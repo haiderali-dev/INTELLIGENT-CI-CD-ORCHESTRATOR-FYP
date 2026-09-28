@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dynamic Queue Optimizer — POC Results</title>
+<script src="assets/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel-2: #1c2129;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --high: #f85149;
+    --medium: #d29922;
+    --low: #3fb950;
+    --good: #3fb950;
+    --bad: #f85149;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px 32px 64px;
+  }
+  h1 { margin: 0 0 4px; font-size: 26px; }
+  h2 { margin: 0 0 14px; font-size: 17px; color: var(--text); }
+  .subtitle { color: var(--muted); margin: 0 0 24px; font-size: 14px; }
+  .badge {
+    display: inline-block; padding: 2px 10px; border-radius: 12px;
+    font-size: 12px; font-weight: 600; margin-left: 6px;
+  }
+  .badge.high { background: rgba(248,81,73,0.15); color: var(--high); }
+  .badge.medium { background: rgba(210,153,34,0.15); color: var(--medium); }
+  .badge.low { background: rgba(63,185,80,0.15); color: var(--low); }
+
+  .kpi-row {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+    gap: 16px; margin-bottom: 24px;
+  }
+  .kpi {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .kpi .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  .kpi .value { font-size: 28px; font-weight: 700; margin-top: 6px; }
+  .kpi .sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .kpi .delta.good { color: var(--good); }
+  .kpi .delta.bad { color: var(--bad); }
+
+  .grid-2 {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;
+  }
+  .panel {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px;
+  }
+  @media (max-width: 1100px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: .03em; position: sticky; top: 0; background: var(--panel); }
+  tr:hover td { background: var(--panel-2); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .pri-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+  .pri-dot.HIGH { background: var(--high); }
+  .pri-dot.MEDIUM { background: var(--medium); }
+  .pri-dot.LOW { background: var(--low); }
+  .table-wrap { max-height: 520px; overflow-y: auto; }
+  .pill { padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .pill.yes { background: rgba(63,185,80,0.15); color: var(--low); }
+  .pill.no { background: rgba(248,81,73,0.15); color: var(--high); }
+  .deps-list { color: var(--muted); font-size: 12px; }
+  .info-box {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 18px; margin-bottom: 24px; font-size: 13px; color: var(--muted); line-height: 1.6;
+  }
+  .info-box b { color: var(--text); }
+  footer { color: var(--muted); font-size: 12px; margin-top: 32px; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>Dynamic Queue Optimizer — Before / After Comparison</h1>
+<p class="subtitle">30-job microservices CI/CD pipeline · single executor · plain Jenkins (FIFO) vs Jenkins + <code>dynamic-queue-optimizer</code></p>
+
+<div class="info-box">
+  <b>Scoring formula:</b> <code>score = 0.5 × Urgency + 0.3 × ExecutionTimeScore (SJF) + 0.2 × DependencyScore</code> &nbsp;|&nbsp;
+  <b>Urgency:</b> HIGH=100, MEDIUM=50, LOW=10 &nbsp;|&nbsp;
+  <b>DependencyScore:</b> 50 (no deps) · 80 (upstream succeeded) · 20 (upstream not yet successful) &nbsp;|&nbsp;
+  <b>Submission order (both runs):</b> all 6 LOW jobs, then all 15 MEDIUM jobs, then all 9 HIGH jobs — the worst case for plain FIFO scheduling, since the highest-priority deploy/integration/smoke jobs are submitted last.
+</div>
+
+<div class="kpi-row" id="kpis"></div>
+
+<div class="grid-2">
+  <div class="panel">
+    <h2>Average Queue Wait by Priority Band</h2>
+    <canvas id="bandChart" height="240"></canvas>
+  </div>
+  <div class="panel">
+    <h2>Throughput — Cumulative Jobs Completed</h2>
+    <canvas id="throughputChart" height="240"></canvas>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="panel">
+    <h2>Execution Timeline — Baseline (FIFO)</h2>
+    <canvas id="ganttBaseline" height="520"></canvas>
+  </div>
+  <div class="panel">
+    <h2>Execution Timeline — Plugin (Dynamic Priority)</h2>
+    <canvas id="ganttPlugin" height="520"></canvas>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="panel">
+    <h2>Queue Wait Time per Job (seconds)</h2>
+    <canvas id="waitChart" height="700"></canvas>
+  </div>
+  <div class="panel">
+    <h2>Dependency Chains — Was the Upstream Job Finished First?</h2>
+    <div class="table-wrap">
+      <table id="depTable">
+        <thead><tr><th>Job</th><th>Depends On</th><th>Baseline</th><th>Plugin</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Full Results — 30 Jobs</h2>
+  <div class="table-wrap">
+    <table id="resultsTable">
+      <thead>
+        <tr>
+          <th>Job</th><th>Priority</th><th>Category</th><th>Dur (s)</th>
+          <th>Baseline Wait</th><th>Baseline Order</th>
+          <th>Plugin Wait</th><th>Plugin Order</th>
+          <th>Wait Δ%</th><th>Order Δ</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<footer>Generated from <code>results/comparison.json</code> — run <code>analyze.py</code> after each experiment to refresh.</footer>
+
+<script>
+const PRI_COLOR = { HIGH: '#f85149', MEDIUM: '#d29922', LOW: '#3fb950' };
+const PRI_COLOR_DIM = { HIGH: 'rgba(248,81,73,0.55)', MEDIUM: 'rgba(210,153,34,0.55)', LOW: 'rgba(63,185,80,0.55)' };
+
+Chart.defaults.color = '#8b949e';
+Chart.defaults.borderColor = '#30363d';
+Chart.defaults.font.family = "-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+
+function fmtPct(v) {
+  const sign = v > 0 ? '+' : '';
+  return sign + v.toFixed(1) + '%';
+}
+
+function kpiCard(label, value, sub, deltaClass) {
+  const div = document.createElement('div');
+  div.className = 'kpi';
+  div.innerHTML = `<div class="label">${label}</div><div class="value">${value}</div>` +
+                  (sub ? `<div class="sub ${deltaClass||''}">${sub}</div>` : '');
+  return div;
+}
+
+fetch('../results/comparison.json')
+  .then(r => r.json())
+  .then(render)
+  .catch(err => {
+    document.body.innerHTML = '<h1>Failed to load results/comparison.json</h1><p>' + err + '</p>';
+  });
+
+function render(data) {
+  const s = data.summary;
+  const kpis = document.getElementById('kpis');
+
+  kpis.appendChild(kpiCard('Avg Queue Wait (Baseline)', s.avgWaitBaseline.toFixed(1) + 's'));
+  kpis.appendChild(kpiCard('Avg Queue Wait (Plugin)', s.avgWaitPlugin.toFixed(1) + 's',
+    fmtPct(-s.avgWaitImprovementPct) + ' vs baseline', s.avgWaitImprovementPct >= 0 ? 'good' : 'bad'));
+
+  const high = s.priorityBands.HIGH;
+  kpis.appendChild(kpiCard('HIGH-priority Avg Wait', high.avgWaitPlugin.toFixed(1) + 's',
+    `was ${high.avgWaitBaseline.toFixed(1)}s · ${fmtPct(-high.waitImprovementPct)}`,
+    high.waitImprovementPct >= 0 ? 'good' : 'bad'));
+
+  const low = s.priorityBands.LOW;
+  kpis.appendChild(kpiCard('LOW-priority Avg Wait', low.avgWaitPlugin.toFixed(1) + 's',
+    `was ${low.avgWaitBaseline.toFixed(1)}s · ${fmtPct(-low.waitImprovementPct)}`,
+    low.waitImprovementPct <= 0 ? 'good' : 'bad'));
+
+  renderBandChart(s.priorityBands);
+  renderThroughput(data.throughput, Math.max(s.makespanBaseline, s.makespanPlugin));
+  renderGantt('ganttBaseline', data.jobs, 'baseline');
+  renderGantt('ganttPlugin', data.jobs, 'plugin');
+  renderWaitChart(data.jobs);
+  renderDepTable(data.dependencyChains);
+  renderResultsTable(data.jobs);
+}
+
+function renderBandChart(bands) {
+  const labels = ['HIGH', 'MEDIUM', 'LOW'];
+  new Chart(document.getElementById('bandChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Baseline', data: labels.map(b => bands[b].avgWaitBaseline), backgroundColor: '#6e7681' },
+        { label: 'Plugin', data: labels.map(b => bands[b].avgWaitPlugin), backgroundColor: labels.map(b => PRI_COLOR[b]) },
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: { y: { beginAtZero: true, title: { display: true, text: 'avg wait (s)' } } },
+      plugins: { legend: { position: 'top' } }
+    }
+  });
+}
+
+function renderThroughput(throughput, maxT) {
+  new Chart(document.getElementById('throughputChart'), {
+    type: 'line',
+    data: {
+      datasets: [
+        {
+          label: 'Baseline', data: throughput.baseline.map(p => ({x: p[0], y: p[1]})),
+          borderColor: '#6e7681', backgroundColor: 'rgba(110,118,129,0.15)',
+          stepped: true, fill: true, pointRadius: 0,
+        },
+        {
+          label: 'Plugin', data: throughput.plugin.map(p => ({x: p[0], y: p[1]})),
+          borderColor: '#58a6ff', backgroundColor: 'rgba(88,166,255,0.15)',
+          stepped: true, fill: true, pointRadius: 0,
+        },
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: { type: 'linear', min: 0, max: Math.ceil(maxT) + 5, title: { display: true, text: 'time since T0 (s)' } },
+        y: { beginAtZero: true, max: 30, title: { display: true, text: 'jobs completed' } },
+      },
+      plugins: { legend: { position: 'top' } }
+    }
+  });
+}
+
+function renderGantt(canvasId, jobs, runKey) {
+  const rows = jobs
+    .filter(j => j[runKey])
+    .slice()
+    .sort((a, b) => a[runKey].order - b[runKey].order);
+
+  const labels = rows.map(r => r.name);
+  const data = rows.map(r => [r[runKey].startSec, r[runKey].completion]);
+  const colors = rows.map(r => PRI_COLOR_DIM[r.priority]);
+
+  new Chart(document.getElementById(canvasId), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'execution window',
+        data,
+        backgroundColor: colors,
+        borderColor: rows.map(r => PRI_COLOR[r.priority]),
+        borderWidth: 1,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      scales: {
+        x: { title: { display: true, text: 'time since T0 (s)' }, beginAtZero: true },
+        y: { ticks: { autoSkip: false, font: { size: 10 } } },
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const r = rows[ctx.dataIndex];
+              return `${r.name}: wait ${r[runKey].wait}s, exec ${r[runKey].exec}s, done @ ${r[runKey].completion}s (order #${r[runKey].order})`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderWaitChart(jobs) {
+  const order = { HIGH: 0, MEDIUM: 1, LOW: 2 };
+  const rows = jobs.slice().sort((a, b) => (order[a.priority] - order[b.priority]) || a.name.localeCompare(b.name));
+  const labels = rows.map(r => r.name);
+
+  new Chart(document.getElementById('waitChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Baseline wait', data: rows.map(r => r.baseline ? r.baseline.wait : 0), backgroundColor: '#6e7681' },
+        { label: 'Plugin wait', data: rows.map(r => r.plugin ? r.plugin.wait : 0), backgroundColor: rows.map(r => PRI_COLOR[r.priority]) },
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      scales: {
+        x: { title: { display: true, text: 'queue wait (s)' }, beginAtZero: true },
+        y: { ticks: { autoSkip: false, font: { size: 10 } } },
+      },
+      plugins: { legend: { position: 'top' } }
+    }
+  });
+}
+
+function renderDepTable(chains) {
+  const tbody = document.querySelector('#depTable tbody');
+  chains.forEach(c => {
+    const tr = document.createElement('tr');
+    const b = c.baseline, p = c.plugin;
+    tr.innerHTML = `
+      <td><span class="pri-dot ${c.priority}"></span>${c.name}</td>
+      <td class="deps-list">${c.dependsOn.join(', ')}</td>
+      <td>${b ? `<span class="pill ${b.honored ? 'yes' : 'no'}">${b.honored ? 'after deps' : 'before deps'}</span>` : '-'}</td>
+      <td>${p ? `<span class="pill ${p.honored ? 'yes' : 'no'}">${p.honored ? 'after deps' : 'before deps'}</span>` : '-'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderResultsTable(jobs) {
+  const tbody = document.querySelector('#resultsTable tbody');
+  jobs.forEach(j => {
+    const b = j.baseline, p = j.plugin;
+    const tr = document.createElement('tr');
+    const waitDelta = j.waitDeltaPct;
+    const orderDelta = j.orderDelta;
+    tr.innerHTML = `
+      <td><span class="pri-dot ${j.priority}"></span>${j.name}</td>
+      <td>${j.priority}</td>
+      <td>${j.category}</td>
+      <td class="num">${j.duration}</td>
+      <td class="num">${b ? b.wait.toFixed(1) : '-'}</td>
+      <td class="num">${b ? b.order : '-'}</td>
+      <td class="num">${p ? p.wait.toFixed(1) : '-'}</td>
+      <td class="num">${p ? p.order : '-'}</td>
+      <td class="num" style="color:${waitDelta > 0 ? 'var(--good)' : (waitDelta < 0 ? 'var(--bad)' : 'inherit')}">${waitDelta !== undefined ? fmtPct(waitDelta) : '-'}</td>
+      <td class="num">${orderDelta !== undefined ? (orderDelta > 0 ? '+' : '') + orderDelta : '-'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+</script>
+
+</body>
+</html>

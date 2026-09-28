@@ -1,0 +1,30 @@
+mvn hpi:run -Dport=8088
+
+cd "D:\FYP POC\CICD project\experiment\scripts"
+
+# 1. Baseline run (plain Jenkins, port 8085) — ~5-6 min
+python run_experiment.py --label baseline --home ../baseline-home --port 8085 `
+  --create-template create-jobs-baseline.groovy.tmpl `
+  --output ../results/baseline-results.json --log ../baseline-jenkins.log
+
+# 2. Plugin run (Jenkins + dynamic-queue-optimizer, port 8086) — ~5-6 min
+python run_experiment.py --label plugin --home ../plugin-home --port 8086 `
+  --create-template create-jobs-plugin.groovy.tmpl `
+  --output ../results/plugin-results.json --log ../plugin-jenkins.log
+
+# 3. Build the comparison dataset
+python analyze.py
+
+Then view the dashboard:
+
+cd "D:\FYP POC\CICD project\experiment"
+python -m http.server 8000
+
+Open http://localhost:8000/dashboard/index.html.
+
+Notes:
+- Run each step one at a time (each is self-contained — starts Jenkins, runs jobs, shuts it down).
+- Requires the Jenkins WAR cached at C:\Users\haide\.m2\repository\org\jenkins-ci\main\jenkins-war\2.479.3\jenkins-war-2.479.3.war.
+- If ports 8085/8086/8000 are stuck, check netstat -ano | findstr :8085 and taskkill /PID <pid> /T /F.
+
+Want me to actually run these now, or are you asking for reference only?

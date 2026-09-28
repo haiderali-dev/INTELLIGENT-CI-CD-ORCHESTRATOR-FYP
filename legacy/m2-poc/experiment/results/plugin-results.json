@@ -1,0 +1,276 @@
+{
+  "label": "plugin",
+  "t0": 1781518804085,
+  "jobs": [
+    {
+      "name": "build-auth-service",
+      "result": "SUCCESS",
+      "startTime": 1781518894713,
+      "duration": 10196,
+      "number": 1,
+      "priority": "MEDIUM",
+      "dependsOn": ""
+    },
+    {
+      "name": "build-catalog-service",
+      "result": "SUCCESS",
+      "startTime": 1781519011354,
+      "duration": 10182,
+      "number": 1,
+      "priority": "MEDIUM",
+      "dependsOn": ""
+    },
+    {
+      "name": "build-frontend-app",
+      "result": "SUCCESS",
+      "startTime": 1781519033786,
+      "duration": 14203,
+      "number": 1,
+      "priority": "MEDIUM",
+      "dependsOn": ""
+    },
+    {
+      "name": "build-notification-service",
+      "result": "SUCCESS",
+      "startTime": 1781518988925,
+      "duration": 10197,
+      "number": 1,
+      "priority": "MEDIUM",
+      "dependsOn": ""
+    },
+    {
+      "name": "build-order-service",
+      "result": "SUCCESS",
+      "startTime": 1781518966392,
+      "duration": 10202,
+      "number": 1,
+      "priority": "MEDIUM",
+      "dependsOn": ""
+    },
+    {
+      "name": "build-payment-service",
+      "result": "SUCCESS",
+      "startTime": 1781518943934,
+      "duration": 10174,
+      "number": 1,
+      "priority": "MEDIUM",
+      "dependsOn": ""
+    },
+    {
+      "name": "build-user-service",
+      "result": "SUCCESS",
+      "startTime": 1781518921389,
+      "duration": 10231,
+      "number": 1,
+      "priority": "MEDIUM",
+      "dependsOn": ""
+    },
+    {
+      "name": "cleanup-old-builds",
+      "result": "SUCCESS",
+      "startTime": 1781519074598,
+      "duration": 6165,
+      "number": 1,
+      "priority": "LOW",
+      "dependsOn": ""
+    },
+    {
+      "name": "deploy-auth-service",
+      "result": "SUCCESS",
+      "startTime": 1781518809558,
+      "duration": 8175,
+      "number": 1,
+      "priority": "HIGH",
+      "dependsOn": "test-auth-service"
+    },
+    {
+      "name": "deploy-catalog-service",
+      "result": "SUCCESS",
+      "startTime": 1781518886467,
+      "duration": 8211,
+      "number": 1,
+      "priority": "HIGH",
+      "dependsOn": "test-catalog-service"
+    },
+    {
+      "name": "deploy-frontend-app",
+      "result": "SUCCESS",
+      "startTime": 1781518817778,
+      "duration": 10218,
+      "number": 1,
+      "priority": "HIGH",
+      "dependsOn": "test-frontend-app"
+    },
+    {
+      "name": "deploy-notification-service",
+      "result": "SUCCESS",
+      "startTime": 1781518878225,
+      "duration": 8205,
+      "number": 1,
+      "priority": "HIGH",
+      "dependsOn": "test-notification-service"
+    },
+    {
+      "name": "deploy-order-service",
+      "result": "SUCCESS",
+      "startTime": 1781518870000,
+      "duration": 8182,
+      "number": 1,
+      "priority": "HIGH",
+      "dependsOn": "test-order-service"
+    },
+    {
+      "name": "deploy-payment-service",
+      "result": "SUCCESS",
+      "startTime": 1781518853570,
+      "duration": 8182,
+      "number": 1,
+      "priority": "HIGH",
+      "dependsOn": "test-payment-service"
+    },
+    {
+      "name": "deploy-user-service",
+      "result": "SUCCESS",
+      "startTime": 1781518861785,
+      "duration": 8165,
+      "number": 1,
+      "priority": "HIGH",
+      "dependsOn": "test-user-service"
+    },
+    {
+      "name": "generate-api-docs",
+      "result": "SUCCESS",
+      "startTime": 1781519080795,
+      "duration": 20309,
+      "number": 1,
+      "priority": "LOW",
+      "dependsOn": ""
+    },
+    {
+      "name": "integration-test-suite",
+      "result": "SUCCESS",
+      "startTime": 1781518835239,
+      "duration": 18298,
+      "number": 1,
+      "priority": "HIGH",
+      "dependsOn": "test-auth-service,test-payment-service,test-user-service"
+    },
+    {
+      "name": "lint-auth-service",
+      "result": "SUCCESS",
+      "startTime": 1781518804230,
+      "duration": 5231,
+      "number": 1,
+      "priority": "LOW",
+      "dependsOn": ""
+    },
+    {
+      "name": "lint-payment-service",
+      "result": "SUCCESS",
+      "startTime": 1781519064237,
+      "duration": 5162,
+      "number": 1,
+      "priority": "LOW",
+      "dependsOn": ""
+    },
+    {
+      "name": "lint-user-service",
+      "result": "SUCCESS",
+      "startTime": 1781519069413,
+      "duration": 5163,
+      "number": 1,
+      "priority": "LOW",
+      "dependsOn": ""
+    },
+    {
+      "name": "release-notes-generator",
+      "result": "SUCCESS",
+      "startTime": 1781518917207,
+      "duration": 4149,
+      "number": 1,
+      "priority": "MEDIUM",
+      "dependsOn": "smoke-test-production"
+    },
+    {
+      "name": "security-scan-dependencies",
+      "result": "SUCCESS",
+      "startTime": 1781519101119,
+      "duration": 25392,
+      "number": 1,
+      "priority": "LOW",
+      "dependsOn": ""
+    },
+    {
+      "name": "smoke-test-production",
+      "result": "SUCCESS",
+      "startTime": 1781518828035,
+      "duration": 7165,
+      "number": 1,
+      "priority": "HIGH",
+      "dependsOn": "deploy-auth-service,deploy-frontend-app"
+    },
+    {
+      "name": "test-auth-service",
+      "result": "SUCCESS",
+      "startTime": 1781518904943,
+      "duration": 12214,
+      "number": 1,
+      "priority": "MEDIUM",
+      "dependsOn": "build-auth-service"
+    },
+    {
+      "name": "test-catalog-service",
+      "result": "SUCCESS",
+      "startTime": 1781519021564,
+      "duration": 12202,
+      "number": 1,
+      "priority": "MEDIUM",
+      "dependsOn": "build-catalog-service"
+    },
+    {
+      "name": "test-frontend-app",
+      "result": "SUCCESS",
+      "startTime": 1781519048005,
+      "duration": 16216,
+      "number": 1,
+      "priority": "MEDIUM",
+      "dependsOn": "build-frontend-app"
+    },
+    {
+      "name": "test-notification-service",
+      "result": "SUCCESS",
+      "startTime": 1781518999145,
+      "duration": 12190,
+      "number": 1,
+      "priority": "MEDIUM",
+      "dependsOn": "build-notification-service"
+    },
+    {
+      "name": "test-order-service",
+      "result": "SUCCESS",
+      "startTime": 1781518976627,
+      "duration": 12264,
+      "number": 1,
+      "priority": "MEDIUM",
+      "dependsOn": "build-order-service"
+    },
+    {
+      "name": "test-payment-service",
+      "result": "SUCCESS",
+      "startTime": 1781518954132,
+      "duration": 12231,
+      "number": 1,
+      "priority": "MEDIUM",
+      "dependsOn": "build-payment-service"
+    },
+    {
+      "name": "test-user-service",
+      "result": "SUCCESS",
+      "startTime": 1781518931654,
+      "duration": 12247,
+      "number": 1,
+      "priority": "MEDIUM",
+      "dependsOn": "build-user-service"
+    }
+  ]
+}

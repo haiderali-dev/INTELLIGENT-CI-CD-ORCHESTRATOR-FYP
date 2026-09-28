@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.jenkins-ci.plugins</groupId>
+        <artifactId>plugin</artifactId>
+        <version>5.9</version>
+        <relativePath />
+    </parent>
+
+    <groupId>io.jenkins.plugins</groupId>
+    <artifactId>dynamic-queue-optimizer</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>hpi</packaging>
+
+    <name>Dynamic Queue Optimizer</name>
+    <description>
+        Intelligent CI/CD queue optimization using priority scoring and
+        Max-Heap scheduling. Intercepts Jenkins queue via QueueTaskDispatcher,
+        estimates execution time from historical build data, and reorders
+        jobs by a weighted score of urgency, execution time, and dependencies.
+    </description>
+    <url>https://github.com/your-username/dynamic-queue-optimizer</url>
+
+    <properties>
+        <jenkins.version>2.479.3</jenkins.version>
+        <!-- Java 17 bytecode target; Jenkins 2.479+ runs on JDK 17 or 21 -->
+        <java.level>17</java.level>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>repo.jenkins-ci.org</id>
+            <url>https://repo.jenkins-ci.org/public/</url>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>repo.jenkins-ci.org</id>
+            <url>https://repo.jenkins-ci.org/public/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <dependencies>
+        <!-- Jenkins core comes via parent BOM — do not add it manually -->
+
+        <!-- Unit testing -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Standard Mockito — no inline mock-maker needed after heap refactor -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>4.11.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Jenkins integration test harness -->
+        <dependency>
+            <groupId>org.jenkins-ci.main</groupId>
+            <artifactId>jenkins-test-harness</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!--
+                Jenkins HPI plugin: packages the plugin as a .hpi file.
+                Parent POM 5.x already passes the Java 17/21 module add-opens
+                flags XStream needs via the jenkins.addOpens property, so no
+                manual jvmOptions/jvmArgs configuration is required here.
+            -->
+            <plugin>
+                <groupId>org.jenkins-ci.tools</groupId>
+                <artifactId>maven-hpi-plugin</artifactId>
+                <extensions>true</extensions>
+            </plugin>
+
+        </plugins>
+    </build>
+</project>

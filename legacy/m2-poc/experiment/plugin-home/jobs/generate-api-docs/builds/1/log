@@ -1,0 +1,18 @@
+Legacy code started this job.  No cause information is available
+Running as SYSTEM
+[DynamicQueueOptimizer] Job started: generate-api-docs at 1781519080795 ms
+Building in workspace D:\FYP POC\CICD project\experiment\plugin-home\workspace\generate-api-docs
+[generate-api-docs] $ cmd /c call C:\Users\haide\AppData\Local\Temp\jenkins15678116650822745628.bat
+
+D:\FYP POC\CICD project\experiment\plugin-home\workspace\generate-api-docs>ping -n 21 127.0.0.1  1>nul 
+
+D:\FYP POC\CICD project\experiment\plugin-home\workspace\generate-api-docs>exit 0 
+
+╔══ Dynamic Queue Optimizer — Build Metrics ══════════════
+║  Job:      generate-api-docs
+║  Build:    #1
+║  Duration: 20.3 seconds
+║  Result:   SUCCESS
+╚══════════════════════════════════════════════════════════
+
+Finished: SUCCESS

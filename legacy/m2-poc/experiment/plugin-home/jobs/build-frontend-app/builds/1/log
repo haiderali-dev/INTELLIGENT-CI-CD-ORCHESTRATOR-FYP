@@ -1,0 +1,18 @@
+Legacy code started this job.  No cause information is available
+Running as SYSTEM
+[DynamicQueueOptimizer] Job started: build-frontend-app at 1781519033786 ms
+Building in workspace D:\FYP POC\CICD project\experiment\plugin-home\workspace\build-frontend-app
+[build-frontend-app] $ cmd /c call C:\Users\haide\AppData\Local\Temp\jenkins337534070223927624.bat
+
+D:\FYP POC\CICD project\experiment\plugin-home\workspace\build-frontend-app>ping -n 15 127.0.0.1  1>nul 
+
+D:\FYP POC\CICD project\experiment\plugin-home\workspace\build-frontend-app>exit 0 
+
+╔══ Dynamic Queue Optimizer — Build Metrics ══════════════
+║  Job:      build-frontend-app
+║  Build:    #1
+║  Duration: 14.2 seconds
+║  Result:   SUCCESS
+╚══════════════════════════════════════════════════════════
+
+Finished: SUCCESS

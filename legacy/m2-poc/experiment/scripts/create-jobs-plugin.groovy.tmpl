@@ -1,0 +1,30 @@
+import groovy.json.JsonSlurper
+import jenkins.model.Jenkins
+import hudson.model.FreeStyleProject
+import hudson.tasks.BatchFile
+import io.jenkins.plugins.queueoptimizer.property.JobPriorityProperty
+
+def jobsJson = '''__JOBS_JSON__'''
+def jobs = new JsonSlurper().parseText(jobsJson)
+
+def created = []
+jobs.each { spec ->
+    String name = spec.name
+    def existing = Jenkins.get().getItem(name)
+    if (existing != null) {
+        existing.delete()
+    }
+    FreeStyleProject job = Jenkins.get().createProject(FreeStyleProject.class, name)
+    int seconds = (spec.duration as int) + 1
+    job.getBuildersList().add(new BatchFile("ping -n " + seconds + " 127.0.0.1 > nul"))
+
+    String priority = spec.priority
+    String dependsOn = (spec.dependsOn as List).join(",")
+    job.addProperty(new JobPriorityProperty(priority, dependsOn))
+
+    job.save()
+    created << [name: name, priority: priority, dependsOn: dependsOn]
+}
+
+println "CREATED:" + created.size()
+created.each { c -> println c.name + " -> " + c.priority + (c.dependsOn ? " (depends on: " + c.dependsOn + ")" : "") }

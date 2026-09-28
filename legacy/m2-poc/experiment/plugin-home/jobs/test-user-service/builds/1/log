@@ -1,0 +1,18 @@
+Legacy code started this job.  No cause information is available
+Running as SYSTEM
+[DynamicQueueOptimizer] Job started: test-user-service at 1781518931654 ms
+Building in workspace D:\FYP POC\CICD project\experiment\plugin-home\workspace\test-user-service
+[test-user-service] $ cmd /c call C:\Users\haide\AppData\Local\Temp\jenkins10036738821049303066.bat
+
+D:\FYP POC\CICD project\experiment\plugin-home\workspace\test-user-service>ping -n 13 127.0.0.1  1>nul 
+
+D:\FYP POC\CICD project\experiment\plugin-home\workspace\test-user-service>exit 0 
+
+╔══ Dynamic Queue Optimizer — Build Metrics ══════════════
+║  Job:      test-user-service
+║  Build:    #1
+║  Duration: 12.2 seconds
+║  Result:   SUCCESS
+╚══════════════════════════════════════════════════════════
+
+Finished: SUCCESS

@@ -1,0 +1,18 @@
+Legacy code started this job.  No cause information is available
+Running as SYSTEM
+[DynamicQueueOptimizer] Job started: security-scan-dependencies at 1781519101119 ms
+Building in workspace D:\FYP POC\CICD project\experiment\plugin-home\workspace\security-scan-dependencies
+[security-scan-dependencies] $ cmd /c call C:\Users\haide\AppData\Local\Temp\jenkins10618886372358282141.bat
+
+D:\FYP POC\CICD project\experiment\plugin-home\workspace\security-scan-dependencies>ping -n 26 127.0.0.1  1>nul 
+
+D:\FYP POC\CICD project\experiment\plugin-home\workspace\security-scan-dependencies>exit 0 
+
+╔══ Dynamic Queue Optimizer — Build Metrics ══════════════
+║  Job:      security-scan-dependencies
+║  Build:    #1
+║  Duration: 25.4 seconds
+║  Result:   SUCCESS
+╚══════════════════════════════════════════════════════════
+
+Finished: SUCCESS

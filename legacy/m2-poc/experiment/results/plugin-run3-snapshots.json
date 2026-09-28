@@ -1,0 +1,670 @@
+[
+  {
+    "t": 9.21,
+    "queueLen": 29,
+    "busy": 0,
+    "heap": [
+      {
+        "jobName": "lint-payment-service",
+        "score": 28.631104016679153,
+        "estimatedSeconds": 8.374600000000001,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 14.33,
+    "queueLen": 28,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 19.43,
+    "queueLen": 28,
+    "busy": 0,
+    "heap": [
+      {
+        "jobName": "lint-user-service",
+        "score": 28.654168159755024,
+        "estimatedSeconds": 8.3628,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 24.55,
+    "queueLen": 27,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 29.67,
+    "queueLen": 27,
+    "busy": 0,
+    "heap": [
+      {
+        "jobName": "cleanup-old-builds",
+        "score": 23.837932045476755,
+        "estimatedSeconds": 10.826866666666666,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 34.79,
+    "queueLen": 26,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 39.9,
+    "queueLen": 26,
+    "busy": 0,
+    "heap": [
+      {
+        "jobName": "generate-api-docs",
+        "score": 23.835325927615074,
+        "estimatedSeconds": 10.8282,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 45.0,
+    "queueLen": 25,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 50.09,
+    "queueLen": 25,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 55.21,
+    "queueLen": 25,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 60.32,
+    "queueLen": 25,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 65.42,
+    "queueLen": 25,
+    "busy": 0,
+    "heap": [
+      {
+        "jobName": "security-scan-dependencies",
+        "score": 23.834935009935826,
+        "estimatedSeconds": 10.828399999999998,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 70.51,
+    "queueLen": 24,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 75.59,
+    "queueLen": 24,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 80.7,
+    "queueLen": 24,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 85.8,
+    "queueLen": 24,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 90.89,
+    "queueLen": 24,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 96.01,
+    "queueLen": 23,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 101.1,
+    "queueLen": 23,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 106.24,
+    "queueLen": 23,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 111.34,
+    "queueLen": 22,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 116.44,
+    "queueLen": 22,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 121.53,
+    "queueLen": 22,
+    "busy": 0,
+    "heap": [
+      {
+        "jobName": "build-user-service",
+        "score": 46.049043880509494,
+        "estimatedSeconds": 9.695625,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 126.63,
+    "queueLen": 21,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 131.7,
+    "queueLen": 21,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 136.79,
+    "queueLen": 21,
+    "busy": 0,
+    "heap": [
+      {
+        "jobName": "build-order-service",
+        "score": 44.79737433625436,
+        "estimatedSeconds": 10.336,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 141.87,
+    "queueLen": 20,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 146.95,
+    "queueLen": 20,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 152.02,
+    "queueLen": 20,
+    "busy": 0,
+    "heap": [
+      {
+        "jobName": "build-notification-service",
+        "score": 44.80379655527064,
+        "estimatedSeconds": 10.332714285714285,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 157.09,
+    "queueLen": 19,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 162.19,
+    "queueLen": 19,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 167.28,
+    "queueLen": 19,
+    "busy": 0,
+    "heap": [
+      {
+        "jobName": "build-catalog-service",
+        "score": 44.8155240856482,
+        "estimatedSeconds": 10.326714285714287,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 172.35,
+    "queueLen": 18,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 177.45,
+    "queueLen": 18,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 182.53,
+    "queueLen": 18,
+    "busy": 0,
+    "heap": [
+      {
+        "jobName": "test-auth-service",
+        "score": 50.00772062416522,
+        "estimatedSeconds": 10.740000000000002,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 187.6,
+    "queueLen": 17,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 192.66,
+    "queueLen": 17,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 197.73,
+    "queueLen": 17,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 202.8,
+    "queueLen": 16,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 207.88,
+    "queueLen": 16,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 212.96,
+    "queueLen": 16,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 218.03,
+    "queueLen": 15,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 223.09,
+    "queueLen": 15,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 228.16,
+    "queueLen": 15,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 233.24,
+    "queueLen": 14,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 238.31,
+    "queueLen": 14,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 243.38,
+    "queueLen": 14,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 248.51,
+    "queueLen": 13,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 253.6,
+    "queueLen": 13,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 258.7,
+    "queueLen": 13,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 263.85,
+    "queueLen": 12,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 268.93,
+    "queueLen": 12,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 274.02,
+    "queueLen": 12,
+    "busy": 0,
+    "heap": [
+      {
+        "jobName": "build-frontend-app",
+        "score": 38.93947291266248,
+        "estimatedSeconds": 13.332999999999998,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 279.12,
+    "queueLen": 11,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 284.24,
+    "queueLen": 11,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 289.32,
+    "queueLen": 11,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 294.39,
+    "queueLen": 10,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 299.47,
+    "queueLen": 10,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 304.57,
+    "queueLen": 10,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 309.64,
+    "queueLen": 10,
+    "busy": 0,
+    "heap": [
+      {
+        "jobName": "release-notes-generator",
+        "score": 49.886336350952334,
+        "estimatedSeconds": 10.845033333333333,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 314.72,
+    "queueLen": 9,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 319.8,
+    "queueLen": 8,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 324.89,
+    "queueLen": 7,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "deploy-payment-service",
+        "score": 79.11350141146696,
+        "estimatedSeconds": 8.673749999999998,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 329.97,
+    "queueLen": 7,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "deploy-payment-service",
+        "score": 79.11350141146696,
+        "estimatedSeconds": 8.673749999999998,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 335.04,
+    "queueLen": 6,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "deploy-user-service",
+        "score": 79.0889224179889,
+        "estimatedSeconds": 8.686374999999998,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 340.13,
+    "queueLen": 6,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "deploy-user-service",
+        "score": 79.0889224179889,
+        "estimatedSeconds": 8.686374999999998,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 345.2,
+    "queueLen": 5,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "deploy-order-service",
+        "score": 78.14904534772148,
+        "estimatedSeconds": 9.169142857142857,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 350.28,
+    "queueLen": 5,
+    "busy": 0,
+    "heap": [
+      {
+        "jobName": "deploy-notification-service",
+        "score": 78.07840246971952,
+        "estimatedSeconds": 9.205428571428572,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 355.36,
+    "queueLen": 4,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 360.44,
+    "queueLen": 3,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "deploy-catalog-service",
+        "score": 78.12985495960284,
+        "estimatedSeconds": 9.179,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 365.51,
+    "queueLen": 3,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "deploy-catalog-service",
+        "score": 78.12985495960284,
+        "estimatedSeconds": 9.179,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 370.62,
+    "queueLen": 3,
+    "busy": 0,
+    "heap": [
+      {
+        "jobName": "deploy-frontend-app",
+        "score": 66.0,
+        "estimatedSeconds": 15.4095,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 375.73,
+    "queueLen": 2,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 380.82,
+    "queueLen": 2,
+    "busy": 1,
+    "heap": []
+  },
+  {
+    "t": 385.88,
+    "queueLen": 1,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "integration-test-suite",
+        "score": 66.0,
+        "estimatedSeconds": 10.852633333333333,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 390.98,
+    "queueLen": 1,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "integration-test-suite",
+        "score": 66.0,
+        "estimatedSeconds": 10.852633333333333,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 396.05,
+    "queueLen": 1,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "integration-test-suite",
+        "score": 66.0,
+        "estimatedSeconds": 10.852633333333333,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 401.1,
+    "queueLen": 0,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "smoke-test-production",
+        "score": 66.0,
+        "estimatedSeconds": 10.854433333333333,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 406.2,
+    "queueLen": 0,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "smoke-test-production",
+        "score": 66.0,
+        "estimatedSeconds": 10.854433333333333,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 411.29,
+    "queueLen": 0,
+    "busy": 0,
+    "heap": []
+  },
+  {
+    "t": 416.37,
+    "queueLen": 0,
+    "busy": 0,
+    "heap": []
+  }
+]

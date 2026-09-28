@@ -1,0 +1,14 @@
+import groovy.json.JsonSlurper
+import jenkins.model.Jenkins
+
+def jobsJson = '''__JOBS_JSON__'''
+def jobs = new JsonSlurper().parseText(jobsJson)
+
+def t0 = System.currentTimeMillis()
+
+jobs.each { spec ->
+    def job = Jenkins.get().getItem(spec.name as String)
+    job.scheduleBuild2(0)
+}
+
+println "T0:" + t0

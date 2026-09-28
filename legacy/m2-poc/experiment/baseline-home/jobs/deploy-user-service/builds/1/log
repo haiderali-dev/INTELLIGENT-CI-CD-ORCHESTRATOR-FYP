@@ -1,0 +1,9 @@
+Legacy code started this job.  No cause information is available
+Running as SYSTEM
+Building in workspace D:\FYP POC\CICD project\experiment\baseline-home\workspace\deploy-user-service
+[deploy-user-service] $ cmd /c call C:\Users\haide\AppData\Local\Temp\jenkins18183108101371527179.bat
+
+D:\FYP POC\CICD project\experiment\baseline-home\workspace\deploy-user-service>ping -n 9 127.0.0.1  1>nul 
+
+D:\FYP POC\CICD project\experiment\baseline-home\workspace\deploy-user-service>exit 0 
+Finished: SUCCESS

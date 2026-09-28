@@ -1,0 +1,6 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core">
+    Optimizes the Jenkins build queue by scoring jobs based on urgency,
+    estimated execution time, and dependency state, then dispatching them
+    in Max-Heap priority order rather than the default FIFO order.
+</j:jelly>

@@ -1,0 +1,9 @@
+Legacy code started this job.  No cause information is available
+Running as SYSTEM
+Building in workspace D:\FYP POC\CICD project\experiment\baseline-home\workspace\test-catalog-service
+[test-catalog-service] $ cmd /c call C:\Users\haide\AppData\Local\Temp\jenkins17715312054169512889.bat
+
+D:\FYP POC\CICD project\experiment\baseline-home\workspace\test-catalog-service>ping -n 13 127.0.0.1  1>nul 
+
+D:\FYP POC\CICD project\experiment\baseline-home\workspace\test-catalog-service>exit 0 
+Finished: SUCCESS

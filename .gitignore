@@ -1,0 +1,83 @@
+# --- Secrets: never commit ---
+.env
+.env.local
+.env.*.local
+.secrets/
+*.pem
+*.key
+!jenkins/casc/*.key.example
+
+# --- Scratch ---
+.tmp/
+*.log
+!legacy/m2-poc/experiment/*.log
+
+# --- Java / Maven ---
+target/
+*.hpi
+*.jpi
+*.class
+.mvn/wrapper/maven-wrapper.jar
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+.coverage
+htmlcov/
+
+# --- Node ---
+node_modules/
+frontend/dist/
+.vite/
+playwright-report/
+test-results/
+blob-report/
+
+# --- Experiment and evaluation output ---
+experiment/results/*/
+!experiment/results/latest.json
+eval/.cache/
+eval/results/
+
+# --- Jenkins runtime state inside the frozen M2 copy ---
+# The exploded WAR, the update-center cache and the credential stores are
+# runtime artifacts, not evidence. Build history under jobs/ IS evidence and is
+# committed. See docs/decisions.md.
+
+# Key material for the local M2 dev instances. Never commit, frozen or not.
+**/secret.key
+**/secret.key.not-so-secret
+**/secrets/
+**/identity.key.enc
+
+# `mvn hpi:run` scratch home. Pure runtime output, no evidential value.
+legacy/m2-poc/dynamic-queue-optimizer/work/
+
+legacy/m2-poc/experiment/*-home/war/
+legacy/m2-poc/experiment/*-home/updates/
+legacy/m2-poc/experiment/*-home/secrets/
+legacy/m2-poc/experiment/*-home/users/
+legacy/m2-poc/experiment/*-home/plugins/
+legacy/m2-poc/experiment/*-home/workspace/
+legacy/m2-poc/experiment/*-home/logs/
+legacy/m2-poc/experiment/*-home/.lastStarted
+legacy/m2-poc/experiment/*-home/identity.key.enc
+
+# --- Editors and OS ---
+.idea/
+.vscode/
+!.vscode/extensions.json
+*.iml
+.DS_Store
+Thumbs.db
+
+# --- Claude Code local overrides ---
+.claude/settings.local.json

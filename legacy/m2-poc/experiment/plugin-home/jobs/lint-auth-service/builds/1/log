@@ -1,0 +1,18 @@
+Legacy code started this job.  No cause information is available
+Running as SYSTEM
+[DynamicQueueOptimizer] Job started: lint-auth-service at 1781518804230 ms
+Building in workspace D:\FYP POC\CICD project\experiment\plugin-home\workspace\lint-auth-service
+[lint-auth-service] $ cmd /c call C:\Users\haide\AppData\Local\Temp\jenkins16643249481808622902.bat
+
+D:\FYP POC\CICD project\experiment\plugin-home\workspace\lint-auth-service>ping -n 6 127.0.0.1  1>nul 
+
+D:\FYP POC\CICD project\experiment\plugin-home\workspace\lint-auth-service>exit 0 
+
+╔══ Dynamic Queue Optimizer — Build Metrics ══════════════
+║  Job:      lint-auth-service
+║  Build:    #1
+║  Duration: 5.2 seconds
+║  Result:   SUCCESS
+╚══════════════════════════════════════════════════════════
+
+Finished: SUCCESS

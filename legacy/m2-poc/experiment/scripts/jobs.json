@@ -1,0 +1,37 @@
+[
+  { "name": "lint-auth-service",          "category": "lint",        "duration": 5,  "priority": "LOW",    "dependsOn": [] },
+  { "name": "lint-payment-service",       "category": "lint",        "duration": 5,  "priority": "LOW",    "dependsOn": [] },
+  { "name": "lint-user-service",          "category": "lint",        "duration": 5,  "priority": "LOW",    "dependsOn": [] },
+  { "name": "cleanup-old-builds",         "category": "maintenance", "duration": 6,  "priority": "LOW",    "dependsOn": [] },
+  { "name": "generate-api-docs",          "category": "docs",        "duration": 20, "priority": "LOW",    "dependsOn": [] },
+  { "name": "security-scan-dependencies", "category": "security",    "duration": 25, "priority": "LOW",    "dependsOn": [] },
+
+  { "name": "build-auth-service",         "category": "build", "duration": 10, "priority": "MEDIUM", "dependsOn": [] },
+  { "name": "build-payment-service",      "category": "build", "duration": 10, "priority": "MEDIUM", "dependsOn": [] },
+  { "name": "build-user-service",         "category": "build", "duration": 10, "priority": "MEDIUM", "dependsOn": [] },
+  { "name": "build-order-service",        "category": "build", "duration": 10, "priority": "MEDIUM", "dependsOn": [] },
+  { "name": "build-notification-service", "category": "build", "duration": 10, "priority": "MEDIUM", "dependsOn": [] },
+  { "name": "build-catalog-service",      "category": "build", "duration": 10, "priority": "MEDIUM", "dependsOn": [] },
+
+  { "name": "test-auth-service",          "category": "test", "duration": 12, "priority": "MEDIUM", "dependsOn": ["build-auth-service"] },
+  { "name": "test-payment-service",       "category": "test", "duration": 12, "priority": "MEDIUM", "dependsOn": ["build-payment-service"] },
+  { "name": "test-user-service",          "category": "test", "duration": 12, "priority": "MEDIUM", "dependsOn": ["build-user-service"] },
+  { "name": "test-order-service",         "category": "test", "duration": 12, "priority": "MEDIUM", "dependsOn": ["build-order-service"] },
+  { "name": "test-notification-service",  "category": "test", "duration": 12, "priority": "MEDIUM", "dependsOn": ["build-notification-service"] },
+  { "name": "test-catalog-service",       "category": "test", "duration": 12, "priority": "MEDIUM", "dependsOn": ["build-catalog-service"] },
+
+  { "name": "build-frontend-app",         "category": "build",    "duration": 14, "priority": "MEDIUM", "dependsOn": [] },
+  { "name": "test-frontend-app",          "category": "test",     "duration": 16, "priority": "MEDIUM", "dependsOn": ["build-frontend-app"] },
+  { "name": "release-notes-generator",    "category": "release",  "duration": 4,  "priority": "MEDIUM", "dependsOn": ["smoke-test-production"] },
+
+  { "name": "deploy-auth-service",         "category": "deploy", "duration": 8,  "priority": "HIGH", "dependsOn": ["test-auth-service"] },
+  { "name": "deploy-payment-service",      "category": "deploy", "duration": 8,  "priority": "HIGH", "dependsOn": ["test-payment-service"] },
+  { "name": "deploy-user-service",         "category": "deploy", "duration": 8,  "priority": "HIGH", "dependsOn": ["test-user-service"] },
+  { "name": "deploy-order-service",        "category": "deploy", "duration": 8,  "priority": "HIGH", "dependsOn": ["test-order-service"] },
+  { "name": "deploy-notification-service", "category": "deploy", "duration": 8,  "priority": "HIGH", "dependsOn": ["test-notification-service"] },
+  { "name": "deploy-catalog-service",      "category": "deploy", "duration": 8,  "priority": "HIGH", "dependsOn": ["test-catalog-service"] },
+  { "name": "deploy-frontend-app",         "category": "deploy", "duration": 10, "priority": "HIGH", "dependsOn": ["test-frontend-app"] },
+
+  { "name": "integration-test-suite",   "category": "integration", "duration": 18, "priority": "HIGH", "dependsOn": ["test-auth-service", "test-payment-service", "test-user-service"] },
+  { "name": "smoke-test-production",    "category": "smoke",       "duration": 7,  "priority": "HIGH", "dependsOn": ["deploy-auth-service", "deploy-frontend-app"] }
+]

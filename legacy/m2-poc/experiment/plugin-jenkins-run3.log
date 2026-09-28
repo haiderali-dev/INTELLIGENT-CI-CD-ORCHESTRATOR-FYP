@@ -1,0 +1,982 @@
+Running from: C:\Users\haide\.m2\repository\org\jenkins-ci\main\jenkins-war\2.479.3\jenkins-war-2.479.3.war
+webroot: D:\FYP POC\CICD project\experiment\plugin-home\war
+2026-06-14 14:59:18.655+0000 [id=1]	INFO	winstone.Logger#logInternal: Beginning extraction from war file
+2026-06-14 14:59:18.905+0000 [id=1]	WARNING	o.e.j.ee9.nested.ContextHandler#setContextPath: Empty contextPath
+2026-06-14 14:59:19.186+0000 [id=1]	INFO	org.eclipse.jetty.server.Server#doStart: jetty-12.0.16; built: 2024-12-09T21:02:54.535Z; git: c3f88bafb4e393f23204dc14dc57b042e84debc7; jvm 21.0.11+9-LTS-211
+2026-06-14 14:59:22.058+0000 [id=1]	INFO	o.e.j.e.w.StandardDescriptorProcessor#visitServlet: NO JSP Support for /, did not find org.eclipse.jetty.ee9.jsp.JettyJspServlet
+2026-06-14 14:59:22.215+0000 [id=1]	INFO	o.e.j.s.DefaultSessionIdManager#doStart: Session workerName=node0
+2026-06-14 14:59:23.473+0000 [id=1]	INFO	hudson.WebAppMain#contextInitialized: Jenkins home directory: D:\FYP POC\CICD project\experiment\plugin-home found at: EnvVars.masterEnvVars.get("JENKINS_HOME")
+2026-06-14 14:59:23.695+0000 [id=1]	INFO	o.e.j.s.handler.ContextHandler#doStart: Started oeje9n.ContextHandler$CoreContextHandler@49ef32e0{Jenkins v2.479.3,/,b=file:///D:/FYP%20POC/CICD%20project/experiment/plugin-home/war/,a=AVAILABLE,h=oeje9n.ContextHandler$CoreContextHandler$CoreToNestedHandler@271f18d3{STARTED}}
+2026-06-14 14:59:23.754+0000 [id=1]	INFO	o.e.j.server.AbstractConnector#doStart: Started ServerConnector@17ae98d7{HTTP/1.1, (http/1.1)}{0.0.0.0:8086}
+2026-06-14 14:59:23.790+0000 [id=1]	INFO	org.eclipse.jetty.server.Server#doStart: Started oejs.Server@16ec5519{STARTING}[12.0.16,sto=0] @6819ms
+2026-06-14 14:59:23.805+0000 [id=40]	INFO	winstone.Logger#logInternal: Winstone Servlet Engine running: controlPort=disabled
+2026-06-14 14:59:24.557+0000 [id=47]	INFO	jenkins.InitReactorRunner$1#onAttained: Started initialization
+2026-06-14 14:59:25.253+0000 [id=55]	WARNING	hudson.ClassicPluginStrategy#createPluginWrapper: encountered D:\FYP POC\CICD project\experiment\plugin-home\plugins\dynamic-queue-optimizer.hpi under a nonstandard name; expected dynamic-queue-optimizer.jpi
+2026-06-14 14:59:25.340+0000 [id=48]	INFO	jenkins.InitReactorRunner$1#onAttained: Listed all plugins
+2026-06-14 14:59:28.012+0000 [id=47]	INFO	jenkins.InitReactorRunner$1#onAttained: Prepared all plugins
+2026-06-14 14:59:28.027+0000 [id=47]	INFO	jenkins.InitReactorRunner$1#onAttained: Started all plugins
+2026-06-14 14:59:28.027+0000 [id=47]	INFO	jenkins.InitReactorRunner$1#onAttained: Augmented all extensions
+2026-06-14 14:59:28.648+0000 [id=47]	INFO	jenkins.InitReactorRunner$1#onAttained: System config loaded
+2026-06-14 14:59:28.809+0000 [id=59]	INFO	jenkins.InitReactorRunner$1#onAttained: System config adapted
+2026-06-14 14:59:28.830+0000 [id=61]	INFO	jenkins.InitReactorRunner$1#onAttained: Loaded all jobs
+2026-06-14 14:59:28.830+0000 [id=61]	INFO	jenkins.InitReactorRunner$1#onAttained: Configuration for all jobs updated
+2026-06-14 14:59:29.737+0000 [id=47]	INFO	j.util.groovy.GroovyHookScript#execute: Executing D:\FYP POC\CICD project\experiment\plugin-home\init.groovy.d\init.groovy
+2026-06-14 14:59:29.828+0000 [id=61]	INFO	jenkins.install.SetupWizard#init: 
+
+*************************************************************
+*************************************************************
+*************************************************************
+
+Jenkins initial setup is required. An admin user has been created and a password generated.
+Please use the following password to proceed to installation:
+
+aa682b991cd1441b896c491c288a1c23
+
+This may also be found at: D:\FYP POC\CICD project\experiment\plugin-home\secrets\initialAdminPassword
+
+*************************************************************
+*************************************************************
+*************************************************************
+
+2026-06-14 14:59:41.461+0000 [id=61]	WARNING	hudson.model.UpdateCenter#updateDefaultSite: Upgrading Jenkins. Failed to update the default Update Site 'default'. Plugin upgrades may fail.
+java.net.UnknownHostException: updates.jenkins.io
+	at java.base/sun.nio.ch.NioSocketImpl.connect(NioSocketImpl.java:567)
+	at java.base/java.net.SocksSocketImpl.connect(SocksSocketImpl.java:327)
+	at java.base/java.net.Socket.connect(Socket.java:751)
+	at java.base/sun.security.ssl.SSLSocketImpl.connect(SSLSocketImpl.java:304)
+	at java.base/sun.net.NetworkClient.doConnect(NetworkClient.java:178)
+	at java.base/sun.net.www.http.HttpClient.openServer(HttpClient.java:531)
+	at java.base/sun.net.www.http.HttpClient.openServer(HttpClient.java:636)
+	at java.base/sun.net.www.protocol.https.HttpsClient.<init>(HttpsClient.java:264)
+	at java.base/sun.net.www.protocol.https.HttpsClient.New(HttpsClient.java:377)
+	at java.base/sun.net.www.protocol.https.AbstractDelegateHttpsURLConnection.getNewHttpClient(AbstractDelegateHttpsURLConnection.java:193)
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.plainConnect0(HttpURLConnection.java:1253)
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.plainConnect(HttpURLConnection.java:1139)
+	at java.base/sun.net.www.protocol.https.AbstractDelegateHttpsURLConnection.connect(AbstractDelegateHttpsURLConnection.java:179)
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream0(HttpURLConnection.java:1691)
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream(HttpURLConnection.java:1615)
+	at java.base/sun.net.www.protocol.https.HttpsURLConnectionImpl.getInputStream(HttpsURLConnectionImpl.java:223)
+	at hudson.model.DownloadService.loadJSON(DownloadService.java:122)
+	at hudson.model.UpdateSite.updateDirectlyNow(UpdateSite.java:217)
+	at hudson.model.UpdateSite.updateDirectlyNow(UpdateSite.java:212)
+	at hudson.model.UpdateCenter.updateDefaultSite(UpdateCenter.java:2885)
+	at jenkins.install.SetupWizard.init(SetupWizard.java:209)
+	at jenkins.install.InstallState$InitialSecuritySetup.initializeState(InstallState.java:182)
+	at jenkins.model.Jenkins.setInstallState(Jenkins.java:1168)
+	at jenkins.install.InstallUtil.proceedToNextStateFrom(InstallUtil.java:98)
+	at jenkins.install.InstallState$Unknown.initializeState(InstallState.java:87)
+	at jenkins.model.Jenkins$15.run(Jenkins.java:3612)
+	at org.jvnet.hudson.reactor.TaskGraphBuilder$TaskImpl.run(TaskGraphBuilder.java:177)
+	at org.jvnet.hudson.reactor.Reactor.runTask(Reactor.java:305)
+	at jenkins.model.Jenkins$5.runTask(Jenkins.java:1195)
+	at org.jvnet.hudson.reactor.Reactor$2.run(Reactor.java:221)
+	at org.jvnet.hudson.reactor.Reactor$Node.run(Reactor.java:120)
+	at jenkins.security.ImpersonatingExecutorService$1.run(ImpersonatingExecutorService.java:68)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026-06-14 14:59:41.463+0000 [id=61]	INFO	jenkins.InitReactorRunner$1#onAttained: Completed initialization
+2026-06-14 14:59:41.486+0000 [id=39]	INFO	hudson.lifecycle.Lifecycle#onReady: Jenkins is fully up and running
+2026-06-14 14:59:43.965+0000 [id=82]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? lint-auth-service | score=15.00
+2026-06-14 14:59:44.097+0000 [id=69]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: lint-auth-service at 1781449184085 ms
+2026-06-14 14:59:49.708+0000 [id=69]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=lint-auth-service | build=#3 | start=1781449184085 | durationMs=5620 | durationSec=5.6 | result=SUCCESS
+2026-06-14 14:59:50.059+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? lint-payment-service | [DynamicQueueOptimizer] Job 'lint-payment-service' (score=28.63) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:50.067+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? lint-user-service | [DynamicQueueOptimizer] Job 'lint-user-service' (score=28.66) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:50.070+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? cleanup-old-builds | [DynamicQueueOptimizer] Job 'cleanup-old-builds' (score=23.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:50.074+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? generate-api-docs | [DynamicQueueOptimizer] Job 'generate-api-docs' (score=23.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:50.075+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? security-scan-dependencies | [DynamicQueueOptimizer] Job 'security-scan-dependencies' (score=23.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:50.075+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-auth-service | [DynamicQueueOptimizer] Job 'build-auth-service' (score=46.00) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:50.083+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-payment-service | [DynamicQueueOptimizer] Job 'build-payment-service' (score=46.06) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:50.085+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-user-service | [DynamicQueueOptimizer] Job 'build-user-service' (score=46.08) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:50.085+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-order-service | [DynamicQueueOptimizer] Job 'build-order-service' (score=44.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:50.090+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-notification-service | [DynamicQueueOptimizer] Job 'build-notification-service' (score=44.83) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:50.091+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-catalog-service | [DynamicQueueOptimizer] Job 'build-catalog-service' (score=44.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:50.091+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-auth-service | [DynamicQueueOptimizer] Job 'test-auth-service' (score=50.04) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:50.097+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-payment-service | [DynamicQueueOptimizer] Job 'test-payment-service' (score=50.07) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:50.099+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-user-service | [DynamicQueueOptimizer] Job 'test-user-service' (score=50.13) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:50.101+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-order-service | [DynamicQueueOptimizer] Job 'test-order-service' (score=48.61) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:50.101+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-notification-service | [DynamicQueueOptimizer] Job 'test-notification-service' (score=48.62) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:50.104+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-catalog-service | [DynamicQueueOptimizer] Job 'test-catalog-service' (score=48.59) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:50.104+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-frontend-app | [DynamicQueueOptimizer] Job 'build-frontend-app' (score=38.94) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:50.107+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-frontend-app | [DynamicQueueOptimizer] Job 'test-frontend-app' (score=46.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:50.107+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? release-notes-generator | [DynamicQueueOptimizer] Job 'release-notes-generator' (score=49.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:50.107+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-auth-service | [DynamicQueueOptimizer] Job 'deploy-auth-service' (score=78.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:50.111+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-payment-service | [DynamicQueueOptimizer] Job 'deploy-payment-service' (score=79.07) is waiting. Higher-priority job 'deploy-user-service' (score=79.03) must run first.
+2026-06-14 14:59:50.115+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-user-service | [DynamicQueueOptimizer] Job 'deploy-user-service' (score=79.03) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 14:59:50.117+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-order-service | [DynamicQueueOptimizer] Job 'deploy-order-service' (score=78.08) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 14:59:50.120+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.07) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 14:59:50.120+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.10) is waiting. Higher-priority job 'integration-test-suite' (score=74.84) must run first.
+2026-06-14 14:59:50.123+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'integration-test-suite' (score=74.84) must run first.
+2026-06-14 14:59:50.123+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.84) is waiting. Higher-priority job 'smoke-test-production' (score=74.84) must run first.
+2026-06-14 14:59:50.125+0000 [id=118]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.84) is waiting. Higher-priority job 'lint-payment-service' (score=28.63) must run first.
+2026-06-14 14:59:54.056+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? lint-payment-service | score=28.63
+2026-06-14 14:59:54.056+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? lint-user-service | score=28.66
+2026-06-14 14:59:54.061+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? cleanup-old-builds | score=23.84
+2026-06-14 14:59:54.061+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? generate-api-docs | score=23.84
+2026-06-14 14:59:54.065+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? security-scan-dependencies | score=23.84
+2026-06-14 14:59:54.065+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-auth-service | score=46.00
+2026-06-14 14:59:54.065+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-payment-service | score=46.06
+2026-06-14 14:59:54.065+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-user-service | score=46.08
+2026-06-14 14:59:54.065+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-order-service | score=44.84
+2026-06-14 14:59:54.065+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-notification-service | score=44.83
+2026-06-14 14:59:54.065+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-catalog-service | score=44.84
+2026-06-14 14:59:54.065+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-auth-service | score=50.04
+2026-06-14 14:59:54.085+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-payment-service | score=50.07
+2026-06-14 14:59:54.087+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-user-service | score=50.13
+2026-06-14 14:59:54.087+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-order-service | score=48.61
+2026-06-14 14:59:54.089+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-notification-service | score=48.62
+2026-06-14 14:59:54.089+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-catalog-service | score=48.59
+2026-06-14 14:59:54.089+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-frontend-app | score=38.94
+2026-06-14 14:59:54.091+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-frontend-app | score=46.95
+2026-06-14 14:59:54.092+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? release-notes-generator | score=49.84
+2026-06-14 14:59:54.092+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-auth-service | score=78.95
+2026-06-14 14:59:54.092+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-payment-service | score=79.07
+2026-06-14 14:59:54.095+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-user-service | score=79.03
+2026-06-14 14:59:54.095+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-order-service | score=78.08
+2026-06-14 14:59:54.099+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-notification-service | score=78.07
+2026-06-14 14:59:54.099+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-catalog-service | score=78.10
+2026-06-14 14:59:54.101+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-frontend-app | score=66.00
+2026-06-14 14:59:54.101+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=74.84
+2026-06-14 14:59:54.101+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=74.84
+2026-06-14 14:59:54.118+0000 [id=116]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: lint-payment-service at 1781449194115 ms
+2026-06-14 14:59:59.421+0000 [id=116]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=lint-payment-service | build=#3 | start=1781449194115 | durationMs=5306 | durationSec=5.3 | result=SUCCESS
+2026-06-14 14:59:59.519+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? lint-user-service | [DynamicQueueOptimizer] Job 'lint-user-service' (score=28.65) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:59.521+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? cleanup-old-builds | [DynamicQueueOptimizer] Job 'cleanup-old-builds' (score=23.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:59.523+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? generate-api-docs | [DynamicQueueOptimizer] Job 'generate-api-docs' (score=23.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:59.523+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? security-scan-dependencies | [DynamicQueueOptimizer] Job 'security-scan-dependencies' (score=23.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:59.525+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-auth-service | [DynamicQueueOptimizer] Job 'build-auth-service' (score=46.00) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:59.529+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-payment-service | [DynamicQueueOptimizer] Job 'build-payment-service' (score=46.05) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:59.529+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-user-service | [DynamicQueueOptimizer] Job 'build-user-service' (score=46.08) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:59.529+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-order-service | [DynamicQueueOptimizer] Job 'build-order-service' (score=44.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:59.529+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-notification-service | [DynamicQueueOptimizer] Job 'build-notification-service' (score=44.83) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:59.529+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-catalog-service | [DynamicQueueOptimizer] Job 'build-catalog-service' (score=44.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:59.535+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-auth-service | [DynamicQueueOptimizer] Job 'test-auth-service' (score=50.04) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:59.537+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-payment-service | [DynamicQueueOptimizer] Job 'test-payment-service' (score=50.07) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:59.539+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-user-service | [DynamicQueueOptimizer] Job 'test-user-service' (score=50.13) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:59.541+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-order-service | [DynamicQueueOptimizer] Job 'test-order-service' (score=48.61) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:59.543+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-notification-service | [DynamicQueueOptimizer] Job 'test-notification-service' (score=48.62) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:59.543+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-catalog-service | [DynamicQueueOptimizer] Job 'test-catalog-service' (score=48.59) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:59.549+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-frontend-app | [DynamicQueueOptimizer] Job 'build-frontend-app' (score=38.94) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:59.550+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-frontend-app | [DynamicQueueOptimizer] Job 'test-frontend-app' (score=46.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:59.553+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? release-notes-generator | [DynamicQueueOptimizer] Job 'release-notes-generator' (score=49.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:59.555+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-auth-service | [DynamicQueueOptimizer] Job 'deploy-auth-service' (score=78.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 14:59:59.555+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-payment-service | [DynamicQueueOptimizer] Job 'deploy-payment-service' (score=79.07) is waiting. Higher-priority job 'deploy-user-service' (score=79.03) must run first.
+2026-06-14 14:59:59.555+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-user-service | [DynamicQueueOptimizer] Job 'deploy-user-service' (score=79.03) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 14:59:59.560+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-order-service | [DynamicQueueOptimizer] Job 'deploy-order-service' (score=78.08) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 14:59:59.562+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.07) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 14:59:59.562+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.10) is waiting. Higher-priority job 'integration-test-suite' (score=74.84) must run first.
+2026-06-14 14:59:59.565+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'integration-test-suite' (score=74.84) must run first.
+2026-06-14 14:59:59.565+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.84) is waiting. Higher-priority job 'smoke-test-production' (score=74.84) must run first.
+2026-06-14 14:59:59.565+0000 [id=122]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.84) is waiting. Higher-priority job 'lint-user-service' (score=28.65) must run first.
+2026-06-14 15:00:04.117+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? lint-user-service | score=28.65
+2026-06-14 15:00:04.120+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? cleanup-old-builds | score=23.84
+2026-06-14 15:00:04.120+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? generate-api-docs | score=23.84
+2026-06-14 15:00:04.120+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? security-scan-dependencies | score=23.84
+2026-06-14 15:00:04.120+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-auth-service | score=46.00
+2026-06-14 15:00:04.120+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-payment-service | score=46.05
+2026-06-14 15:00:04.120+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-user-service | score=46.08
+2026-06-14 15:00:04.120+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-order-service | score=44.84
+2026-06-14 15:00:04.120+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-notification-service | score=44.83
+2026-06-14 15:00:04.125+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-catalog-service | score=44.84
+2026-06-14 15:00:04.126+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-auth-service | score=50.04
+2026-06-14 15:00:04.126+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-payment-service | score=50.07
+2026-06-14 15:00:04.126+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-user-service | score=50.13
+2026-06-14 15:00:04.128+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-order-service | score=48.61
+2026-06-14 15:00:04.129+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-notification-service | score=48.62
+2026-06-14 15:00:04.129+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-catalog-service | score=48.59
+2026-06-14 15:00:04.129+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-frontend-app | score=38.94
+2026-06-14 15:00:04.132+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-frontend-app | score=46.95
+2026-06-14 15:00:04.132+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? release-notes-generator | score=49.84
+2026-06-14 15:00:04.135+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-auth-service | score=78.95
+2026-06-14 15:00:04.135+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-payment-service | score=79.07
+2026-06-14 15:00:04.137+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-user-service | score=79.03
+2026-06-14 15:00:04.137+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-order-service | score=78.08
+2026-06-14 15:00:04.137+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-notification-service | score=78.07
+2026-06-14 15:00:04.137+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-catalog-service | score=78.10
+2026-06-14 15:00:04.140+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-frontend-app | score=66.00
+2026-06-14 15:00:04.140+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=74.84
+2026-06-14 15:00:04.140+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=74.84
+2026-06-14 15:00:04.157+0000 [id=121]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: lint-user-service at 1781449204155 ms
+2026-06-14 15:00:09.433+0000 [id=121]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=lint-user-service | build=#3 | start=1781449204155 | durationMs=5278 | durationSec=5.3 | result=SUCCESS
+2026-06-14 15:00:09.503+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? cleanup-old-builds | [DynamicQueueOptimizer] Job 'cleanup-old-builds' (score=23.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:09.505+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? generate-api-docs | [DynamicQueueOptimizer] Job 'generate-api-docs' (score=23.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:09.507+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? security-scan-dependencies | [DynamicQueueOptimizer] Job 'security-scan-dependencies' (score=23.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:09.507+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-auth-service | [DynamicQueueOptimizer] Job 'build-auth-service' (score=46.00) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:09.507+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-payment-service | [DynamicQueueOptimizer] Job 'build-payment-service' (score=46.05) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:09.507+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-user-service | [DynamicQueueOptimizer] Job 'build-user-service' (score=46.08) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:09.510+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-order-service | [DynamicQueueOptimizer] Job 'build-order-service' (score=44.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:09.512+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-notification-service | [DynamicQueueOptimizer] Job 'build-notification-service' (score=44.83) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:09.512+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-catalog-service | [DynamicQueueOptimizer] Job 'build-catalog-service' (score=44.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:09.515+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-auth-service | [DynamicQueueOptimizer] Job 'test-auth-service' (score=50.04) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:09.515+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-payment-service | [DynamicQueueOptimizer] Job 'test-payment-service' (score=50.07) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:09.520+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-user-service | [DynamicQueueOptimizer] Job 'test-user-service' (score=50.13) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:09.520+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-order-service | [DynamicQueueOptimizer] Job 'test-order-service' (score=48.61) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:09.524+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-notification-service | [DynamicQueueOptimizer] Job 'test-notification-service' (score=48.62) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:09.527+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-catalog-service | [DynamicQueueOptimizer] Job 'test-catalog-service' (score=48.59) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:09.528+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-frontend-app | [DynamicQueueOptimizer] Job 'build-frontend-app' (score=38.94) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:09.528+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-frontend-app | [DynamicQueueOptimizer] Job 'test-frontend-app' (score=46.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:09.528+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? release-notes-generator | [DynamicQueueOptimizer] Job 'release-notes-generator' (score=49.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:09.528+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-auth-service | [DynamicQueueOptimizer] Job 'deploy-auth-service' (score=78.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:09.528+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-payment-service | [DynamicQueueOptimizer] Job 'deploy-payment-service' (score=79.07) is waiting. Higher-priority job 'deploy-user-service' (score=79.03) must run first.
+2026-06-14 15:00:09.535+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-user-service | [DynamicQueueOptimizer] Job 'deploy-user-service' (score=79.03) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:00:09.535+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-order-service | [DynamicQueueOptimizer] Job 'deploy-order-service' (score=78.08) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:00:09.536+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.07) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:00:09.536+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.10) is waiting. Higher-priority job 'integration-test-suite' (score=74.84) must run first.
+2026-06-14 15:00:09.536+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'integration-test-suite' (score=74.84) must run first.
+2026-06-14 15:00:09.536+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.84) is waiting. Higher-priority job 'smoke-test-production' (score=74.84) must run first.
+2026-06-14 15:00:09.536+0000 [id=126]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.84) is waiting. Higher-priority job 'cleanup-old-builds' (score=23.84) must run first.
+2026-06-14 15:00:14.170+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? cleanup-old-builds | score=23.84
+2026-06-14 15:00:14.172+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? generate-api-docs | score=23.84
+2026-06-14 15:00:14.172+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? security-scan-dependencies | score=23.84
+2026-06-14 15:00:14.174+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-auth-service | score=46.00
+2026-06-14 15:00:14.174+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-payment-service | score=46.05
+2026-06-14 15:00:14.175+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-user-service | score=46.08
+2026-06-14 15:00:14.175+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-order-service | score=44.84
+2026-06-14 15:00:14.175+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-notification-service | score=44.83
+2026-06-14 15:00:14.177+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-catalog-service | score=44.84
+2026-06-14 15:00:14.177+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-auth-service | score=50.04
+2026-06-14 15:00:14.177+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-payment-service | score=50.07
+2026-06-14 15:00:14.179+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-user-service | score=50.13
+2026-06-14 15:00:14.179+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-order-service | score=48.61
+2026-06-14 15:00:14.179+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-notification-service | score=48.62
+2026-06-14 15:00:14.179+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-catalog-service | score=48.59
+2026-06-14 15:00:14.185+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-frontend-app | score=38.94
+2026-06-14 15:00:14.185+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-frontend-app | score=46.95
+2026-06-14 15:00:14.185+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? release-notes-generator | score=49.84
+2026-06-14 15:00:14.187+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-auth-service | score=78.95
+2026-06-14 15:00:14.187+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-payment-service | score=79.07
+2026-06-14 15:00:14.187+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-user-service | score=79.03
+2026-06-14 15:00:14.187+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-order-service | score=78.08
+2026-06-14 15:00:14.187+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-notification-service | score=78.07
+2026-06-14 15:00:14.187+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-catalog-service | score=78.10
+2026-06-14 15:00:14.187+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-frontend-app | score=66.00
+2026-06-14 15:00:14.187+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=74.84
+2026-06-14 15:00:14.187+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=74.84
+2026-06-14 15:00:14.201+0000 [id=125]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: cleanup-old-builds at 1781449214201 ms
+2026-06-14 15:00:20.501+0000 [id=125]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=cleanup-old-builds | build=#3 | start=1781449214201 | durationMs=6300 | durationSec=6.3 | result=SUCCESS
+2026-06-14 15:00:20.579+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? generate-api-docs | [DynamicQueueOptimizer] Job 'generate-api-docs' (score=23.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:20.585+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? security-scan-dependencies | [DynamicQueueOptimizer] Job 'security-scan-dependencies' (score=23.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:20.587+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-auth-service | [DynamicQueueOptimizer] Job 'build-auth-service' (score=46.00) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:20.589+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-payment-service | [DynamicQueueOptimizer] Job 'build-payment-service' (score=46.05) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:20.591+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-user-service | [DynamicQueueOptimizer] Job 'build-user-service' (score=46.08) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:20.593+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-order-service | [DynamicQueueOptimizer] Job 'build-order-service' (score=44.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:20.595+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-notification-service | [DynamicQueueOptimizer] Job 'build-notification-service' (score=44.83) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:20.595+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-catalog-service | [DynamicQueueOptimizer] Job 'build-catalog-service' (score=44.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:20.597+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-auth-service | [DynamicQueueOptimizer] Job 'test-auth-service' (score=50.04) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:20.597+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-payment-service | [DynamicQueueOptimizer] Job 'test-payment-service' (score=50.07) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:20.599+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-user-service | [DynamicQueueOptimizer] Job 'test-user-service' (score=50.13) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:20.599+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-order-service | [DynamicQueueOptimizer] Job 'test-order-service' (score=48.61) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:20.601+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-notification-service | [DynamicQueueOptimizer] Job 'test-notification-service' (score=48.62) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:20.601+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-catalog-service | [DynamicQueueOptimizer] Job 'test-catalog-service' (score=48.59) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:20.601+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-frontend-app | [DynamicQueueOptimizer] Job 'build-frontend-app' (score=38.94) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:20.601+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-frontend-app | [DynamicQueueOptimizer] Job 'test-frontend-app' (score=46.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:20.605+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? release-notes-generator | [DynamicQueueOptimizer] Job 'release-notes-generator' (score=49.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:20.605+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-auth-service | [DynamicQueueOptimizer] Job 'deploy-auth-service' (score=78.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:20.605+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-payment-service | [DynamicQueueOptimizer] Job 'deploy-payment-service' (score=79.07) is waiting. Higher-priority job 'deploy-user-service' (score=79.03) must run first.
+2026-06-14 15:00:20.605+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-user-service | [DynamicQueueOptimizer] Job 'deploy-user-service' (score=79.03) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:00:20.608+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-order-service | [DynamicQueueOptimizer] Job 'deploy-order-service' (score=78.08) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:00:20.608+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.07) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:00:20.608+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.10) is waiting. Higher-priority job 'integration-test-suite' (score=74.84) must run first.
+2026-06-14 15:00:20.610+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'integration-test-suite' (score=74.84) must run first.
+2026-06-14 15:00:20.610+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.84) is waiting. Higher-priority job 'smoke-test-production' (score=74.84) must run first.
+2026-06-14 15:00:20.613+0000 [id=130]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.84) is waiting. Higher-priority job 'generate-api-docs' (score=23.84) must run first.
+2026-06-14 15:00:24.225+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? generate-api-docs | score=23.84
+2026-06-14 15:00:24.225+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? security-scan-dependencies | score=23.84
+2026-06-14 15:00:24.225+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-auth-service | score=46.00
+2026-06-14 15:00:24.225+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-payment-service | score=46.05
+2026-06-14 15:00:24.225+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-user-service | score=46.08
+2026-06-14 15:00:24.225+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-order-service | score=44.84
+2026-06-14 15:00:24.225+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-notification-service | score=44.83
+2026-06-14 15:00:24.234+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-catalog-service | score=44.84
+2026-06-14 15:00:24.234+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-auth-service | score=50.04
+2026-06-14 15:00:24.234+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-payment-service | score=50.07
+2026-06-14 15:00:24.235+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-user-service | score=50.13
+2026-06-14 15:00:24.235+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-order-service | score=48.61
+2026-06-14 15:00:24.235+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-notification-service | score=48.62
+2026-06-14 15:00:24.235+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-catalog-service | score=48.59
+2026-06-14 15:00:24.235+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-frontend-app | score=38.94
+2026-06-14 15:00:24.235+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-frontend-app | score=46.95
+2026-06-14 15:00:24.235+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? release-notes-generator | score=49.84
+2026-06-14 15:00:24.235+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-auth-service | score=78.95
+2026-06-14 15:00:24.235+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-payment-service | score=79.07
+2026-06-14 15:00:24.235+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-user-service | score=79.03
+2026-06-14 15:00:24.235+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-order-service | score=78.08
+2026-06-14 15:00:24.235+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-notification-service | score=78.07
+2026-06-14 15:00:24.235+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-catalog-service | score=78.10
+2026-06-14 15:00:24.235+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-frontend-app | score=66.00
+2026-06-14 15:00:24.235+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=74.84
+2026-06-14 15:00:24.235+0000 [id=45]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=74.84
+2026-06-14 15:00:24.255+0000 [id=129]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: generate-api-docs at 1781449224251 ms
+2026-06-14 15:00:44.669+0000 [id=129]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=generate-api-docs | build=#3 | start=1781449224251 | durationMs=20418 | durationSec=20.4 | result=SUCCESS
+2026-06-14 15:00:44.726+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? security-scan-dependencies | [DynamicQueueOptimizer] Job 'security-scan-dependencies' (score=23.83) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:44.730+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-auth-service | [DynamicQueueOptimizer] Job 'build-auth-service' (score=46.00) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:44.732+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-payment-service | [DynamicQueueOptimizer] Job 'build-payment-service' (score=46.05) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:44.735+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-user-service | [DynamicQueueOptimizer] Job 'build-user-service' (score=46.08) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:44.735+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-order-service | [DynamicQueueOptimizer] Job 'build-order-service' (score=44.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:44.735+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-notification-service | [DynamicQueueOptimizer] Job 'build-notification-service' (score=44.83) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:44.739+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-catalog-service | [DynamicQueueOptimizer] Job 'build-catalog-service' (score=44.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:44.741+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-auth-service | [DynamicQueueOptimizer] Job 'test-auth-service' (score=50.04) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:44.741+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-payment-service | [DynamicQueueOptimizer] Job 'test-payment-service' (score=50.07) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:44.743+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-user-service | [DynamicQueueOptimizer] Job 'test-user-service' (score=50.13) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:44.744+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-order-service | [DynamicQueueOptimizer] Job 'test-order-service' (score=48.61) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:44.747+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-notification-service | [DynamicQueueOptimizer] Job 'test-notification-service' (score=48.62) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:44.747+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-catalog-service | [DynamicQueueOptimizer] Job 'test-catalog-service' (score=48.59) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:44.747+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-frontend-app | [DynamicQueueOptimizer] Job 'build-frontend-app' (score=38.94) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:44.747+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-frontend-app | [DynamicQueueOptimizer] Job 'test-frontend-app' (score=46.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:44.747+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? release-notes-generator | [DynamicQueueOptimizer] Job 'release-notes-generator' (score=49.83) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:44.751+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-auth-service | [DynamicQueueOptimizer] Job 'deploy-auth-service' (score=78.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:00:44.751+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-payment-service | [DynamicQueueOptimizer] Job 'deploy-payment-service' (score=79.07) is waiting. Higher-priority job 'deploy-user-service' (score=79.03) must run first.
+2026-06-14 15:00:44.751+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-user-service | [DynamicQueueOptimizer] Job 'deploy-user-service' (score=79.03) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:00:44.751+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-order-service | [DynamicQueueOptimizer] Job 'deploy-order-service' (score=78.08) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:00:44.753+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.07) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:00:44.753+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.10) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:00:44.753+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:00:44.754+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.83) is waiting. Higher-priority job 'smoke-test-production' (score=74.83) must run first.
+2026-06-14 15:00:44.754+0000 [id=134]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.83) is waiting. Higher-priority job 'security-scan-dependencies' (score=23.83) must run first.
+2026-06-14 15:00:49.272+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? security-scan-dependencies | score=23.83
+2026-06-14 15:00:49.276+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-auth-service | score=46.00
+2026-06-14 15:00:49.278+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-payment-service | score=46.05
+2026-06-14 15:00:49.278+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-user-service | score=46.08
+2026-06-14 15:00:49.278+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-order-service | score=44.84
+2026-06-14 15:00:49.280+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-notification-service | score=44.83
+2026-06-14 15:00:49.280+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-catalog-service | score=44.84
+2026-06-14 15:00:49.282+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-auth-service | score=50.04
+2026-06-14 15:00:49.282+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-payment-service | score=50.07
+2026-06-14 15:00:49.282+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-user-service | score=50.13
+2026-06-14 15:00:49.282+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-order-service | score=48.61
+2026-06-14 15:00:49.285+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-notification-service | score=48.62
+2026-06-14 15:00:49.285+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-catalog-service | score=48.59
+2026-06-14 15:00:49.285+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-frontend-app | score=38.94
+2026-06-14 15:00:49.285+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-frontend-app | score=46.95
+2026-06-14 15:00:49.285+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? release-notes-generator | score=49.83
+2026-06-14 15:00:49.287+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-auth-service | score=78.95
+2026-06-14 15:00:49.287+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-payment-service | score=79.07
+2026-06-14 15:00:49.288+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-user-service | score=79.03
+2026-06-14 15:00:49.288+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-order-service | score=78.08
+2026-06-14 15:00:49.288+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-notification-service | score=78.07
+2026-06-14 15:00:49.288+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-catalog-service | score=78.10
+2026-06-14 15:00:49.290+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-frontend-app | score=66.00
+2026-06-14 15:00:49.290+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=74.83
+2026-06-14 15:00:49.290+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=74.83
+2026-06-14 15:00:49.304+0000 [id=133]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: security-scan-dependencies at 1781449249304 ms
+2026-06-14 15:01:14.804+0000 [id=133]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=security-scan-dependencies | build=#3 | start=1781449249304 | durationMs=25498 | durationSec=25.5 | result=SUCCESS
+2026-06-14 15:01:14.859+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-auth-service | [DynamicQueueOptimizer] Job 'build-auth-service' (score=46.00) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:14.861+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-payment-service | [DynamicQueueOptimizer] Job 'build-payment-service' (score=46.05) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:14.861+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-user-service | [DynamicQueueOptimizer] Job 'build-user-service' (score=46.08) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:14.863+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-order-service | [DynamicQueueOptimizer] Job 'build-order-service' (score=44.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:14.864+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-notification-service | [DynamicQueueOptimizer] Job 'build-notification-service' (score=44.83) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:14.865+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-catalog-service | [DynamicQueueOptimizer] Job 'build-catalog-service' (score=44.84) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:14.865+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-auth-service | [DynamicQueueOptimizer] Job 'test-auth-service' (score=50.04) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:14.865+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-payment-service | [DynamicQueueOptimizer] Job 'test-payment-service' (score=50.07) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:14.867+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-user-service | [DynamicQueueOptimizer] Job 'test-user-service' (score=50.13) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:14.867+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-order-service | [DynamicQueueOptimizer] Job 'test-order-service' (score=48.61) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:14.867+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-notification-service | [DynamicQueueOptimizer] Job 'test-notification-service' (score=48.62) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:14.867+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-catalog-service | [DynamicQueueOptimizer] Job 'test-catalog-service' (score=48.59) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:14.869+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-frontend-app | [DynamicQueueOptimizer] Job 'build-frontend-app' (score=38.94) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:14.869+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-frontend-app | [DynamicQueueOptimizer] Job 'test-frontend-app' (score=46.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:14.869+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? release-notes-generator | [DynamicQueueOptimizer] Job 'release-notes-generator' (score=49.83) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:14.869+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-auth-service | [DynamicQueueOptimizer] Job 'deploy-auth-service' (score=78.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:14.871+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-payment-service | [DynamicQueueOptimizer] Job 'deploy-payment-service' (score=79.07) is waiting. Higher-priority job 'deploy-user-service' (score=79.03) must run first.
+2026-06-14 15:01:14.872+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-user-service | [DynamicQueueOptimizer] Job 'deploy-user-service' (score=79.03) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:01:14.872+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-order-service | [DynamicQueueOptimizer] Job 'deploy-order-service' (score=78.08) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:01:14.872+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.07) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:01:14.872+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.10) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:01:14.872+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:01:14.872+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.83) is waiting. Higher-priority job 'smoke-test-production' (score=74.83) must run first.
+2026-06-14 15:01:14.874+0000 [id=138]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.83) is waiting. Higher-priority job 'build-auth-service' (score=46.00) must run first.
+2026-06-14 15:01:19.315+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-auth-service | score=46.00
+2026-06-14 15:01:19.319+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-payment-service | score=46.05
+2026-06-14 15:01:19.322+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-user-service | score=46.08
+2026-06-14 15:01:19.322+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-order-service | score=44.84
+2026-06-14 15:01:19.322+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-notification-service | score=44.83
+2026-06-14 15:01:19.322+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-catalog-service | score=44.84
+2026-06-14 15:01:19.324+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-auth-service | score=50.04
+2026-06-14 15:01:19.324+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-payment-service | score=50.07
+2026-06-14 15:01:19.324+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-user-service | score=50.13
+2026-06-14 15:01:19.324+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-order-service | score=48.61
+2026-06-14 15:01:19.324+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-notification-service | score=48.62
+2026-06-14 15:01:19.324+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-catalog-service | score=48.59
+2026-06-14 15:01:19.324+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-frontend-app | score=38.94
+2026-06-14 15:01:19.328+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-frontend-app | score=46.95
+2026-06-14 15:01:19.328+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? release-notes-generator | score=49.83
+2026-06-14 15:01:19.328+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-auth-service | score=78.95
+2026-06-14 15:01:19.330+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-payment-service | score=79.07
+2026-06-14 15:01:19.330+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-user-service | score=79.03
+2026-06-14 15:01:19.330+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-order-service | score=78.08
+2026-06-14 15:01:19.330+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-notification-service | score=78.07
+2026-06-14 15:01:19.330+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-catalog-service | score=78.10
+2026-06-14 15:01:19.330+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-frontend-app | score=66.00
+2026-06-14 15:01:19.332+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=74.83
+2026-06-14 15:01:19.332+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=74.83
+2026-06-14 15:01:19.338+0000 [id=137]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: build-auth-service at 1781449279338 ms
+2026-06-14 15:01:29.771+0000 [id=137]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=build-auth-service | build=#3 | start=1781449279338 | durationMs=10433 | durationSec=10.4 | result=SUCCESS
+2026-06-14 15:01:29.842+0000 [id=142]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-payment-service | [DynamicQueueOptimizer] Job 'build-payment-service' (score=46.03) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:29.846+0000 [id=142]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-user-service | [DynamicQueueOptimizer] Job 'build-user-service' (score=46.05) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:29.848+0000 [id=142]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-order-service | [DynamicQueueOptimizer] Job 'build-order-service' (score=44.80) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:29.848+0000 [id=142]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-notification-service | [DynamicQueueOptimizer] Job 'build-notification-service' (score=44.80) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:29.850+0000 [id=142]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-catalog-service | [DynamicQueueOptimizer] Job 'build-catalog-service' (score=44.81) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:29.850+0000 [id=142]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-auth-service | [DynamicQueueOptimizer] Job 'test-auth-service' (score=50.01) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:29.852+0000 [id=142]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-payment-service | [DynamicQueueOptimizer] Job 'test-payment-service' (score=50.07) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:29.852+0000 [id=142]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-user-service | [DynamicQueueOptimizer] Job 'test-user-service' (score=50.13) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:29.854+0000 [id=142]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-order-service | [DynamicQueueOptimizer] Job 'test-order-service' (score=48.61) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:29.854+0000 [id=142]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-notification-service | [DynamicQueueOptimizer] Job 'test-notification-service' (score=48.62) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:29.857+0000 [id=142]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-catalog-service | [DynamicQueueOptimizer] Job 'test-catalog-service' (score=48.59) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:29.857+0000 [id=142]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-frontend-app | [DynamicQueueOptimizer] Job 'build-frontend-app' (score=38.94) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:29.857+0000 [id=142]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-frontend-app | [DynamicQueueOptimizer] Job 'test-frontend-app' (score=46.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:29.859+0000 [id=142]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? release-notes-generator | [DynamicQueueOptimizer] Job 'release-notes-generator' (score=49.83) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:29.859+0000 [id=142]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-auth-service | [DynamicQueueOptimizer] Job 'deploy-auth-service' (score=78.92) is waiting. Higher-priority job 'deploy-payment-service' (score=79.07) must run first.
+2026-06-14 15:01:29.863+0000 [id=142]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-payment-service | [DynamicQueueOptimizer] Job 'deploy-payment-service' (score=79.07) is waiting. Higher-priority job 'deploy-user-service' (score=79.03) must run first.
+2026-06-14 15:01:29.867+0000 [id=142]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-user-service | [DynamicQueueOptimizer] Job 'deploy-user-service' (score=79.03) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:01:29.869+0000 [id=142]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-order-service | [DynamicQueueOptimizer] Job 'deploy-order-service' (score=78.08) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:01:29.870+0000 [id=142]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.07) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:01:29.871+0000 [id=142]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.10) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:01:29.871+0000 [id=142]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:01:29.871+0000 [id=142]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.83) is waiting. Higher-priority job 'smoke-test-production' (score=74.83) must run first.
+2026-06-14 15:01:29.871+0000 [id=142]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.83) is waiting. Higher-priority job 'build-payment-service' (score=46.03) must run first.
+2026-06-14 15:01:34.361+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-payment-service | score=46.03
+2026-06-14 15:01:34.369+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-user-service | score=46.05
+2026-06-14 15:01:34.369+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-order-service | score=44.80
+2026-06-14 15:01:34.369+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-notification-service | score=44.80
+2026-06-14 15:01:34.371+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-catalog-service | score=44.81
+2026-06-14 15:01:34.371+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-auth-service | score=50.01
+2026-06-14 15:01:34.371+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-payment-service | score=50.07
+2026-06-14 15:01:34.371+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-user-service | score=50.13
+2026-06-14 15:01:34.371+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-order-service | score=48.61
+2026-06-14 15:01:34.373+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-notification-service | score=48.62
+2026-06-14 15:01:34.373+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-catalog-service | score=48.59
+2026-06-14 15:01:34.373+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-frontend-app | score=38.94
+2026-06-14 15:01:34.374+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-frontend-app | score=46.95
+2026-06-14 15:01:34.374+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? release-notes-generator | score=49.83
+2026-06-14 15:01:34.374+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-auth-service | score=78.92
+2026-06-14 15:01:34.374+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-payment-service | score=79.07
+2026-06-14 15:01:34.374+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-user-service | score=79.03
+2026-06-14 15:01:34.374+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-order-service | score=78.08
+2026-06-14 15:01:34.376+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-notification-service | score=78.07
+2026-06-14 15:01:34.376+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-catalog-service | score=78.10
+2026-06-14 15:01:34.376+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-frontend-app | score=66.00
+2026-06-14 15:01:34.378+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=74.83
+2026-06-14 15:01:34.378+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=74.83
+2026-06-14 15:01:34.385+0000 [id=141]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: build-payment-service at 1781449294385 ms
+2026-06-14 15:01:44.705+0000 [id=141]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=build-payment-service | build=#3 | start=1781449294385 | durationMs=10320 | durationSec=10.3 | result=SUCCESS
+2026-06-14 15:01:44.746+0000 [id=146]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-user-service | [DynamicQueueOptimizer] Job 'build-user-service' (score=46.05) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:44.746+0000 [id=146]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-order-service | [DynamicQueueOptimizer] Job 'build-order-service' (score=44.80) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:44.746+0000 [id=146]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-notification-service | [DynamicQueueOptimizer] Job 'build-notification-service' (score=44.80) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:44.746+0000 [id=146]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-catalog-service | [DynamicQueueOptimizer] Job 'build-catalog-service' (score=44.81) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:44.746+0000 [id=146]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-auth-service | [DynamicQueueOptimizer] Job 'test-auth-service' (score=50.01) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:44.746+0000 [id=146]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-payment-service | [DynamicQueueOptimizer] Job 'test-payment-service' (score=50.07) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:44.746+0000 [id=146]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-user-service | [DynamicQueueOptimizer] Job 'test-user-service' (score=50.13) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:44.746+0000 [id=146]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-order-service | [DynamicQueueOptimizer] Job 'test-order-service' (score=48.61) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:44.746+0000 [id=146]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-notification-service | [DynamicQueueOptimizer] Job 'test-notification-service' (score=48.62) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:44.746+0000 [id=146]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-catalog-service | [DynamicQueueOptimizer] Job 'test-catalog-service' (score=48.59) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:44.746+0000 [id=146]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-frontend-app | [DynamicQueueOptimizer] Job 'build-frontend-app' (score=38.94) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:44.746+0000 [id=146]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-frontend-app | [DynamicQueueOptimizer] Job 'test-frontend-app' (score=46.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:44.746+0000 [id=146]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? release-notes-generator | [DynamicQueueOptimizer] Job 'release-notes-generator' (score=49.83) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:44.754+0000 [id=146]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-auth-service | [DynamicQueueOptimizer] Job 'deploy-auth-service' (score=78.92) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:44.754+0000 [id=146]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-payment-service | [DynamicQueueOptimizer] Job 'deploy-payment-service' (score=79.06) is waiting. Higher-priority job 'deploy-user-service' (score=79.03) must run first.
+2026-06-14 15:01:44.754+0000 [id=146]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-user-service | [DynamicQueueOptimizer] Job 'deploy-user-service' (score=79.03) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:01:44.754+0000 [id=146]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-order-service | [DynamicQueueOptimizer] Job 'deploy-order-service' (score=78.08) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:01:44.754+0000 [id=146]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.07) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:01:44.754+0000 [id=146]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.10) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:01:44.754+0000 [id=146]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:01:44.754+0000 [id=146]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.83) is waiting. Higher-priority job 'smoke-test-production' (score=74.83) must run first.
+2026-06-14 15:01:44.754+0000 [id=146]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.83) is waiting. Higher-priority job 'build-user-service' (score=46.05) must run first.
+2026-06-14 15:01:49.406+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-user-service | score=46.05
+2026-06-14 15:01:49.410+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-order-service | score=44.80
+2026-06-14 15:01:49.410+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-notification-service | score=44.80
+2026-06-14 15:01:49.412+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-catalog-service | score=44.81
+2026-06-14 15:01:49.414+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-auth-service | score=50.01
+2026-06-14 15:01:49.414+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-payment-service | score=50.07
+2026-06-14 15:01:49.414+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-user-service | score=50.13
+2026-06-14 15:01:49.416+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-order-service | score=48.61
+2026-06-14 15:01:49.416+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-notification-service | score=48.62
+2026-06-14 15:01:49.416+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-catalog-service | score=48.59
+2026-06-14 15:01:49.416+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-frontend-app | score=38.94
+2026-06-14 15:01:49.418+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-frontend-app | score=46.95
+2026-06-14 15:01:49.418+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? release-notes-generator | score=49.83
+2026-06-14 15:01:49.418+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-auth-service | score=78.92
+2026-06-14 15:01:49.418+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-payment-service | score=79.06
+2026-06-14 15:01:49.418+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-user-service | score=79.03
+2026-06-14 15:01:49.418+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-order-service | score=78.08
+2026-06-14 15:01:49.418+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-notification-service | score=78.07
+2026-06-14 15:01:49.420+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-catalog-service | score=78.10
+2026-06-14 15:01:49.420+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-frontend-app | score=66.00
+2026-06-14 15:01:49.420+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=74.83
+2026-06-14 15:01:49.420+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=74.83
+2026-06-14 15:01:49.431+0000 [id=145]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: build-user-service at 1781449309431 ms
+2026-06-14 15:01:59.758+0000 [id=145]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=build-user-service | build=#3 | start=1781449309431 | durationMs=10327 | durationSec=10.3 | result=SUCCESS
+2026-06-14 15:01:59.813+0000 [id=150]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-order-service | [DynamicQueueOptimizer] Job 'build-order-service' (score=44.80) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:59.815+0000 [id=150]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-notification-service | [DynamicQueueOptimizer] Job 'build-notification-service' (score=44.79) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:59.815+0000 [id=150]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-catalog-service | [DynamicQueueOptimizer] Job 'build-catalog-service' (score=44.80) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:59.816+0000 [id=150]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-auth-service | [DynamicQueueOptimizer] Job 'test-auth-service' (score=50.01) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:59.816+0000 [id=150]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-payment-service | [DynamicQueueOptimizer] Job 'test-payment-service' (score=50.07) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:59.816+0000 [id=150]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-user-service | [DynamicQueueOptimizer] Job 'test-user-service' (score=50.12) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:59.816+0000 [id=150]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-order-service | [DynamicQueueOptimizer] Job 'test-order-service' (score=48.61) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:59.816+0000 [id=150]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-notification-service | [DynamicQueueOptimizer] Job 'test-notification-service' (score=48.62) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:59.816+0000 [id=150]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-catalog-service | [DynamicQueueOptimizer] Job 'test-catalog-service' (score=48.59) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:59.816+0000 [id=150]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-frontend-app | [DynamicQueueOptimizer] Job 'build-frontend-app' (score=38.94) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:59.816+0000 [id=150]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-frontend-app | [DynamicQueueOptimizer] Job 'test-frontend-app' (score=46.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:59.816+0000 [id=150]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? release-notes-generator | [DynamicQueueOptimizer] Job 'release-notes-generator' (score=49.83) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:59.816+0000 [id=150]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-auth-service | [DynamicQueueOptimizer] Job 'deploy-auth-service' (score=78.92) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:01:59.816+0000 [id=150]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-payment-service | [DynamicQueueOptimizer] Job 'deploy-payment-service' (score=79.06) is waiting. Higher-priority job 'deploy-user-service' (score=79.02) must run first.
+2026-06-14 15:01:59.816+0000 [id=150]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-user-service | [DynamicQueueOptimizer] Job 'deploy-user-service' (score=79.02) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:01:59.816+0000 [id=150]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-order-service | [DynamicQueueOptimizer] Job 'deploy-order-service' (score=78.08) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:01:59.816+0000 [id=150]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.07) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:01:59.816+0000 [id=150]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.10) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:01:59.816+0000 [id=150]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:01:59.816+0000 [id=150]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.83) is waiting. Higher-priority job 'smoke-test-production' (score=74.83) must run first.
+2026-06-14 15:01:59.816+0000 [id=150]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.83) is waiting. Higher-priority job 'build-order-service' (score=44.80) must run first.
+2026-06-14 15:02:04.441+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-order-service | score=44.80
+2026-06-14 15:02:04.441+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-notification-service | score=44.79
+2026-06-14 15:02:04.441+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-catalog-service | score=44.80
+2026-06-14 15:02:04.445+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-auth-service | score=50.01
+2026-06-14 15:02:04.445+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-payment-service | score=50.07
+2026-06-14 15:02:04.445+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-user-service | score=50.12
+2026-06-14 15:02:04.445+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-order-service | score=48.61
+2026-06-14 15:02:04.445+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-notification-service | score=48.62
+2026-06-14 15:02:04.445+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-catalog-service | score=48.59
+2026-06-14 15:02:04.445+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-frontend-app | score=38.94
+2026-06-14 15:02:04.445+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-frontend-app | score=46.95
+2026-06-14 15:02:04.445+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? release-notes-generator | score=49.83
+2026-06-14 15:02:04.445+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-auth-service | score=78.92
+2026-06-14 15:02:04.445+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-payment-service | score=79.06
+2026-06-14 15:02:04.445+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-user-service | score=79.02
+2026-06-14 15:02:04.445+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-order-service | score=78.08
+2026-06-14 15:02:04.445+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-notification-service | score=78.07
+2026-06-14 15:02:04.445+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-catalog-service | score=78.10
+2026-06-14 15:02:04.445+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-frontend-app | score=66.00
+2026-06-14 15:02:04.445+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=74.83
+2026-06-14 15:02:04.445+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=74.83
+2026-06-14 15:02:04.459+0000 [id=149]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: build-order-service at 1781449324459 ms
+2026-06-14 15:02:14.735+0000 [id=149]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=build-order-service | build=#3 | start=1781449324459 | durationMs=10276 | durationSec=10.3 | result=SUCCESS
+2026-06-14 15:02:14.767+0000 [id=154]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-notification-service | [DynamicQueueOptimizer] Job 'build-notification-service' (score=44.80) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:14.767+0000 [id=154]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-catalog-service | [DynamicQueueOptimizer] Job 'build-catalog-service' (score=44.81) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:14.767+0000 [id=154]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-auth-service | [DynamicQueueOptimizer] Job 'test-auth-service' (score=50.01) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:14.767+0000 [id=154]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-payment-service | [DynamicQueueOptimizer] Job 'test-payment-service' (score=50.07) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:14.767+0000 [id=154]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-user-service | [DynamicQueueOptimizer] Job 'test-user-service' (score=50.12) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:14.767+0000 [id=154]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-order-service | [DynamicQueueOptimizer] Job 'test-order-service' (score=48.62) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:14.767+0000 [id=154]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-notification-service | [DynamicQueueOptimizer] Job 'test-notification-service' (score=48.62) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:14.767+0000 [id=154]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-catalog-service | [DynamicQueueOptimizer] Job 'test-catalog-service' (score=48.59) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:14.767+0000 [id=154]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-frontend-app | [DynamicQueueOptimizer] Job 'build-frontend-app' (score=38.94) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:14.767+0000 [id=154]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-frontend-app | [DynamicQueueOptimizer] Job 'test-frontend-app' (score=46.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:14.767+0000 [id=154]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? release-notes-generator | [DynamicQueueOptimizer] Job 'release-notes-generator' (score=49.83) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:14.767+0000 [id=154]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-auth-service | [DynamicQueueOptimizer] Job 'deploy-auth-service' (score=78.92) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:14.767+0000 [id=154]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-payment-service | [DynamicQueueOptimizer] Job 'deploy-payment-service' (score=79.06) is waiting. Higher-priority job 'deploy-user-service' (score=79.02) must run first.
+2026-06-14 15:02:14.767+0000 [id=154]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-user-service | [DynamicQueueOptimizer] Job 'deploy-user-service' (score=79.02) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:02:14.783+0000 [id=154]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-order-service | [DynamicQueueOptimizer] Job 'deploy-order-service' (score=78.09) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:02:14.783+0000 [id=154]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.07) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:02:14.783+0000 [id=154]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.10) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:02:14.783+0000 [id=154]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:02:14.783+0000 [id=154]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.83) is waiting. Higher-priority job 'smoke-test-production' (score=74.83) must run first.
+2026-06-14 15:02:14.783+0000 [id=154]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.83) is waiting. Higher-priority job 'build-notification-service' (score=44.80) must run first.
+2026-06-14 15:02:19.465+0000 [id=66]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-notification-service | score=44.80
+2026-06-14 15:02:19.468+0000 [id=66]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-catalog-service | score=44.81
+2026-06-14 15:02:19.471+0000 [id=66]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-auth-service | score=50.01
+2026-06-14 15:02:19.472+0000 [id=66]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-payment-service | score=50.07
+2026-06-14 15:02:19.472+0000 [id=66]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-user-service | score=50.12
+2026-06-14 15:02:19.473+0000 [id=66]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-order-service | score=48.62
+2026-06-14 15:02:19.473+0000 [id=66]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-notification-service | score=48.62
+2026-06-14 15:02:19.473+0000 [id=66]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-catalog-service | score=48.59
+2026-06-14 15:02:19.473+0000 [id=66]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-frontend-app | score=38.94
+2026-06-14 15:02:19.473+0000 [id=66]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-frontend-app | score=46.95
+2026-06-14 15:02:19.473+0000 [id=66]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? release-notes-generator | score=49.83
+2026-06-14 15:02:19.473+0000 [id=66]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-auth-service | score=78.92
+2026-06-14 15:02:19.473+0000 [id=66]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-payment-service | score=79.06
+2026-06-14 15:02:19.473+0000 [id=66]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-user-service | score=79.02
+2026-06-14 15:02:19.478+0000 [id=66]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-order-service | score=78.09
+2026-06-14 15:02:19.478+0000 [id=66]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-notification-service | score=78.07
+2026-06-14 15:02:19.479+0000 [id=66]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-catalog-service | score=78.10
+2026-06-14 15:02:19.479+0000 [id=66]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-frontend-app | score=66.00
+2026-06-14 15:02:19.480+0000 [id=66]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=74.83
+2026-06-14 15:02:19.480+0000 [id=66]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=74.83
+2026-06-14 15:02:19.494+0000 [id=153]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: build-notification-service at 1781449339493 ms
+2026-06-14 15:02:29.801+0000 [id=153]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=build-notification-service | build=#3 | start=1781449339493 | durationMs=10308 | durationSec=10.3 | result=SUCCESS
+2026-06-14 15:02:29.846+0000 [id=158]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-catalog-service | [DynamicQueueOptimizer] Job 'build-catalog-service' (score=44.82) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:29.846+0000 [id=158]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-auth-service | [DynamicQueueOptimizer] Job 'test-auth-service' (score=50.01) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:29.846+0000 [id=158]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-payment-service | [DynamicQueueOptimizer] Job 'test-payment-service' (score=50.07) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:29.846+0000 [id=158]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-user-service | [DynamicQueueOptimizer] Job 'test-user-service' (score=50.12) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:29.846+0000 [id=158]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-order-service | [DynamicQueueOptimizer] Job 'test-order-service' (score=48.62) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:29.846+0000 [id=158]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-notification-service | [DynamicQueueOptimizer] Job 'test-notification-service' (score=48.62) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:29.846+0000 [id=158]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-catalog-service | [DynamicQueueOptimizer] Job 'test-catalog-service' (score=48.59) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:29.851+0000 [id=158]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-frontend-app | [DynamicQueueOptimizer] Job 'build-frontend-app' (score=38.94) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:29.851+0000 [id=158]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-frontend-app | [DynamicQueueOptimizer] Job 'test-frontend-app' (score=46.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:29.851+0000 [id=158]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? release-notes-generator | [DynamicQueueOptimizer] Job 'release-notes-generator' (score=49.83) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:29.851+0000 [id=158]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-auth-service | [DynamicQueueOptimizer] Job 'deploy-auth-service' (score=78.92) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:29.851+0000 [id=158]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-payment-service | [DynamicQueueOptimizer] Job 'deploy-payment-service' (score=79.06) is waiting. Higher-priority job 'deploy-user-service' (score=79.02) must run first.
+2026-06-14 15:02:29.851+0000 [id=158]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-user-service | [DynamicQueueOptimizer] Job 'deploy-user-service' (score=79.02) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:02:29.851+0000 [id=158]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-order-service | [DynamicQueueOptimizer] Job 'deploy-order-service' (score=78.09) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:02:29.851+0000 [id=158]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.07) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.10) must run first.
+2026-06-14 15:02:29.851+0000 [id=158]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.10) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:02:29.851+0000 [id=158]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:02:29.851+0000 [id=158]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.83) is waiting. Higher-priority job 'smoke-test-production' (score=74.83) must run first.
+2026-06-14 15:02:29.851+0000 [id=158]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.83) is waiting. Higher-priority job 'build-catalog-service' (score=44.82) must run first.
+2026-06-14 15:02:34.497+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-catalog-service | score=44.82
+2026-06-14 15:02:34.497+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-auth-service | score=50.01
+2026-06-14 15:02:34.497+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-payment-service | score=50.07
+2026-06-14 15:02:34.497+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-user-service | score=50.12
+2026-06-14 15:02:34.497+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-order-service | score=48.62
+2026-06-14 15:02:34.497+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-notification-service | score=48.62
+2026-06-14 15:02:34.497+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-catalog-service | score=48.59
+2026-06-14 15:02:34.497+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-frontend-app | score=38.94
+2026-06-14 15:02:34.497+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-frontend-app | score=46.95
+2026-06-14 15:02:34.497+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? release-notes-generator | score=49.83
+2026-06-14 15:02:34.497+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-auth-service | score=78.92
+2026-06-14 15:02:34.497+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-payment-service | score=79.06
+2026-06-14 15:02:34.497+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-user-service | score=79.02
+2026-06-14 15:02:34.497+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-order-service | score=78.09
+2026-06-14 15:02:34.497+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-notification-service | score=78.07
+2026-06-14 15:02:34.497+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-catalog-service | score=78.10
+2026-06-14 15:02:34.497+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-frontend-app | score=66.00
+2026-06-14 15:02:34.497+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=74.83
+2026-06-14 15:02:34.497+0000 [id=67]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=74.83
+2026-06-14 15:02:34.513+0000 [id=157]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: build-catalog-service at 1781449354513 ms
+2026-06-14 15:02:44.768+0000 [id=157]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=build-catalog-service | build=#3 | start=1781449354513 | durationMs=10255 | durationSec=10.3 | result=SUCCESS
+2026-06-14 15:02:44.815+0000 [id=162]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-auth-service | [DynamicQueueOptimizer] Job 'test-auth-service' (score=50.01) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:44.815+0000 [id=162]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-payment-service | [DynamicQueueOptimizer] Job 'test-payment-service' (score=50.07) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:44.815+0000 [id=162]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-user-service | [DynamicQueueOptimizer] Job 'test-user-service' (score=50.12) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:44.815+0000 [id=162]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-order-service | [DynamicQueueOptimizer] Job 'test-order-service' (score=48.62) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:44.815+0000 [id=162]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-notification-service | [DynamicQueueOptimizer] Job 'test-notification-service' (score=48.62) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:44.815+0000 [id=162]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-catalog-service | [DynamicQueueOptimizer] Job 'test-catalog-service' (score=48.61) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:44.815+0000 [id=162]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-frontend-app | [DynamicQueueOptimizer] Job 'build-frontend-app' (score=38.94) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:44.815+0000 [id=162]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-frontend-app | [DynamicQueueOptimizer] Job 'test-frontend-app' (score=46.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:44.815+0000 [id=162]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? release-notes-generator | [DynamicQueueOptimizer] Job 'release-notes-generator' (score=49.83) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:44.815+0000 [id=162]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-auth-service | [DynamicQueueOptimizer] Job 'deploy-auth-service' (score=78.92) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:02:44.815+0000 [id=162]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-payment-service | [DynamicQueueOptimizer] Job 'deploy-payment-service' (score=79.06) is waiting. Higher-priority job 'deploy-user-service' (score=79.02) must run first.
+2026-06-14 15:02:44.815+0000 [id=162]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-user-service | [DynamicQueueOptimizer] Job 'deploy-user-service' (score=79.02) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.11) must run first.
+2026-06-14 15:02:44.815+0000 [id=162]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-order-service | [DynamicQueueOptimizer] Job 'deploy-order-service' (score=78.09) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.11) must run first.
+2026-06-14 15:02:44.815+0000 [id=162]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.07) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.11) must run first.
+2026-06-14 15:02:44.815+0000 [id=162]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.11) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:02:44.815+0000 [id=162]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:02:44.815+0000 [id=162]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.83) is waiting. Higher-priority job 'smoke-test-production' (score=74.83) must run first.
+2026-06-14 15:02:44.815+0000 [id=162]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.83) is waiting. Higher-priority job 'test-auth-service' (score=50.01) must run first.
+2026-06-14 15:02:49.538+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-auth-service | score=50.01
+2026-06-14 15:02:49.541+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-payment-service | score=50.07
+2026-06-14 15:02:49.541+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-user-service | score=50.12
+2026-06-14 15:02:49.541+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-order-service | score=48.62
+2026-06-14 15:02:49.541+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-notification-service | score=48.62
+2026-06-14 15:02:49.544+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-catalog-service | score=48.61
+2026-06-14 15:02:49.545+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-frontend-app | score=38.94
+2026-06-14 15:02:49.547+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-frontend-app | score=46.95
+2026-06-14 15:02:49.547+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? release-notes-generator | score=49.83
+2026-06-14 15:02:49.547+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-auth-service | score=78.92
+2026-06-14 15:02:49.547+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-payment-service | score=79.06
+2026-06-14 15:02:49.549+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-user-service | score=79.02
+2026-06-14 15:02:49.549+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-order-service | score=78.09
+2026-06-14 15:02:49.549+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-notification-service | score=78.07
+2026-06-14 15:02:49.549+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-catalog-service | score=78.11
+2026-06-14 15:02:49.549+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-frontend-app | score=66.00
+2026-06-14 15:02:49.553+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=74.83
+2026-06-14 15:02:49.553+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=74.83
+2026-06-14 15:02:49.566+0000 [id=161]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: test-auth-service at 1781449369564 ms
+2026-06-14 15:03:01.950+0000 [id=161]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=test-auth-service | build=#3 | start=1781449369564 | durationMs=12386 | durationSec=12.4 | result=SUCCESS
+2026-06-14 15:03:01.998+0000 [id=166]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-payment-service | [DynamicQueueOptimizer] Job 'test-payment-service' (score=50.05) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:01.998+0000 [id=166]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-user-service | [DynamicQueueOptimizer] Job 'test-user-service' (score=50.10) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:01.998+0000 [id=166]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-order-service | [DynamicQueueOptimizer] Job 'test-order-service' (score=48.60) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:01.998+0000 [id=166]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-notification-service | [DynamicQueueOptimizer] Job 'test-notification-service' (score=48.60) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:01.998+0000 [id=166]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-catalog-service | [DynamicQueueOptimizer] Job 'test-catalog-service' (score=48.59) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:01.998+0000 [id=166]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-frontend-app | [DynamicQueueOptimizer] Job 'build-frontend-app' (score=38.94) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:01.998+0000 [id=166]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-frontend-app | [DynamicQueueOptimizer] Job 'test-frontend-app' (score=46.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:01.998+0000 [id=166]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? release-notes-generator | [DynamicQueueOptimizer] Job 'release-notes-generator' (score=49.83) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:01.998+0000 [id=166]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-auth-service | [DynamicQueueOptimizer] Job 'deploy-auth-service' (score=78.90) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:01.998+0000 [id=166]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-payment-service | [DynamicQueueOptimizer] Job 'deploy-payment-service' (score=79.06) is waiting. Higher-priority job 'deploy-user-service' (score=79.02) must run first.
+2026-06-14 15:03:01.998+0000 [id=166]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-user-service | [DynamicQueueOptimizer] Job 'deploy-user-service' (score=79.02) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.11) must run first.
+2026-06-14 15:03:01.998+0000 [id=166]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-order-service | [DynamicQueueOptimizer] Job 'deploy-order-service' (score=78.09) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.11) must run first.
+2026-06-14 15:03:01.998+0000 [id=166]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.07) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.11) must run first.
+2026-06-14 15:03:01.998+0000 [id=166]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.11) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:03:01.998+0000 [id=166]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:03:02.007+0000 [id=166]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.83) is waiting. Higher-priority job 'smoke-test-production' (score=74.83) must run first.
+2026-06-14 15:03:02.007+0000 [id=166]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.83) is waiting. Higher-priority job 'test-payment-service' (score=50.05) must run first.
+2026-06-14 15:03:04.571+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-payment-service | score=50.05
+2026-06-14 15:03:04.573+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-user-service | score=50.10
+2026-06-14 15:03:04.573+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-order-service | score=48.60
+2026-06-14 15:03:04.573+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-notification-service | score=48.60
+2026-06-14 15:03:04.573+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-catalog-service | score=48.59
+2026-06-14 15:03:04.573+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-frontend-app | score=38.94
+2026-06-14 15:03:04.573+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-frontend-app | score=46.95
+2026-06-14 15:03:04.573+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? release-notes-generator | score=49.83
+2026-06-14 15:03:04.573+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-auth-service | score=78.90
+2026-06-14 15:03:04.573+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-payment-service | score=79.06
+2026-06-14 15:03:04.573+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-user-service | score=79.02
+2026-06-14 15:03:04.573+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-order-service | score=78.09
+2026-06-14 15:03:04.573+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-notification-service | score=78.07
+2026-06-14 15:03:04.573+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-catalog-service | score=78.11
+2026-06-14 15:03:04.573+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-frontend-app | score=66.00
+2026-06-14 15:03:04.573+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=74.83
+2026-06-14 15:03:04.578+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=74.83
+2026-06-14 15:03:04.590+0000 [id=165]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: test-payment-service at 1781449384585 ms
+2026-06-14 15:03:16.874+0000 [id=165]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=test-payment-service | build=#3 | start=1781449384585 | durationMs=12289 | durationSec=12.3 | result=SUCCESS
+2026-06-14 15:03:16.921+0000 [id=171]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-user-service | [DynamicQueueOptimizer] Job 'test-user-service' (score=50.10) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:16.921+0000 [id=171]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-order-service | [DynamicQueueOptimizer] Job 'test-order-service' (score=48.59) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:16.921+0000 [id=171]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-notification-service | [DynamicQueueOptimizer] Job 'test-notification-service' (score=48.59) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:16.921+0000 [id=171]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-catalog-service | [DynamicQueueOptimizer] Job 'test-catalog-service' (score=48.58) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:16.921+0000 [id=171]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-frontend-app | [DynamicQueueOptimizer] Job 'build-frontend-app' (score=38.94) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:16.921+0000 [id=171]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-frontend-app | [DynamicQueueOptimizer] Job 'test-frontend-app' (score=46.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:16.921+0000 [id=171]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? release-notes-generator | [DynamicQueueOptimizer] Job 'release-notes-generator' (score=49.83) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:16.921+0000 [id=171]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-auth-service | [DynamicQueueOptimizer] Job 'deploy-auth-service' (score=78.90) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:16.921+0000 [id=171]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-payment-service | [DynamicQueueOptimizer] Job 'deploy-payment-service' (score=79.06) is waiting. Higher-priority job 'deploy-user-service' (score=79.02) must run first.
+2026-06-14 15:03:16.921+0000 [id=171]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-user-service | [DynamicQueueOptimizer] Job 'deploy-user-service' (score=79.02) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.11) must run first.
+2026-06-14 15:03:16.921+0000 [id=171]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-order-service | [DynamicQueueOptimizer] Job 'deploy-order-service' (score=78.09) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.11) must run first.
+2026-06-14 15:03:16.921+0000 [id=171]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.07) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.11) must run first.
+2026-06-14 15:03:16.921+0000 [id=171]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.11) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:03:16.921+0000 [id=171]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:03:16.921+0000 [id=171]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.83) is waiting. Higher-priority job 'smoke-test-production' (score=74.83) must run first.
+2026-06-14 15:03:16.921+0000 [id=171]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.83) is waiting. Higher-priority job 'test-user-service' (score=50.10) must run first.
+2026-06-14 15:03:19.594+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-user-service | score=50.10
+2026-06-14 15:03:19.597+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-order-service | score=48.59
+2026-06-14 15:03:19.597+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-notification-service | score=48.59
+2026-06-14 15:03:19.597+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-catalog-service | score=48.58
+2026-06-14 15:03:19.597+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-frontend-app | score=38.94
+2026-06-14 15:03:19.601+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-frontend-app | score=46.95
+2026-06-14 15:03:19.601+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? release-notes-generator | score=49.83
+2026-06-14 15:03:19.601+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-auth-service | score=78.90
+2026-06-14 15:03:19.603+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-payment-service | score=79.06
+2026-06-14 15:03:19.604+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-user-service | score=79.02
+2026-06-14 15:03:19.604+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-order-service | score=78.09
+2026-06-14 15:03:19.604+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-notification-service | score=78.07
+2026-06-14 15:03:19.604+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-catalog-service | score=78.11
+2026-06-14 15:03:19.604+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-frontend-app | score=66.00
+2026-06-14 15:03:19.604+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=74.83
+2026-06-14 15:03:19.604+0000 [id=72]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=74.83
+2026-06-14 15:03:19.620+0000 [id=170]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: test-user-service at 1781449399618 ms
+2026-06-14 15:03:31.947+0000 [id=170]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=test-user-service | build=#3 | start=1781449399618 | durationMs=12329 | durationSec=12.3 | result=SUCCESS
+2026-06-14 15:03:31.984+0000 [id=175]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-order-service | [DynamicQueueOptimizer] Job 'test-order-service' (score=48.59) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:31.986+0000 [id=175]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-notification-service | [DynamicQueueOptimizer] Job 'test-notification-service' (score=48.59) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:31.986+0000 [id=175]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-catalog-service | [DynamicQueueOptimizer] Job 'test-catalog-service' (score=48.58) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:31.986+0000 [id=175]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-frontend-app | [DynamicQueueOptimizer] Job 'build-frontend-app' (score=38.94) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:31.986+0000 [id=175]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-frontend-app | [DynamicQueueOptimizer] Job 'test-frontend-app' (score=46.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:31.986+0000 [id=175]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? release-notes-generator | [DynamicQueueOptimizer] Job 'release-notes-generator' (score=49.83) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:31.986+0000 [id=175]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-auth-service | [DynamicQueueOptimizer] Job 'deploy-auth-service' (score=78.90) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:31.986+0000 [id=175]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-payment-service | [DynamicQueueOptimizer] Job 'deploy-payment-service' (score=79.06) is waiting. Higher-priority job 'deploy-user-service' (score=79.02) must run first.
+2026-06-14 15:03:31.986+0000 [id=175]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-user-service | [DynamicQueueOptimizer] Job 'deploy-user-service' (score=79.02) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.11) must run first.
+2026-06-14 15:03:31.988+0000 [id=175]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-order-service | [DynamicQueueOptimizer] Job 'deploy-order-service' (score=78.09) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.11) must run first.
+2026-06-14 15:03:31.988+0000 [id=175]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.07) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.11) must run first.
+2026-06-14 15:03:31.988+0000 [id=175]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.11) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:03:31.988+0000 [id=175]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:03:31.988+0000 [id=175]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.83) is waiting. Higher-priority job 'smoke-test-production' (score=74.83) must run first.
+2026-06-14 15:03:31.988+0000 [id=175]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.83) is waiting. Higher-priority job 'test-order-service' (score=48.59) must run first.
+2026-06-14 15:03:34.637+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-order-service | score=48.59
+2026-06-14 15:03:34.637+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-notification-service | score=48.59
+2026-06-14 15:03:34.637+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-catalog-service | score=48.58
+2026-06-14 15:03:34.637+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-frontend-app | score=38.94
+2026-06-14 15:03:34.637+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-frontend-app | score=46.95
+2026-06-14 15:03:34.637+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? release-notes-generator | score=49.83
+2026-06-14 15:03:34.637+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-auth-service | score=78.90
+2026-06-14 15:03:34.637+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-payment-service | score=79.06
+2026-06-14 15:03:34.637+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-user-service | score=79.02
+2026-06-14 15:03:34.637+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-order-service | score=78.09
+2026-06-14 15:03:34.637+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-notification-service | score=78.07
+2026-06-14 15:03:34.637+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-catalog-service | score=78.11
+2026-06-14 15:03:34.637+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-frontend-app | score=66.00
+2026-06-14 15:03:34.637+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=74.83
+2026-06-14 15:03:34.637+0000 [id=71]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=74.83
+2026-06-14 15:03:34.653+0000 [id=174]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: test-order-service at 1781449414653 ms
+2026-06-14 15:03:46.987+0000 [id=174]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=test-order-service | build=#3 | start=1781449414653 | durationMs=12334 | durationSec=12.3 | result=SUCCESS
+2026-06-14 15:03:47.031+0000 [id=179]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-notification-service | [DynamicQueueOptimizer] Job 'test-notification-service' (score=48.59) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:47.031+0000 [id=179]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-catalog-service | [DynamicQueueOptimizer] Job 'test-catalog-service' (score=48.59) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:47.033+0000 [id=179]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-frontend-app | [DynamicQueueOptimizer] Job 'build-frontend-app' (score=38.94) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:47.033+0000 [id=179]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-frontend-app | [DynamicQueueOptimizer] Job 'test-frontend-app' (score=46.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:47.033+0000 [id=179]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? release-notes-generator | [DynamicQueueOptimizer] Job 'release-notes-generator' (score=49.83) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:47.033+0000 [id=179]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-auth-service | [DynamicQueueOptimizer] Job 'deploy-auth-service' (score=78.90) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:03:47.033+0000 [id=179]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-payment-service | [DynamicQueueOptimizer] Job 'deploy-payment-service' (score=79.06) is waiting. Higher-priority job 'deploy-user-service' (score=79.02) must run first.
+2026-06-14 15:03:47.035+0000 [id=179]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-user-service | [DynamicQueueOptimizer] Job 'deploy-user-service' (score=79.02) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.11) must run first.
+2026-06-14 15:03:47.035+0000 [id=179]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-order-service | [DynamicQueueOptimizer] Job 'deploy-order-service' (score=78.10) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.11) must run first.
+2026-06-14 15:03:47.035+0000 [id=179]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.07) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.11) must run first.
+2026-06-14 15:03:47.035+0000 [id=179]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.11) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:03:47.035+0000 [id=179]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'integration-test-suite' (score=74.83) must run first.
+2026-06-14 15:03:47.037+0000 [id=179]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.83) is waiting. Higher-priority job 'smoke-test-production' (score=74.83) must run first.
+2026-06-14 15:03:47.037+0000 [id=179]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.83) is waiting. Higher-priority job 'test-notification-service' (score=48.59) must run first.
+2026-06-14 15:03:49.668+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-notification-service | score=48.59
+2026-06-14 15:03:49.672+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-catalog-service | score=48.59
+2026-06-14 15:03:49.672+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-frontend-app | score=38.94
+2026-06-14 15:03:49.677+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-frontend-app | score=46.95
+2026-06-14 15:03:49.679+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? release-notes-generator | score=49.83
+2026-06-14 15:03:49.679+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-auth-service | score=78.90
+2026-06-14 15:03:49.679+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-payment-service | score=79.06
+2026-06-14 15:03:49.679+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-user-service | score=79.02
+2026-06-14 15:03:49.679+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-order-service | score=78.10
+2026-06-14 15:03:49.679+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-notification-service | score=78.07
+2026-06-14 15:03:49.679+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-catalog-service | score=78.11
+2026-06-14 15:03:49.679+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-frontend-app | score=66.00
+2026-06-14 15:03:49.679+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=74.83
+2026-06-14 15:03:49.685+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=74.83
+2026-06-14 15:03:49.695+0000 [id=178]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: test-notification-service at 1781449429695 ms
+2026-06-14 15:04:02.226+0000 [id=178]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=test-notification-service | build=#3 | start=1781449429695 | durationMs=12531 | durationSec=12.5 | result=SUCCESS
+2026-06-14 15:04:02.275+0000 [id=192]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-catalog-service | [DynamicQueueOptimizer] Job 'test-catalog-service' (score=48.54) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:04:02.279+0000 [id=192]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-frontend-app | [DynamicQueueOptimizer] Job 'build-frontend-app' (score=38.94) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:04:02.281+0000 [id=192]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-frontend-app | [DynamicQueueOptimizer] Job 'test-frontend-app' (score=46.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:04:02.281+0000 [id=192]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? release-notes-generator | [DynamicQueueOptimizer] Job 'release-notes-generator' (score=49.82) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:04:02.281+0000 [id=192]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-auth-service | [DynamicQueueOptimizer] Job 'deploy-auth-service' (score=78.90) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:04:02.281+0000 [id=192]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-payment-service | [DynamicQueueOptimizer] Job 'deploy-payment-service' (score=79.06) is waiting. Higher-priority job 'deploy-user-service' (score=79.02) must run first.
+2026-06-14 15:04:02.281+0000 [id=192]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-user-service | [DynamicQueueOptimizer] Job 'deploy-user-service' (score=79.02) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.11) must run first.
+2026-06-14 15:04:02.281+0000 [id=192]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-order-service | [DynamicQueueOptimizer] Job 'deploy-order-service' (score=78.10) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.11) must run first.
+2026-06-14 15:04:02.281+0000 [id=192]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.03) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.11) must run first.
+2026-06-14 15:04:02.281+0000 [id=192]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.11) is waiting. Higher-priority job 'integration-test-suite' (score=74.82) must run first.
+2026-06-14 15:04:02.281+0000 [id=192]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'integration-test-suite' (score=74.82) must run first.
+2026-06-14 15:04:02.281+0000 [id=192]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.82) is waiting. Higher-priority job 'smoke-test-production' (score=74.82) must run first.
+2026-06-14 15:04:02.281+0000 [id=192]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.82) is waiting. Higher-priority job 'test-catalog-service' (score=48.54) must run first.
+2026-06-14 15:04:04.708+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-catalog-service | score=48.54
+2026-06-14 15:04:04.709+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-frontend-app | score=38.94
+2026-06-14 15:04:04.709+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-frontend-app | score=46.95
+2026-06-14 15:04:04.709+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? release-notes-generator | score=49.82
+2026-06-14 15:04:04.709+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-auth-service | score=78.90
+2026-06-14 15:04:04.709+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-payment-service | score=79.06
+2026-06-14 15:04:04.709+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-user-service | score=79.02
+2026-06-14 15:04:04.709+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-order-service | score=78.10
+2026-06-14 15:04:04.709+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-notification-service | score=78.03
+2026-06-14 15:04:04.709+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-catalog-service | score=78.11
+2026-06-14 15:04:04.716+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-frontend-app | score=66.00
+2026-06-14 15:04:04.716+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=74.82
+2026-06-14 15:04:04.716+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=74.82
+2026-06-14 15:04:04.724+0000 [id=191]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: test-catalog-service at 1781449444724 ms
+2026-06-14 15:04:17.109+0000 [id=191]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=test-catalog-service | build=#3 | start=1781449444724 | durationMs=12385 | durationSec=12.4 | result=SUCCESS
+2026-06-14 15:04:17.163+0000 [id=197]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? build-frontend-app | [DynamicQueueOptimizer] Job 'build-frontend-app' (score=38.94) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:04:17.164+0000 [id=197]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-frontend-app | [DynamicQueueOptimizer] Job 'test-frontend-app' (score=46.95) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:04:17.166+0000 [id=197]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? release-notes-generator | [DynamicQueueOptimizer] Job 'release-notes-generator' (score=49.81) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:04:17.166+0000 [id=197]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-auth-service | [DynamicQueueOptimizer] Job 'deploy-auth-service' (score=78.90) is waiting. Higher-priority job 'deploy-payment-service' (score=79.06) must run first.
+2026-06-14 15:04:17.166+0000 [id=197]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-payment-service | [DynamicQueueOptimizer] Job 'deploy-payment-service' (score=79.06) is waiting. Higher-priority job 'deploy-user-service' (score=79.02) must run first.
+2026-06-14 15:04:17.166+0000 [id=197]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-user-service | [DynamicQueueOptimizer] Job 'deploy-user-service' (score=79.02) is waiting. Higher-priority job 'deploy-order-service' (score=78.10) must run first.
+2026-06-14 15:04:17.166+0000 [id=197]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-order-service | [DynamicQueueOptimizer] Job 'deploy-order-service' (score=78.10) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.09) must run first.
+2026-06-14 15:04:17.166+0000 [id=197]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.03) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.09) must run first.
+2026-06-14 15:04:17.166+0000 [id=197]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.09) is waiting. Higher-priority job 'integration-test-suite' (score=74.81) must run first.
+2026-06-14 15:04:17.172+0000 [id=197]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'integration-test-suite' (score=74.81) must run first.
+2026-06-14 15:04:17.172+0000 [id=197]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.81) is waiting. Higher-priority job 'smoke-test-production' (score=74.81) must run first.
+2026-06-14 15:04:17.172+0000 [id=197]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.81) is waiting. Higher-priority job 'build-frontend-app' (score=38.94) must run first.
+2026-06-14 15:04:19.761+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? build-frontend-app | score=38.94
+2026-06-14 15:04:19.764+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-frontend-app | score=46.95
+2026-06-14 15:04:19.764+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? release-notes-generator | score=49.81
+2026-06-14 15:04:19.764+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-auth-service | score=78.90
+2026-06-14 15:04:19.764+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-payment-service | score=79.06
+2026-06-14 15:04:19.764+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-user-service | score=79.02
+2026-06-14 15:04:19.764+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-order-service | score=78.10
+2026-06-14 15:04:19.764+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-notification-service | score=78.03
+2026-06-14 15:04:19.764+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-catalog-service | score=78.09
+2026-06-14 15:04:19.764+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-frontend-app | score=66.00
+2026-06-14 15:04:19.764+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=74.81
+2026-06-14 15:04:19.764+0000 [id=65]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=74.81
+2026-06-14 15:04:19.778+0000 [id=196]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: build-frontend-app at 1781449459778 ms
+2026-06-14 15:04:34.162+0000 [id=196]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=build-frontend-app | build=#3 | start=1781449459778 | durationMs=14384 | durationSec=14.4 | result=SUCCESS
+2026-06-14 15:04:34.201+0000 [id=201]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? test-frontend-app | [DynamicQueueOptimizer] Job 'test-frontend-app' (score=46.94) is waiting. Higher-priority job 'deploy-payment-service' (score=79.10) must run first.
+2026-06-14 15:04:34.207+0000 [id=201]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? release-notes-generator | [DynamicQueueOptimizer] Job 'release-notes-generator' (score=49.85) is waiting. Higher-priority job 'deploy-payment-service' (score=79.10) must run first.
+2026-06-14 15:04:34.207+0000 [id=201]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-auth-service | [DynamicQueueOptimizer] Job 'deploy-auth-service' (score=78.93) is waiting. Higher-priority job 'deploy-payment-service' (score=79.10) must run first.
+2026-06-14 15:04:34.207+0000 [id=201]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-payment-service | [DynamicQueueOptimizer] Job 'deploy-payment-service' (score=79.10) is waiting. Higher-priority job 'deploy-user-service' (score=79.06) must run first.
+2026-06-14 15:04:34.207+0000 [id=201]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-user-service | [DynamicQueueOptimizer] Job 'deploy-user-service' (score=79.06) is waiting. Higher-priority job 'deploy-order-service' (score=78.13) must run first.
+2026-06-14 15:04:34.209+0000 [id=201]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-order-service | [DynamicQueueOptimizer] Job 'deploy-order-service' (score=78.13) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.13) must run first.
+2026-06-14 15:04:34.209+0000 [id=201]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.07) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.13) must run first.
+2026-06-14 15:04:34.209+0000 [id=201]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.13) is waiting. Higher-priority job 'integration-test-suite' (score=74.85) must run first.
+2026-06-14 15:04:34.209+0000 [id=201]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'integration-test-suite' (score=74.85) must run first.
+2026-06-14 15:04:34.209+0000 [id=201]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.85) is waiting. Higher-priority job 'smoke-test-production' (score=74.85) must run first.
+2026-06-14 15:04:34.211+0000 [id=201]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.85) is waiting. Higher-priority job 'test-frontend-app' (score=46.94) must run first.
+2026-06-14 15:04:34.788+0000 [id=73]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? test-frontend-app | score=46.94
+2026-06-14 15:04:34.788+0000 [id=73]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? release-notes-generator | score=49.85
+2026-06-14 15:04:34.791+0000 [id=73]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-auth-service | score=78.93
+2026-06-14 15:04:34.791+0000 [id=73]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-payment-service | score=79.10
+2026-06-14 15:04:34.791+0000 [id=73]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-user-service | score=79.06
+2026-06-14 15:04:34.791+0000 [id=73]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-order-service | score=78.13
+2026-06-14 15:04:34.793+0000 [id=73]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-notification-service | score=78.07
+2026-06-14 15:04:34.793+0000 [id=73]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-catalog-service | score=78.13
+2026-06-14 15:04:34.793+0000 [id=73]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-frontend-app | score=66.00
+2026-06-14 15:04:34.793+0000 [id=73]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=74.85
+2026-06-14 15:04:34.793+0000 [id=73]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=74.85
+2026-06-14 15:04:34.803+0000 [id=200]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: test-frontend-app at 1781449474803 ms
+2026-06-14 15:04:51.238+0000 [id=200]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=test-frontend-app | build=#3 | start=1781449474803 | durationMs=16435 | durationSec=16.4 | result=SUCCESS
+2026-06-14 15:04:51.282+0000 [id=205]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? release-notes-generator | [DynamicQueueOptimizer] Job 'release-notes-generator' (score=49.89) is waiting. Higher-priority job 'deploy-payment-service' (score=79.13) must run first.
+2026-06-14 15:04:51.282+0000 [id=205]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-auth-service | [DynamicQueueOptimizer] Job 'deploy-auth-service' (score=78.97) is waiting. Higher-priority job 'deploy-payment-service' (score=79.13) must run first.
+2026-06-14 15:04:51.282+0000 [id=205]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-payment-service | [DynamicQueueOptimizer] Job 'deploy-payment-service' (score=79.13) is waiting. Higher-priority job 'deploy-user-service' (score=79.09) must run first.
+2026-06-14 15:04:51.282+0000 [id=205]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-user-service | [DynamicQueueOptimizer] Job 'deploy-user-service' (score=79.09) is waiting. Higher-priority job 'deploy-order-service' (score=78.17) must run first.
+2026-06-14 15:04:51.282+0000 [id=205]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-order-service | [DynamicQueueOptimizer] Job 'deploy-order-service' (score=78.17) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.16) must run first.
+2026-06-14 15:04:51.282+0000 [id=205]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.10) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.16) must run first.
+2026-06-14 15:04:51.282+0000 [id=205]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.16) is waiting. Higher-priority job 'integration-test-suite' (score=74.89) must run first.
+2026-06-14 15:04:51.282+0000 [id=205]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'integration-test-suite' (score=74.89) must run first.
+2026-06-14 15:04:51.282+0000 [id=205]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.89) is waiting. Higher-priority job 'smoke-test-production' (score=74.89) must run first.
+2026-06-14 15:04:51.282+0000 [id=205]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.89) is waiting. Higher-priority job 'release-notes-generator' (score=49.89) must run first.
+2026-06-14 15:04:54.827+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? release-notes-generator | score=49.89
+2026-06-14 15:04:54.827+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-auth-service | score=78.97
+2026-06-14 15:04:54.832+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-payment-service | score=79.13
+2026-06-14 15:04:54.832+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-user-service | score=79.09
+2026-06-14 15:04:54.832+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-order-service | score=78.17
+2026-06-14 15:04:54.832+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-notification-service | score=78.10
+2026-06-14 15:04:54.832+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-catalog-service | score=78.16
+2026-06-14 15:04:54.832+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-frontend-app | score=66.00
+2026-06-14 15:04:54.832+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=74.89
+2026-06-14 15:04:54.832+0000 [id=63]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=74.89
+2026-06-14 15:04:54.856+0000 [id=204]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: release-notes-generator at 1781449494856 ms
+2026-06-14 15:04:59.195+0000 [id=204]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=release-notes-generator | build=#3 | start=1781449494856 | durationMs=4339 | durationSec=4.3 | result=SUCCESS
+2026-06-14 15:04:59.231+0000 [id=210]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-auth-service | [DynamicQueueOptimizer] Job 'deploy-auth-service' (score=78.97) is waiting. Higher-priority job 'deploy-payment-service' (score=79.13) must run first.
+2026-06-14 15:04:59.231+0000 [id=210]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-payment-service | [DynamicQueueOptimizer] Job 'deploy-payment-service' (score=79.13) is waiting. Higher-priority job 'deploy-user-service' (score=79.09) must run first.
+2026-06-14 15:04:59.231+0000 [id=210]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-user-service | [DynamicQueueOptimizer] Job 'deploy-user-service' (score=79.09) is waiting. Higher-priority job 'deploy-auth-service' (score=78.97) must run first.
+2026-06-14 15:04:59.246+0000 [id=210]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-order-service | [DynamicQueueOptimizer] Job 'deploy-order-service' (score=78.17) is waiting. Higher-priority job 'deploy-auth-service' (score=78.97) must run first.
+2026-06-14 15:04:59.246+0000 [id=210]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.10) is waiting. Higher-priority job 'deploy-auth-service' (score=78.97) must run first.
+2026-06-14 15:04:59.246+0000 [id=210]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.16) is waiting. Higher-priority job 'deploy-auth-service' (score=78.97) must run first.
+2026-06-14 15:04:59.247+0000 [id=210]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'deploy-auth-service' (score=78.97) must run first.
+2026-06-14 15:04:59.247+0000 [id=210]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.88) is waiting. Higher-priority job 'deploy-auth-service' (score=78.97) must run first.
+2026-06-14 15:04:59.248+0000 [id=210]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.88) is waiting. Higher-priority job 'deploy-auth-service' (score=78.97) must run first.
+2026-06-14 15:04:59.840+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-auth-service | score=78.97
+2026-06-14 15:04:59.844+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-payment-service | score=79.13
+2026-06-14 15:04:59.846+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-user-service | score=79.09
+2026-06-14 15:04:59.846+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-order-service | score=78.17
+2026-06-14 15:04:59.846+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-notification-service | score=78.10
+2026-06-14 15:04:59.846+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-catalog-service | score=78.16
+2026-06-14 15:04:59.848+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-frontend-app | score=66.00
+2026-06-14 15:04:59.848+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=74.88
+2026-06-14 15:04:59.848+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=74.88
+2026-06-14 15:04:59.861+0000 [id=209]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: deploy-auth-service at 1781449499861 ms
+2026-06-14 15:05:08.175+0000 [id=209]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=deploy-auth-service | build=#3 | start=1781449499861 | durationMs=8314 | durationSec=8.3 | result=SUCCESS
+2026-06-14 15:05:08.215+0000 [id=217]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-payment-service | score=79.11
+2026-06-14 15:05:08.217+0000 [id=217]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-user-service | [DynamicQueueOptimizer] Job 'deploy-user-service' (score=79.08) is waiting. Higher-priority job 'deploy-payment-service' (score=79.11) must run first.
+2026-06-14 15:05:08.217+0000 [id=217]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-order-service | [DynamicQueueOptimizer] Job 'deploy-order-service' (score=78.15) is waiting. Higher-priority job 'deploy-payment-service' (score=79.11) must run first.
+2026-06-14 15:05:08.219+0000 [id=217]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.08) is waiting. Higher-priority job 'deploy-payment-service' (score=79.11) must run first.
+2026-06-14 15:05:08.219+0000 [id=217]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.15) is waiting. Higher-priority job 'deploy-payment-service' (score=79.11) must run first.
+2026-06-14 15:05:08.219+0000 [id=217]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'deploy-payment-service' (score=79.11) must run first.
+2026-06-14 15:05:08.219+0000 [id=217]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.88) is waiting. Higher-priority job 'deploy-payment-service' (score=79.11) must run first.
+2026-06-14 15:05:08.221+0000 [id=217]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.88) is waiting. Higher-priority job 'deploy-payment-service' (score=79.11) must run first.
+2026-06-14 15:05:08.232+0000 [id=216]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: deploy-payment-service at 1781449508230 ms
+2026-06-14 15:05:16.572+0000 [id=216]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=deploy-payment-service | build=#3 | start=1781449508230 | durationMs=8342 | durationSec=8.3 | result=SUCCESS
+2026-06-14 15:05:16.635+0000 [id=221]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-user-service | score=79.09
+2026-06-14 15:05:16.639+0000 [id=221]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-order-service | [DynamicQueueOptimizer] Job 'deploy-order-service' (score=78.16) is waiting. Higher-priority job 'deploy-user-service' (score=79.09) must run first.
+2026-06-14 15:05:16.639+0000 [id=221]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.10) is waiting. Higher-priority job 'deploy-user-service' (score=79.09) must run first.
+2026-06-14 15:05:16.641+0000 [id=221]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.16) is waiting. Higher-priority job 'deploy-user-service' (score=79.09) must run first.
+2026-06-14 15:05:16.642+0000 [id=221]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'deploy-user-service' (score=79.09) must run first.
+2026-06-14 15:05:16.642+0000 [id=221]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.88) is waiting. Higher-priority job 'deploy-user-service' (score=79.09) must run first.
+2026-06-14 15:05:16.642+0000 [id=221]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.88) is waiting. Higher-priority job 'deploy-user-service' (score=79.09) must run first.
+2026-06-14 15:05:16.655+0000 [id=220]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: deploy-user-service at 1781449516653 ms
+2026-06-14 15:05:24.969+0000 [id=220]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=deploy-user-service | build=#3 | start=1781449516653 | durationMs=8316 | durationSec=8.3 | result=SUCCESS
+2026-06-14 15:05:25.004+0000 [id=225]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-order-service | score=78.15
+2026-06-14 15:05:25.004+0000 [id=225]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.08) is waiting. Higher-priority job 'deploy-order-service' (score=78.15) must run first.
+2026-06-14 15:05:25.004+0000 [id=225]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.15) is waiting. Higher-priority job 'deploy-order-service' (score=78.15) must run first.
+2026-06-14 15:05:25.004+0000 [id=225]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'deploy-order-service' (score=78.15) must run first.
+2026-06-14 15:05:25.004+0000 [id=225]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.88) is waiting. Higher-priority job 'deploy-order-service' (score=78.15) must run first.
+2026-06-14 15:05:25.004+0000 [id=225]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.88) is waiting. Higher-priority job 'deploy-order-service' (score=78.15) must run first.
+2026-06-14 15:05:25.021+0000 [id=224]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: deploy-order-service at 1781449525021 ms
+2026-06-14 15:05:33.333+0000 [id=224]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=deploy-order-service | build=#3 | start=1781449525021 | durationMs=8312 | durationSec=8.3 | result=SUCCESS
+2026-06-14 15:05:33.379+0000 [id=229]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-notification-service | [DynamicQueueOptimizer] Job 'deploy-notification-service' (score=78.08) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.14) must run first.
+2026-06-14 15:05:33.379+0000 [id=229]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-catalog-service | [DynamicQueueOptimizer] Job 'deploy-catalog-service' (score=78.14) is waiting. Higher-priority job 'deploy-notification-service' (score=78.08) must run first.
+2026-06-14 15:05:33.379+0000 [id=229]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'deploy-notification-service' (score=78.08) must run first.
+2026-06-14 15:05:33.379+0000 [id=229]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.87) is waiting. Higher-priority job 'deploy-notification-service' (score=78.08) must run first.
+2026-06-14 15:05:33.379+0000 [id=229]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.87) is waiting. Higher-priority job 'deploy-notification-service' (score=78.08) must run first.
+2026-06-14 15:05:34.919+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-notification-service | score=78.08
+2026-06-14 15:05:34.921+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-catalog-service | score=78.14
+2026-06-14 15:05:34.921+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-frontend-app | score=66.00
+2026-06-14 15:05:34.921+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=74.87
+2026-06-14 15:05:34.921+0000 [id=64]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=74.87
+2026-06-14 15:05:34.933+0000 [id=228]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: deploy-notification-service at 1781449534933 ms
+2026-06-14 15:05:43.262+0000 [id=228]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=deploy-notification-service | build=#3 | start=1781449534933 | durationMs=8329 | durationSec=8.3 | result=SUCCESS
+2026-06-14 15:05:43.312+0000 [id=233]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-catalog-service | score=78.13
+2026-06-14 15:05:43.312+0000 [id=233]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.13) must run first.
+2026-06-14 15:05:43.312+0000 [id=233]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.87) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.13) must run first.
+2026-06-14 15:05:43.312+0000 [id=233]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.87) is waiting. Higher-priority job 'deploy-catalog-service' (score=78.13) must run first.
+2026-06-14 15:05:43.331+0000 [id=232]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: deploy-catalog-service at 1781449543331 ms
+2026-06-14 15:05:51.637+0000 [id=232]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=deploy-catalog-service | build=#3 | start=1781449543331 | durationMs=8306 | durationSec=8.3 | result=SUCCESS
+2026-06-14 15:05:51.676+0000 [id=237]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? deploy-frontend-app | [DynamicQueueOptimizer] Job 'deploy-frontend-app' (score=66.00) is waiting. Higher-priority job 'integration-test-suite' (score=74.87) must run first.
+2026-06-14 15:05:51.676+0000 [id=237]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? integration-test-suite | [DynamicQueueOptimizer] Job 'integration-test-suite' (score=74.87) is waiting. Higher-priority job 'smoke-test-production' (score=74.87) must run first.
+2026-06-14 15:05:51.676+0000 [id=237]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=74.87) is waiting. Higher-priority job 'deploy-frontend-app' (score=66.00) must run first.
+2026-06-14 15:05:54.951+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? deploy-frontend-app | score=66.00
+2026-06-14 15:05:54.951+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=74.87
+2026-06-14 15:05:54.951+0000 [id=68]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=74.87
+2026-06-14 15:05:54.963+0000 [id=236]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: deploy-frontend-app at 1781449554963 ms
+2026-06-14 15:06:05.266+0000 [id=236]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=deploy-frontend-app | build=#3 | start=1781449554963 | durationMs=10303 | durationSec=10.3 | result=SUCCESS
+2026-06-14 15:06:05.315+0000 [id=241]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? integration-test-suite | score=66.00
+2026-06-14 15:06:05.319+0000 [id=241]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: BLOCK  ? smoke-test-production | [DynamicQueueOptimizer] Job 'smoke-test-production' (score=66.00) is waiting. Higher-priority job 'integration-test-suite' (score=66.00) must run first.
+2026-06-14 15:06:05.334+0000 [id=240]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: integration-test-suite at 1781449565329 ms
+2026-06-14 15:06:23.725+0000 [id=240]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=integration-test-suite | build=#3 | start=1781449565329 | durationMs=18396 | durationSec=18.4 | result=SUCCESS
+2026-06-14 15:06:23.766+0000 [id=245]	INFO	i.j.p.q.d.DynamicQueueDispatcher#canTake: ALLOW ? smoke-test-production | score=66.00
+2026-06-14 15:06:23.783+0000 [id=244]	INFO	i.j.p.q.d.BuildMetricsRecorder#onStarted: Build started: smoke-test-production at 1781449583781 ms
+2026-06-14 15:06:31.055+0000 [id=244]	INFO	i.j.p.q.d.BuildMetricsRecorder#onCompleted: [METRICS] job=smoke-test-production | build=#3 | start=1781449583781 | durationMs=7274 | durationSec=7.3 | result=SUCCESS

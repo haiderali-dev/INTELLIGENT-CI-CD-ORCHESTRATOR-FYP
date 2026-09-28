@@ -1,0 +1,18 @@
+Legacy code started this job.  No cause information is available
+Running as SYSTEM
+[DynamicQueueOptimizer] Job started: smoke-test-production at 1781518828035 ms
+Building in workspace D:\FYP POC\CICD project\experiment\plugin-home\workspace\smoke-test-production
+[smoke-test-production] $ cmd /c call C:\Users\haide\AppData\Local\Temp\jenkins15321690529869814968.bat
+
+D:\FYP POC\CICD project\experiment\plugin-home\workspace\smoke-test-production>ping -n 8 127.0.0.1  1>nul 
+
+D:\FYP POC\CICD project\experiment\plugin-home\workspace\smoke-test-production>exit 0 
+
+╔══ Dynamic Queue Optimizer — Build Metrics ══════════════
+║  Job:      smoke-test-production
+║  Build:    #1
+║  Duration: 7.2 seconds
+║  Result:   SUCCESS
+╚══════════════════════════════════════════════════════════
+
+Finished: SUCCESS

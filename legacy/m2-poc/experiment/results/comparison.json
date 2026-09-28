@@ -1,0 +1,1577 @@
+{
+  "meta": {
+    "baselineT0": 1781512211965,
+    "pluginT0": 1781512819559,
+    "jobCount": 30
+  },
+  "summary": {
+    "makespanBaseline": 327.75,
+    "makespanPlugin": 328.2,
+    "makespanDeltaPct": -0.1,
+    "avgWaitBaseline": 159.83,
+    "avgWaitPlugin": 144.06,
+    "avgWaitImprovementPct": 9.9,
+    "priorityBands": {
+      "HIGH": {
+        "count": 9,
+        "avgWaitBaseline": 276.13,
+        "avgWaitPlugin": 46.24,
+        "waitImprovementPct": 83.3,
+        "avgCompletionBaseline": 285.72,
+        "avgCompletionPlugin": 55.83,
+        "completionImprovementPct": 80.5
+      },
+      "MEDIUM": {
+        "count": 15,
+        "avgWaitBaseline": 147.3,
+        "avgWaitPlugin": 167.24,
+        "waitImprovementPct": -13.5,
+        "avgCompletionBaseline": 158.72,
+        "avgCompletionPlugin": 178.67,
+        "completionImprovementPct": -12.6
+      },
+      "LOW": {
+        "count": 6,
+        "avgWaitBaseline": 16.7,
+        "avgWaitPlugin": 232.82,
+        "waitImprovementPct": -1294.1,
+        "avgCompletionBaseline": 28.12,
+        "avgCompletionPlugin": 244.19,
+        "completionImprovementPct": -768.4
+      }
+    }
+  },
+  "categories": {
+    "build": {
+      "count": 7,
+      "avgDuration": 10.57,
+      "avgWaitBaseline": 110.95,
+      "avgWaitPlugin": 165.4
+    },
+    "deploy": {
+      "count": 7,
+      "avgDuration": 8.29,
+      "avgWaitBaseline": 266.2,
+      "avgWaitPlugin": 51.27
+    },
+    "docs": {
+      "count": 1,
+      "avgDuration": 20.0,
+      "avgWaitBaseline": 22.95,
+      "avgWaitPlugin": 282.19
+    },
+    "integration": {
+      "count": 1,
+      "avgDuration": 18.0,
+      "avgWaitBaseline": 301.65,
+      "avgWaitPlugin": 32.37
+    },
+    "lint": {
+      "count": 3,
+      "avgDuration": 5.0,
+      "avgWaitBaseline": 5.73,
+      "avgWaitPlugin": 178.71
+    },
+    "maintenance": {
+      "count": 1,
+      "avgDuration": 6.0,
+      "avgWaitBaseline": 16.61,
+      "avgWaitPlugin": 275.91
+    },
+    "release": {
+      "count": 1,
+      "avgDuration": 4.0,
+      "avgWaitBaseline": 236.88,
+      "avgWaitPlugin": 116.08
+    },
+    "security": {
+      "count": 1,
+      "avgDuration": 25.0,
+      "avgWaitBaseline": 43.43,
+      "avgWaitPlugin": 302.67
+    },
+    "smoke": {
+      "count": 1,
+      "avgDuration": 7.0,
+      "avgWaitBaseline": 320.16,
+      "avgWaitPlugin": 24.93
+    },
+    "test": {
+      "count": 7,
+      "avgDuration": 12.57,
+      "avgWaitBaseline": 170.85,
+      "avgWaitPlugin": 176.4
+    }
+  },
+  "jobs": [
+    {
+      "name": "lint-auth-service",
+      "category": "lint",
+      "priority": "LOW",
+      "duration": 5,
+      "dependsOn": [],
+      "baseline": {
+        "name": "lint-auth-service",
+        "result": "SUCCESS",
+        "wait": 0.12,
+        "exec": 5.61,
+        "completion": 5.73,
+        "startSec": 0.12,
+        "order": 1
+      },
+      "plugin": {
+        "name": "lint-auth-service",
+        "result": "SUCCESS",
+        "wait": 0.25,
+        "exec": 5.49,
+        "completion": 5.74,
+        "startSec": 0.25,
+        "order": 1
+      },
+      "waitDeltaPct": -108.3,
+      "orderDelta": 0
+    },
+    {
+      "name": "lint-payment-service",
+      "category": "lint",
+      "priority": "LOW",
+      "duration": 5,
+      "dependsOn": [],
+      "baseline": {
+        "name": "lint-payment-service",
+        "result": "SUCCESS",
+        "wait": 5.83,
+        "exec": 5.36,
+        "completion": 11.18,
+        "startSec": 5.83,
+        "order": 2
+      },
+      "plugin": {
+        "name": "lint-payment-service",
+        "result": "SUCCESS",
+        "wait": 270.6,
+        "exec": 5.27,
+        "completion": 275.87,
+        "startSec": 270.6,
+        "order": 27
+      },
+      "waitDeltaPct": -4541.5,
+      "orderDelta": -25
+    },
+    {
+      "name": "lint-user-service",
+      "category": "lint",
+      "priority": "LOW",
+      "duration": 5,
+      "dependsOn": [],
+      "baseline": {
+        "name": "lint-user-service",
+        "result": "SUCCESS",
+        "wait": 11.25,
+        "exec": 5.32,
+        "completion": 16.57,
+        "startSec": 11.25,
+        "order": 3
+      },
+      "plugin": {
+        "name": "lint-user-service",
+        "result": "SUCCESS",
+        "wait": 265.27,
+        "exec": 5.26,
+        "completion": 270.53,
+        "startSec": 265.27,
+        "order": 26
+      },
+      "waitDeltaPct": -2258.0,
+      "orderDelta": -23
+    },
+    {
+      "name": "cleanup-old-builds",
+      "category": "maintenance",
+      "priority": "LOW",
+      "duration": 6,
+      "dependsOn": [],
+      "baseline": {
+        "name": "cleanup-old-builds",
+        "result": "SUCCESS",
+        "wait": 16.61,
+        "exec": 6.28,
+        "completion": 22.88,
+        "startSec": 16.61,
+        "order": 4
+      },
+      "plugin": {
+        "name": "cleanup-old-builds",
+        "result": "SUCCESS",
+        "wait": 275.91,
+        "exec": 6.25,
+        "completion": 282.16,
+        "startSec": 275.91,
+        "order": 28
+      },
+      "waitDeltaPct": -1561.1,
+      "orderDelta": -24
+    },
+    {
+      "name": "generate-api-docs",
+      "category": "docs",
+      "priority": "LOW",
+      "duration": 20,
+      "dependsOn": [],
+      "baseline": {
+        "name": "generate-api-docs",
+        "result": "SUCCESS",
+        "wait": 22.95,
+        "exec": 20.42,
+        "completion": 43.37,
+        "startSec": 22.95,
+        "order": 5
+      },
+      "plugin": {
+        "name": "generate-api-docs",
+        "result": "SUCCESS",
+        "wait": 282.19,
+        "exec": 20.43,
+        "completion": 302.62,
+        "startSec": 282.19,
+        "order": 29
+      },
+      "waitDeltaPct": -1129.6,
+      "orderDelta": -24
+    },
+    {
+      "name": "security-scan-dependencies",
+      "category": "security",
+      "priority": "LOW",
+      "duration": 25,
+      "dependsOn": [],
+      "baseline": {
+        "name": "security-scan-dependencies",
+        "result": "SUCCESS",
+        "wait": 43.43,
+        "exec": 25.56,
+        "completion": 68.98,
+        "startSec": 43.43,
+        "order": 6
+      },
+      "plugin": {
+        "name": "security-scan-dependencies",
+        "result": "SUCCESS",
+        "wait": 302.67,
+        "exec": 25.53,
+        "completion": 328.2,
+        "startSec": 302.67,
+        "order": 30
+      },
+      "waitDeltaPct": -596.9,
+      "orderDelta": -24
+    },
+    {
+      "name": "build-auth-service",
+      "category": "build",
+      "priority": "MEDIUM",
+      "duration": 10,
+      "dependsOn": [],
+      "baseline": {
+        "name": "build-auth-service",
+        "result": "SUCCESS",
+        "wait": 69.05,
+        "exec": 10.43,
+        "completion": 79.48,
+        "startSec": 69.05,
+        "order": 7
+      },
+      "plugin": {
+        "name": "build-auth-service",
+        "result": "SUCCESS",
+        "wait": 93.04,
+        "exec": 10.47,
+        "completion": 103.51,
+        "startSec": 93.04,
+        "order": 11
+      },
+      "waitDeltaPct": -34.7,
+      "orderDelta": -4
+    },
+    {
+      "name": "build-payment-service",
+      "category": "build",
+      "priority": "MEDIUM",
+      "duration": 10,
+      "dependsOn": [],
+      "baseline": {
+        "name": "build-payment-service",
+        "result": "SUCCESS",
+        "wait": 79.53,
+        "exec": 10.32,
+        "completion": 89.84,
+        "startSec": 79.53,
+        "order": 8
+      },
+      "plugin": {
+        "name": "build-payment-service",
+        "result": "SUCCESS",
+        "wait": 120.44,
+        "exec": 10.37,
+        "completion": 130.81,
+        "startSec": 120.44,
+        "order": 14
+      },
+      "waitDeltaPct": -51.4,
+      "orderDelta": -6
+    },
+    {
+      "name": "build-user-service",
+      "category": "build",
+      "priority": "MEDIUM",
+      "duration": 10,
+      "dependsOn": [],
+      "baseline": {
+        "name": "build-user-service",
+        "result": "SUCCESS",
+        "wait": 89.9,
+        "exec": 10.37,
+        "completion": 100.26,
+        "startSec": 89.9,
+        "order": 9
+      },
+      "plugin": {
+        "name": "build-user-service",
+        "result": "SUCCESS",
+        "wait": 166.09,
+        "exec": 10.36,
+        "completion": 176.45,
+        "startSec": 166.09,
+        "order": 18
+      },
+      "waitDeltaPct": -84.7,
+      "orderDelta": -9
+    },
+    {
+      "name": "build-order-service",
+      "category": "build",
+      "priority": "MEDIUM",
+      "duration": 10,
+      "dependsOn": [],
+      "baseline": {
+        "name": "build-order-service",
+        "result": "SUCCESS",
+        "wait": 100.31,
+        "exec": 10.37,
+        "completion": 110.69,
+        "startSec": 100.31,
+        "order": 10
+      },
+      "plugin": {
+        "name": "build-order-service",
+        "result": "SUCCESS",
+        "wait": 143.28,
+        "exec": 10.35,
+        "completion": 153.63,
+        "startSec": 143.28,
+        "order": 16
+      },
+      "waitDeltaPct": -42.8,
+      "orderDelta": -6
+    },
+    {
+      "name": "build-notification-service",
+      "category": "build",
+      "priority": "MEDIUM",
+      "duration": 10,
+      "dependsOn": [],
+      "baseline": {
+        "name": "build-notification-service",
+        "result": "SUCCESS",
+        "wait": 110.73,
+        "exec": 10.31,
+        "completion": 121.04,
+        "startSec": 110.73,
+        "order": 11
+      },
+      "plugin": {
+        "name": "build-notification-service",
+        "result": "SUCCESS",
+        "wait": 188.88,
+        "exec": 10.3,
+        "completion": 199.18,
+        "startSec": 188.88,
+        "order": 20
+      },
+      "waitDeltaPct": -70.6,
+      "orderDelta": -9
+    },
+    {
+      "name": "build-catalog-service",
+      "category": "build",
+      "priority": "MEDIUM",
+      "duration": 10,
+      "dependsOn": [],
+      "baseline": {
+        "name": "build-catalog-service",
+        "result": "SUCCESS",
+        "wait": 121.08,
+        "exec": 10.36,
+        "completion": 131.44,
+        "startSec": 121.08,
+        "order": 12
+      },
+      "plugin": {
+        "name": "build-catalog-service",
+        "result": "SUCCESS",
+        "wait": 211.63,
+        "exec": 10.37,
+        "completion": 221.99,
+        "startSec": 211.63,
+        "order": 22
+      },
+      "waitDeltaPct": -74.8,
+      "orderDelta": -10
+    },
+    {
+      "name": "test-auth-service",
+      "category": "test",
+      "priority": "MEDIUM",
+      "duration": 12,
+      "dependsOn": [
+        "build-auth-service"
+      ],
+      "baseline": {
+        "name": "test-auth-service",
+        "result": "SUCCESS",
+        "wait": 131.49,
+        "exec": 12.47,
+        "completion": 143.95,
+        "startSec": 131.49,
+        "order": 13
+      },
+      "plugin": {
+        "name": "test-auth-service",
+        "result": "SUCCESS",
+        "wait": 103.61,
+        "exec": 12.41,
+        "completion": 116.02,
+        "startSec": 103.61,
+        "order": 12
+      },
+      "waitDeltaPct": 21.2,
+      "orderDelta": 1
+    },
+    {
+      "name": "test-payment-service",
+      "category": "test",
+      "priority": "MEDIUM",
+      "duration": 12,
+      "dependsOn": [
+        "build-payment-service"
+      ],
+      "baseline": {
+        "name": "test-payment-service",
+        "result": "SUCCESS",
+        "wait": 144.0,
+        "exec": 12.35,
+        "completion": 156.36,
+        "startSec": 144.0,
+        "order": 14
+      },
+      "plugin": {
+        "name": "test-payment-service",
+        "result": "SUCCESS",
+        "wait": 130.88,
+        "exec": 12.34,
+        "completion": 143.23,
+        "startSec": 130.88,
+        "order": 15
+      },
+      "waitDeltaPct": 9.1,
+      "orderDelta": -1
+    },
+    {
+      "name": "test-user-service",
+      "category": "test",
+      "priority": "MEDIUM",
+      "duration": 12,
+      "dependsOn": [
+        "build-user-service"
+      ],
+      "baseline": {
+        "name": "test-user-service",
+        "result": "SUCCESS",
+        "wait": 156.41,
+        "exec": 12.31,
+        "completion": 168.71,
+        "startSec": 156.41,
+        "order": 15
+      },
+      "plugin": {
+        "name": "test-user-service",
+        "result": "SUCCESS",
+        "wait": 176.5,
+        "exec": 12.33,
+        "completion": 188.82,
+        "startSec": 176.5,
+        "order": 19
+      },
+      "waitDeltaPct": -12.8,
+      "orderDelta": -4
+    },
+    {
+      "name": "test-order-service",
+      "category": "test",
+      "priority": "MEDIUM",
+      "duration": 12,
+      "dependsOn": [
+        "build-order-service"
+      ],
+      "baseline": {
+        "name": "test-order-service",
+        "result": "SUCCESS",
+        "wait": 168.76,
+        "exec": 12.43,
+        "completion": 181.19,
+        "startSec": 168.76,
+        "order": 16
+      },
+      "plugin": {
+        "name": "test-order-service",
+        "result": "SUCCESS",
+        "wait": 153.67,
+        "exec": 12.37,
+        "completion": 166.05,
+        "startSec": 153.67,
+        "order": 17
+      },
+      "waitDeltaPct": 8.9,
+      "orderDelta": -1
+    },
+    {
+      "name": "test-notification-service",
+      "category": "test",
+      "priority": "MEDIUM",
+      "duration": 12,
+      "dependsOn": [
+        "build-notification-service"
+      ],
+      "baseline": {
+        "name": "test-notification-service",
+        "result": "SUCCESS",
+        "wait": 181.23,
+        "exec": 12.35,
+        "completion": 193.58,
+        "startSec": 181.23,
+        "order": 17
+      },
+      "plugin": {
+        "name": "test-notification-service",
+        "result": "SUCCESS",
+        "wait": 199.23,
+        "exec": 12.35,
+        "completion": 211.58,
+        "startSec": 199.23,
+        "order": 21
+      },
+      "waitDeltaPct": -9.9,
+      "orderDelta": -4
+    },
+    {
+      "name": "test-catalog-service",
+      "category": "test",
+      "priority": "MEDIUM",
+      "duration": 12,
+      "dependsOn": [
+        "build-catalog-service"
+      ],
+      "baseline": {
+        "name": "test-catalog-service",
+        "result": "SUCCESS",
+        "wait": 193.62,
+        "exec": 12.34,
+        "completion": 205.97,
+        "startSec": 193.62,
+        "order": 18
+      },
+      "plugin": {
+        "name": "test-catalog-service",
+        "result": "SUCCESS",
+        "wait": 222.04,
+        "exec": 12.35,
+        "completion": 234.39,
+        "startSec": 222.04,
+        "order": 23
+      },
+      "waitDeltaPct": -14.7,
+      "orderDelta": -5
+    },
+    {
+      "name": "build-frontend-app",
+      "category": "build",
+      "priority": "MEDIUM",
+      "duration": 14,
+      "dependsOn": [],
+      "baseline": {
+        "name": "build-frontend-app",
+        "result": "SUCCESS",
+        "wait": 206.02,
+        "exec": 14.37,
+        "completion": 220.39,
+        "startSec": 206.02,
+        "order": 19
+      },
+      "plugin": {
+        "name": "build-frontend-app",
+        "result": "SUCCESS",
+        "wait": 234.44,
+        "exec": 14.35,
+        "completion": 248.79,
+        "startSec": 234.44,
+        "order": 24
+      },
+      "waitDeltaPct": -13.8,
+      "orderDelta": -5
+    },
+    {
+      "name": "test-frontend-app",
+      "category": "test",
+      "priority": "MEDIUM",
+      "duration": 16,
+      "dependsOn": [
+        "build-frontend-app"
+      ],
+      "baseline": {
+        "name": "test-frontend-app",
+        "result": "SUCCESS",
+        "wait": 220.42,
+        "exec": 16.42,
+        "completion": 236.84,
+        "startSec": 220.42,
+        "order": 20
+      },
+      "plugin": {
+        "name": "test-frontend-app",
+        "result": "SUCCESS",
+        "wait": 248.84,
+        "exec": 16.39,
+        "completion": 265.23,
+        "startSec": 248.84,
+        "order": 25
+      },
+      "waitDeltaPct": -12.9,
+      "orderDelta": -5
+    },
+    {
+      "name": "release-notes-generator",
+      "category": "release",
+      "priority": "MEDIUM",
+      "duration": 4,
+      "dependsOn": [
+        "smoke-test-production"
+      ],
+      "baseline": {
+        "name": "release-notes-generator",
+        "result": "SUCCESS",
+        "wait": 236.88,
+        "exec": 4.25,
+        "completion": 241.12,
+        "startSec": 236.88,
+        "order": 21
+      },
+      "plugin": {
+        "name": "release-notes-generator",
+        "result": "SUCCESS",
+        "wait": 116.08,
+        "exec": 4.3,
+        "completion": 120.38,
+        "startSec": 116.08,
+        "order": 13
+      },
+      "waitDeltaPct": 51.0,
+      "orderDelta": 8
+    },
+    {
+      "name": "deploy-auth-service",
+      "category": "deploy",
+      "priority": "HIGH",
+      "duration": 8,
+      "dependsOn": [
+        "test-auth-service"
+      ],
+      "baseline": {
+        "name": "deploy-auth-service",
+        "result": "SUCCESS",
+        "wait": 241.18,
+        "exec": 8.28,
+        "completion": 249.46,
+        "startSec": 241.18,
+        "order": 22
+      },
+      "plugin": {
+        "name": "deploy-auth-service",
+        "result": "SUCCESS",
+        "wait": 6.05,
+        "exec": 8.34,
+        "completion": 14.39,
+        "startSec": 6.05,
+        "order": 2
+      },
+      "waitDeltaPct": 97.5,
+      "orderDelta": 20
+    },
+    {
+      "name": "deploy-payment-service",
+      "category": "deploy",
+      "priority": "HIGH",
+      "duration": 8,
+      "dependsOn": [
+        "test-payment-service"
+      ],
+      "baseline": {
+        "name": "deploy-payment-service",
+        "result": "SUCCESS",
+        "wait": 249.5,
+        "exec": 8.31,
+        "completion": 257.81,
+        "startSec": 249.5,
+        "order": 23
+      },
+      "plugin": {
+        "name": "deploy-payment-service",
+        "result": "SUCCESS",
+        "wait": 50.87,
+        "exec": 8.31,
+        "completion": 59.19,
+        "startSec": 50.87,
+        "order": 6
+      },
+      "waitDeltaPct": 79.6,
+      "orderDelta": 17
+    },
+    {
+      "name": "deploy-user-service",
+      "category": "deploy",
+      "priority": "HIGH",
+      "duration": 8,
+      "dependsOn": [
+        "test-user-service"
+      ],
+      "baseline": {
+        "name": "deploy-user-service",
+        "result": "SUCCESS",
+        "wait": 257.85,
+        "exec": 8.31,
+        "completion": 266.17,
+        "startSec": 257.85,
+        "order": 24
+      },
+      "plugin": {
+        "name": "deploy-user-service",
+        "result": "SUCCESS",
+        "wait": 59.26,
+        "exec": 8.32,
+        "completion": 67.58,
+        "startSec": 59.26,
+        "order": 7
+      },
+      "waitDeltaPct": 77.0,
+      "orderDelta": 17
+    },
+    {
+      "name": "deploy-order-service",
+      "category": "deploy",
+      "priority": "HIGH",
+      "duration": 8,
+      "dependsOn": [
+        "test-order-service"
+      ],
+      "baseline": {
+        "name": "deploy-order-service",
+        "result": "SUCCESS",
+        "wait": 266.21,
+        "exec": 8.28,
+        "completion": 274.49,
+        "startSec": 266.21,
+        "order": 25
+      },
+      "plugin": {
+        "name": "deploy-order-service",
+        "result": "SUCCESS",
+        "wait": 67.65,
+        "exec": 8.32,
+        "completion": 75.97,
+        "startSec": 67.65,
+        "order": 8
+      },
+      "waitDeltaPct": 74.6,
+      "orderDelta": 17
+    },
+    {
+      "name": "deploy-notification-service",
+      "category": "deploy",
+      "priority": "HIGH",
+      "duration": 8,
+      "dependsOn": [
+        "test-notification-service"
+      ],
+      "baseline": {
+        "name": "deploy-notification-service",
+        "result": "SUCCESS",
+        "wait": 274.53,
+        "exec": 8.32,
+        "completion": 282.85,
+        "startSec": 274.53,
+        "order": 26
+      },
+      "plugin": {
+        "name": "deploy-notification-service",
+        "result": "SUCCESS",
+        "wait": 76.04,
+        "exec": 8.4,
+        "completion": 84.44,
+        "startSec": 76.04,
+        "order": 9
+      },
+      "waitDeltaPct": 72.3,
+      "orderDelta": 17
+    },
+    {
+      "name": "deploy-catalog-service",
+      "category": "deploy",
+      "priority": "HIGH",
+      "duration": 8,
+      "dependsOn": [
+        "test-catalog-service"
+      ],
+      "baseline": {
+        "name": "deploy-catalog-service",
+        "result": "SUCCESS",
+        "wait": 282.88,
+        "exec": 8.34,
+        "completion": 291.22,
+        "startSec": 282.88,
+        "order": 27
+      },
+      "plugin": {
+        "name": "deploy-catalog-service",
+        "result": "SUCCESS",
+        "wait": 84.51,
+        "exec": 8.46,
+        "completion": 92.97,
+        "startSec": 84.51,
+        "order": 10
+      },
+      "waitDeltaPct": 70.1,
+      "orderDelta": 17
+    },
+    {
+      "name": "deploy-frontend-app",
+      "category": "deploy",
+      "priority": "HIGH",
+      "duration": 10,
+      "dependsOn": [
+        "test-frontend-app"
+      ],
+      "baseline": {
+        "name": "deploy-frontend-app",
+        "result": "SUCCESS",
+        "wait": 291.25,
+        "exec": 10.35,
+        "completion": 301.6,
+        "startSec": 291.25,
+        "order": 28
+      },
+      "plugin": {
+        "name": "deploy-frontend-app",
+        "result": "SUCCESS",
+        "wait": 14.49,
+        "exec": 10.35,
+        "completion": 24.84,
+        "startSec": 14.49,
+        "order": 3
+      },
+      "waitDeltaPct": 95.0,
+      "orderDelta": 25
+    },
+    {
+      "name": "integration-test-suite",
+      "category": "integration",
+      "priority": "HIGH",
+      "duration": 18,
+      "dependsOn": [
+        "test-auth-service",
+        "test-payment-service",
+        "test-user-service"
+      ],
+      "baseline": {
+        "name": "integration-test-suite",
+        "result": "SUCCESS",
+        "wait": 301.65,
+        "exec": 18.46,
+        "completion": 320.11,
+        "startSec": 301.65,
+        "order": 29
+      },
+      "plugin": {
+        "name": "integration-test-suite",
+        "result": "SUCCESS",
+        "wait": 32.37,
+        "exec": 18.43,
+        "completion": 50.8,
+        "startSec": 32.37,
+        "order": 5
+      },
+      "waitDeltaPct": 89.3,
+      "orderDelta": 24
+    },
+    {
+      "name": "smoke-test-production",
+      "category": "smoke",
+      "priority": "HIGH",
+      "duration": 7,
+      "dependsOn": [
+        "deploy-auth-service",
+        "deploy-frontend-app"
+      ],
+      "baseline": {
+        "name": "smoke-test-production",
+        "result": "SUCCESS",
+        "wait": 320.16,
+        "exec": 7.59,
+        "completion": 327.75,
+        "startSec": 320.16,
+        "order": 30
+      },
+      "plugin": {
+        "name": "smoke-test-production",
+        "result": "SUCCESS",
+        "wait": 24.93,
+        "exec": 7.37,
+        "completion": 32.3,
+        "startSec": 24.93,
+        "order": 4
+      },
+      "waitDeltaPct": 92.2,
+      "orderDelta": 26
+    }
+  ],
+  "throughput": {
+    "baseline": [
+      [
+        0.0,
+        0
+      ],
+      [
+        5.73,
+        1
+      ],
+      [
+        11.18,
+        2
+      ],
+      [
+        16.57,
+        3
+      ],
+      [
+        22.88,
+        4
+      ],
+      [
+        43.37,
+        5
+      ],
+      [
+        68.98,
+        6
+      ],
+      [
+        79.48,
+        7
+      ],
+      [
+        89.84,
+        8
+      ],
+      [
+        100.26,
+        9
+      ],
+      [
+        110.69,
+        10
+      ],
+      [
+        121.04,
+        11
+      ],
+      [
+        131.44,
+        12
+      ],
+      [
+        143.95,
+        13
+      ],
+      [
+        156.36,
+        14
+      ],
+      [
+        168.71,
+        15
+      ],
+      [
+        181.19,
+        16
+      ],
+      [
+        193.58,
+        17
+      ],
+      [
+        205.97,
+        18
+      ],
+      [
+        220.39,
+        19
+      ],
+      [
+        236.84,
+        20
+      ],
+      [
+        241.12,
+        21
+      ],
+      [
+        249.46,
+        22
+      ],
+      [
+        257.81,
+        23
+      ],
+      [
+        266.17,
+        24
+      ],
+      [
+        274.49,
+        25
+      ],
+      [
+        282.85,
+        26
+      ],
+      [
+        291.22,
+        27
+      ],
+      [
+        301.6,
+        28
+      ],
+      [
+        320.11,
+        29
+      ],
+      [
+        327.75,
+        30
+      ]
+    ],
+    "plugin": [
+      [
+        0.0,
+        0
+      ],
+      [
+        5.74,
+        1
+      ],
+      [
+        14.39,
+        2
+      ],
+      [
+        24.84,
+        3
+      ],
+      [
+        32.3,
+        4
+      ],
+      [
+        50.8,
+        5
+      ],
+      [
+        59.19,
+        6
+      ],
+      [
+        67.58,
+        7
+      ],
+      [
+        75.97,
+        8
+      ],
+      [
+        84.44,
+        9
+      ],
+      [
+        92.97,
+        10
+      ],
+      [
+        103.51,
+        11
+      ],
+      [
+        116.02,
+        12
+      ],
+      [
+        120.38,
+        13
+      ],
+      [
+        130.81,
+        14
+      ],
+      [
+        143.23,
+        15
+      ],
+      [
+        153.63,
+        16
+      ],
+      [
+        166.05,
+        17
+      ],
+      [
+        176.45,
+        18
+      ],
+      [
+        188.82,
+        19
+      ],
+      [
+        199.18,
+        20
+      ],
+      [
+        211.58,
+        21
+      ],
+      [
+        221.99,
+        22
+      ],
+      [
+        234.39,
+        23
+      ],
+      [
+        248.79,
+        24
+      ],
+      [
+        265.23,
+        25
+      ],
+      [
+        270.53,
+        26
+      ],
+      [
+        275.87,
+        27
+      ],
+      [
+        282.16,
+        28
+      ],
+      [
+        302.62,
+        29
+      ],
+      [
+        328.2,
+        30
+      ]
+    ]
+  },
+  "dependencyChains": [
+    {
+      "name": "test-auth-service",
+      "dependsOn": [
+        "build-auth-service"
+      ],
+      "priority": "MEDIUM",
+      "baseline": {
+        "jobStart": 131.49,
+        "depCompletions": [
+          79.48
+        ],
+        "honored": true
+      },
+      "plugin": {
+        "jobStart": 103.61,
+        "depCompletions": [
+          103.51
+        ],
+        "honored": true
+      }
+    },
+    {
+      "name": "test-payment-service",
+      "dependsOn": [
+        "build-payment-service"
+      ],
+      "priority": "MEDIUM",
+      "baseline": {
+        "jobStart": 144.0,
+        "depCompletions": [
+          89.84
+        ],
+        "honored": true
+      },
+      "plugin": {
+        "jobStart": 130.88,
+        "depCompletions": [
+          130.81
+        ],
+        "honored": true
+      }
+    },
+    {
+      "name": "test-user-service",
+      "dependsOn": [
+        "build-user-service"
+      ],
+      "priority": "MEDIUM",
+      "baseline": {
+        "jobStart": 156.41,
+        "depCompletions": [
+          100.26
+        ],
+        "honored": true
+      },
+      "plugin": {
+        "jobStart": 176.5,
+        "depCompletions": [
+          176.45
+        ],
+        "honored": true
+      }
+    },
+    {
+      "name": "test-order-service",
+      "dependsOn": [
+        "build-order-service"
+      ],
+      "priority": "MEDIUM",
+      "baseline": {
+        "jobStart": 168.76,
+        "depCompletions": [
+          110.69
+        ],
+        "honored": true
+      },
+      "plugin": {
+        "jobStart": 153.67,
+        "depCompletions": [
+          153.63
+        ],
+        "honored": true
+      }
+    },
+    {
+      "name": "test-notification-service",
+      "dependsOn": [
+        "build-notification-service"
+      ],
+      "priority": "MEDIUM",
+      "baseline": {
+        "jobStart": 181.23,
+        "depCompletions": [
+          121.04
+        ],
+        "honored": true
+      },
+      "plugin": {
+        "jobStart": 199.23,
+        "depCompletions": [
+          199.18
+        ],
+        "honored": true
+      }
+    },
+    {
+      "name": "test-catalog-service",
+      "dependsOn": [
+        "build-catalog-service"
+      ],
+      "priority": "MEDIUM",
+      "baseline": {
+        "jobStart": 193.62,
+        "depCompletions": [
+          131.44
+        ],
+        "honored": true
+      },
+      "plugin": {
+        "jobStart": 222.04,
+        "depCompletions": [
+          221.99
+        ],
+        "honored": true
+      }
+    },
+    {
+      "name": "test-frontend-app",
+      "dependsOn": [
+        "build-frontend-app"
+      ],
+      "priority": "MEDIUM",
+      "baseline": {
+        "jobStart": 220.42,
+        "depCompletions": [
+          220.39
+        ],
+        "honored": true
+      },
+      "plugin": {
+        "jobStart": 248.84,
+        "depCompletions": [
+          248.79
+        ],
+        "honored": true
+      }
+    },
+    {
+      "name": "release-notes-generator",
+      "dependsOn": [
+        "smoke-test-production"
+      ],
+      "priority": "MEDIUM",
+      "baseline": {
+        "jobStart": 236.88,
+        "depCompletions": [
+          327.75
+        ],
+        "honored": false
+      },
+      "plugin": {
+        "jobStart": 116.08,
+        "depCompletions": [
+          32.3
+        ],
+        "honored": true
+      }
+    },
+    {
+      "name": "deploy-auth-service",
+      "dependsOn": [
+        "test-auth-service"
+      ],
+      "priority": "HIGH",
+      "baseline": {
+        "jobStart": 241.18,
+        "depCompletions": [
+          143.95
+        ],
+        "honored": true
+      },
+      "plugin": {
+        "jobStart": 6.05,
+        "depCompletions": [
+          116.02
+        ],
+        "honored": false
+      }
+    },
+    {
+      "name": "deploy-payment-service",
+      "dependsOn": [
+        "test-payment-service"
+      ],
+      "priority": "HIGH",
+      "baseline": {
+        "jobStart": 249.5,
+        "depCompletions": [
+          156.36
+        ],
+        "honored": true
+      },
+      "plugin": {
+        "jobStart": 50.87,
+        "depCompletions": [
+          143.23
+        ],
+        "honored": false
+      }
+    },
+    {
+      "name": "deploy-user-service",
+      "dependsOn": [
+        "test-user-service"
+      ],
+      "priority": "HIGH",
+      "baseline": {
+        "jobStart": 257.85,
+        "depCompletions": [
+          168.71
+        ],
+        "honored": true
+      },
+      "plugin": {
+        "jobStart": 59.26,
+        "depCompletions": [
+          188.82
+        ],
+        "honored": false
+      }
+    },
+    {
+      "name": "deploy-order-service",
+      "dependsOn": [
+        "test-order-service"
+      ],
+      "priority": "HIGH",
+      "baseline": {
+        "jobStart": 266.21,
+        "depCompletions": [
+          181.19
+        ],
+        "honored": true
+      },
+      "plugin": {
+        "jobStart": 67.65,
+        "depCompletions": [
+          166.05
+        ],
+        "honored": false
+      }
+    },
+    {
+      "name": "deploy-notification-service",
+      "dependsOn": [
+        "test-notification-service"
+      ],
+      "priority": "HIGH",
+      "baseline": {
+        "jobStart": 274.53,
+        "depCompletions": [
+          193.58
+        ],
+        "honored": true
+      },
+      "plugin": {
+        "jobStart": 76.04,
+        "depCompletions": [
+          211.58
+        ],
+        "honored": false
+      }
+    },
+    {
+      "name": "deploy-catalog-service",
+      "dependsOn": [
+        "test-catalog-service"
+      ],
+      "priority": "HIGH",
+      "baseline": {
+        "jobStart": 282.88,
+        "depCompletions": [
+          205.97
+        ],
+        "honored": true
+      },
+      "plugin": {
+        "jobStart": 84.51,
+        "depCompletions": [
+          234.39
+        ],
+        "honored": false
+      }
+    },
+    {
+      "name": "deploy-frontend-app",
+      "dependsOn": [
+        "test-frontend-app"
+      ],
+      "priority": "HIGH",
+      "baseline": {
+        "jobStart": 291.25,
+        "depCompletions": [
+          236.84
+        ],
+        "honored": true
+      },
+      "plugin": {
+        "jobStart": 14.49,
+        "depCompletions": [
+          265.23
+        ],
+        "honored": false
+      }
+    },
+    {
+      "name": "integration-test-suite",
+      "dependsOn": [
+        "test-auth-service",
+        "test-payment-service",
+        "test-user-service"
+      ],
+      "priority": "HIGH",
+      "baseline": {
+        "jobStart": 301.65,
+        "depCompletions": [
+          143.95,
+          156.36,
+          168.71
+        ],
+        "honored": true
+      },
+      "plugin": {
+        "jobStart": 32.37,
+        "depCompletions": [
+          116.02,
+          143.23,
+          188.82
+        ],
+        "honored": false
+      }
+    },
+    {
+      "name": "smoke-test-production",
+      "dependsOn": [
+        "deploy-auth-service",
+        "deploy-frontend-app"
+      ],
+      "priority": "HIGH",
+      "baseline": {
+        "jobStart": 320.16,
+        "depCompletions": [
+          249.46,
+          301.6
+        ],
+        "honored": true
+      },
+      "plugin": {
+        "jobStart": 24.93,
+        "depCompletions": [
+          14.39,
+          24.84
+        ],
+        "honored": true
+      }
+    }
+  ]
+}

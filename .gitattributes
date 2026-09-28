@@ -1,0 +1,42 @@
+# Normalise to LF in the repository by default.
+* text=auto eol=lf
+
+# The frozen Milestone 2 copy is stored byte for byte. Line-ending normalisation
+# would rewrite files that BUILD_PROMPT rule 1.5 forbids modifying, and would
+# make the working copy differ from the m2-final tag it is checked against.
+legacy/** -text
+
+# These are read inside Linux containers or by Jenkins agents. CRLF breaks a
+# shebang line and breaks `sh` parsing, so LF is mandatory, not cosmetic.
+*.sh        text eol=lf
+*.py        text eol=lf
+*.groovy    text eol=lf
+Jenkinsfile text eol=lf
+*.yaml      text eol=lf
+*.yml       text eol=lf
+Dockerfile  text eol=lf
+
+# Windows-only helpers keep CRLF.
+*.ps1       text eol=crlf
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+
+# Binary: never normalise, never diff as text.
+*.pdf       binary
+*.pptx      binary
+*.docx      binary
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.woff      binary
+*.woff2     binary
+*.hpi       binary
+*.jar       binary
+*.war       binary
+
+# Generated files: collapse in pull request diffs.
+frontend/src/api/generated.ts linguist-generated=true
+package-lock.json             linguist-generated=true
+uv.lock                       linguist-generated=true

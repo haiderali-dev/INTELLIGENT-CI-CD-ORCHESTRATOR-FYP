@@ -1,0 +1,23 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form">
+
+    <!--
+        field="priority" tells Jenkins to:
+          1. Call descriptor.doFillPriorityItems()  to get the list of options
+          2. Call instance.getPriority().name()      to determine which option is pre-selected
+          3. Pass the selected value as "priority"   to @DataBoundConstructor when saved
+    -->
+    <f:entry title="Job Priority"
+             field="priority"
+             description="HIGH runs before MEDIUM, MEDIUM before LOW. Default: MEDIUM.">
+        <f:select />
+    </f:entry>
+
+    <f:entry title="Depends On (optional)"
+             field="dependsOn"
+             description="Comma-separated names of jobs that must complete successfully
+                          before this job runs. Example: build-backend, run-unit-tests">
+        <f:textbox default="" />
+    </f:entry>
+
+</j:jelly>

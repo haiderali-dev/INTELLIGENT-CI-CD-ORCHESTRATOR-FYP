@@ -1,0 +1,18 @@
+Legacy code started this job.  No cause information is available
+Running as SYSTEM
+[DynamicQueueOptimizer] Job started: cleanup-old-builds at 1781519074598 ms
+Building in workspace D:\FYP POC\CICD project\experiment\plugin-home\workspace\cleanup-old-builds
+[cleanup-old-builds] $ cmd /c call C:\Users\haide\AppData\Local\Temp\jenkins5732274263186244264.bat
+
+D:\FYP POC\CICD project\experiment\plugin-home\workspace\cleanup-old-builds>ping -n 7 127.0.0.1  1>nul 
+
+D:\FYP POC\CICD project\experiment\plugin-home\workspace\cleanup-old-builds>exit 0 
+
+╔══ Dynamic Queue Optimizer — Build Metrics ══════════════
+║  Job:      cleanup-old-builds
+║  Build:    #1
+║  Duration: 6.2 seconds
+║  Result:   SUCCESS
+╚══════════════════════════════════════════════════════════
+
+Finished: SUCCESS

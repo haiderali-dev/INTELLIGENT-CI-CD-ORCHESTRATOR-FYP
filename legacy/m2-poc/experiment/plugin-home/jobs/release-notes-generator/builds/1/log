@@ -1,0 +1,18 @@
+Legacy code started this job.  No cause information is available
+Running as SYSTEM
+[DynamicQueueOptimizer] Job started: release-notes-generator at 1781518917207 ms
+Building in workspace D:\FYP POC\CICD project\experiment\plugin-home\workspace\release-notes-generator
+[release-notes-generator] $ cmd /c call C:\Users\haide\AppData\Local\Temp\jenkins8617918947284819066.bat
+
+D:\FYP POC\CICD project\experiment\plugin-home\workspace\release-notes-generator>ping -n 5 127.0.0.1  1>nul 
+
+D:\FYP POC\CICD project\experiment\plugin-home\workspace\release-notes-generator>exit 0 
+
+╔══ Dynamic Queue Optimizer — Build Metrics ══════════════
+║  Job:      release-notes-generator
+║  Build:    #1
+║  Duration: 4.1 seconds
+║  Result:   SUCCESS
+╚══════════════════════════════════════════════════════════
+
+Finished: SUCCESS

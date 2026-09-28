@@ -1,0 +1,143 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<build>
+  <actions>
+    <hudson.model.CauseAction>
+      <causeBag class="linked-hash-map">
+        <entry>
+          <hudson.model.Cause_-LegacyCodeCause>
+            <stackTrace>
+              <trace>hudson.model.Cause$LegacyCodeCause.&lt;init&gt;(Cause.java:138)</trace>
+              <trace>hudson.model.AbstractProject.scheduleBuild2(AbstractProject.java:843)</trace>
+              <trace>hudson.model.AbstractProject$scheduleBuild2$0.call(Unknown Source)</trace>
+              <trace>Script1$_run_closure1.doCall(Script1.groovy:11)</trace>
+              <trace>java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)</trace>
+              <trace>java.base/java.lang.reflect.Method.invoke(Method.java:580)</trace>
+              <trace>org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:98)</trace>
+              <trace>groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:325)</trace>
+              <trace>org.codehaus.groovy.runtime.metaclass.ClosureMetaClass.invokeMethod(ClosureMetaClass.java:264)</trace>
+              <trace>groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1034)</trace>
+              <trace>groovy.lang.Closure.call(Closure.java:420)</trace>
+              <trace>groovy.lang.Closure.call(Closure.java:436)</trace>
+              <trace>org.codehaus.groovy.runtime.DefaultGroovyMethods.each(DefaultGroovyMethods.java:2125)</trace>
+              <trace>org.codehaus.groovy.runtime.DefaultGroovyMethods.each(DefaultGroovyMethods.java:2110)</trace>
+              <trace>org.codehaus.groovy.runtime.DefaultGroovyMethods.each(DefaultGroovyMethods.java:2151)</trace>
+              <trace>org.codehaus.groovy.runtime.dgm$163.invoke(Unknown Source)</trace>
+              <trace>org.codehaus.groovy.runtime.callsite.PojoMetaMethodSite$PojoMetaMethodSiteNoUnwrapNoCoerce.invoke(PojoMetaMethodSite.java:274)</trace>
+              <trace>org.codehaus.groovy.runtime.callsite.PojoMetaMethodSite.call(PojoMetaMethodSite.java:56)</trace>
+              <trace>org.codehaus.groovy.runtime.callsite.CallSiteArray.defaultCall(CallSiteArray.java:47)</trace>
+              <trace>org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:116)</trace>
+              <trace>org.codehaus.groovy.runtime.callsite.AbstractCallSite.call(AbstractCallSite.java:128)</trace>
+              <trace>Script1.run(Script1.groovy:9)</trace>
+              <trace>groovy.lang.GroovyShell.evaluate(GroovyShell.java:574)</trace>
+              <trace>groovy.lang.GroovyShell.evaluate(GroovyShell.java:612)</trace>
+              <trace>groovy.lang.GroovyShell.evaluate(GroovyShell.java:583)</trace>
+              <trace>hudson.util.RemotingDiagnostics$Script.call(RemotingDiagnostics.java:161)</trace>
+              <trace>hudson.util.RemotingDiagnostics$Script.call(RemotingDiagnostics.java:130)</trace>
+              <trace>hudson.remoting.LocalChannel.call(LocalChannel.java:46)</trace>
+              <trace>hudson.util.RemotingDiagnostics.executeGroovy(RemotingDiagnostics.java:125)</trace>
+              <trace>jenkins.model.Jenkins._doScript(Jenkins.java:4968)</trace>
+              <trace>jenkins.model.Jenkins.doScriptText(Jenkins.java:4933)</trace>
+              <trace>java.base/java.lang.invoke.MethodHandle.invokeWithArguments(MethodHandle.java:733)</trace>
+              <trace>org.kohsuke.stapler.Function$MethodFunction.invoke(Function.java:484)</trace>
+              <trace>org.kohsuke.stapler.Function$InstanceFunction.invoke(Function.java:497)</trace>
+              <trace>org.kohsuke.stapler.Function.bindAndInvoke(Function.java:218)</trace>
+              <trace>org.kohsuke.stapler.Function.bindAndInvokeAndServeResponse(Function.java:140)</trace>
+              <trace>org.kohsuke.stapler.MetaClass$12.doDispatch(MetaClass.java:686)</trace>
+              <trace>org.kohsuke.stapler.NameBasedDispatcher.dispatch(NameBasedDispatcher.java:61)</trace>
+              <trace>org.kohsuke.stapler.Stapler.tryInvoke(Stapler.java:800)</trace>
+              <trace>org.kohsuke.stapler.Stapler.invoke(Stapler.java:938)</trace>
+              <trace>org.kohsuke.stapler.Stapler.invoke(Stapler.java:721)</trace>
+              <trace>org.kohsuke.stapler.Stapler.service(Stapler.java:253)</trace>
+              <trace>Jenkins Main ClassLoader//jakarta.servlet.http.HttpServlet.service(HttpServlet.java:587)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.servlet.ServletHolder.handle(ServletHolder.java:765)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.servlet.ServletHandler$ChainEnd.doFilter(ServletHandler.java:1668)</trace>
+              <trace>hudson.util.PluginServletFilter$1.doFilter(PluginServletFilter.java:204)</trace>
+              <trace>jenkins.install.SetupWizard$1.doFilter(SetupWizard.java:787)</trace>
+              <trace>hudson.util.PluginServletFilter$1.doFilter(PluginServletFilter.java:201)</trace>
+              <trace>jenkins.util.HttpServletFilter$1.doFilter(HttpServletFilter.java:77)</trace>
+              <trace>hudson.util.PluginServletFilter$1.doFilter(PluginServletFilter.java:201)</trace>
+              <trace>hudson.util.PluginServletFilter.doFilter(PluginServletFilter.java:207)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.servlet.FilterHolder.doFilter(FilterHolder.java:202)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.servlet.ServletHandler$Chain.doFilter(ServletHandler.java:1638)</trace>
+              <trace>jenkins.ErrorAttributeFilter.doFilter(ErrorAttributeFilter.java:29)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.servlet.FilterHolder.doFilter(FilterHolder.java:202)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.servlet.ServletHandler$Chain.doFilter(ServletHandler.java:1638)</trace>
+              <trace>hudson.security.csrf.CrumbFilter.doFilter(CrumbFilter.java:154)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.servlet.FilterHolder.doFilter(FilterHolder.java:202)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.servlet.ServletHandler$Chain.doFilter(ServletHandler.java:1638)</trace>
+              <trace>hudson.security.ChainedServletFilter2$1.doFilter(ChainedServletFilter2.java:94)</trace>
+              <trace>hudson.security.ChainedServletFilter2.doFilter(ChainedServletFilter2.java:111)</trace>
+              <trace>hudson.security.HudsonFilter.doFilter(HudsonFilter.java:173)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.servlet.FilterHolder.doFilter(FilterHolder.java:202)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.servlet.ServletHandler$Chain.doFilter(ServletHandler.java:1638)</trace>
+              <trace>org.kohsuke.stapler.UncaughtExceptionFilter.doFilter(UncaughtExceptionFilter.java:26)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.servlet.FilterHolder.doFilter(FilterHolder.java:202)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.servlet.ServletHandler$Chain.doFilter(ServletHandler.java:1638)</trace>
+              <trace>hudson.util.CharacterEncodingFilter.doFilter(CharacterEncodingFilter.java:86)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.servlet.FilterHolder.doFilter(FilterHolder.java:202)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.servlet.ServletHandler$Chain.doFilter(ServletHandler.java:1638)</trace>
+              <trace>org.kohsuke.stapler.DiagnosticThreadNameFilter.doFilter(DiagnosticThreadNameFilter.java:31)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.servlet.FilterHolder.doFilter(FilterHolder.java:202)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.servlet.ServletHandler$Chain.doFilter(ServletHandler.java:1638)</trace>
+              <trace>jenkins.security.SuspiciousRequestFilter.doFilter(SuspiciousRequestFilter.java:38)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.servlet.FilterHolder.doFilter(FilterHolder.java:202)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.servlet.ServletHandler$Chain.doFilter(ServletHandler.java:1638)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.servlet.ServletHandler.doHandle(ServletHandler.java:526)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.nested.ScopedHandler.handle(ScopedHandler.java:127)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.security.SecurityHandler.handle(SecurityHandler.java:574)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.nested.HandlerWrapper.handle(HandlerWrapper.java:124)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.nested.ScopedHandler.nextHandle(ScopedHandler.java:197)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.nested.SessionHandler.doHandle(SessionHandler.java:612)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.nested.ScopedHandler.nextHandle(ScopedHandler.java:195)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.nested.ContextHandler.doHandle(ContextHandler.java:1037)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.nested.ScopedHandler.nextScope(ScopedHandler.java:164)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.servlet.ServletHandler.doScope(ServletHandler.java:483)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.nested.ScopedHandler.nextScope(ScopedHandler.java:162)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.nested.SessionHandler.doScope(SessionHandler.java:589)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.nested.ScopedHandler.nextScope(ScopedHandler.java:162)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.nested.ContextHandler.doScope(ContextHandler.java:958)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.nested.ScopedHandler.handle(ScopedHandler.java:125)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.nested.ContextHandler.handle(ContextHandler.java:1696)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.nested.HttpChannel$RequestDispatchable.dispatch(HttpChannel.java:1564)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.nested.HttpChannel.dispatch(HttpChannel.java:723)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.nested.HttpChannel.handle(HttpChannel.java:511)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.ee9.nested.ContextHandler$CoreContextHandler$CoreToNestedHandler.handle(ContextHandler.java:2873)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.server.handler.ContextHandler.handle(ContextHandler.java:1060)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.server.handler.gzip.GzipHandler.handle(GzipHandler.java:611)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.server.Server.handle(Server.java:182)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.server.internal.HttpChannelState$HandlerInvoker.run(HttpChannelState.java:662)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.server.internal.HttpConnection.onFillable(HttpConnection.java:418)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.io.AbstractConnection$ReadCallback.succeeded(AbstractConnection.java:322)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.io.FillInterest.fillable(FillInterest.java:99)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.io.SelectableChannelEndPoint$1.run(SelectableChannelEndPoint.java:53)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.util.thread.strategy.AdaptiveExecutionStrategy.runTask(AdaptiveExecutionStrategy.java:480)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.util.thread.strategy.AdaptiveExecutionStrategy.consumeTask(AdaptiveExecutionStrategy.java:443)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.util.thread.strategy.AdaptiveExecutionStrategy.tryProduce(AdaptiveExecutionStrategy.java:293)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.util.thread.strategy.AdaptiveExecutionStrategy.run(AdaptiveExecutionStrategy.java:201)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.util.thread.ReservedThreadExecutor$ReservedThread.run(ReservedThreadExecutor.java:311)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.util.thread.QueuedThreadPool.runJob(QueuedThreadPool.java:979)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.util.thread.QueuedThreadPool$Runner.doRunJob(QueuedThreadPool.java:1209)</trace>
+              <trace>Jenkins Main ClassLoader//org.eclipse.jetty.util.thread.QueuedThreadPool$Runner.run(QueuedThreadPool.java:1164)</trace>
+              <trace>java.base/java.lang.Thread.run(Thread.java:1583)</trace>
+            </stackTrace>
+          </hudson.model.Cause_-LegacyCodeCause>
+          <int>1</int>
+        </entry>
+      </causeBag>
+    </hudson.model.CauseAction>
+  </actions>
+  <queueId>177</queueId>
+  <timestamp>1781518886465</timestamp>
+  <startTime>1781518886467</startTime>
+  <result>SUCCESS</result>
+  <duration>8211</duration>
+  <charset>UTF-8</charset>
+  <keepLog>false</keepLog>
+  <builtOn></builtOn>
+  <workspace>D:\FYP POC\CICD project\experiment\plugin-home\workspace\deploy-catalog-service</workspace>
+  <hudsonVersion>2.479.3</hudsonVersion>
+  <scm class="hudson.scm.NullChangeLogParser"/>
+  <culprits class="java.util.Collections$UnmodifiableSet">
+    <c class="sorted-set"/>
+  </culprits>
+</build>

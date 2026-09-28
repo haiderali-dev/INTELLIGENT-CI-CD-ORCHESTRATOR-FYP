@@ -1,0 +1,1649 @@
+[
+  {
+    "t": 8.98,
+    "queueLen": 28,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "smoke-test-production",
+        "score": 87.4344186604859,
+        "estimatedSeconds": 7.275235294117648,
+        "hasDependency": true
+      },
+      {
+        "jobName": "deploy-user-service",
+        "score": 86.24022790023363,
+        "estimatedSeconds": 8.289529411764706,
+        "hasDependency": true
+      },
+      {
+        "jobName": "deploy-auth-service",
+        "score": 86.23406406692953,
+        "estimatedSeconds": 8.294764705882352,
+        "hasDependency": true
+      },
+      {
+        "jobName": "deploy-order-service",
+        "score": 86.22727692463964,
+        "estimatedSeconds": 8.300529411764705,
+        "hasDependency": true
+      },
+      {
+        "jobName": "deploy-notification-service",
+        "score": 86.2257532804521,
+        "estimatedSeconds": 8.301823529411765,
+        "hasDependency": true
+      },
+      {
+        "jobName": "deploy-catalog-service",
+        "score": 86.21813505951447,
+        "estimatedSeconds": 8.308294117647058,
+        "hasDependency": true
+      },
+      {
+        "jobName": "deploy-payment-service",
+        "score": 86.1728412732125,
+        "estimatedSeconds": 8.346764705882352,
+        "hasDependency": true
+      },
+      {
+        "jobName": "deploy-frontend-app",
+        "score": 83.87463178598802,
+        "estimatedSeconds": 10.298764705882354,
+        "hasDependency": true
+      },
+      {
+        "jobName": "integration-test-suite",
+        "score": 74.36723056891951,
+        "estimatedSeconds": 18.373941176470588,
+        "hasDependency": true
+      },
+      {
+        "jobName": "release-notes-generator",
+        "score": 65.94170906706805,
+        "estimatedSeconds": 4.296294117647059,
+        "hasDependency": true
+      },
+      {
+        "jobName": "test-payment-service",
+        "score": 56.53535316225425,
+        "estimatedSeconds": 12.28564705882353,
+        "hasDependency": true
+      },
+      {
+        "jobName": "test-order-service",
+        "score": 56.47260672434968,
+        "estimatedSeconds": 12.338941176470588,
+        "hasDependency": true
+      },
+      {
+        "jobName": "test-user-service",
+        "score": 56.47205267191785,
+        "estimatedSeconds": 12.339411764705883,
+        "hasDependency": true
+      },
+      {
+        "jobName": "test-catalog-service",
+        "score": 56.47052902773032,
+        "estimatedSeconds": 12.34070588235294,
+        "hasDependency": true
+      },
+      {
+        "jobName": "test-auth-service",
+        "score": 56.445250385528155,
+        "estimatedSeconds": 12.362176470588235,
+        "hasDependency": true
+      },
+      {
+        "jobName": "test-notification-service",
+        "score": 56.348083440296236,
+        "estimatedSeconds": 12.44470588235294,
+        "hasDependency": true
+      },
+      {
+        "jobName": "build-order-service",
+        "score": 52.89000674097125,
+        "estimatedSeconds": 10.285705882352943,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-catalog-service",
+        "score": 52.86943754443962,
+        "estimatedSeconds": 10.303176470588237,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-user-service",
+        "score": 52.85738690404736,
+        "estimatedSeconds": 10.313411764705881,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-payment-service",
+        "score": 52.84194269251013,
+        "estimatedSeconds": 10.326529411764707,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-notification-service",
+        "score": 52.84152715318626,
+        "estimatedSeconds": 10.326882352941176,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-auth-service",
+        "score": 52.78930771148643,
+        "estimatedSeconds": 10.371235294117648,
+        "hasDependency": false
+      },
+      {
+        "jobName": "test-frontend-app",
+        "score": 51.70179974698273,
+        "estimatedSeconds": 16.39105882352941,
+        "hasDependency": true
+      },
+      {
+        "jobName": "build-frontend-app",
+        "score": 48.1130359303002,
+        "estimatedSeconds": 14.343058823529413,
+        "hasDependency": false
+      },
+      {
+        "jobName": "lint-user-service",
+        "score": 38.8010536230412,
+        "estimatedSeconds": 5.2651176470588235,
+        "hasDependency": false
+      },
+      {
+        "jobName": "lint-payment-service",
+        "score": 38.77660605948677,
+        "estimatedSeconds": 5.285882352941177,
+        "hasDependency": false
+      },
+      {
+        "jobName": "cleanup-old-builds",
+        "score": 37.617320602439676,
+        "estimatedSeconds": 6.270529411764705,
+        "hasDependency": false
+      },
+      {
+        "jobName": "generate-api-docs",
+        "score": 20.969568670181825,
+        "estimatedSeconds": 20.41041176470588,
+        "hasDependency": false
+      },
+      {
+        "jobName": "security-scan-dependencies",
+        "score": 15.0,
+        "estimatedSeconds": 25.480705882352943,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 14.14,
+    "queueLen": 27,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "deploy-user-service",
+        "score": 86.24022790023363,
+        "estimatedSeconds": 8.289529411764706,
+        "hasDependency": true
+      },
+      {
+        "jobName": "deploy-auth-service",
+        "score": 86.23406406692953,
+        "estimatedSeconds": 8.294764705882352,
+        "hasDependency": true
+      },
+      {
+        "jobName": "deploy-order-service",
+        "score": 86.22727692463964,
+        "estimatedSeconds": 8.300529411764705,
+        "hasDependency": true
+      },
+      {
+        "jobName": "deploy-notification-service",
+        "score": 86.2257532804521,
+        "estimatedSeconds": 8.301823529411765,
+        "hasDependency": true
+      },
+      {
+        "jobName": "deploy-catalog-service",
+        "score": 86.21813505951447,
+        "estimatedSeconds": 8.308294117647058,
+        "hasDependency": true
+      },
+      {
+        "jobName": "deploy-payment-service",
+        "score": 86.1728412732125,
+        "estimatedSeconds": 8.346764705882352,
+        "hasDependency": true
+      },
+      {
+        "jobName": "deploy-frontend-app",
+        "score": 83.87463178598802,
+        "estimatedSeconds": 10.298764705882354,
+        "hasDependency": true
+      },
+      {
+        "jobName": "integration-test-suite",
+        "score": 74.36723056891951,
+        "estimatedSeconds": 18.373941176470588,
+        "hasDependency": true
+      },
+      {
+        "jobName": "release-notes-generator",
+        "score": 65.94170906706805,
+        "estimatedSeconds": 4.296294117647059,
+        "hasDependency": true
+      },
+      {
+        "jobName": "test-payment-service",
+        "score": 56.53535316225425,
+        "estimatedSeconds": 12.28564705882353,
+        "hasDependency": true
+      },
+      {
+        "jobName": "test-order-service",
+        "score": 56.47260672434968,
+        "estimatedSeconds": 12.338941176470588,
+        "hasDependency": true
+      },
+      {
+        "jobName": "test-user-service",
+        "score": 56.47205267191785,
+        "estimatedSeconds": 12.339411764705883,
+        "hasDependency": true
+      },
+      {
+        "jobName": "test-catalog-service",
+        "score": 56.47052902773032,
+        "estimatedSeconds": 12.34070588235294,
+        "hasDependency": true
+      },
+      {
+        "jobName": "test-auth-service",
+        "score": 56.445250385528155,
+        "estimatedSeconds": 12.362176470588235,
+        "hasDependency": true
+      },
+      {
+        "jobName": "test-notification-service",
+        "score": 56.348083440296236,
+        "estimatedSeconds": 12.44470588235294,
+        "hasDependency": true
+      },
+      {
+        "jobName": "build-order-service",
+        "score": 52.89000674097125,
+        "estimatedSeconds": 10.285705882352943,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-catalog-service",
+        "score": 52.86943754443962,
+        "estimatedSeconds": 10.303176470588237,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-user-service",
+        "score": 52.85738690404736,
+        "estimatedSeconds": 10.313411764705881,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-payment-service",
+        "score": 52.84194269251013,
+        "estimatedSeconds": 10.326529411764707,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-notification-service",
+        "score": 52.84152715318626,
+        "estimatedSeconds": 10.326882352941176,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-auth-service",
+        "score": 52.78930771148643,
+        "estimatedSeconds": 10.371235294117648,
+        "hasDependency": false
+      },
+      {
+        "jobName": "test-frontend-app",
+        "score": 51.70179974698273,
+        "estimatedSeconds": 16.39105882352941,
+        "hasDependency": true
+      },
+      {
+        "jobName": "build-frontend-app",
+        "score": 48.1130359303002,
+        "estimatedSeconds": 14.343058823529413,
+        "hasDependency": false
+      },
+      {
+        "jobName": "lint-user-service",
+        "score": 38.8010536230412,
+        "estimatedSeconds": 5.2651176470588235,
+        "hasDependency": false
+      },
+      {
+        "jobName": "lint-payment-service",
+        "score": 38.77660605948677,
+        "estimatedSeconds": 5.285882352941177,
+        "hasDependency": false
+      },
+      {
+        "jobName": "cleanup-old-builds",
+        "score": 37.617320602439676,
+        "estimatedSeconds": 6.270529411764705,
+        "hasDependency": false
+      },
+      {
+        "jobName": "generate-api-docs",
+        "score": 20.969568670181825,
+        "estimatedSeconds": 20.41041176470588,
+        "hasDependency": false
+      },
+      {
+        "jobName": "security-scan-dependencies",
+        "score": 15.0,
+        "estimatedSeconds": 25.480705882352943,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 19.27,
+    "queueLen": 27,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "deploy-user-service",
+        "score": 86.24022790023363,
+        "estimatedSeconds": 8.289529411764706,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 24.36,
+    "queueLen": 26,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "deploy-auth-service",
+        "score": 86.23406406692953,
+        "estimatedSeconds": 8.294764705882352,
+        "hasDependency": true
+      },
+      {
+        "jobName": "deploy-order-service",
+        "score": 86.22727692463964,
+        "estimatedSeconds": 8.300529411764705,
+        "hasDependency": true
+      },
+      {
+        "jobName": "deploy-notification-service",
+        "score": 86.2257532804521,
+        "estimatedSeconds": 8.301823529411765,
+        "hasDependency": true
+      },
+      {
+        "jobName": "deploy-catalog-service",
+        "score": 86.21813505951447,
+        "estimatedSeconds": 8.308294117647058,
+        "hasDependency": true
+      },
+      {
+        "jobName": "deploy-payment-service",
+        "score": 86.1728412732125,
+        "estimatedSeconds": 8.346764705882352,
+        "hasDependency": true
+      },
+      {
+        "jobName": "deploy-frontend-app",
+        "score": 83.87463178598802,
+        "estimatedSeconds": 10.298764705882354,
+        "hasDependency": true
+      },
+      {
+        "jobName": "integration-test-suite",
+        "score": 74.36723056891951,
+        "estimatedSeconds": 18.373941176470588,
+        "hasDependency": true
+      },
+      {
+        "jobName": "release-notes-generator",
+        "score": 65.94170906706805,
+        "estimatedSeconds": 4.296294117647059,
+        "hasDependency": true
+      },
+      {
+        "jobName": "test-payment-service",
+        "score": 56.53535316225425,
+        "estimatedSeconds": 12.28564705882353,
+        "hasDependency": true
+      },
+      {
+        "jobName": "test-order-service",
+        "score": 56.47260672434968,
+        "estimatedSeconds": 12.338941176470588,
+        "hasDependency": true
+      },
+      {
+        "jobName": "test-user-service",
+        "score": 56.47205267191785,
+        "estimatedSeconds": 12.339411764705883,
+        "hasDependency": true
+      },
+      {
+        "jobName": "test-catalog-service",
+        "score": 56.47052902773032,
+        "estimatedSeconds": 12.34070588235294,
+        "hasDependency": true
+      },
+      {
+        "jobName": "test-auth-service",
+        "score": 56.445250385528155,
+        "estimatedSeconds": 12.362176470588235,
+        "hasDependency": true
+      },
+      {
+        "jobName": "test-notification-service",
+        "score": 56.348083440296236,
+        "estimatedSeconds": 12.44470588235294,
+        "hasDependency": true
+      },
+      {
+        "jobName": "build-order-service",
+        "score": 52.89000674097125,
+        "estimatedSeconds": 10.285705882352943,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-catalog-service",
+        "score": 52.86943754443962,
+        "estimatedSeconds": 10.303176470588237,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-user-service",
+        "score": 52.85738690404736,
+        "estimatedSeconds": 10.313411764705881,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-payment-service",
+        "score": 52.84194269251013,
+        "estimatedSeconds": 10.326529411764707,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-notification-service",
+        "score": 52.84152715318626,
+        "estimatedSeconds": 10.326882352941176,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-auth-service",
+        "score": 52.78930771148643,
+        "estimatedSeconds": 10.371235294117648,
+        "hasDependency": false
+      },
+      {
+        "jobName": "test-frontend-app",
+        "score": 51.70179974698273,
+        "estimatedSeconds": 16.39105882352941,
+        "hasDependency": true
+      },
+      {
+        "jobName": "build-frontend-app",
+        "score": 48.1130359303002,
+        "estimatedSeconds": 14.343058823529413,
+        "hasDependency": false
+      },
+      {
+        "jobName": "lint-user-service",
+        "score": 38.8010536230412,
+        "estimatedSeconds": 5.2651176470588235,
+        "hasDependency": false
+      },
+      {
+        "jobName": "lint-payment-service",
+        "score": 38.77660605948677,
+        "estimatedSeconds": 5.285882352941177,
+        "hasDependency": false
+      },
+      {
+        "jobName": "cleanup-old-builds",
+        "score": 37.617320602439676,
+        "estimatedSeconds": 6.270529411764705,
+        "hasDependency": false
+      },
+      {
+        "jobName": "generate-api-docs",
+        "score": 20.969568670181825,
+        "estimatedSeconds": 20.41041176470588,
+        "hasDependency": false
+      },
+      {
+        "jobName": "security-scan-dependencies",
+        "score": 15.0,
+        "estimatedSeconds": 25.480705882352943,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 29.46,
+    "queueLen": 26,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "deploy-auth-service",
+        "score": 86.23406406692953,
+        "estimatedSeconds": 8.294764705882352,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 34.55,
+    "queueLen": 25,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "deploy-order-service",
+        "score": 86.22727692463964,
+        "estimatedSeconds": 8.300529411764705,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 39.66,
+    "queueLen": 24,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "deploy-notification-service",
+        "score": 86.2257532804521,
+        "estimatedSeconds": 8.301823529411765,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 44.74,
+    "queueLen": 24,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "deploy-notification-service",
+        "score": 86.2257532804521,
+        "estimatedSeconds": 8.301823529411765,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 49.84,
+    "queueLen": 23,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "deploy-catalog-service",
+        "score": 86.21813505951447,
+        "estimatedSeconds": 8.308294117647058,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 54.94,
+    "queueLen": 23,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "deploy-catalog-service",
+        "score": 86.21813505951447,
+        "estimatedSeconds": 8.308294117647058,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 60.03,
+    "queueLen": 22,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "deploy-payment-service",
+        "score": 86.1728412732125,
+        "estimatedSeconds": 8.346764705882352,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 65.11,
+    "queueLen": 21,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "deploy-frontend-app",
+        "score": 83.87463178598802,
+        "estimatedSeconds": 10.298764705882354,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 70.21,
+    "queueLen": 21,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "deploy-frontend-app",
+        "score": 83.87463178598802,
+        "estimatedSeconds": 10.298764705882354,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 75.31,
+    "queueLen": 20,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "integration-test-suite",
+        "score": 74.36723056891951,
+        "estimatedSeconds": 18.373941176470588,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 80.39,
+    "queueLen": 20,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "integration-test-suite",
+        "score": 74.36723056891951,
+        "estimatedSeconds": 18.373941176470588,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 85.52,
+    "queueLen": 20,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "integration-test-suite",
+        "score": 74.36723056891951,
+        "estimatedSeconds": 18.373941176470588,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 90.64,
+    "queueLen": 20,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "integration-test-suite",
+        "score": 74.36723056891951,
+        "estimatedSeconds": 18.373941176470588,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 95.98,
+    "queueLen": 19,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "release-notes-generator",
+        "score": 65.94170906706805,
+        "estimatedSeconds": 4.296294117647059,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 101.06,
+    "queueLen": 18,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "test-payment-service",
+        "score": 56.53535316225425,
+        "estimatedSeconds": 12.28564705882353,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 106.17,
+    "queueLen": 18,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "test-payment-service",
+        "score": 56.53535316225425,
+        "estimatedSeconds": 12.28564705882353,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 111.28,
+    "queueLen": 17,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "test-order-service",
+        "score": 56.47260672434968,
+        "estimatedSeconds": 12.338941176470588,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 116.39,
+    "queueLen": 17,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "test-order-service",
+        "score": 56.47260672434968,
+        "estimatedSeconds": 12.338941176470588,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 121.5,
+    "queueLen": 17,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "test-order-service",
+        "score": 56.47260672434968,
+        "estimatedSeconds": 12.338941176470588,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 126.81,
+    "queueLen": 16,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "test-user-service",
+        "score": 56.47205267191785,
+        "estimatedSeconds": 12.339411764705883,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 131.92,
+    "queueLen": 16,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "test-user-service",
+        "score": 56.47205267191785,
+        "estimatedSeconds": 12.339411764705883,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 137.0,
+    "queueLen": 15,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "test-catalog-service",
+        "score": 56.47052902773032,
+        "estimatedSeconds": 12.34070588235294,
+        "hasDependency": true
+      },
+      {
+        "jobName": "test-auth-service",
+        "score": 56.445250385528155,
+        "estimatedSeconds": 12.362176470588235,
+        "hasDependency": true
+      },
+      {
+        "jobName": "test-notification-service",
+        "score": 56.348083440296236,
+        "estimatedSeconds": 12.44470588235294,
+        "hasDependency": true
+      },
+      {
+        "jobName": "build-order-service",
+        "score": 52.89000674097125,
+        "estimatedSeconds": 10.285705882352943,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-catalog-service",
+        "score": 52.86943754443962,
+        "estimatedSeconds": 10.303176470588237,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-user-service",
+        "score": 52.85738690404736,
+        "estimatedSeconds": 10.313411764705881,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-payment-service",
+        "score": 52.84194269251013,
+        "estimatedSeconds": 10.326529411764707,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-notification-service",
+        "score": 52.84152715318626,
+        "estimatedSeconds": 10.326882352941176,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-auth-service",
+        "score": 52.78930771148643,
+        "estimatedSeconds": 10.371235294117648,
+        "hasDependency": false
+      },
+      {
+        "jobName": "test-frontend-app",
+        "score": 51.70179974698273,
+        "estimatedSeconds": 16.39105882352941,
+        "hasDependency": true
+      },
+      {
+        "jobName": "build-frontend-app",
+        "score": 48.1130359303002,
+        "estimatedSeconds": 14.343058823529413,
+        "hasDependency": false
+      },
+      {
+        "jobName": "lint-user-service",
+        "score": 38.8010536230412,
+        "estimatedSeconds": 5.2651176470588235,
+        "hasDependency": false
+      },
+      {
+        "jobName": "lint-payment-service",
+        "score": 38.77660605948677,
+        "estimatedSeconds": 5.285882352941177,
+        "hasDependency": false
+      },
+      {
+        "jobName": "cleanup-old-builds",
+        "score": 37.617320602439676,
+        "estimatedSeconds": 6.270529411764705,
+        "hasDependency": false
+      },
+      {
+        "jobName": "generate-api-docs",
+        "score": 20.969568670181825,
+        "estimatedSeconds": 20.41041176470588,
+        "hasDependency": false
+      },
+      {
+        "jobName": "security-scan-dependencies",
+        "score": 15.0,
+        "estimatedSeconds": 25.480705882352943,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 142.1,
+    "queueLen": 15,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "test-catalog-service",
+        "score": 56.47052902773032,
+        "estimatedSeconds": 12.34070588235294,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 147.18,
+    "queueLen": 15,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "test-catalog-service",
+        "score": 56.47052902773032,
+        "estimatedSeconds": 12.34070588235294,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 152.28,
+    "queueLen": 14,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "test-auth-service",
+        "score": 56.445250385528155,
+        "estimatedSeconds": 12.362176470588235,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 157.36,
+    "queueLen": 14,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "test-auth-service",
+        "score": 56.445250385528155,
+        "estimatedSeconds": 12.362176470588235,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 162.44,
+    "queueLen": 13,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "test-notification-service",
+        "score": 56.348083440296236,
+        "estimatedSeconds": 12.44470588235294,
+        "hasDependency": true
+      },
+      {
+        "jobName": "build-order-service",
+        "score": 52.89000674097125,
+        "estimatedSeconds": 10.285705882352943,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-catalog-service",
+        "score": 52.86943754443962,
+        "estimatedSeconds": 10.303176470588237,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-user-service",
+        "score": 52.85738690404736,
+        "estimatedSeconds": 10.313411764705881,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-payment-service",
+        "score": 52.84194269251013,
+        "estimatedSeconds": 10.326529411764707,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-notification-service",
+        "score": 52.84152715318626,
+        "estimatedSeconds": 10.326882352941176,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-auth-service",
+        "score": 52.78930771148643,
+        "estimatedSeconds": 10.371235294117648,
+        "hasDependency": false
+      },
+      {
+        "jobName": "test-frontend-app",
+        "score": 51.70179974698273,
+        "estimatedSeconds": 16.39105882352941,
+        "hasDependency": true
+      },
+      {
+        "jobName": "build-frontend-app",
+        "score": 48.1130359303002,
+        "estimatedSeconds": 14.343058823529413,
+        "hasDependency": false
+      },
+      {
+        "jobName": "lint-user-service",
+        "score": 38.8010536230412,
+        "estimatedSeconds": 5.2651176470588235,
+        "hasDependency": false
+      },
+      {
+        "jobName": "lint-payment-service",
+        "score": 38.77660605948677,
+        "estimatedSeconds": 5.285882352941177,
+        "hasDependency": false
+      },
+      {
+        "jobName": "cleanup-old-builds",
+        "score": 37.617320602439676,
+        "estimatedSeconds": 6.270529411764705,
+        "hasDependency": false
+      },
+      {
+        "jobName": "generate-api-docs",
+        "score": 20.969568670181825,
+        "estimatedSeconds": 20.41041176470588,
+        "hasDependency": false
+      },
+      {
+        "jobName": "security-scan-dependencies",
+        "score": 15.0,
+        "estimatedSeconds": 25.480705882352943,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 167.51,
+    "queueLen": 13,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "test-notification-service",
+        "score": 56.348083440296236,
+        "estimatedSeconds": 12.44470588235294,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 172.58,
+    "queueLen": 13,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "build-order-service",
+        "score": 52.89000674097125,
+        "estimatedSeconds": 10.285705882352943,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-catalog-service",
+        "score": 52.86943754443962,
+        "estimatedSeconds": 10.303176470588237,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-user-service",
+        "score": 52.85738690404736,
+        "estimatedSeconds": 10.313411764705881,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-payment-service",
+        "score": 52.84194269251013,
+        "estimatedSeconds": 10.326529411764707,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-notification-service",
+        "score": 52.84152715318626,
+        "estimatedSeconds": 10.326882352941176,
+        "hasDependency": false
+      },
+      {
+        "jobName": "build-auth-service",
+        "score": 52.78930771148643,
+        "estimatedSeconds": 10.371235294117648,
+        "hasDependency": false
+      },
+      {
+        "jobName": "test-frontend-app",
+        "score": 51.70179974698273,
+        "estimatedSeconds": 16.39105882352941,
+        "hasDependency": true
+      },
+      {
+        "jobName": "build-frontend-app",
+        "score": 48.1130359303002,
+        "estimatedSeconds": 14.343058823529413,
+        "hasDependency": false
+      },
+      {
+        "jobName": "lint-user-service",
+        "score": 38.8010536230412,
+        "estimatedSeconds": 5.2651176470588235,
+        "hasDependency": false
+      },
+      {
+        "jobName": "lint-payment-service",
+        "score": 38.77660605948677,
+        "estimatedSeconds": 5.285882352941177,
+        "hasDependency": false
+      },
+      {
+        "jobName": "cleanup-old-builds",
+        "score": 37.617320602439676,
+        "estimatedSeconds": 6.270529411764705,
+        "hasDependency": false
+      },
+      {
+        "jobName": "generate-api-docs",
+        "score": 20.969568670181825,
+        "estimatedSeconds": 20.41041176470588,
+        "hasDependency": false
+      },
+      {
+        "jobName": "security-scan-dependencies",
+        "score": 15.0,
+        "estimatedSeconds": 25.480705882352943,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 177.67,
+    "queueLen": 12,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "build-order-service",
+        "score": 52.89000674097125,
+        "estimatedSeconds": 10.285705882352943,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 182.77,
+    "queueLen": 12,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "build-order-service",
+        "score": 52.89000674097125,
+        "estimatedSeconds": 10.285705882352943,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 187.86,
+    "queueLen": 11,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "build-catalog-service",
+        "score": 52.86943754443962,
+        "estimatedSeconds": 10.303176470588237,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 192.94,
+    "queueLen": 11,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "build-catalog-service",
+        "score": 52.86943754443962,
+        "estimatedSeconds": 10.303176470588237,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 198.02,
+    "queueLen": 10,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "build-user-service",
+        "score": 52.85738690404736,
+        "estimatedSeconds": 10.313411764705881,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 203.1,
+    "queueLen": 10,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "build-user-service",
+        "score": 52.85738690404736,
+        "estimatedSeconds": 10.313411764705881,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 208.17,
+    "queueLen": 9,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "build-payment-service",
+        "score": 52.84194269251013,
+        "estimatedSeconds": 10.326529411764707,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 213.24,
+    "queueLen": 9,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "build-payment-service",
+        "score": 52.84194269251013,
+        "estimatedSeconds": 10.326529411764707,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 218.31,
+    "queueLen": 8,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "build-notification-service",
+        "score": 52.84152715318626,
+        "estimatedSeconds": 10.326882352941176,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 223.38,
+    "queueLen": 8,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "build-notification-service",
+        "score": 52.84152715318626,
+        "estimatedSeconds": 10.326882352941176,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 228.45,
+    "queueLen": 7,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "build-auth-service",
+        "score": 52.78930771148643,
+        "estimatedSeconds": 10.371235294117648,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 233.55,
+    "queueLen": 7,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "build-auth-service",
+        "score": 52.78930771148643,
+        "estimatedSeconds": 10.371235294117648,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 238.62,
+    "queueLen": 6,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "test-frontend-app",
+        "score": 51.70179974698273,
+        "estimatedSeconds": 16.39105882352941,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 243.69,
+    "queueLen": 6,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "test-frontend-app",
+        "score": 51.70179974698273,
+        "estimatedSeconds": 16.39105882352941,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 248.77,
+    "queueLen": 6,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "test-frontend-app",
+        "score": 51.70179974698273,
+        "estimatedSeconds": 16.39105882352941,
+        "hasDependency": true
+      }
+    ]
+  },
+  {
+    "t": 253.85,
+    "queueLen": 5,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "build-frontend-app",
+        "score": 48.1130359303002,
+        "estimatedSeconds": 14.343058823529413,
+        "hasDependency": false
+      },
+      {
+        "jobName": "lint-user-service",
+        "score": 38.8010536230412,
+        "estimatedSeconds": 5.2651176470588235,
+        "hasDependency": false
+      },
+      {
+        "jobName": "lint-payment-service",
+        "score": 38.77660605948677,
+        "estimatedSeconds": 5.285882352941177,
+        "hasDependency": false
+      },
+      {
+        "jobName": "cleanup-old-builds",
+        "score": 37.617320602439676,
+        "estimatedSeconds": 6.270529411764705,
+        "hasDependency": false
+      },
+      {
+        "jobName": "generate-api-docs",
+        "score": 20.969568670181825,
+        "estimatedSeconds": 20.41041176470588,
+        "hasDependency": false
+      },
+      {
+        "jobName": "security-scan-dependencies",
+        "score": 15.0,
+        "estimatedSeconds": 25.480705882352943,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 258.94,
+    "queueLen": 5,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "build-frontend-app",
+        "score": 48.1130359303002,
+        "estimatedSeconds": 14.343058823529413,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 264.0,
+    "queueLen": 5,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "build-frontend-app",
+        "score": 48.1130359303002,
+        "estimatedSeconds": 14.343058823529413,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 269.09,
+    "queueLen": 4,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "lint-user-service",
+        "score": 38.8010536230412,
+        "estimatedSeconds": 5.2651176470588235,
+        "hasDependency": false
+      },
+      {
+        "jobName": "lint-payment-service",
+        "score": 38.77660605948677,
+        "estimatedSeconds": 5.285882352941177,
+        "hasDependency": false
+      },
+      {
+        "jobName": "cleanup-old-builds",
+        "score": 37.617320602439676,
+        "estimatedSeconds": 6.270529411764705,
+        "hasDependency": false
+      },
+      {
+        "jobName": "generate-api-docs",
+        "score": 20.969568670181825,
+        "estimatedSeconds": 20.41041176470588,
+        "hasDependency": false
+      },
+      {
+        "jobName": "security-scan-dependencies",
+        "score": 15.0,
+        "estimatedSeconds": 25.480705882352943,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 274.15,
+    "queueLen": 3,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "lint-payment-service",
+        "score": 38.77660605948677,
+        "estimatedSeconds": 5.285882352941177,
+        "hasDependency": false
+      },
+      {
+        "jobName": "cleanup-old-builds",
+        "score": 37.617320602439676,
+        "estimatedSeconds": 6.270529411764705,
+        "hasDependency": false
+      },
+      {
+        "jobName": "generate-api-docs",
+        "score": 20.969568670181825,
+        "estimatedSeconds": 20.41041176470588,
+        "hasDependency": false
+      },
+      {
+        "jobName": "security-scan-dependencies",
+        "score": 15.0,
+        "estimatedSeconds": 25.480705882352943,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 279.22,
+    "queueLen": 2,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "cleanup-old-builds",
+        "score": 37.617320602439676,
+        "estimatedSeconds": 6.270529411764705,
+        "hasDependency": false
+      },
+      {
+        "jobName": "generate-api-docs",
+        "score": 20.969568670181825,
+        "estimatedSeconds": 20.41041176470588,
+        "hasDependency": false
+      },
+      {
+        "jobName": "security-scan-dependencies",
+        "score": 15.0,
+        "estimatedSeconds": 25.480705882352943,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 284.28,
+    "queueLen": 1,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "generate-api-docs",
+        "score": 20.969568670181825,
+        "estimatedSeconds": 20.41041176470588,
+        "hasDependency": false
+      },
+      {
+        "jobName": "security-scan-dependencies",
+        "score": 15.0,
+        "estimatedSeconds": 25.480705882352943,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 289.37,
+    "queueLen": 1,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "generate-api-docs",
+        "score": 20.969568670181825,
+        "estimatedSeconds": 20.41041176470588,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 294.45,
+    "queueLen": 1,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "generate-api-docs",
+        "score": 20.969568670181825,
+        "estimatedSeconds": 20.41041176470588,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 299.52,
+    "queueLen": 1,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "generate-api-docs",
+        "score": 20.969568670181825,
+        "estimatedSeconds": 20.41041176470588,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 304.6,
+    "queueLen": 0,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "security-scan-dependencies",
+        "score": 15.0,
+        "estimatedSeconds": 25.480705882352943,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 309.66,
+    "queueLen": 0,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "security-scan-dependencies",
+        "score": 15.0,
+        "estimatedSeconds": 25.480705882352943,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 314.76,
+    "queueLen": 0,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "security-scan-dependencies",
+        "score": 15.0,
+        "estimatedSeconds": 25.480705882352943,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 319.83,
+    "queueLen": 0,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "security-scan-dependencies",
+        "score": 15.0,
+        "estimatedSeconds": 25.480705882352943,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 324.91,
+    "queueLen": 0,
+    "busy": 1,
+    "heap": [
+      {
+        "jobName": "security-scan-dependencies",
+        "score": 15.0,
+        "estimatedSeconds": 25.480705882352943,
+        "hasDependency": false
+      }
+    ]
+  },
+  {
+    "t": 329.98,
+    "queueLen": 0,
+    "busy": 0,
+    "heap": []
+  },
+  {
+    "t": 335.06,
+    "queueLen": 0,
+    "busy": 0,
+    "heap": []
+  }
+]

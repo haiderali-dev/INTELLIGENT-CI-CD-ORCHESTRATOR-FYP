@@ -1,0 +1,9 @@
+Legacy code started this job.  No cause information is available
+Running as SYSTEM
+Building in workspace D:\FYP POC\CICD project\experiment\baseline-home\workspace\smoke-test-production
+[smoke-test-production] $ cmd /c call C:\Users\haide\AppData\Local\Temp\jenkins10997357009609811043.bat
+
+D:\FYP POC\CICD project\experiment\baseline-home\workspace\smoke-test-production>ping -n 8 127.0.0.1  1>nul 
+
+D:\FYP POC\CICD project\experiment\baseline-home\workspace\smoke-test-production>exit 0 
+Finished: SUCCESS
