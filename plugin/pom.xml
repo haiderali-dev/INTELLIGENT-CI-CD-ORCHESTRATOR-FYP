@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!--
+    Versions here are pinned only after checking their official source, per
+    BUILD_PROMPT rule 1.4. Every one is recorded in docs/versions.md with the
+    date it was checked. Milestone 2 used parent 5.9 on Jenkins 2.479.3; both
+    move up. See docs/decisions.md D-003.
+  -->
+  <parent>
+    <groupId>org.jenkins-ci.plugins</groupId>
+    <artifactId>plugin</artifactId>
+    <version>6.2236.v12dd4c483242</version>
+    <relativePath />
+  </parent>
+
+  <groupId>io.jenkins.plugins</groupId>
+  <artifactId>dynamic-queue-optimizer</artifactId>
+  <version>2.0.0-SNAPSHOT</version>
+  <packaging>hpi</packaging>
+
+  <name>Dynamic Queue Optimizer</name>
+  <description>
+    Orders the Jenkins build queue by a weighted priority score of urgency,
+    dependency grouping and estimated execution time, with an aging bonus that
+    prevents starvation. Covers freestyle, Maven and Pipeline jobs.
+  </description>
+  <url>https://github.com/uit-group04/intelligent-cicd-orchestrator</url>
+
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>https://opensource.org/licenses/MIT</url>
+    </license>
+  </licenses>
+
+  <properties>
+    <!-- The BOM artifact id is derived from the baseline, so these stay in step. -->
+    <jenkins.baseline>2.568</jenkins.baseline>
+    <jenkins.version>${jenkins.baseline}.3</jenkins.version>
+
+    <!--
+      Bytecode target is the parent's default of 17, deliberately not raised to
+      21. The controller runs JDK 21 (BUILD_PROMPT 4.2.1), but 17 bytecode runs
+      there unchanged, and targeting 21 would rule out a JDK 17 controller for
+      no benefit we actually use.
+    -->
+    <spotbugs.failOnError>true</spotbugs.failOnError>
+    <spotless.check.skip>false</spotless.check.skip>
+  </properties>
+
+  <repositories>
+    <repository>
+      <id>repo.jenkins-ci.org</id>
+      <url>https://repo.jenkins-ci.org/public/</url>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>repo.jenkins-ci.org</id>
+      <url>https://repo.jenkins-ci.org/public/</url>
+    </pluginRepository>
+  </pluginRepositories>
+
+  <dependencyManagement>
+    <dependencies>
+      <!--
+        The plugin BOM keeps every Jenkins plugin dependency at a version known
+        to work together on this baseline, so no plugin version is pinned by
+        hand below.
+      -->
+      <dependency>
+        <groupId>io.jenkins.tools.bom</groupId>
+        <artifactId>bom-${jenkins.baseline}.x</artifactId>
+        <version>7093.v37de7b_4a_8a_4f</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <!-- Compile scope: @Symbol and the describable machinery the job property needs. -->
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>structs</artifactId>
+    </dependency>
+
+    <!--
+      Pipeline support is test scope only, per BUILD_PROMPT 4.3. The plugin has
+      no compile-time dependency on Pipeline: JobResolver walks getOwnerTask()
+      through the Queue API, so a controller without the Pipeline plugins still
+      loads this plugin. The tests need them to prove the Pipeline path works.
+    -->
+    <dependency>
+      <groupId>org.jenkins-ci.plugins.workflow</groupId>
+      <artifactId>workflow-job</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins.workflow</groupId>
+      <artifactId>workflow-cps</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins.workflow</groupId>
+      <artifactId>workflow-durable-task-step</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins.workflow</groupId>
+      <artifactId>workflow-basic-steps</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jenkinsci.plugins</groupId>
+      <artifactId>pipeline-model-definition</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- JCasC round-trip test (ConfigAsCodeIT). -->
+    <dependency>
+      <groupId>io.jenkins</groupId>
+      <artifactId>configuration-as-code</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.jenkins.configuration-as-code</groupId>
+      <artifactId>test-harness</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.jenkins-ci.tools</groupId>
+        <artifactId>maven-hpi-plugin</artifactId>
+        <extensions>true</extensions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

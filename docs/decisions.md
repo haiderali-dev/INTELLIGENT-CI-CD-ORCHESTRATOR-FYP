@@ -9,6 +9,75 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ---
 
+## Phase 2
+
+### D-014 A Pipeline job passes through the queue twice, not once
+**Date:** 2026-09-28 · **Status:** measured, task T2.1 · **Evidence:** `QueueShapeProbeIT`
+
+`BUILD_PROMPT.md` 4.3.3 says a Pipeline job "enters the queue as a placeholder task rather than as
+the job". That is true of a `node` block but it is not the whole picture, and the missing half
+produced a test that failed for the wrong reason before it was found.
+
+Measured with a diagnostic test that prints the real queue shape in three scenarios (controller with
+zero executors, an offline labelled agent, a busy labelled agent). In every case:
+
+```
+item state=BuildableItem  isJob=false  flyweight=false
+  hop 0: ExecutorStepExecution$PlaceholderTask
+  hop 1: org.jenkinsci.plugins.workflow.job.WorkflowJob   <-- IS A Job
+```
+
+So the specification's core claim holds: the job is exactly **one** `getOwnerTask()` hop away, and
+`JobResolver`'s five-hop walk is comfortably sufficient.
+
+**What the specification omits.** A Pipeline job appears in the queue in two shapes, at different
+times:
+
+1. First as the `WorkflowJob` itself, a **flyweight task** waiting to start the run. Here
+   `item.task instanceof Job` is **true**.
+2. Then, once the script reaches a `node` block, as a `PlaceholderTask`. Here it is **false**.
+
+The window for shape 1 is short but real. Both of `JobResolver`'s branches are therefore load
+bearing, and neither is dead code.
+
+**Consequences.**
+
+- A test that waits for "N buildable items" can sample during shape 1 and measure the wrong thing.
+  `QueueTestSupport.waitUntilNodeBlocksBuildable` waits on the item *shape*, not the count.
+- The sorter will see flyweight items among its buildable items. Ordering them is harmless but
+  meaningless, because a flyweight task runs on a one-off executor and never competes for an
+  executor slot. T2.9 should not treat them as scheduling decisions.
+- `QueueShapeProbeIT` stays in the suite. When a future Jenkins baseline changes queue behaviour,
+  its output is what will explain what moved.
+
+### D-015 Ordering is measured by dispatch order, never by run start time
+**Date:** 2026-09-28 · **Status:** decided, task T2.1
+
+The first version of the Phase 2 integration tests compared `Run#getStartTimeInMillis()`. That is
+valid for freestyle jobs and **invalid for Pipeline**, which made one test pass for no reason and
+would have made another fail permanently however correct the sorter became.
+
+A Pipeline run starts as a flyweight task the instant it is scheduled, well before its `node` block
+reaches the front of the queue. Its start time therefore records when the script began executing,
+which no scheduling decision influences. Ranking two Pipeline jobs by start time measures the order
+they were submitted in.
+
+**Decision.** `DispatchRecorder`, a `QueueListener` watching `onLeft`, is the single ground truth for
+every ordering assertion. It records the order in which items leave the queue onto an executor,
+which is precisely what the sorter controls, and it works identically for freestyle tasks and
+Pipeline placeholders.
+
+It ignores two kinds of event: cancelled items, which left without being dispatched, and flyweight
+tasks. Including flyweight tasks recorded the order `[pl-low, pl-high, pl-high, pl-low]` for two
+Pipeline jobs, where the first two entries are just the submission order. Filtering them yields
+`[pl-low, pl-high]`, the actual node-block dispatch order, which is the thing under test.
+
+**Why this is worth a decision entry.** An ordering test that passes by accident is worse than no
+test, because it will be trusted. Milestone 2 had no dispatcher test at all; a scheduling test that
+measures the wrong clock would have been no better.
+
+---
+
 ## Phase 0
 
 ### D-001 Build order: Phase 2 before Phase 1

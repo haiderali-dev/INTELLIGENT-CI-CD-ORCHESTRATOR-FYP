@@ -1,6 +1,6 @@
 # Progress
 
-Updated: 2026-09-28 · Current phase: 0 · Branch: phase-0-foundation
+Updated: 2026-09-28 · Current phase: 2 · Branch: phase-2-plugin
 
 ## Needs human
 - [ ] **Install Docker Desktop and start it.** Blocks Phase 1 entirely (T1.1 to T1.10) and every
@@ -57,6 +57,36 @@ Updated: 2026-09-28 · Current phase: 0 · Branch: phase-0-foundation
 **Acceptance:** `python scripts/verify.py --phase 0` prints ALL CHECKS PASSED.
 **Met** on 2026-09-28: 11 of 11 checks pass, exit code 0.
 
+## Phase 2: Plugin v2
+Branch `phase-2-plugin`, stacked on the unmerged `phase-0-foundation`.
+
+- [x] T2.1 Maven project on the current LTS baseline with the plugin BOM; `PipelinePriorityIT` and
+      `MultiExecutorIT` written first, as failing tests — evidence:
+      `mvn -B -ntp failsafe:integration-test -Dit.test='PipelinePriorityIT,MultiExecutorIT'` →
+      `Tests run: 5, Failures: 3`, each failing on arrival order with the dispatch order printed:
+      Pipeline `[pl-low, pl-high]`, multi-executor
+      `[fs-low-1, fs-low-2, fs-low-3, fs-high-1, fs-high-2, fs-high-3]`, mixed
+      `[fs-low, pl-high-mixed]`. The two passing tests are the ones that prove the platform
+      assumption rather than the unbuilt feature: placeholder tasks resolve to their job in one
+      `getOwnerTask()` hop with the priority property readable, and nothing is throttled yet.
+- [ ] T2.2 `OptimizerConfiguration` (global configuration and JCasC)
+- [ ] T2.3 `PriorityLevel`, `JobPriorityProperty` Jelly form and validation, M2 back-compat test
+- [ ] T2.4 `JobResolver` for freestyle, Maven and Pipeline queue items
+- [ ] T2.5 `UnionFind`, `KahnTopologicalSort`, `DependencyGraphService`
+- [ ] T2.6 `BuildHistoryService`, `RecordedLabelAction`, `SimilarityEstimator`
+- [ ] T2.7 `PriorityScoreCalculator` and `AppendixCExampleTest`
+- [ ] T2.8 `PriorityJobHeap`
+- [ ] T2.9 `DynamicQueueSorter` with the per-cycle cache
+- [ ] T2.10 `DependencyGate`
+- [ ] T2.11 `QueueMetricsRecorder`, `RunMetricsRecorder`, `MetricsPublisher`
+- [ ] T2.12 `DynamicQueueApi` (ranking and metrics endpoints)
+- [ ] T2.13 Every test in Part 4.3.10 passing; SpotBugs clean
+- [ ] T2.14 Build the `.hpi`, install it on `jenkins-dev`, add Phase 2 checks to `verify.py`
+      — **blocked on Docker**, deferred into Phase 1
+
+**Acceptance:** `mvn -B verify` passes; every test named in Part 4.3.10 exists and passes;
+`GET /dynamic-queue/api/json` on `jenkins-dev` returns 200 with the bot token (needs Docker).
+
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
   installed and every Phase 2 test except T2.14 runs on JenkinsRule without it. Approved by the user.
@@ -97,6 +127,12 @@ Details in `docs/decisions.md`.
 - `docs/versions.md` still has `pending` rows for every plugin, backend and frontend dependency. Each
   is filled by the task that pins it, against the official source, per rule 1.4.
 
+- 2026-09-28 The job property field is `level`, with an XStream/`readResolve` fallback onto M2's
+  `priority`, so old job configurations still load. Decided in D-005, implemented in T2.1.
+- 2026-09-28 Ordering assertions measure queue dispatch order via a `QueueListener`, never
+  `Run#getStartTimeInMillis()`. A Pipeline run starts before its node block is ever queued, so start
+  time measures submission order for Pipeline jobs. See D-015.
+
 ## Session log
 - 2026-09-28 Read BUILD_PROMPT.md in full. Explored `legacy/m2-poc/` (plugin sources, experiment
   harness, result files) and the report PDF (Chapter 6 algorithms, Chapter 12, Appendices B to F).
@@ -113,3 +149,14 @@ Details in `docs/decisions.md`.
   Then completed Phase 0: T0.1 to T0.6 all checked, `verify.py --phase 0` prints ALL CHECKS PASSED.
   Next: open the Phase 0 pull request (needs `gh`), then start Phase 2 with the failing-test spike —
   `PipelinePriorityIT` and `MultiExecutorIT` before any production code.
+- 2026-09-28 Phase 2 started on `phase-2-plugin`. T2.1 done: Maven project on Jenkins LTS 2.568.3
+  with parent POM 6.2236 and plugin BOM `bom-2.568.x`, all three checked against
+  repo.jenkins-ci.org before pinning. The failing-test spike paid for itself twice. First, the queue
+  does not have the shape the specification describes: a Pipeline job passes through it twice, once
+  as a flyweight task where `item.task` IS a `Job`, then as a placeholder where it is not, so the
+  first version of the test measured the wrong window (D-014, proven by `QueueShapeProbeIT`).
+  Second, comparing run start times is invalid for Pipeline, because a Pipeline run starts before
+  its node block is queued; that made one test pass for no reason and would have made another fail
+  forever however correct the sorter became (D-015). Both fixed before any production code was
+  written, which is the entire point of doing the spike first. Next: T2.2 to T2.8, the pure-logic
+  classes, then T2.9 turns these tests green.
