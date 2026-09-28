@@ -434,22 +434,56 @@ def check_m2_baseline_figures() -> Result:
     return ok(f"HIGH-band wait {got_baseline:.2f} s -> {got_plugin:.2f} s, as documented")
 
 
-@check(0, "no /scriptText outside legacy/")
+# Executable or deployable file types. Prose cannot call an HTTP endpoint, so markdown and
+# the report are out of scope: the rule is about code, and documenting the prohibition must
+# not trip the check that enforces it.
+CODE_SUFFIXES = frozenset(
+    {
+        ".py", ".java", ".groovy", ".kt", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs",
+        ".sh", ".bash", ".ps1", ".rb", ".go", ".yaml", ".yml", ".xml", ".json", ".toml",
+        ".cfg", ".ini", ".jelly", ".sql", ".tmpl", ".j2", ".dockerfile",
+    }
+)
+CODE_FILENAMES = frozenset({"Jenkinsfile", "Dockerfile", "Makefile"})
+
+# Jenkins script console endpoints, matched as URL paths rather than as bare words, so that
+# a word like "description" or a sentence about scripts cannot produce a false positive.
+SCRIPT_CONSOLE_RE = re.compile(r"""/scriptText\b|/script(?=["'\s,)/?]|$)|\bdoScript\b""")
+
+
+def _is_code_file(rel: str) -> bool:
+    name = rel.rsplit("/", 1)[-1]
+    if name in CODE_FILENAMES:
+        return True
+    suffix = ("." + name.rsplit(".", 1)[-1].lower()) if "." in name else ""
+    return suffix in CODE_SUFFIXES
+
+
+@check(0, "no Jenkins script console call in our code")
 def check_no_script_console() -> Result:
     """Rule 1.5: the Jenkins script console is never called from our own code.
 
-    Enforced from Phase 0 so it can never be introduced in the first place. Milestone 2's
-    harness used it, which is why legacy/ is excluded rather than cleaned.
-    """
-    listing = git("ls-files")
-    if listing.returncode != 0:
-        return fail("git unavailable or not a repository")
+    Enforced from Phase 0, not Phase 3, so it can never be introduced in the first place.
+    Milestone 2's harness posted Groovy to /scriptText, which is why legacy/ is excluded here
+    rather than cleaned: it is frozen evidence, not live code.
 
+    Scope is code and configuration only. This script itself is excluded because it must
+    contain the pattern in order to search for it.
+    """
+    tracked = git("ls-files")
+    if tracked.returncode != 0:
+        return fail("git unavailable or not a repository")
+    # Untracked-but-not-ignored files count too. A guard that sees only committed code
+    # misses exactly the code about to be committed, which is when it matters most.
+    untracked = git("ls-files", "--others", "--exclude-standard")
+
+    scanned = 0
     offenders: list[str] = []
-    for rel in listing.stdout.splitlines():
-        if rel.startswith("legacy/") or rel in ("BUILD_PROMPT.md", "CLAUDE.md"):
+    candidates = sorted(set(tracked.stdout.splitlines()) | set(untracked.stdout.splitlines()))
+    for rel in candidates:
+        if rel.startswith("legacy/") or rel == "scripts/verify.py":
             continue
-        if rel.startswith("docs/") or rel == "scripts/verify.py":
+        if not _is_code_file(rel):
             continue
         path = REPO_ROOT / rel
         if not path.is_file() or path.stat().st_size > 2_000_000:
@@ -458,11 +492,12 @@ def check_no_script_console() -> Result:
             body = path.read_text(encoding="utf-8", errors="ignore")
         except OSError:
             continue
-        if "/scriptText" in body or "/script " in body:
+        scanned += 1
+        if SCRIPT_CONSOLE_RE.search(body):
             offenders.append(rel)
     if offenders:
         return fail(f"script console referenced in: {', '.join(offenders[:5])}")
-    return ok("no reference in application, experiment or test code")
+    return ok(f"{scanned} code files scanned, no reference")
 
 
 # ---------------------------------------------------------------------------
