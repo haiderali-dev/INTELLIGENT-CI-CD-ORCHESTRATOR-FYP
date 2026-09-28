@@ -32,14 +32,30 @@ Updated: 2026-09-28 · Current phase: 0 · Branch: phase-0-foundation
       `comparison.json` disagrees on every figure and is stale: it cites `baselineT0=1781512211965`
       and `pluginT0=1781512819559` while the result files on disk carry `t0=1781518086378` and
       `t0=1781518804085`. Nothing under `legacy/` was written to.
-- [ ] T0.2 Write `docs/m2-baseline.md`
-- [ ] T0.3 Monorepo skeleton, `.gitignore`, `.gitattributes`, `.editorconfig`, `.env.example`, `README.md`
-- [ ] T0.4 `.github/workflows/ci.yml` with plugin, backend and frontend jobs, each skipped until its
-      folder holds a build file
-- [ ] T0.5 `scripts/verify.py` following Appendix D, with the Phase 0 checks
-- [ ] T0.6 `docs/decisions.md`, `docs/report-updates.md`, `docs/versions.md`
+- [x] T0.2 Write `docs/m2-baseline.md` — evidence: `python scripts/verify.py --phase 0` → check
+      "M2 baseline figures match the legacy result files" PASS. The check recomputes the HIGH-band
+      mean wait straight from the frozen result files and asserts the figure appears in the document:
+      271.50 s baseline → 39.08 s plugin. The document cannot drift from the data it describes.
+- [x] T0.3 Monorepo skeleton, `.gitignore`, `.gitattributes`, `.editorconfig`, `.env.example`,
+      `README.md` — evidence: `python scripts/verify.py --phase 0` → "skeleton folders exist" all 22
+      present, "root documents exist" all 9 present, ".gitattributes sets LF for the required types"
+      all 7 types pinned, "legacy/ is exempt from line-ending normalisation" PASS.
+- [x] T0.4 `.github/workflows/ci.yml` with plugin, backend and frontend jobs, each skipped until its
+      folder holds a build file — evidence: `python scripts/verify.py --phase 0` → "CI workflow
+      parses" PASS, 5 jobs (detect, verify, plugin, backend, frontend). A `detect` job sets an output
+      per component from the presence of `pom.xml`, `pyproject.toml` and `package.json`, and the
+      three build jobs are gated on it, so an unbuilt component reports as skipped rather than as
+      success.
+- [x] T0.5 `scripts/verify.py` following Appendix D, with the Phase 0 checks — evidence:
+      `python scripts/verify.py --phase 0` → ALL CHECKS PASSED, exit code 0. 11 checks.
+      `--list` shows them without running them. A phase with no checks registered fails loudly
+      rather than passing vacuously.
+- [x] T0.6 `docs/decisions.md`, `docs/report-updates.md`, `docs/versions.md` — evidence:
+      `python scripts/verify.py --phase 0` → "tracking documents exist" all 4 present. 13 decisions
+      recorded (D-001 to D-013), including all eleven conflicts found.
 
 **Acceptance:** `python scripts/verify.py --phase 0` prints ALL CHECKS PASSED.
+**Met** on 2026-09-28: 11 of 11 checks pass, exit code 0.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
@@ -59,6 +75,12 @@ Updated: 2026-09-28 · Current phase: 0 · Branch: phase-0-foundation
 
 Details in `docs/decisions.md`.
 
+- 2026-09-28 `verify.py`'s CI-workflow check falls back to a dependency-free structural scan when
+  PyYAML is absent, instead of failing. PyPI's download host would not resolve from this machine, and
+  a phase gate that fails because an unrelated package could not be downloaded is a broken gate. The
+  full parse still runs wherever PyYAML is present, including CI, and the fallback message says which
+  path ran.
+
 ## Known gaps
 - Docker-gated work is untested on this machine: all of Phase 1, T2.14, and every acceptance check
   from Phase 3 onward that needs a live Jenkins or PostgreSQL. Tracked under Needs human.
@@ -69,6 +91,11 @@ Details in `docs/decisions.md`.
 - `legacy/experiment/results/baseline-results.json` holds 31 job rows against a 30-job spec, and the
   legacy `analyze.py` silently discards the extra row. Noted in `docs/m2-baseline.md`.
 - The report's Word source was not provided, so report changes are tracked as a checklist.
+- PyYAML is not installed locally and PyPI's download host does not resolve from this machine, so the
+  CI-workflow check runs its structural fallback rather than a full YAML parse. CI installs PyYAML and
+  runs the full parse.
+- `docs/versions.md` still has `pending` rows for every plugin, backend and frontend dependency. Each
+  is filled by the task that pins it, against the official source, per rule 1.4.
 
 ## Session log
 - 2026-09-28 Read BUILD_PROMPT.md in full. Explored `legacy/m2-poc/` (plugin sources, experiment
@@ -76,4 +103,13 @@ Details in `docs/decisions.md`.
   Confirmed M2 known problems 1, 2, 3, 6 and 7 directly in the code and data. Found eleven conflicts
   across BUILD_PROMPT.md, the report and the legacy code, including one contradiction internal to
   Part 4.3.2. Verified the current Jenkins LTS against jenkins.io. Wrote PLAN.md, CLAUDE.md and this
-  file. Next: finish Phase 0 (T0.2 to T0.6), then the Phase 2 failing-test spike.
+  file.
+- 2026-09-28 Prepared the repository, which the human setup steps had never done: initialised Git,
+  moved the M2 folders into `legacy/m2-poc/` and the report into `docs/report/`, wrote the root
+  configuration files and the Appendix A guard rails, committed and tagged `m2-final`. Caught two
+  problems while staging: Jenkins credential stores were about to be committed, and the repo-wide
+  `text=auto eol=lf` rule would have rewritten the frozen copy. Both fixed before the first commit.
+  The frozen copy went from 328 MB to 2 MB by excluding regenerable runtime output.
+  Then completed Phase 0: T0.1 to T0.6 all checked, `verify.py --phase 0` prints ALL CHECKS PASSED.
+  Next: open the Phase 0 pull request (needs `gh`), then start Phase 2 with the failing-test spike —
+  `PipelinePriorityIT` and `MultiExecutorIT` before any production code.
