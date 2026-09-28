@@ -90,8 +90,10 @@ public final class PriorityScoreCalculator {
                 .filter(OptionalLong::isPresent)
                 .mapToLong(OptionalLong::getAsLong)
                 .toArray();
-        long estMin = known.length == 0 ? 0 : java.util.Arrays.stream(known).min().getAsLong();
-        long estMax = known.length == 0 ? 0 : java.util.Arrays.stream(known).max().getAsLong();
+        long estMin =
+                known.length == 0 ? 0 : java.util.Arrays.stream(known).min().getAsLong();
+        long estMax =
+                known.length == 0 ? 0 : java.util.Arrays.stream(known).max().getAsLong();
 
         List<ScoredJob> scored = new ArrayList<>(items.size());
         for (ScoreInput item : items) {
@@ -100,15 +102,12 @@ public final class PriorityScoreCalculator {
         return applyGroupInheritance(scored);
     }
 
-    private ScoredJob scoreOne(
-            ScoreInput item, int maxGroupSize, long estMin, long estMax, boolean anyKnown) {
+    private ScoredJob scoreOne(ScoreInput item, int maxGroupSize, long estMin, long estMax, boolean anyKnown) {
         double urgency = item.level().getUrgency();
         double dependency = dependencyFactor(item.groupSize(), maxGroupSize);
         double executionTime = executionTimeFactor(item.estimateMillis(), estMin, estMax, anyKnown);
 
-        double base = weightUrgency * urgency
-                + weightDependency * dependency
-                + weightExecutionTime * executionTime;
+        double base = weightUrgency * urgency + weightDependency * dependency + weightExecutionTime * executionTime;
         double aging = agingBonus(item.waitMillis());
 
         return new ScoredJob(
@@ -151,8 +150,7 @@ public final class PriorityScoreCalculator {
      * looks: {@code estMax == estMin} would divide by zero, and a queue of identical jobs is
      * exactly what the experiment's warm-up produces.
      */
-    private static double executionTimeFactor(
-            OptionalLong estimate, long estMin, long estMax, boolean anyKnown) {
+    private static double executionTimeFactor(OptionalLong estimate, long estMin, long estMax, boolean anyKnown) {
         if (estimate.isEmpty() || !anyKnown || estMax == estMin) {
             return NEUTRAL_EXECUTION_TIME_FACTOR;
         }

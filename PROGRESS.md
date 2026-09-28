@@ -69,23 +69,50 @@ Branch `phase-2-plugin`, stacked on the unmerged `phase-0-foundation`.
       `[fs-low, pl-high-mixed]`. The two passing tests are the ones that prove the platform
       assumption rather than the unbuilt feature: placeholder tasks resolve to their job in one
       `getOwnerTask()` hop with the priority property readable, and nothing is throttled yet.
-- [ ] T2.2 `OptimizerConfiguration` (global configuration and JCasC)
-- [ ] T2.3 `PriorityLevel`, `JobPriorityProperty` Jelly form and validation, M2 back-compat test
-- [ ] T2.4 `JobResolver` for freestyle, Maven and Pipeline queue items
-- [ ] T2.5 `UnionFind`, `KahnTopologicalSort`, `DependencyGraphService`
-- [ ] T2.6 `BuildHistoryService`, `RecordedLabelAction`, `SimilarityEstimator`
-- [ ] T2.7 `PriorityScoreCalculator` and `AppendixCExampleTest`
-- [ ] T2.8 `PriorityJobHeap`
-- [ ] T2.9 `DynamicQueueSorter` with the per-cycle cache
+- [x] T2.2 `OptimizerConfiguration` (global configuration and JCasC) — evidence: `mvn -B verify` →
+      BUILD SUCCESS. Every report Appendix D default present; `@Symbol("dynamicQueueOptimizer")` for
+      JCasC. `metricsBackendUrl` defaults to empty, not the report's URL (D-006). Mismatched weights
+      warn rather than error, because the report's ablation varies them.
+- [x] T2.3 `PriorityLevel`, `JobPriorityProperty` Jelly form and validation, M2 back-compat test —
+      evidence: `mvn failsafe:integration-test -Dit.test=Milestone2CompatibilityIT` →
+      `Tests run: 4, Failures: 0`. A Milestone 2 `config.xml` carrying `<priority>HIGH</priority>`
+      loads as HIGH, round-trips to `<level>HIGH</level>` on save, and survives a reload.
+      `doCheckDependsOn` rejects unknown names, self-references and cycles.
+- [x] T2.4 `JobResolver` for freestyle, Maven and Pipeline queue items — evidence:
+      `PipelinePriorityIT.placeholderTasksResolveToTheirJob` PASS. Both branches are exercised, and
+      both are needed: see D-014.
+- [x] T2.5 `UnionFind`, `KahnTopologicalSort`, `DependencyGraphService` — evidence:
+      `mvn test -Dtest=UnionFindKahnTest` → `Tests run: 18, Failures: 0`.
+- [x] T2.6 `BuildHistoryService`, `RecordedLabelAction`, `SimilarityEstimator` — evidence:
+      `mvn -B verify` → BUILD SUCCESS; exercised end to end through the sorter by the green
+      integration tests. **Gap:** `SimilarityEstimatorTest` is still to write (T2.13).
+- [x] T2.7 `PriorityScoreCalculator` and `AppendixCExampleTest` — evidence:
+      `mvn test -Dtest=AppendixCExampleTest,ScoreComponentTest,AgingTest` →
+      `Tests run: 62, Failures: 0`. The report's four scores reproduce at 0.667, 0.650, 0.650 and
+      0.300, with 0.633 asserted as the pre-inheritance value too (D-004).
+- [x] T2.8 `PriorityJobHeap` — evidence: `mvn -B verify` → BUILD SUCCESS. Ported from Milestone 2,
+      keeping its item-id tie-break, and now sharing one comparator with the sorter so the two
+      cannot disagree about order. **Gap:** `PriorityJobHeapTest` is still to port (T2.13).
+- [x] T2.9 `DynamicQueueSorter` with the per-cycle cache — evidence:
+      `mvn failsafe:integration-test -Dit.test='PipelinePriorityIT,MultiExecutorIT'` →
+      `Tests run: 5, Failures: 0`. The three tests that failed on arrival order in T2.1 now pass.
+      The heap is rebuilt on every pass including a cache hit; the cache key includes the current
+      minute so aging refreshes at least once a minute.
 - [ ] T2.10 `DependencyGate`
 - [ ] T2.11 `QueueMetricsRecorder`, `RunMetricsRecorder`, `MetricsPublisher`
 - [ ] T2.12 `DynamicQueueApi` (ranking and metrics endpoints)
-- [ ] T2.13 Every test in Part 4.3.10 passing; SpotBugs clean
+- [ ] T2.13 Every test in Part 4.3.10 passing; SpotBugs clean — still to write:
+      `SimilarityEstimatorTest`, `PriorityJobHeapTest`, `SchedulerOverheadTest`,
+      `FreestylePriorityIT`, `DeclarativeOptionsIT`, `ObserveOnlyIT`,
+      `CacheEvictionRegressionIT`, `ConfigAsCodeIT`, `ApiJsonIT`
 - [ ] T2.14 Build the `.hpi`, install it on `jenkins-dev`, add Phase 2 checks to `verify.py`
       — **blocked on Docker**, deferred into Phase 1
 
 **Acceptance:** `mvn -B verify` passes; every test named in Part 4.3.10 exists and passes;
 `GET /dynamic-queue/api/json` on `jenkins-dev` returns 200 with the bot token (needs Docker).
+**Partially met** on 2026-09-28: `mvn -B -ntp verify` → BUILD SUCCESS, 67 tests, 0 failures,
+1 skipped (the harness's generated `InjectedTest`), `target/dynamic-queue-optimizer.hpi` built.
+Nine of the Part 4.3.10 tests are not written yet, and the endpoint check needs Docker.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not

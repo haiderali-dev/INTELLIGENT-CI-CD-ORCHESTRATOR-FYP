@@ -48,16 +48,7 @@ public final class AppendixCFixture {
                         0L,
                         4L),
                 // LOW, but the producer of group G1, so it inherits the group's best score.
-                new ScoreInput(
-                        2L,
-                        "build-api",
-                        PriorityLevel.LOW,
-                        GROUP_G1,
-                        2,
-                        0,
-                        OptionalLong.of(2 * MINUTE),
-                        0L,
-                        2L),
+                new ScoreInput(2L, "build-api", PriorityLevel.LOW, GROUP_G1, 2, 0, OptionalLong.of(2 * MINUTE), 0L, 2L),
                 // MEDIUM consumer in G1; ordered after build-api by Kahn's algorithm.
                 new ScoreInput(
                         3L,
@@ -84,7 +75,6 @@ public final class AppendixCFixture {
 
     /** The order the report says the heap dispatches in. */
     public static List<String> expectedDispatchOrder() {
-        return List.of(
-                "deploy-payment-service", "build-api", "integration-tests-api", "build-frontend");
+        return List.of("deploy-payment-service", "build-api", "integration-tests-api", "build-frontend");
     }
 }

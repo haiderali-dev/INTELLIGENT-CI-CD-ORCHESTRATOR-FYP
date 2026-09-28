@@ -100,10 +100,9 @@ class MultiExecutorIT {
         waitUntilAllComplete(j, names);
 
         if (peakConcurrent < 2) {
-            throw new AssertionError(
-                    "never observed two builds running at once with four executors and four "
-                            + "queued jobs; the optimizer is serialising the queue. Peak was "
-                            + peakConcurrent);
+            throw new AssertionError("never observed two builds running at once with four executors and four "
+                    + "queued jobs; the optimizer is serialising the queue. Peak was "
+                    + peakConcurrent);
         }
     }
 

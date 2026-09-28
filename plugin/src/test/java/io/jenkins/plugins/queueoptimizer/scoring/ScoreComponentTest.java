@@ -125,8 +125,7 @@ class ScoreComponentTest {
                     ScoreInput.independent(1, "a", PriorityLevel.MEDIUM, MINUTE, 0),
                     ScoreInput.independent(2, "b", PriorityLevel.MEDIUM, MINUTE, 0)));
 
-            scored.values().forEach(job ->
-                    assertEquals(0.0, job.dependencyFactor(), TOLERANCE, job.jobName()));
+            scored.values().forEach(job -> assertEquals(0.0, job.dependencyFactor(), TOLERANCE, job.jobName()));
         }
     }
 
@@ -183,8 +182,7 @@ class ScoreComponentTest {
                     ScoreInput.independentUnknownEstimate(1, "a", PriorityLevel.MEDIUM, 0),
                     ScoreInput.independentUnknownEstimate(2, "b", PriorityLevel.HIGH, 0)));
 
-            scored.values().forEach(job ->
-                    assertEquals(0.5, job.executionTimeFactor(), TOLERANCE, job.jobName()));
+            scored.values().forEach(job -> assertEquals(0.5, job.executionTimeFactor(), TOLERANCE, job.jobName()));
             assertTrue(scored.get("b").score() > scored.get("a").score(), "urgency still separates them");
         }
 
@@ -264,8 +262,10 @@ class ScoreComponentTest {
             // at the root and no item is ever consistently the top. Milestone 2 hit exactly this.
             List<ScoredJob> ordered = PriorityScoreCalculator.withReportDefaults()
                     .scoreAll(List.of(
-                            new ScoreInput(9, "later", PriorityLevel.MEDIUM, "s9", 1, 0, OptionalLong.of(MINUTE), 0, 200),
-                            new ScoreInput(3, "earlier", PriorityLevel.MEDIUM, "s3", 1, 0, OptionalLong.of(MINUTE), 0, 100)))
+                            new ScoreInput(
+                                    9, "later", PriorityLevel.MEDIUM, "s9", 1, 0, OptionalLong.of(MINUTE), 0, 200),
+                            new ScoreInput(
+                                    3, "earlier", PriorityLevel.MEDIUM, "s3", 1, 0, OptionalLong.of(MINUTE), 0, 100)))
                     .stream()
                     .sorted(PriorityScoreCalculator.compareForDispatch())
                     .toList();
@@ -298,6 +298,7 @@ class ScoreComponentTest {
     @Test
     @DisplayName("an empty queue scores to an empty list")
     void emptyQueue() {
-        assertTrue(PriorityScoreCalculator.withReportDefaults().scoreAll(List.of()).isEmpty());
+        assertTrue(
+                PriorityScoreCalculator.withReportDefaults().scoreAll(List.of()).isEmpty());
     }
 }

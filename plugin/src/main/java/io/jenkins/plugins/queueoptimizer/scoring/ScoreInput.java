@@ -35,21 +35,12 @@ public record ScoreInput(
     public static ScoreInput independent(
             long itemId, String jobName, PriorityLevel level, long estimateMillis, long waitMillis) {
         return new ScoreInput(
-                itemId,
-                jobName,
-                level,
-                "solo-" + itemId,
-                1,
-                0,
-                OptionalLong.of(estimateMillis),
-                waitMillis,
-                0L);
+                itemId, jobName, level, "solo-" + itemId, 1, 0, OptionalLong.of(estimateMillis), waitMillis, 0L);
     }
 
     /** A convenience for an independent job whose duration history gives nothing usable. */
     public static ScoreInput independentUnknownEstimate(
             long itemId, String jobName, PriorityLevel level, long waitMillis) {
-        return new ScoreInput(
-                itemId, jobName, level, "solo-" + itemId, 1, 0, OptionalLong.empty(), waitMillis, 0L);
+        return new ScoreInput(itemId, jobName, level, "solo-" + itemId, 1, 0, OptionalLong.empty(), waitMillis, 0L);
     }
 }

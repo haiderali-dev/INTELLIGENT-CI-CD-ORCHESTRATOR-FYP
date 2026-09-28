@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <!--
@@ -23,11 +21,9 @@
   <packaging>hpi</packaging>
 
   <name>Dynamic Queue Optimizer</name>
-  <description>
-    Orders the Jenkins build queue by a weighted priority score of urgency,
+  <description>Orders the Jenkins build queue by a weighted priority score of urgency,
     dependency grouping and estimated execution time, with an aging bonus that
-    prevents starvation. Covers freestyle, Maven and Pipeline jobs.
-  </description>
+    prevents starvation. Covers freestyle, Maven and Pipeline jobs.</description>
   <url>https://github.com/uit-group04/intelligent-cicd-orchestrator</url>
 
   <licenses>
@@ -51,19 +47,6 @@
     <spotbugs.failOnError>true</spotbugs.failOnError>
     <spotless.check.skip>false</spotless.check.skip>
   </properties>
-
-  <repositories>
-    <repository>
-      <id>repo.jenkins-ci.org</id>
-      <url>https://repo.jenkins-ci.org/public/</url>
-    </repository>
-  </repositories>
-  <pluginRepositories>
-    <pluginRepository>
-      <id>repo.jenkins-ci.org</id>
-      <url>https://repo.jenkins-ci.org/public/</url>
-    </pluginRepository>
-  </pluginRepositories>
 
   <dependencyManagement>
     <dependencies>
@@ -89,15 +72,20 @@
       <artifactId>structs</artifactId>
     </dependency>
 
-    <!--
-      Pipeline support is test scope only, per BUILD_PROMPT 4.3. The plugin has
-      no compile-time dependency on Pipeline: JobResolver walks getOwnerTask()
-      through the Queue API, so a controller without the Pipeline plugins still
-      loads this plugin. The tests need them to prove the Pipeline path works.
-    -->
+    <!-- JCasC round-trip test (ConfigAsCodeIT). -->
+    <dependency>
+      <groupId>io.jenkins</groupId>
+      <artifactId>configuration-as-code</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.jenkins.configuration-as-code</groupId>
+      <artifactId>test-harness</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins.workflow</groupId>
-      <artifactId>workflow-job</artifactId>
+      <artifactId>workflow-basic-steps</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -110,9 +98,16 @@
       <artifactId>workflow-durable-task-step</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <!--
+      Pipeline support is test scope only, per BUILD_PROMPT 4.3. The plugin has
+      no compile-time dependency on Pipeline: JobResolver walks getOwnerTask()
+      through the Queue API, so a controller without the Pipeline plugins still
+      loads this plugin. The tests need them to prove the Pipeline path works.
+    -->
     <dependency>
       <groupId>org.jenkins-ci.plugins.workflow</groupId>
-      <artifactId>workflow-basic-steps</artifactId>
+      <artifactId>workflow-job</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -120,19 +115,20 @@
       <artifactId>pipeline-model-definition</artifactId>
       <scope>test</scope>
     </dependency>
-
-    <!-- JCasC round-trip test (ConfigAsCodeIT). -->
-    <dependency>
-      <groupId>io.jenkins</groupId>
-      <artifactId>configuration-as-code</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.jenkins.configuration-as-code</groupId>
-      <artifactId>test-harness</artifactId>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
+
+  <repositories>
+    <repository>
+      <id>repo.jenkins-ci.org</id>
+      <url>https://repo.jenkins-ci.org/public/</url>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>repo.jenkins-ci.org</id>
+      <url>https://repo.jenkins-ci.org/public/</url>
+    </pluginRepository>
+  </pluginRepositories>
 
   <build>
     <plugins>

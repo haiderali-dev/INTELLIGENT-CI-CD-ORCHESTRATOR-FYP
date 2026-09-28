@@ -89,13 +89,19 @@ class AgingTest {
                         ScoreInput.independent(1, "starved-low", PriorityLevel.LOW, 1 * MINUTE, 15 * MINUTE),
                         ScoreInput.independent(2, "fresh-medium", PriorityLevel.MEDIUM, 9 * MINUTE, 0)));
 
-        ScoredJob low = scored.stream().filter(j -> j.jobName().equals("starved-low")).findFirst().orElseThrow();
-        ScoredJob medium = scored.stream().filter(j -> j.jobName().equals("fresh-medium")).findFirst().orElseThrow();
+        ScoredJob low = scored.stream()
+                .filter(j -> j.jobName().equals("starved-low"))
+                .findFirst()
+                .orElseThrow();
+        ScoredJob medium = scored.stream()
+                .filter(j -> j.jobName().equals("fresh-medium"))
+                .findFirst()
+                .orElseThrow();
 
         assertTrue(
                 low.score() > medium.score(),
-                "a LOW job waiting 15 minutes must eventually overtake fresh MEDIUM work; "
-                        + "low=" + low.score() + " medium=" + medium.score());
+                "a LOW job waiting 15 minutes must eventually overtake fresh MEDIUM work; " + "low=" + low.score()
+                        + " medium=" + medium.score());
     }
 
     @Test
@@ -108,8 +114,14 @@ class AgingTest {
                         ScoreInput.independent(1, "old-low", PriorityLevel.LOW, 5 * MINUTE, 600 * MINUTE),
                         ScoreInput.independent(2, "new-high", PriorityLevel.HIGH, 5 * MINUTE, 0)));
 
-        ScoredJob low = scored.stream().filter(j -> j.jobName().equals("old-low")).findFirst().orElseThrow();
-        ScoredJob high = scored.stream().filter(j -> j.jobName().equals("new-high")).findFirst().orElseThrow();
+        ScoredJob low = scored.stream()
+                .filter(j -> j.jobName().equals("old-low"))
+                .findFirst()
+                .orElseThrow();
+        ScoredJob high = scored.stream()
+                .filter(j -> j.jobName().equals("new-high"))
+                .findFirst()
+                .orElseThrow();
 
         assertTrue(high.score() > low.score(), "the cap must keep urgency decisive");
     }
@@ -120,8 +132,8 @@ class AgingTest {
         // The experiment's aging-ablation arm turns the bonus off entirely, so this must be
         // driven by configuration rather than hardcoded.
         PriorityScoreCalculator noAging = new PriorityScoreCalculator(0.5, 0.3, 0.2, 0.0, 5, 0.0);
-        ScoredJob job = noAging
-                .scoreAll(List.of(ScoreInput.independent(1, "job", PriorityLevel.LOW, MINUTE, 60 * MINUTE)))
+        ScoredJob job = noAging.scoreAll(
+                        List.of(ScoreInput.independent(1, "job", PriorityLevel.LOW, MINUTE, 60 * MINUTE)))
                 .get(0);
 
         assertEquals(0.0, job.agingBonus(), TOLERANCE, "the ablation arm must see no aging at all");

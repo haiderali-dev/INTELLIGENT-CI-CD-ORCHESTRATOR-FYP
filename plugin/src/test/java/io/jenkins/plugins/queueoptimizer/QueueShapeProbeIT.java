@@ -79,8 +79,7 @@ class QueueShapeProbeIT {
 
         // Wait until the blocker actually owns the agent's only executor.
         long deadline = System.currentTimeMillis() + 60_000;
-        while (System.currentTimeMillis() < deadline
-                && agent.toComputer().countBusy() == 0) {
+        while (System.currentTimeMillis() < deadline && agent.toComputer().countBusy() == 0) {
             Thread.sleep(100);
         }
 
@@ -104,8 +103,10 @@ class QueueShapeProbeIT {
     private static void report(JenkinsRule j, String scenario) {
         Queue queue = j.jenkins.getQueue();
         StringBuilder out = new StringBuilder("\n=== QUEUE SHAPE: " + scenario + " ===\n");
-        out.append("items=").append(queue.getItems().length)
-                .append("  buildable=").append(queue.getBuildableItems().size())
+        out.append("items=")
+                .append(queue.getItems().length)
+                .append("  buildable=")
+                .append(queue.getBuildableItems().size())
                 .append("\n");
         Arrays.stream(queue.getItems()).forEach(item -> out.append(describe(item)));
         for (Node node : j.jenkins.getNodes()) {
@@ -116,7 +117,9 @@ class QueueShapeProbeIT {
                     node.getNumExecutors(),
                     node.toComputer() == null ? -1 : node.toComputer().countBusy()));
         }
-        out.append("  controller executors=").append(j.jenkins.getNumExecutors()).append("\n");
+        out.append("  controller executors=")
+                .append(j.jenkins.getNumExecutors())
+                .append("\n");
         System.out.println(out);
     }
 
@@ -125,7 +128,9 @@ class QueueShapeProbeIT {
         StringBuilder chain = new StringBuilder();
         Queue.Task cursor = task;
         for (int hop = 0; hop < 5; hop++) {
-            chain.append("\n        hop ").append(hop).append(": ")
+            chain.append("\n        hop ")
+                    .append(hop)
+                    .append(": ")
                     .append(cursor.getClass().getName())
                     .append(cursor instanceof hudson.model.Job ? "   <-- IS A Job" : "");
             Queue.Task owner = cursor.getOwnerTask();

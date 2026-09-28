@@ -86,16 +86,15 @@ class AppendixCExampleTest {
     @Test
     @DisplayName("no aging has accumulated in the report's snapshot")
     void noAgingInTheWorkedExample() {
-        score().values().forEach(job ->
-                assertEquals(0.0, job.agingBonus(), TOLERANCE, job.jobName() + " should have no aging"));
+        score().values()
+                .forEach(
+                        job -> assertEquals(0.0, job.agingBonus(), TOLERANCE, job.jobName() + " should have no aging"));
     }
 
     @Test
     @DisplayName("the jobs dispatch in the report's order")
     void dispatchOrderMatchesTheReport() {
-        List<String> actual = PriorityScoreCalculator.withReportDefaults()
-                .scoreAll(AppendixCFixture.queue())
-                .stream()
+        List<String> actual = PriorityScoreCalculator.withReportDefaults().scoreAll(AppendixCFixture.queue()).stream()
                 .sorted(PriorityScoreCalculator.compareForDispatch())
                 .map(ScoredJob::jobName)
                 .toList();
@@ -108,9 +107,7 @@ class AppendixCExampleTest {
     @Test
     @DisplayName("the group's producer is dispatched before its consumer despite a lower urgency")
     void producerRunsBeforeConsumerWithinTheGroup() {
-        List<String> order = PriorityScoreCalculator.withReportDefaults()
-                .scoreAll(AppendixCFixture.queue())
-                .stream()
+        List<String> order = PriorityScoreCalculator.withReportDefaults().scoreAll(AppendixCFixture.queue()).stream()
                 .sorted(PriorityScoreCalculator.compareForDispatch())
                 .map(ScoredJob::jobName)
                 .toList();
@@ -129,9 +126,7 @@ class AppendixCExampleTest {
         // Under FIFO, arrival order is build-frontend, build-api, integration-tests-api,
         // deploy-payment-service, so the HIGH deployment waits behind everything. If this ever
         // stops holding, the example no longer shows what the report claims it shows.
-        List<String> order = PriorityScoreCalculator.withReportDefaults()
-                .scoreAll(AppendixCFixture.queue())
-                .stream()
+        List<String> order = PriorityScoreCalculator.withReportDefaults().scoreAll(AppendixCFixture.queue()).stream()
                 .sorted(PriorityScoreCalculator.compareForDispatch())
                 .map(ScoredJob::jobName)
                 .toList();

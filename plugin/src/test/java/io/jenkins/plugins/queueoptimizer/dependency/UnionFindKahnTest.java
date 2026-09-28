@@ -119,8 +119,7 @@ class UnionFindKahnTest {
         @DisplayName("producers are ordered before consumers")
         void producersComeFirst() {
             var result = KahnTopologicalSort.sort(
-                    List.of("deploy", "build", "test"),
-                    List.of(of("build", "test"), of("test", "deploy")));
+                    List.of("deploy", "build", "test"), List.of(of("build", "test"), of("test", "deploy")));
 
             assertTrue(result.isAcyclic());
             assertEquals(List.of("build", "test", "deploy"), result.getOrder());
@@ -131,16 +130,10 @@ class UnionFindKahnTest {
         void fanInWaitsForAllProducers() {
             var result = KahnTopologicalSort.sort(
                     List.of("integration", "test-a", "test-b", "test-c"),
-                    List.of(
-                            of("test-a", "integration"),
-                            of("test-b", "integration"),
-                            of("test-c", "integration")));
+                    List.of(of("test-a", "integration"), of("test-b", "integration"), of("test-c", "integration")));
 
             assertTrue(result.isAcyclic());
-            assertEquals(
-                    "integration",
-                    result.getOrder().get(3),
-                    "the consumer must come after all three producers");
+            assertEquals("integration", result.getOrder().get(3), "the consumer must come after all three producers");
         }
 
         @Test
@@ -163,8 +156,7 @@ class UnionFindKahnTest {
             // out of the ordering. Milestone 2 treated a missing upstream as satisfied, which is
             // the opposite of safe.
             var result = KahnTopologicalSort.sort(
-                    List.of("test", "deploy"),
-                    List.of(of("build-not-queued", "test"), of("test", "deploy")));
+                    List.of("test", "deploy"), List.of(of("build-not-queued", "test"), of("test", "deploy")));
 
             assertTrue(result.isAcyclic());
             assertEquals(List.of("test", "deploy"), result.getOrder());
@@ -176,8 +168,7 @@ class UnionFindKahnTest {
             // Counting the same edge twice would leave the consumer's in-degree permanently
             // above zero, and the whole group would look like a cycle.
             var result = KahnTopologicalSort.sort(
-                    List.of("build", "test"),
-                    List.of(of("build", "test"), of("build", "test")));
+                    List.of("build", "test"), List.of(of("build", "test"), of("build", "test")));
 
             assertTrue(result.isAcyclic(), "a repeated declaration is not a cycle");
             assertEquals(List.of("build", "test"), result.getOrder());
@@ -200,8 +191,7 @@ class UnionFindKahnTest {
         @Test
         @DisplayName("a two-node cycle is reported, not thrown")
         void twoNodeCycle() {
-            var result = KahnTopologicalSort.sort(
-                    List.of("a", "b"), List.of(of("a", "b"), of("b", "a")));
+            var result = KahnTopologicalSort.sort(List.of("a", "b"), List.of(of("a", "b"), of("b", "a")));
 
             assertFalse(result.isAcyclic());
             assertEquals(Set.of("a", "b"), result.getCycleMembers());
@@ -210,8 +200,8 @@ class UnionFindKahnTest {
         @Test
         @DisplayName("a longer cycle is reported with all its members")
         void threeNodeCycle() {
-            var result = KahnTopologicalSort.sort(
-                    List.of("a", "b", "c"), List.of(of("a", "b"), of("b", "c"), of("c", "a")));
+            var result =
+                    KahnTopologicalSort.sort(List.of("a", "b", "c"), List.of(of("a", "b"), of("b", "c"), of("c", "a")));
 
             assertFalse(result.isAcyclic());
             assertEquals(Set.of("a", "b", "c"), result.getCycleMembers());
@@ -229,8 +219,7 @@ class UnionFindKahnTest {
         @Test
         @DisplayName("acyclic nodes are still ordered when a separate cycle exists")
         void acyclicPrefixSurvivesACycleElsewhere() {
-            var result = KahnTopologicalSort.sort(
-                    List.of("clean", "a", "b"), List.of(of("a", "b"), of("b", "a")));
+            var result = KahnTopologicalSort.sort(List.of("clean", "a", "b"), List.of(of("a", "b"), of("b", "a")));
 
             assertFalse(result.isAcyclic());
             assertEquals(List.of("clean"), result.getOrder());

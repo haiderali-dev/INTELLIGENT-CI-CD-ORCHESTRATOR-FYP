@@ -6,12 +6,23 @@ import hudson.Extension;
 import hudson.model.Job;
 import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import io.jenkins.plugins.queueoptimizer.model.PriorityLevel;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+import jenkins.model.Jenkins;
 import org.jenkinsci.Symbol;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
 /**
  * Per-job configuration: the urgency level, and the upstream jobs this one depends on.
@@ -80,6 +91,21 @@ public class JobPriorityProperty extends JobProperty<Job<?, ?>> {
         return PriorityLevel.fromString(level);
     }
 
+    /**
+     * The level configured on a job, defaulting to MEDIUM when the property is absent.
+     *
+     * <p>Lives here rather than in the sorter because the default belongs to the property: an
+     * unconfigured job must be schedulable at a sensible priority, never rejected.
+     */
+    @NonNull
+    public static PriorityLevel levelOf(@CheckForNull Job<?, ?> job) {
+        if (job == null) {
+            return PriorityLevel.MEDIUM;
+        }
+        JobPriorityProperty property = job.getProperty(JobPriorityProperty.class);
+        return property == null ? PriorityLevel.MEDIUM : property.getPriorityLevel();
+    }
+
     /** @return the raw comma-separated upstream job names, as the form stores them */
     @NonNull
     public String getDependsOn() {
@@ -106,7 +132,6 @@ public class JobPriorityProperty extends JobProperty<Job<?, ?>> {
                 .collect(Collectors.toList());
     }
 
-    /** Descriptor. Form validation and the level drop-down arrive with task T2.3. */
     @Extension
     @Symbol("dynamicQueuePriority")
     public static class DescriptorImpl extends JobPropertyDescriptor {
@@ -126,6 +151,100 @@ public class JobPriorityProperty extends JobProperty<Job<?, ?>> {
         @Override
         public boolean isApplicable(Class<? extends Job> jobType) {
             return true;
+        }
+
+        /** Populates the level drop-down. */
+        public ListBoxModel doFillLevelItems() {
+            ListBoxModel model = new ListBoxModel();
+            model.add("HIGH — runs first", PriorityLevel.HIGH.name());
+            model.add("MEDIUM — default", PriorityLevel.MEDIUM.name());
+            model.add("LOW — runs last", PriorityLevel.LOW.name());
+            return model;
+        }
+
+        /**
+         * Rejects unknown job names, self-references and declared cycles.
+         *
+         * <p>An unknown name is an error rather than a warning because Milestone 2 treated a
+         * missing upstream as satisfied, letting a downstream job run as though its producer had
+         * succeeded. Catching the typo at configuration time is the cheapest place to stop that.
+         *
+         * <p>A cycle is rejected here, at submission, exactly as report Algorithm 6.3 line 6
+         * specifies. At runtime a cycle never blocks anything; it is reported through the API.
+         */
+        public FormValidation doCheckDependsOn(@QueryParameter String value, @AncestorInPath Job<?, ?> job) {
+            if (value == null || value.isBlank()) {
+                return FormValidation.ok();
+            }
+
+            Jenkins jenkins = Jenkins.getInstanceOrNull();
+            if (jenkins == null) {
+                return FormValidation.ok();
+            }
+
+            String ownName = job == null ? null : job.getFullName();
+            List<String> unknown = new ArrayList<>();
+            List<String> names = Arrays.stream(value.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .toList();
+
+            for (String name : names) {
+                if (ownName != null && name.equals(ownName)) {
+                    return FormValidation.error("A job cannot depend on itself.");
+                }
+                if (jenkins.getItemByFullName(name, Job.class) == null) {
+                    unknown.add(name);
+                }
+            }
+            if (!unknown.isEmpty()) {
+                return FormValidation.error(
+                        "No such job: %s. A dependency that names a job Jenkins does not know is "
+                                + "reported as unresolved and never treated as satisfied.",
+                        String.join(", ", unknown));
+            }
+
+            if (ownName != null) {
+                Optional<String> cycle = findCycleFrom(jenkins, ownName, names);
+                if (cycle.isPresent()) {
+                    return FormValidation.error("This creates a dependency cycle through %s.", cycle.get());
+                }
+            }
+            return FormValidation.ok();
+        }
+
+        /**
+         * Walks upstream from the proposed dependencies looking for a path back to this job.
+         *
+         * @return the job at which the cycle closes, or empty when the declaration is acyclic
+         */
+        private static Optional<String> findCycleFrom(Jenkins jenkins, String ownName, List<String> proposed) {
+            Deque<String> pending = new ArrayDeque<>(proposed);
+            Set<String> seen = new LinkedHashSet<>(proposed);
+
+            while (!pending.isEmpty()) {
+                String current = pending.poll();
+                if (current.equals(ownName)) {
+                    return Optional.of(current);
+                }
+                Job<?, ?> upstreamJob = jenkins.getItemByFullName(current, Job.class);
+                if (upstreamJob == null) {
+                    continue;
+                }
+                JobPriorityProperty property = upstreamJob.getProperty(JobPriorityProperty.class);
+                if (property == null) {
+                    continue;
+                }
+                for (String next : property.getDependsOnList()) {
+                    if (next.equals(ownName)) {
+                        return Optional.of(current);
+                    }
+                    if (seen.add(next)) {
+                        pending.add(next);
+                    }
+                }
+            }
+            return Optional.empty();
         }
     }
 }

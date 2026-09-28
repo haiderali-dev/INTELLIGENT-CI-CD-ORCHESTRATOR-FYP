@@ -69,17 +69,12 @@ public final class QueueTestSupport {
      * which makes a test either spuriously pass or fail for the wrong reason. Measured with
      * {@link QueueShapeProbeIT}; recorded in {@code docs/decisions.md} D-014.
      */
-    public static void waitUntilNodeBlocksBuildable(JenkinsRule rule, int count)
-            throws InterruptedException {
+    public static void waitUntilNodeBlocksBuildable(JenkinsRule rule, int count) throws InterruptedException {
         waitUntilBuildable(
-                rule,
-                count,
-                item -> !(item.task instanceof Job),
-                count + " Pipeline node blocks (placeholder tasks)");
+                rule, count, item -> !(item.task instanceof Job), count + " Pipeline node blocks (placeholder tasks)");
     }
 
-    private static void waitUntilBuildable(
-            JenkinsRule rule, int count, Predicate<Queue.Item> shape, String what)
+    private static void waitUntilBuildable(JenkinsRule rule, int count, Predicate<Queue.Item> shape, String what)
             throws InterruptedException {
         long deadline = System.currentTimeMillis() + TIMEOUT_MILLIS;
         while (System.currentTimeMillis() < deadline) {
@@ -95,8 +90,7 @@ public final class QueueTestSupport {
     }
 
     /** Blocks until every named job has at least one completed build, or fails the test. */
-    public static void waitUntilAllComplete(JenkinsRule rule, List<String> jobNames)
-            throws InterruptedException {
+    public static void waitUntilAllComplete(JenkinsRule rule, List<String> jobNames) throws InterruptedException {
         long deadline = System.currentTimeMillis() + TIMEOUT_MILLIS;
         while (System.currentTimeMillis() < deadline) {
             List<String> pending = new ArrayList<>();
@@ -139,11 +133,12 @@ public final class QueueTestSupport {
             }
         }
         if (!missing.isEmpty()) {
-            fail(because + "\n  these jobs were never dispatched: " + missing
-                    + "\n  observed dispatch order: " + order);
+            fail(because + "\n  these jobs were never dispatched: " + missing + "\n  observed dispatch order: "
+                    + order);
         }
 
-        int lastOfEarlier = earlier.stream().mapToInt(recorder::positionOf).max().orElseThrow();
+        int lastOfEarlier =
+                earlier.stream().mapToInt(recorder::positionOf).max().orElseThrow();
         int firstOfLater = later.stream().mapToInt(recorder::positionOf).min().orElseThrow();
 
         assertTrue(
