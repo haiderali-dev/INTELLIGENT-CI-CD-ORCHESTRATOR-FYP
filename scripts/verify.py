@@ -450,6 +450,12 @@ CODE_FILENAMES = frozenset({"Jenkinsfile", "Dockerfile", "Makefile"})
 # a word like "description" or a sentence about scripts cannot produce a false positive.
 SCRIPT_CONSOLE_RE = re.compile(r"""/scriptText\b|/script(?=["'\s,)/?]|$)|\bdoScript\b""")
 
+# The guards themselves. Each must contain the pattern in order to look for it, so each is
+# exempt from its own rule. Nothing else belongs in this set.
+SCRIPT_CONSOLE_GUARD_FILES = frozenset(
+    {"scripts/verify.py", "backend/tests/test_no_script_console.py"}
+)
+
 
 def _is_code_file(rel: str) -> bool:
     name = rel.rsplit("/", 1)[-1]
@@ -467,8 +473,9 @@ def check_no_script_console() -> Result:
     Milestone 2's harness posted Groovy to /scriptText, which is why legacy/ is excluded here
     rather than cleaned: it is frozen evidence, not live code.
 
-    Scope is code and configuration only. This script itself is excluded because it must
-    contain the pattern in order to search for it.
+    Scope is code and configuration only. Two files are excluded, both for the same reason: a
+    guard cannot search for a pattern without containing it. This script is one; the backend's
+    own equivalent test is the other.
     """
     tracked = git("ls-files")
     if tracked.returncode != 0:
@@ -481,7 +488,7 @@ def check_no_script_console() -> Result:
     offenders: list[str] = []
     candidates = sorted(set(tracked.stdout.splitlines()) | set(untracked.stdout.splitlines()))
     for rel in candidates:
-        if rel.startswith("legacy/") or rel == "scripts/verify.py":
+        if rel.startswith("legacy/") or rel in SCRIPT_CONSOLE_GUARD_FILES:
             continue
         if not _is_code_file(rel):
             continue

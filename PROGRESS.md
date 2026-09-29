@@ -1,6 +1,6 @@
 # Progress
 
-Updated: 2026-09-29 · Current phase: 2 · Branch: phase-2-plugin
+Updated: 2026-09-29 · Current phase: 3 · Branch: phase-3-backend
 
 ## Needs human
 - [ ] **Install Docker Desktop and start it.** Blocks Phase 1 entirely (T1.1 to T1.10) and every
@@ -139,6 +139,35 @@ Branch `phase-2-plugin`, stacked on the unmerged `phase-0-foundation`.
 BUILD SUCCESS. Every one of the 17 tests named in Part 4.3.10 exists and passes. The remaining
 clause, `GET /dynamic-queue/api/json` returning 200 on `jenkins-dev` with the bot token, needs a
 running container; the endpoint itself is covered by `ApiJsonIT` against `JenkinsRule`.
+
+## Phase 3: Backend foundation
+Branch `phase-3-backend`, stacked on the unmerged `phase-2-plugin`.
+
+- [x] T3.1 Project skeleton with `uv`, settings, structured logging, error format, CORS and health
+      endpoint — evidence: `uv run ruff check .` → All checks passed; `uv run ruff format --check .`
+      → 23 files already formatted; `uv run mypy app` → no issues in 19 files (strict);
+      `uv run pytest -m "not live and not e2e"` → 16 passed. `uv` 0.12.20 installed into
+      `.venv-tools/` and Python 3.12.14 managed by it, per D-010.
+- [x] T3.4 `JenkinsClient` with a fake implementation for tests — evidence: the same pytest run.
+      `FakeJenkinsClient` keeps jobs, queue items and logs in memory and validates job names and
+      `config.xml` well-formedness, so a template bug fails in the unit suite rather than only
+      against a live Jenkins. The real client does basic auth with the bot token, a 10-second
+      timeout, three attempts with jittered backoff on connection errors and 5xx, and one crumb
+      retry on a 403.
+- [ ] T3.2 SQLAlchemy models and Alembic migrations; seed scripts — models written, migrations and
+      seeds still to do
+- [ ] T3.3 Auth: login, refresh, logout, current user, role dependencies, rate limits
+- [ ] T3.5 `GitClient` and `CatalogService`
+- [ ] T3.6 `PluginClient` for the ranking endpoint and `POST /api/metrics` ingestion
+- [ ] T3.7 `RunTracker` background worker and the WebSocket hub
+- [ ] T3.8 Jobs, runs, queue, analytics and admin routers
+- [x] T3.9 (part) The `/scriptText` guard test — evidence: `pytest tests/test_no_script_console.py`
+      → 4 passed. Scans `backend/` and `experiment/`, proves it detects a planted call, and proves
+      it does not flag prose. Integration tests and the Phase 3 `verify.py` checks remain.
+
+**Acceptance:** all backend quality bars pass, `GET /api/health` reports database, Jenkins and LLM
+provider on the Compose stack, and integration tests create, trigger and read one freestyle job and
+one Pipeline job. **Quality bars met**; the Compose and integration clauses need Docker.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
