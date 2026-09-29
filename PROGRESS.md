@@ -13,6 +13,15 @@ Updated: 2026-09-29 · Current phase: 2 · Branch: phase-2-plugin
 - [ ] **Create the two sample-service GitHub repositories**, push them, create the
       `demo/failing-tests` branch, and put the URLs in `catalog/services.yaml`. Blocks T1.8's
       `git ls-remote` check and the Phase 5 failing-branch acceptance test.
+- [ ] **Resolve or work around the JCasC floating-point defect (D-017).** Importing a YAML file
+      silently ignores `weightUrgency`, `weightDependency`, `weightExecutionTime`,
+      `agingBonusPerInterval`, `agingCap`, `similarityThreshold` and `recencyLambdaPerDay`, while
+      every other field applies. `optimizerEnabled` works, so the main baseline-versus-optimized
+      comparison is unaffected and Table 12.1 stays reproducible from YAML. The **aging-ablation arm**
+      of the Part 4.8.2 matrix varies `agingBonusPerInterval` and `agingCap`, so it cannot be driven
+      from JCasC and needs another route (the global configuration form, or a decision to drop that
+      arm). `ConfigAsCodeIT.floatingPointAttributesAreNotAppliedKnownDefect` pins the current
+      behaviour and will fail loudly when it is fixed.
 - [ ] **Install `gh`, or open pull requests by hand.** Not blocking; each phase still ends on its
       own branch.
 - [ ] **Approve `frontend/DESIGN.md`** when T6.1 produces it. No screen is built before that.
@@ -85,14 +94,14 @@ Branch `phase-2-plugin`, stacked on the unmerged `phase-0-foundation`.
       `mvn test -Dtest=UnionFindKahnTest` → `Tests run: 18, Failures: 0`.
 - [x] T2.6 `BuildHistoryService`, `RecordedLabelAction`, `SimilarityEstimator` — evidence:
       `mvn -B verify` → BUILD SUCCESS; exercised end to end through the sorter by the green
-      integration tests. **Gap:** `SimilarityEstimatorTest` is still to write (T2.13).
+      integration tests. `SimilarityEstimatorTest` covers the maths (T2.13).
 - [x] T2.7 `PriorityScoreCalculator` and `AppendixCExampleTest` — evidence:
       `mvn test -Dtest=AppendixCExampleTest,ScoreComponentTest,AgingTest` →
       `Tests run: 62, Failures: 0`. The report's four scores reproduce at 0.667, 0.650, 0.650 and
       0.300, with 0.633 asserted as the pre-inheritance value too (D-004).
 - [x] T2.8 `PriorityJobHeap` — evidence: `mvn -B verify` → BUILD SUCCESS. Ported from Milestone 2,
       keeping its item-id tie-break, and now sharing one comparator with the sorter so the two
-      cannot disagree about order. **Gap:** `PriorityJobHeapTest` is still to port (T2.13).
+      cannot disagree about order. `PriorityJobHeapTest` is ported and passing (T2.13).
 - [x] T2.9 `DynamicQueueSorter` with the per-cycle cache — evidence:
       `mvn failsafe:integration-test -Dit.test='PipelinePriorityIT,MultiExecutorIT'` →
       `Tests run: 5, Failures: 0`. The three tests that failed on arrival order in T2.1 now pass.
@@ -113,21 +122,23 @@ Branch `phase-2-plugin`, stacked on the unmerged `phase-0-foundation`.
       sorter applied, every documented field and score-bar component is present, the metrics
       `Secret` is never rendered, a malformed `limit` is rejected with 400, and an anonymous caller
       receives no payload while an authenticated reader does.
-- [ ] T2.13 Every test in Part 4.3.10 passing; SpotBugs clean — still to write:
+- [x] T2.13 Every test in Part 4.3.10 exists and passes; SpotBugs clean — evidence:
+      `mvn -B -ntp verify` → BUILD SUCCESS. All 17 required tests are present:
+      `AppendixCExampleTest`, `ScoreComponentTest`, `AgingTest`, `UnionFindKahnTest`,
       `SimilarityEstimatorTest`, `PriorityJobHeapTest`, `SchedulerOverheadTest`,
-      `FreestylePriorityIT`, `DeclarativeOptionsIT`, `CacheEvictionRegressionIT`, `ConfigAsCodeIT`.
-      Done: `AppendixCExampleTest`, `ScoreComponentTest`, `AgingTest`, `UnionFindKahnTest`,
-      `PipelinePriorityIT`, `MultiExecutorIT`, `DependencyGateIT`, `MissingUpstreamIT`,
-      `ObserveOnlyIT`, `ApiJsonIT`
+      `FreestylePriorityIT`, `PipelinePriorityIT`, `MultiExecutorIT`, `DependencyGateIT`,
+      `MissingUpstreamIT`, `DeclarativeOptionsIT`, `ObserveOnlyIT`, `CacheEvictionRegressionIT`,
+      `ConfigAsCodeIT`, `ApiJsonIT`. Plus `Milestone2CompatibilityIT` and `QueueShapeProbeIT`,
+      which are not required but earned their place.
 - [ ] T2.14 Build the `.hpi`, install it on `jenkins-dev`, add Phase 2 checks to `verify.py`
       — **blocked on Docker**, deferred into Phase 1
 
 **Acceptance:** `mvn -B verify` passes; every test named in Part 4.3.10 exists and passes;
 `GET /dynamic-queue/api/json` on `jenkins-dev` returns 200 with the bot token (needs Docker).
-**Partially met** on 2026-09-29: `mvn -B -ntp verify` → BUILD SUCCESS with **67 unit tests and 44
-integration tests** across 7 IT classes, 0 failures, 1 skipped (the harness's generated
-`InjectedTest`), `target/dynamic-queue-optimizer.hpi` built. Seven of the Part 4.3.10 tests are not
-written yet, and the live-endpoint check needs Docker.
+**Met except for the Docker-gated endpoint check**, 2026-09-29: `mvn -B -ntp verify` →
+BUILD SUCCESS. Every one of the 17 tests named in Part 4.3.10 exists and passes. The remaining
+clause, `GET /dynamic-queue/api/json` returning 200 on `jenkins-dev` with the bot token, needs a
+running container; the endpoint itself is covered by `ApiJsonIT` against `JenkinsRule`.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
@@ -170,6 +181,9 @@ Details in `docs/decisions.md`.
 - PyYAML is not installed locally and PyPI's download host does not resolve from this machine, so the
   CI-workflow check runs its structural fallback rather than a full YAML parse. CI installs PyYAML and
   runs the full parse.
+- The JCasC floating-point import defect (D-017) blocks configuring the experiment's aging-ablation
+  arm from YAML. Root cause inside JCasC not identified; ruled out the YAML scalar form,
+  integer-valued floats, the `doCheck*` validators, boxing as `Double`, and the JVM locale.
 - `docs/versions.md` still has `pending` rows for every plugin, backend and frontend dependency. Each
   is filled by the task that pins it, against the official source, per rule 1.4.
 
@@ -178,6 +192,11 @@ Details in `docs/decisions.md`.
 - 2026-09-28 Ordering assertions measure queue dispatch order via a `QueueListener`, never
   `Run#getStartTimeInMillis()`. A Pipeline run starts before its node block is ever queued, so start
   time measures submission order for Pipeline jobs. See D-015.
+
+- 2026-09-29 The similarity threshold filters weakly on a homogeneous controller: two
+  unparameterised builds sharing an agent label score 0.5 before their names are compared, clearing
+  the 0.35 threshold. That is the experiment's exact workload. Formula kept as specified; the
+  consequence is recorded in D-016 and queued as a report correction.
 
 ## Session log
 - 2026-09-28 Read BUILD_PROMPT.md in full. Explored `legacy/m2-poc/` (plugin sources, experiment

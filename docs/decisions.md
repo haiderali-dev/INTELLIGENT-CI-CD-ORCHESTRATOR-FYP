@@ -50,6 +50,92 @@ bearing, and neither is dead code.
 - `QueueShapeProbeIT` stays in the suite. When a future Jenkins baseline changes queue behaviour,
   its output is what will explain what moved.
 
+### D-017 JCasC silently ignores the optimizer's floating-point fields
+**Date:** 2026-09-29 · **Status:** open defect, worked around · **Evidence:** `ConfigAsCodeIT`
+
+On `configuration-as-code:2121.v86fe99d4b_b_a_b_` with Jenkins 2.568.3, importing a YAML file into
+`OptimizerConfiguration` applies every `int`, `boolean`, `String` and `Secret` attribute and
+silently ignores every floating-point one. No warning is logged and the import reports success, so
+the instance keeps its defaults while the file says otherwise.
+
+Affected: `weightUrgency`, `weightDependency`, `weightExecutionTime`, `agingBonusPerInterval`,
+`agingCap`, `similarityThreshold`, `recencyLambdaPerDay`. Unaffected: `optimizerEnabled`,
+`agingIntervalMinutes`, `estimatorK`, `historyWindow`, `rescoreIntervalSeconds`, `metricsEnabled`,
+`metricsBackendUrl`, `metricsToken`.
+
+**Ruled out**, each with a verified compile: the YAML scalar form (quoted and unquoted behave
+identically); integer-valued floats such as `weightUrgency: 2`; the `doCheck*` form validators
+(renaming them away changes nothing); boxing the field, getter and setter as `Double`; and the JVM
+locale, which is en/US. Attribute discovery is correct — JCasC reports all fifteen attributes with
+their proper types, including `weightUrgency : double`. Only the import silently fails. The root
+cause inside JCasC was not identified within a proportionate time budget.
+
+**A note on how this was investigated,** because it cost more than it should have. Three
+intermediate experiments were run with the Maven compile output suppressed, and a broken diagnostic
+in the test file meant they never compiled; each one re-ran the previously compiled classes and
+produced identical output, which read as "the fix had no effect" rather than "the fix was never
+built". Compile output is not noise when the next step depends on it.
+
+**Decision: keep the specified `double` fields and pin the defect with a test.**
+`ConfigAsCodeIT.floatingPointAttributesAreNotAppliedKnownDefect` asserts the current, wrong
+behaviour, with a comment saying so. It fails the moment JCasC starts applying these values, which
+turns a silent limitation into a loud prompt to delete it. Changing the field types to `String` to
+work around it would corrupt the global configuration form and the report's Appendix D.
+
+**Impact, and why the project is not blocked.** `optimizerEnabled` applies, so the main
+baseline-versus-optimized comparison — the one Table 12.1 reports — is fully reproducible from
+`jenkins/casc/experiment-baseline.yaml` and `experiment-plugin.yaml`. The aging-ablation arm of the
+Part 4.8.2 matrix varies `agingBonusPerInterval` and `agingCap`, so it cannot be driven from JCasC
+until this is resolved and must be configured another way. Tracked under Needs human in
+`PROGRESS.md`.
+
+### D-016 The similarity threshold filters weakly on a homogeneous controller
+**Date:** 2026-09-29 · **Status:** measured, task T2.13 · **Evidence:** `SimilarityEstimatorTest`
+
+Found while writing the estimator's tests, from an assertion that turned out to be wrong about the
+implementation the specification asks for.
+
+`BUILD_PROMPT.md` 4.3.5 fixes the similarity formula:
+
+```
+sim = 0.5 * jaccard(nameTokens) + 0.3 * jaccard(params) + 0.2 * (labels equal ? 1 : 0)
+```
+
+Two builds that both take **no parameters** have identical, empty parameter sets. Jaccard of two
+empty sets is 1.0 — the only sensible reading, since "neither build takes parameters" is a genuine
+match rather than missing information, and the alternative would score a job 0 on that term against
+its own history. So the parameter term contributes its full 0.3, a shared agent label adds 0.2, and
+**any two unparameterised builds on the same label score 0.5 before their names are compared at
+all**, comfortably clearing the 0.35 threshold.
+
+**Consequences.**
+
+- On a homogeneous controller — every job unparameterised, one agent label — the threshold excludes
+  almost nothing. Name similarity becomes a ranking weight rather than a filter.
+- That description is exactly the experiment's workload: `freestyle-30` is 30 unparameterised sleep
+  jobs on one `linux` label. So in the experiment, every historical build is a candidate for every
+  estimate.
+- The report's cold-start claim is narrower than it reads. Report section 6.5.1 says a job with
+  nothing similar returns UNKNOWN and takes the neutral factor; reaching that path requires the
+  history to differ in **agent label** as well as name, because a label mismatch is what brings the
+  total to 0.3 and under the threshold.
+
+**Decision: keep the formula exactly as specified.** It is stated in the higher source of truth
+(`BUILD_PROMPT.md` 4.3.5) and in report Algorithm 6.4, and rule 1.2 says the higher source wins.
+Renormalising the weights over only the comparable features would be more principled — an
+unparameterised pair would then score 0.2/0.7 = 0.286 and be excluded — but it is a different
+algorithm from the published one, and silently substituting it is precisely the Milestone 2 failure
+this project exists to correct.
+
+**Why it is tolerable rather than harmful.** The weak filtering costs accuracy only if weak
+candidates distort the estimate, and they do not dominate: an exact name match scores 1.0 against a
+weak candidate's 0.5, and the top-k selection prefers it, so the weighted mean stays anchored to the
+closest builds. `SimilarityEstimatorTest.closerMatchesDominate` asserts that.
+
+**Report change.** Section 6.5.1's cold-start description should state the condition under which
+UNKNOWN actually occurs, and Chapter 6 should note that on a single-label, unparameterised workload
+the threshold is not doing the filtering the prose implies. Tracked in `docs/report-updates.md`.
+
 ### D-015 Ordering is measured by dispatch order, never by run start time
 **Date:** 2026-09-28 · **Status:** decided, task T2.1
 
