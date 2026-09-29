@@ -1,0 +1,56 @@
+<!--
+  Exported from jenkins-dev with GET /job/reference-pipeline-payment-service/config.xml.
+
+  This is what Jenkins itself produced, not hand-written XML. BUILD_PROMPT rule 1.4:
+  every config.xml template is derived from a job created on jenkins-dev and exported,
+  never written from memory. Phase 5's Jinja2 templates are built from these files, and
+  the golden-file tests compare rendered output against them.
+
+  Regenerate with: python scripts/export_reference_configs.py
+-->
+<?xml version="1.1" encoding="UTF-8"?>
+<flow-definition plugin="workflow-job@1602.v2a_70b_80a_2396">
+  <description>Reference Pipeline job: build, test and deploy payment-service to staging.</description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@4383.v04fa_a_3d67b_d9">
+    <script>pipeline {
+    agent { label &apos;linux&apos; }
+    options {
+        dynamicQueuePriority(level: &apos;HIGH&apos;)
+        timestamps()
+        buildDiscarder(logRotator(numToKeepStr: &apos;30&apos;))
+        timeout(time: 30, unit: &apos;MINUTES&apos;)
+    }
+    parameters {
+        string(name: &apos;BRANCH&apos;, defaultValue: &apos;main&apos;, description: &apos;Branch to build&apos;)
+        string(name: &apos;COMMIT&apos;, defaultValue: &apos;&apos;, description: &apos;Commit SHA or empty for head&apos;)
+    }
+    stages {
+        stage(&apos;Checkout&apos;) {
+            steps {
+                checkout([$class: &apos;GitSCM&apos;,
+                          branches: [[name: params.COMMIT ?: params.BRANCH]],
+                          userRemoteConfigs: [[url: &apos;https://github.com/uit-group04/payment-service.git&apos;]]])
+            }
+        }
+        stage(&apos;Build&apos;) {
+            steps { sh &apos;./scripts/build.sh&apos; }
+        }
+        stage(&apos;Unit tests&apos;) {
+            steps { sh &apos;./scripts/test.sh unit&apos; }
+        }
+        stage(&apos;Deploy&apos;) {
+            steps { sh &apos;./deploy.sh staging&apos; }
+        }
+    }
+    post {
+        always { cleanWs() }
+    }
+}
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

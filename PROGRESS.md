@@ -80,24 +80,43 @@ belongs to Phase 1 and is listed under it).
       5 default, 5 profiled) and "Compose refuses to start rather than defaulting a secret" PASS.
       Every build context and `COPY` source resolves except `frontend`, which is profile-gated until
       Phase 6 (D-018).
-- [x] T1.10 Phase 1 checks in `verify.py` — 12 checks, **all passing**: the 9 offline ones plus
-      three live ones added once the stack was up (jenkins-dev answers with the bot token, the
-      controller runs zero executors, both agents online with the `linux` label).
+- [x] T1.10 Phase 1 checks in `verify.py` — 17 checks, **all passing**: 9 offline, 3 live against
+      the running controller, and 5 covering the sample services, the catalog and the reference
+      configs.
 - [x] T1.4 `scripts/bootstrap.py`: SSH keys, waiting for Jenkins, creating the bot API token —
       evidence: `python scripts/bootstrap.py` → generated an ed25519 pair, waited for the
       controller, minted a 34-character token and verified the bot can authenticate with it.
       No script console: the token comes from
       `/user/<id>/descriptorByName/jenkins.security.ApiTokenProperty/generateNewToken`.
-- [ ] T1.6 Sample service `payment-service` (Python)
-- [ ] T1.7 Sample service `auth-service` (Node.js)
-- [ ] T1.8 `catalog/services.yaml` plus its JSON Schema and `scripts/validate_catalog.py`
-- [ ] T1.9 Export reference `config.xml` from hand-made jobs — **needs a running Jenkins**
+- [x] T1.6 Sample service `payment-service` (Python) — evidence: `pytest tests/test_unit.py` →
+      7 passed in 9.01s and `pytest tests/test_integration.py` → 5 passed in 20.89s, matching the
+      catalog's approx_seconds of 8 and 20; `ruff check app tests` → All checks passed. FastAPI with
+      `/health` and `/version` (the latter returning the commit baked in at image build), build,
+      test, lint and security-scan scripts, a Dockerfile and `deploy.sh staging` on port 9001.
+- [x] T1.7 Sample service `auth-service` (Node.js) — evidence: `node --test test/*.test.js` →
+      7 passed in 6.11s, matching approx_seconds 6. Node standard library only, `/health`,
+      `/version`, `/login`, `/verify`, Dockerfile and `deploy.sh staging` on port 9002. Deliberately
+      the shorter service so the execution-time factor T has a real spread to normalise over.
+- [x] T1.8 `catalog/services.yaml` plus its JSON Schema and `scripts/validate_catalog.py` —
+      evidence: `python scripts/validate_catalog.py` → schema valid, production absent, both agent
+      labels exist on the live controller. The two repo-reachability checks fail because the GitHub
+      repositories do not exist yet (Needs human). The schema rejects `production` in
+      `allowed_environments` outright, so it cannot be enabled by editing the catalog alone.
+- [x] T1.9 Export reference `config.xml` from hand-made jobs — evidence:
+      `python scripts/export_reference_configs.py` created one freestyle and one Pipeline job
+      through the REST API on the live `jenkins-dev`, exported what Jenkins stored, and removed
+      them. `verify.py --phase 1` → "reference configs were exported from Jenkins" PASS. The
+      exports carry Jenkins' own `plugin="name@version"` stamps
+      (`dynamic-queue-optimizer@2.0.0-SNAPSHOT`, `git@5.10.1`, `timestamper@1.30`,
+      `ws-cleanup@0.49`), which is the evidence they were produced by Jenkins rather than written
+      by hand — exactly what rule 1.4 requires.
 
 **Acceptance:** `verify.py --phase 1` confirms `jenkins-dev` answers with the bot token, both agents
 online, controller executors 0, reference configs exist, the catalog validates, and both services'
-tests pass. **Partially met** on 2026-09-29: the first three clauses pass live
-(`python scripts/verify.py --phase 2` → ALL CHECKS PASSED, 12 Phase 1 checks). The reference-config,
-catalog and sample-service clauses need T1.6 to T1.9.
+tests pass. **MET** on 2026-09-29: `python scripts/verify.py --phase 2` → ALL CHECKS PASSED,
+34 checks across phases 0, 1 and 2. The one outstanding item is outside the check: the two GitHub
+repositories do not exist, so `validate_catalog.py` reports both `git ls-remote` probes as failing
+until a human creates and pushes them.
 
 ## Phase 2: Plugin v2
 Branch `phase-2-plugin`, stacked on the unmerged `phase-0-foundation`.

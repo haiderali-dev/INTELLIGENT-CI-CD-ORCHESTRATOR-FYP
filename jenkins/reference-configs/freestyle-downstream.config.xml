@@ -1,0 +1,37 @@
+<!--
+  Exported from jenkins-dev with GET /job/reference-freestyle-downstream/config.xml.
+
+  This is what Jenkins itself produced, not hand-written XML. BUILD_PROMPT rule 1.4:
+  every config.xml template is derived from a job created on jenkins-dev and exported,
+  never written from memory. Phase 5's Jinja2 templates are built from these files, and
+  the golden-file tests compare rendered output against them.
+
+  Regenerate with: python scripts/export_reference_configs.py
+-->
+<?xml version="1.1" encoding="UTF-8"?>
+<project>
+  <description>Downstream target for the reference freestyle trigger.</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <io.jenkins.plugins.queueoptimizer.property.JobPriorityProperty plugin="dynamic-queue-optimizer@2.0.0-SNAPSHOT">
+      <level>HIGH</level>
+      <dependsOn>reference-freestyle-payment-service</dependsOn>
+    </io.jenkins.plugins.queueoptimizer.property.JobPriorityProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>linux</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>echo downstream</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

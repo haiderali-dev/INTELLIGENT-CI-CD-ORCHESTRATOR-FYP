@@ -1091,6 +1091,144 @@ def check_plugin_side_endpoints() -> Result:
     return ok("both answer 200")
 
 
+# ---------------------------------------------------------------------------
+# Phase 1: sample services, catalog and reference configs (T1.6 to T1.9)
+# ---------------------------------------------------------------------------
+
+SAMPLE_SERVICES = {
+    "payment-service": ["deploy.sh", "Dockerfile", "scripts/build.sh", "scripts/test.sh", "app/main.py"],
+    "auth-service": ["deploy.sh", "Dockerfile", "scripts/build.sh", "scripts/test.sh", "src/app.js"],
+}
+
+REFERENCE_CONFIGS = [
+    "freestyle-build-test-deploy.config.xml",
+    "pipeline-build-test-deploy.config.xml",
+    "freestyle-downstream.config.xml",
+]
+
+
+@check(1, "sample services are present and complete")
+def check_sample_services() -> Result:
+    problems: list[str] = []
+    for service, files in SAMPLE_SERVICES.items():
+        root = REPO_ROOT / "sample-services" / service
+        if not root.is_dir():
+            problems.append(f"{service} is missing")
+            continue
+        for relative in files:
+            if not (root / relative).is_file():
+                problems.append(f"{service}/{relative}")
+    if problems:
+        return fail("missing: " + ", ".join(problems))
+    return ok(f"{len(SAMPLE_SERVICES)} services with build, test, deploy and a Dockerfile")
+
+
+@check(1, "deploy scripts refuse production")
+def check_deploy_refuses_production() -> Result:
+    """Rule 1.5 enforced at the one place that could actually reach a production host.
+
+    The policy layer refuses production too, but a deploy script is executable on its own from any
+    agent, so the refusal has to live in the script rather than only upstream of it.
+    """
+    problems: list[str] = []
+    for service in SAMPLE_SERVICES:
+        script = REPO_ROOT / "sample-services" / service / "deploy.sh"
+        if not script.is_file():
+            problems.append(f"{service}: no deploy.sh")
+            continue
+        text = script.read_text(encoding="utf-8")
+        if "production)" not in text:
+            problems.append(f"{service}: no explicit production branch")
+        elif "refused" not in text.lower():
+            problems.append(f"{service}: production branch does not refuse")
+    if problems:
+        return fail("; ".join(problems))
+    return ok("both refuse production explicitly")
+
+
+@check(1, "shell scripts use LF endings")
+def check_shell_line_endings() -> Result:
+    """A CRLF shebang fails on a Linux agent with 'bad interpreter: /bin/sh^M'.
+
+    .gitattributes pins these to LF, but that only governs what Git stores; this checks the files
+    on disk, which is what gets copied into a container.
+    """
+    offenders: list[str] = []
+    for script in (REPO_ROOT / "sample-services").rglob("*.sh"):
+        if b"\r\n" in script.read_bytes():
+            offenders.append(str(script.relative_to(REPO_ROOT)))
+    if offenders:
+        return fail("CRLF found in: " + ", ".join(offenders))
+    return ok("all sample-service shell scripts are LF")
+
+
+@check(1, "catalog validates")
+def check_catalog() -> Result:
+    """Delegates to scripts/validate_catalog.py so there is one implementation of the rules.
+
+    Run with --offline: the repository-reachability check needs GitHub, and a phase gate should not
+    depend on network conditions. validate_catalog.py is run without --offline separately.
+    """
+    script = REPO_ROOT / "scripts" / "validate_catalog.py"
+    if not script.is_file():
+        return fail("scripts/validate_catalog.py does not exist")
+    if not (REPO_ROOT / "catalog" / "services.yaml").is_file():
+        return fail("catalog/services.yaml does not exist")
+
+    result = run([sys.executable, str(script), "--offline"], timeout=120)
+    if result.returncode != 0:
+        tail = [line for line in result.stdout.splitlines() if line.startswith("[FAIL]")]
+        return fail("; ".join(tail[:3]) or result.stdout.strip()[-200:])
+    return ok("schema, production policy and structure all valid")
+
+
+@check(1, "reference configs were exported from Jenkins")
+def check_reference_configs() -> Result:
+    """Rule 1.4: Jenkins XML templates are derived from these, never written from memory.
+
+    The `plugin="name@version"` stamps are the evidence: Jenkins adds them on save, so their
+    presence distinguishes a genuine export from hand-written XML that merely looks right.
+    """
+    directory = REPO_ROOT / "jenkins" / "reference-configs"
+    missing = [name for name in REFERENCE_CONFIGS if not (directory / name).is_file()]
+    if missing:
+        return fail(
+            f"{len(missing)} missing: {', '.join(missing)}. "
+            "Run `python scripts/export_reference_configs.py` against a running jenkins-dev."
+        )
+
+    freestyle = (directory / "freestyle-build-test-deploy.config.xml").read_text(encoding="utf-8")
+    if "plugin=" not in freestyle or "@" not in freestyle:
+        return fail(
+            "no plugin version stamps: this looks hand-written rather than exported from Jenkins"
+        )
+
+    # The elements Part 4.6.3 says a freestyle job needs, so a template built from this file has
+    # something real to copy for each.
+    required = {
+        "Git SCM": "hudson.plugins.git.GitSCM",
+        "branch/commit parameters": "ParametersDefinitionProperty",
+        "agent label": "<assignedNode>",
+        "shell steps": "hudson.tasks.Shell",
+        "priority property": "JobPriorityProperty",
+        "archiving": "ArtifactArchiver",
+        "downstream trigger": "hudson.tasks.BuildTrigger",
+    }
+    absent = [label for label, needle in required.items() if needle not in freestyle]
+    if absent:
+        return fail("the freestyle reference lacks: " + ", ".join(absent))
+
+    pipeline = (directory / "pipeline-build-test-deploy.config.xml").read_text(encoding="utf-8")
+    if "CpsFlowDefinition" not in pipeline:
+        return fail("the Pipeline reference is not a CpsFlowDefinition")
+    if "<sandbox>true</sandbox>" not in pipeline:
+        return fail("the Pipeline reference is not sandboxed; 4.6.3 requires a sandboxed script")
+    if "dynamicQueuePriority" not in pipeline:
+        return fail("the Pipeline reference does not use the dynamicQueuePriority option")
+
+    return ok(f"{len(REFERENCE_CONFIGS)} configs, all carrying Jenkins' own plugin version stamps")
+
+
 IMPLEMENTED_PHASES = {0, 1, 2}
 
 
@@ -1123,7 +1261,12 @@ def main() -> int:
         return 2
 
     unimplemented = sorted(p for p in range(args.phase + 1) if p not in IMPLEMENTED_PHASES)
-    selected = [c for c in _REGISTRY if c.phase <= args.phase]
+    # Sorted by phase, stably, so checks registered later still print under their own heading.
+    # Grouping on phase *changes* alone printed "-- phase 1 --" twice once Phase 1 checks were
+    # added below the Phase 2 block.
+    selected = sorted(
+        (c for c in _REGISTRY if c.phase <= args.phase), key=lambda c: c.phase
+    )
 
     if args.list:
         for c in selected:
