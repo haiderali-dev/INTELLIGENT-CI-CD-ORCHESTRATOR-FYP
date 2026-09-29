@@ -1,0 +1,15 @@
+Alembic migrations for the orchestrator backend.
+
+The database URL comes from the application's Settings (see env.py), never from alembic.ini, so
+migrations and the running application cannot disagree about which database they target and no
+credential is committed.
+
+  cd backend
+  uv run alembic upgrade head          # apply
+  uv run alembic downgrade -1          # roll back one
+  uv run alembic upgrade head --sql    # review the SQL without connecting
+  uv run alembic revision --autogenerate -m "describe the change"
+
+tests/test_migrations.py asserts that `upgrade head` produces exactly the schema the models
+declare, so a model change without a matching migration fails the suite rather than surfacing as a
+runtime error in production.

@@ -1,6 +1,6 @@
 # Progress
 
-Updated: 2026-09-29 · Current phase: 1 and 3 · Branch: phase-3-backend
+Updated: 2026-09-29 · Current phase: 3 · Branch: phase-3-backend
 
 ## Needs human
 - [ ] **Create the two sample-service GitHub repositories**, push them, create the
@@ -213,8 +213,14 @@ Branch `phase-3-backend`, stacked on the unmerged `phase-2-plugin`.
       against a live Jenkins. The real client does basic auth with the bot token, a 10-second
       timeout, three attempts with jittered backoff on connection errors and 5xx, and one crumb
       retry on a 403.
-- [ ] T3.2 SQLAlchemy models and Alembic migrations; seed scripts — models written, migrations and
-      seeds still to do
+- [x] T3.2 SQLAlchemy models and Alembic migrations for every table in Part 4.4.3; seed scripts for
+      the admin user and the catalog — evidence: `alembic upgrade head` against the Compose
+      PostgreSQL created all 14 tables (`\dt` shows them plus `alembic_version`);
+      `alembic downgrade base` then `upgrade head` proved the migration reversible; a second
+      `--autogenerate` produced an empty upgrade/downgrade, proving the models and the migration
+      agree with no drift. `python -m app.db.seed` run twice, in the container, reported
+      `2 created, 0 updated` then `0 created, 0 updated`. `verify.py --phase 3` → 6 Phase 3 checks
+      pass; `pytest` → 30 passed, 1 skipped (the `integration`-marked live upgrade).
 - [ ] T3.3 Auth: login, refresh, logout, current user, role dependencies, rate limits
 - [ ] T3.5 `GitClient` and `CatalogService`
 - [ ] T3.6 `PluginClient` for the ranking endpoint and `POST /api/metrics` ingestion
@@ -226,7 +232,7 @@ Branch `phase-3-backend`, stacked on the unmerged `phase-2-plugin`.
 
 **Acceptance:** all backend quality bars pass, `GET /api/health` reports database, Jenkins and LLM
 provider on the Compose stack, and integration tests create, trigger and read one freestyle job and
-one Pipeline job. **Two of three met** on 2026-09-29: quality bars pass, and `GET /api/health` on
+one Pipeline job. **Two of three met** on 2026-09-29 (unchanged by T3.2): quality bars pass, and `GET /api/health` on
 the Compose stack returns `status: up` with database up, jenkins up (2.568.3, reached with the bot
 token) and llm disabled (fake mode). The integration-test clause needs T3.8's routers, which are
 not written yet.

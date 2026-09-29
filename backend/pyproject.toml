@@ -78,6 +78,9 @@ ignore = [
 # Tests may hardcode credentials and use long literals.
 "tests/**" = ["S105", "S106", "S107", "E501"]
 "alembic/**" = ["E501"]
+# seed.py is a command-line entry point (`python -m app.db.seed`); its printed summary is its
+# user interface, not a stray debug statement. The same events are also logged structurally.
+"app/db/seed.py" = ["T201"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]

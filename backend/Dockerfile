@@ -40,13 +40,11 @@ ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
+# Migrations travel with the image so `docker compose exec backend alembic upgrade head` works
+# without a bind mount, and so the image is self-contained for a demo reset.
+COPY --chown=orchestrator:orchestrator alembic.ini ./
+COPY --chown=orchestrator:orchestrator alembic ./alembic
 COPY --chown=orchestrator:orchestrator app ./app
-
-# Alembic is not copied yet: task T3.2 creates alembic.ini and alembic/, and a COPY of a path that
-# does not exist fails the build. Add these two lines with T3.2 rather than carrying a Dockerfile
-# that cannot build:
-#     COPY --chown=orchestrator:orchestrator alembic.ini ./
-#     COPY --chown=orchestrator:orchestrator alembic ./alembic
 
 USER orchestrator
 

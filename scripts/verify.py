@@ -1229,7 +1229,165 @@ def check_reference_configs() -> Result:
     return ok(f"{len(REFERENCE_CONFIGS)} configs, all carrying Jenkins' own plugin version stamps")
 
 
-IMPLEMENTED_PHASES = {0, 1, 2}
+# ---------------------------------------------------------------------------
+# Phase 3: backend
+#
+# Only the parts T3.2 delivers are checked here. The rest of Phase 3's checks
+# arrive with T3.9.
+# ---------------------------------------------------------------------------
+
+# Every table BUILD_PROMPT 4.4.3 names.
+REQUIRED_TABLES = [
+    "users",
+    "services",
+    "conversations",
+    "messages",
+    "nl_commands",
+    "generated_pipelines",
+    "jobs",
+    "job_runs",
+    "llm_calls",
+    "experiments",
+    "experiment_metrics",
+    "resource_samples",
+    "notifications",
+    "audit_logs",
+]
+
+
+@check(3, "Alembic is configured and has a migration")
+def check_alembic_present() -> Result:
+    backend = REPO_ROOT / "backend"
+    missing = [
+        str(p.relative_to(REPO_ROOT))
+        for p in (backend / "alembic.ini", backend / "alembic" / "env.py")
+        if not p.is_file()
+    ]
+    if missing:
+        return fail("missing: " + ", ".join(missing))
+
+    versions = backend / "alembic" / "versions"
+    migrations = sorted(p for p in versions.glob("*.py") if not p.name.startswith("__"))
+    if not migrations:
+        return fail(
+            "no migration in backend/alembic/versions/. Run "
+            "`uv run alembic revision --autogenerate -m 'initial schema'`."
+        )
+    return ok(f"{len(migrations)} migration(s), newest {migrations[-1].name}")
+
+
+@check(3, "migrations create every table in Part 4.4.3")
+def check_migrations_cover_the_schema() -> Result:
+    versions = REPO_ROOT / "backend" / "alembic" / "versions"
+    if not versions.is_dir():
+        return fail("backend/alembic/versions/ does not exist")
+
+    source = "\n".join(
+        p.read_text(encoding="utf-8")
+        for p in versions.glob("*.py")
+        if not p.name.startswith("__")
+    )
+    created = set(re.findall(r'op\.create_table\(\s*"([a-z_]+)"', source))
+    missing = [name for name in REQUIRED_TABLES if name not in created]
+    if missing:
+        return fail(f"{len(missing)} not created by any migration: {', '.join(missing)}")
+    return ok(f"all {len(REQUIRED_TABLES)} tables")
+
+
+@check(3, "every migration is reversible")
+def check_migrations_reversible() -> Result:
+    """A migration that cannot be rolled back is one nobody can safely apply.
+
+    demo_reset.py restores a known state before the demo; an irreversible migration turns that
+    from a rollback into a reinstall.
+    """
+    versions = REPO_ROOT / "backend" / "alembic" / "versions"
+    if not versions.is_dir():
+        return fail("backend/alembic/versions/ does not exist")
+
+    offenders: list[str] = []
+    for path in versions.glob("*.py"):
+        if path.name.startswith("__"):
+            continue
+        text = path.read_text(encoding="utf-8")
+        parts = text.split("def downgrade()", 1)
+        if len(parts) < 2:
+            offenders.append(f"{path.name}: no downgrade()")
+        elif "op." not in parts[1]:
+            offenders.append(f"{path.name}: downgrade() does nothing")
+    if offenders:
+        return fail("; ".join(offenders))
+    return ok("all downgrade cleanly")
+
+
+@check(3, "seed scripts exist and are idempotent by construction")
+def check_seed_scripts() -> Result:
+    seed = REPO_ROOT / "backend" / "app" / "db" / "seed.py"
+    if not seed.is_file():
+        return fail("backend/app/db/seed.py does not exist")
+    text = seed.read_text(encoding="utf-8")
+
+    problems: list[str] = []
+    if "def seed_admin" not in text:
+        problems.append("no seed_admin")
+    if "def seed_catalog" not in text:
+        problems.append("no seed_catalog")
+    # Both seeds must look before they write, or a restart duplicates rows.
+    if text.count("select(") < 2:
+        problems.append("a seed writes without checking for an existing row first")
+    if problems:
+        return fail("; ".join(problems))
+    return ok("seed_admin and seed_catalog, both checking before writing")
+
+
+@check(3, "the backend image ships its migrations")
+def check_backend_image_has_migrations() -> Result:
+    """Without these, `docker compose exec backend alembic upgrade head` cannot work."""
+    dockerfile = REPO_ROOT / "backend" / "Dockerfile"
+    if not dockerfile.is_file():
+        return fail("backend/Dockerfile does not exist")
+    text = dockerfile.read_text(encoding="utf-8")
+    missing = [
+        need
+        for need in ("alembic.ini", "alembic ./alembic", "app ./app")
+        if f"COPY --chown=orchestrator:orchestrator {need}" not in text
+    ]
+    if missing:
+        return fail("the image does not copy: " + ", ".join(missing))
+    return ok("alembic.ini, alembic/ and app/ all copied")
+
+
+@check(3, "backend quality bars pass")
+def check_backend_quality_bars() -> Result:
+    """ruff, ruff format, mypy and the offline pytest run, exactly as 1.6 lists them."""
+    backend = REPO_ROOT / "backend"
+    if not (backend / "pyproject.toml").is_file():
+        return fail("backend/pyproject.toml does not exist")
+
+    uv = REPO_ROOT / ".venv-tools" / "Scripts" / "uv.exe"
+    if not uv.is_file():
+        uv_name = "uv"
+        if not have(uv_name):
+            return fail("uv is not installed; see docs/decisions.md D-010")
+        runner = [uv_name]
+    else:
+        runner = [str(uv)]
+
+    stages = (
+        ("ruff check", [*runner, "run", "ruff", "check", "."]),
+        ("ruff format --check", [*runner, "run", "ruff", "format", "--check", "."]),
+        ("mypy app", [*runner, "run", "mypy", "app"]),
+        ("pytest", [*runner, "run", "pytest", "-m", "not live and not e2e", "-q"]),
+    )
+    for label, command in stages:
+        result = run(command, cwd=backend, timeout=600)
+        if result.returncode != 0:
+            tail = (result.stdout + result.stderr).strip().splitlines()
+            return fail(f"{label} failed: " + " / ".join(tail[-2:])[:200])
+    return ok("ruff, ruff format, mypy and pytest all clean")
+
+
+IMPLEMENTED_PHASES = {0, 1, 2, 3}
 
 
 # ---------------------------------------------------------------------------
