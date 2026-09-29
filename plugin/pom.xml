@@ -137,6 +137,32 @@
         <artifactId>maven-hpi-plugin</artifactId>
         <extensions>true</extensions>
       </plugin>
+
+      <!--
+        Bind Failsafe to the lifecycle so `mvn verify` actually runs the *IT classes.
+
+        Without this it does not. Surefire picks up *Test only, Failsafe is available but
+        unbound, and `mvn verify` reported BUILD SUCCESS over 67 unit tests while silently
+        skipping every JenkinsRule integration test named in BUILD_PROMPT 4.3.10. The phase's
+        acceptance criterion is "mvn -B verify passes", so that criterion was passing
+        vacuously — precisely the class of hollow green this project exists to avoid.
+
+        The `verify` goal is included as well as `integration-test`, so a failing IT fails the
+        build rather than merely being recorded in a report nobody reads.
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>integration-tests</id>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 </project>

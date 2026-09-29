@@ -1,6 +1,6 @@
 # Progress
 
-Updated: 2026-09-28 · Current phase: 2 · Branch: phase-2-plugin
+Updated: 2026-09-29 · Current phase: 2 · Branch: phase-2-plugin
 
 ## Needs human
 - [ ] **Install Docker Desktop and start it.** Blocks Phase 1 entirely (T1.1 to T1.10) and every
@@ -98,21 +98,36 @@ Branch `phase-2-plugin`, stacked on the unmerged `phase-0-foundation`.
       `Tests run: 5, Failures: 0`. The three tests that failed on arrival order in T2.1 now pass.
       The heap is rebuilt on every pass including a cache hit; the cache key includes the current
       minute so aging refreshes at least once a minute.
-- [ ] T2.10 `DependencyGate`
-- [ ] T2.11 `QueueMetricsRecorder`, `RunMetricsRecorder`, `MetricsPublisher`
-- [ ] T2.12 `DynamicQueueApi` (ranking and metrics endpoints)
+- [x] T2.10 `DependencyGate` — evidence: `mvn -B verify` → `DependencyGateIT` 7/7 and
+      `MissingUpstreamIT` 9/9 pass. A HIGH downstream job waits for its LOW upstream despite
+      outranking it; a three-job chain runs in order; a missing upstream is reported unresolved and
+      never blocks; a failed upstream does not block; a self-dependency and a runtime cycle do not
+      deadlock.
+- [x] T2.11 `QueueMetricsRecorder`, `RunMetricsRecorder`, `MetricsPublisher` — evidence:
+      `mvn -B verify` → `ObserveOnlyIT` 6/6 pass, including that all four event kinds are recorded
+      with the optimizer disabled and every event is labelled with which arm produced it. Publishing
+      uses a bounded queue of 1000 on a daemon thread that drops and counts on overflow, so an
+      unreachable backend can never block queue maintenance or leak memory.
+- [x] T2.12 `DynamicQueueApi` (ranking and metrics endpoints) — evidence: `mvn -B verify` →
+      `ApiJsonIT` 10/10 pass. All three endpoints answer, the ranking lists items in the order the
+      sorter applied, every documented field and score-bar component is present, the metrics
+      `Secret` is never rendered, a malformed `limit` is rejected with 400, and an anonymous caller
+      receives no payload while an authenticated reader does.
 - [ ] T2.13 Every test in Part 4.3.10 passing; SpotBugs clean — still to write:
       `SimilarityEstimatorTest`, `PriorityJobHeapTest`, `SchedulerOverheadTest`,
-      `FreestylePriorityIT`, `DeclarativeOptionsIT`, `ObserveOnlyIT`,
-      `CacheEvictionRegressionIT`, `ConfigAsCodeIT`, `ApiJsonIT`
+      `FreestylePriorityIT`, `DeclarativeOptionsIT`, `CacheEvictionRegressionIT`, `ConfigAsCodeIT`.
+      Done: `AppendixCExampleTest`, `ScoreComponentTest`, `AgingTest`, `UnionFindKahnTest`,
+      `PipelinePriorityIT`, `MultiExecutorIT`, `DependencyGateIT`, `MissingUpstreamIT`,
+      `ObserveOnlyIT`, `ApiJsonIT`
 - [ ] T2.14 Build the `.hpi`, install it on `jenkins-dev`, add Phase 2 checks to `verify.py`
       — **blocked on Docker**, deferred into Phase 1
 
 **Acceptance:** `mvn -B verify` passes; every test named in Part 4.3.10 exists and passes;
 `GET /dynamic-queue/api/json` on `jenkins-dev` returns 200 with the bot token (needs Docker).
-**Partially met** on 2026-09-28: `mvn -B -ntp verify` → BUILD SUCCESS, 67 tests, 0 failures,
-1 skipped (the harness's generated `InjectedTest`), `target/dynamic-queue-optimizer.hpi` built.
-Nine of the Part 4.3.10 tests are not written yet, and the endpoint check needs Docker.
+**Partially met** on 2026-09-29: `mvn -B -ntp verify` → BUILD SUCCESS with **67 unit tests and 44
+integration tests** across 7 IT classes, 0 failures, 1 skipped (the harness's generated
+`InjectedTest`), `target/dynamic-queue-optimizer.hpi` built. Seven of the Part 4.3.10 tests are not
+written yet, and the live-endpoint check needs Docker.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
@@ -132,6 +147,10 @@ Nine of the Part 4.3.10 tests are not written yet, and the endpoint check needs 
 
 Details in `docs/decisions.md`.
 
+- 2026-09-29 Maven Failsafe is now bound to the lifecycle in `plugin/pom.xml`. It was not, so
+  `mvn verify` ran only the 67 surefire unit tests and silently skipped every `*IT` class while
+  reporting BUILD SUCCESS. The phase's acceptance criterion is "`mvn -B verify` passes", so that
+  criterion was passing vacuously.
 - 2026-09-28 `verify.py`'s CI-workflow check falls back to a dependency-free structural scan when
   PyYAML is absent, instead of failing. PyPI's download host would not resolve from this machine, and
   a phase gate that fails because an unrelated package could not be downloaded is a broken gate. The
