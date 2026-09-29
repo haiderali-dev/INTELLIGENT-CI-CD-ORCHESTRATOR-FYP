@@ -1,36 +1,8 @@
 # Progress
 
-Updated: 2026-09-29 · Current phase: 3 · Branch: phase-3-backend
+Updated: 2026-09-29 · Current phase: 1 and 3 · Branch: phase-3-backend
 
 ## Needs human
-- [ ] **Install Docker Desktop.** Diagnosed 2026-09-29: Docker is **not installed** on this machine.
-      No `docker` on PATH, no `com.docker.service`, no uninstall entry, and no binaries under
-      `C:\Program Files\Docker`. Only ~94 MB of orphaned data remains under
-      `%LOCALAPPDATA%\Docker`, `%ProgramData%\DockerDesktop` and `~/.docker`, so it was installed
-      and later removed.
-      **Prerequisites are already satisfied:** Windows 11 Pro build 26200, WSL 2.6.3.0 with kernel
-      6.6.87.2-1, default WSL version 2, `HypervisorPresent: True`, 64 GB free on C:. (The
-      `VirtualizationFirmwareEnabled: False` reading is the known artefact of a hypervisor already
-      running, not a disabled BIOS setting — WSL2 could not run otherwise.)
-      **This session cannot install it: the shell is not elevated** (`HAIDER-HP\haide`,
-      `IsElevated: False`) and Docker Desktop is a machine-scope installer.
-      Run in an **Administrator** PowerShell:
-      ```
-      winget install --id Docker.DockerDesktop --source winget --accept-package-agreements --accept-source-agreements
-      ```
-      Then reboot, launch Docker Desktop once, wait for "Engine running", and confirm with
-      `docker version && docker info && docker compose version`.
-      Still waiting on it: `docker compose config`/`up`, the reference-config export (T1.9), the
-      `.hpi` install on `jenkins-dev` (T2.14), and every integration and end-to-end test.
-- [ ] **Create `.env`.** It does not exist. `cp .env.example .env`, then fill in `GROQ_API_KEY`
-      (optional; `LLM_MODE=fake` works without it), `JENKINS_ADMIN_PASSWORD`,
-      `JENKINS_BOT_PASSWORD`, `JWT_SECRET`, `METRICS_TOKEN`, `POSTGRES_PASSWORD`, `SEED_ADMIN_EMAIL`
-      and `SEED_ADMIN_PASSWORD`. Compose uses the `${VAR:?}` form for all six secrets, so it refuses
-      to start with a named variable rather than silently defaulting a password.
-- [ ] **Put the secrets in `.env`.** Needed: `GROQ_API_KEY`, `JENKINS_ADMIN_PASSWORD`,
-      `JENKINS_BOT_PASSWORD`, `JWT_SECRET`, `METRICS_TOKEN`, `POSTGRES_PASSWORD`, `SEED_ADMIN_EMAIL`,
-      `SEED_ADMIN_PASSWORD`. Never paste them into the chat. Blocks the live AI path in Phase 4 and
-      the whole stack in Phase 1. Fakes and replay fixtures cover everything else meanwhile.
 - [ ] **Create the two sample-service GitHub repositories**, push them, create the
       `demo/failing-tests` branch, and put the URLs in `catalog/services.yaml`. Blocks T1.8's
       `git ls-remote` check and the Phase 5 failing-branch acceptance test.
@@ -108,10 +80,14 @@ belongs to Phase 1 and is listed under it).
       5 default, 5 profiled) and "Compose refuses to start rather than defaulting a secret" PASS.
       Every build context and `COPY` source resolves except `frontend`, which is profile-gated until
       Phase 6 (D-018).
-- [x] T1.10 (part) Phase 1 checks in `verify.py` — 9 checks. 7 pass offline; the 2 that fail are
-      "Docker is available" and "docker compose config validates", which name the missing
-      prerequisite rather than failing generically.
-- [ ] T1.4 `scripts/bootstrap.py`: SSH keys, waiting for Jenkins, creating the bot API token
+- [x] T1.10 Phase 1 checks in `verify.py` — 12 checks, **all passing**: the 9 offline ones plus
+      three live ones added once the stack was up (jenkins-dev answers with the bot token, the
+      controller runs zero executors, both agents online with the `linux` label).
+- [x] T1.4 `scripts/bootstrap.py`: SSH keys, waiting for Jenkins, creating the bot API token —
+      evidence: `python scripts/bootstrap.py` → generated an ed25519 pair, waited for the
+      controller, minted a 34-character token and verified the bot can authenticate with it.
+      No script console: the token comes from
+      `/user/<id>/descriptorByName/jenkins.security.ApiTokenProperty/generateNewToken`.
 - [ ] T1.6 Sample service `payment-service` (Python)
 - [ ] T1.7 Sample service `auth-service` (Node.js)
 - [ ] T1.8 `catalog/services.yaml` plus its JSON Schema and `scripts/validate_catalog.py`
@@ -119,7 +95,9 @@ belongs to Phase 1 and is listed under it).
 
 **Acceptance:** `verify.py --phase 1` confirms `jenkins-dev` answers with the bot token, both agents
 online, controller executors 0, reference configs exist, the catalog validates, and both services'
-tests pass. **Not met:** blocked on Docker, then on T1.4 and T1.6 to T1.9.
+tests pass. **Partially met** on 2026-09-29: the first three clauses pass live
+(`python scripts/verify.py --phase 2` → ALL CHECKS PASSED, 12 Phase 1 checks). The reference-config,
+catalog and sample-service clauses need T1.6 to T1.9.
 
 ## Phase 2: Plugin v2
 Branch `phase-2-plugin`, stacked on the unmerged `phase-0-foundation`.
@@ -185,12 +163,19 @@ Branch `phase-2-plugin`, stacked on the unmerged `phase-0-foundation`.
       `MissingUpstreamIT`, `DeclarativeOptionsIT`, `ObserveOnlyIT`, `CacheEvictionRegressionIT`,
       `ConfigAsCodeIT`, `ApiJsonIT`. Plus `Milestone2CompatibilityIT` and `QueueShapeProbeIT`,
       which are not required but earned their place.
-- [ ] T2.14 Build the `.hpi`, install it on `jenkins-dev`, add Phase 2 checks to `verify.py`
-      — **blocked on Docker**, deferred into Phase 1
+- [x] T2.14 Build the `.hpi`, install it on `jenkins-dev`, add Phase 2 checks to `verify.py` —
+      evidence: `docker compose build jenkins-dev && docker compose up -d` →
+      `dynamic-queue-optimizer 2.0.0-SNAPSHOT` reports `active=true enabled=true` among 80 plugins;
+      `python scripts/verify.py --phase 2` → "the ranking endpoint answers with the bot token" 200
+      with weights 0.5/0.3/0.2 and aging 0.05 cap 0.15, and "the plugin health and metrics endpoints
+      answer" both 200. A live end-to-end check created LOW, MEDIUM and HIGH freestyle jobs on the
+      `linux` label, filled all four executors with blockers, and confirmed the plugin ranked them
+      HIGH 0.600 / MEDIUM 0.400 / LOW 0.250 and dispatched them in that order despite worst-first
+      arrival.
 
 **Acceptance:** `mvn -B verify` passes; every test named in Part 4.3.10 exists and passes;
-`GET /dynamic-queue/api/json` on `jenkins-dev` returns 200 with the bot token (needs Docker).
-**Met except for the Docker-gated endpoint check**, 2026-09-29: `mvn -B -ntp verify` →
+`GET /dynamic-queue/api/json` on `jenkins-dev` returns 200 with the bot token.
+**MET in full**, 2026-09-29. The endpoint clause is now verified live; earlier detail: `mvn -B -ntp verify` →
 BUILD SUCCESS. Every one of the 17 tests named in Part 4.3.10 exists and passes. The remaining
 clause, `GET /dynamic-queue/api/json` returning 200 on `jenkins-dev` with the bot token, needs a
 running container; the endpoint itself is covered by `ApiJsonIT` against `JenkinsRule`.
@@ -222,7 +207,10 @@ Branch `phase-3-backend`, stacked on the unmerged `phase-2-plugin`.
 
 **Acceptance:** all backend quality bars pass, `GET /api/health` reports database, Jenkins and LLM
 provider on the Compose stack, and integration tests create, trigger and read one freestyle job and
-one Pipeline job. **Quality bars met**; the Compose and integration clauses need Docker.
+one Pipeline job. **Two of three met** on 2026-09-29: quality bars pass, and `GET /api/health` on
+the Compose stack returns `status: up` with database up, jenkins up (2.568.3, reached with the bot
+token) and llm disabled (fake mode). The integration-test clause needs T3.8's routers, which are
+not written yet.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not

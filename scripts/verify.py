@@ -907,6 +907,190 @@ def check_compose_config() -> Result:
     return ok("the merged configuration is valid")
 
 
+# ---------------------------------------------------------------------------
+# Phase 1 and 2, live: these need a running stack. Each one reports the exact
+# missing prerequisite rather than a generic failure.
+# ---------------------------------------------------------------------------
+
+
+def _env_file() -> dict[str, str]:
+    """Parse .env. Values are used, never printed."""
+    path = REPO_ROOT / ".env"
+    if not path.is_file():
+        return {}
+    values: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        match = re.match(r"^([A-Z_][A-Z0-9_]*)=(.*)$", line)
+        if match:
+            values[match.group(1)] = match.group(2)
+    return values
+
+
+def _jenkins_get(path: str, user: str, secret: str, timeout: int = 30) -> tuple[int, str]:
+    """One authenticated GET against the dev controller."""
+    import base64
+    import urllib.error
+    import urllib.request
+
+    url = "http://localhost:8087" + path
+    request = urllib.request.Request(url)
+    token = base64.b64encode(f"{user}:{secret}".encode()).decode("ascii")
+    request.add_header("Authorization", f"Basic {token}")
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310
+            return response.status, response.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as exc:
+        return exc.code, exc.read().decode("utf-8", "replace")
+    except Exception as exc:
+        return 0, f"{type(exc).__name__}: {exc}"
+
+
+def _bot_credentials() -> tuple[str, str] | str:
+    """The bot user and token, or a message explaining what is missing."""
+    env = _env_file()
+    if not env:
+        return "no .env file; copy .env.example and run scripts/bootstrap.py"
+    user = env.get("JENKINS_USER", "orchestrator-bot")
+    token = env.get("JENKINS_TOKEN", "")
+    if not token:
+        return "JENKINS_TOKEN is empty; run `python scripts/bootstrap.py --token-only`"
+    return user, token
+
+
+@check(1, "jenkins-dev answers with the bot token")
+def check_jenkins_bot_token() -> Result:
+    credentials = _bot_credentials()
+    if isinstance(credentials, str):
+        return fail(credentials)
+    user, token = credentials
+
+    status, body = _jenkins_get("/api/json?tree=numExecutors", user, token)
+    if status == 0:
+        return fail(f"jenkins-dev unreachable at localhost:8087 ({body[:120]}). Is the stack up?")
+    if status != 200:
+        return fail(f"GET /api/json returned {status} for {user}")
+    return ok(f"authenticated as {user}")
+
+
+@check(1, "controller runs zero executors")
+def check_controller_zero_executors() -> Result:
+    credentials = _bot_credentials()
+    if isinstance(credentials, str):
+        return fail(credentials)
+    user, token = credentials
+
+    status, body = _jenkins_get("/api/json?tree=numExecutors", user, token)
+    if status != 200:
+        return fail(f"GET /api/json returned {status}")
+    try:
+        count = json.loads(body).get("numExecutors")
+    except ValueError:
+        return fail("could not parse the controller's /api/json")
+    if count != 0:
+        return fail(f"the controller reports {count} executors; Part 4.2.2 requires 0")
+    return ok("0, so all work goes to the labelled agents")
+
+
+@check(1, "both agents are online")
+def check_agents_online() -> Result:
+    credentials = _bot_credentials()
+    if isinstance(credentials, str):
+        return fail(credentials)
+    user, token = credentials
+
+    status, body = _jenkins_get(
+        "/computer/api/json?tree=computer[displayName,offline,numExecutors,assignedLabels[name]]",
+        user,
+        token,
+    )
+    if status != 200:
+        return fail(f"GET /computer/api/json returned {status}")
+    try:
+        computers = json.loads(body)["computer"]
+    except (ValueError, KeyError):
+        return fail("could not parse /computer/api/json")
+
+    agents = [c for c in computers if c.get("displayName") != "Built-In Node"]
+    if not agents:
+        return fail("no agents are configured")
+    offline = [c["displayName"] for c in agents if c.get("offline")]
+    if offline:
+        return fail(
+            f"offline: {', '.join(offline)}. Check the launch log at "
+            "http://localhost:8087/computer/<name>/log"
+        )
+    linux = [
+        c["displayName"]
+        for c in agents
+        if any(label.get("name") == "linux" for label in c.get("assignedLabels", []))
+    ]
+    if not linux:
+        return fail("no online agent carries the `linux` label the catalog targets")
+    total = sum(c.get("numExecutors", 0) for c in agents)
+    return ok(f"{len(agents)} agents online, {total} executors, linux on {', '.join(linux)}")
+
+
+@check(2, "the ranking endpoint answers with the bot token")
+def check_ranking_endpoint() -> Result:
+    """BUILD_PROMPT's Phase 2 acceptance, and the install half of T2.14."""
+    credentials = _bot_credentials()
+    if isinstance(credentials, str):
+        return fail(credentials)
+    user, token = credentials
+
+    status, body = _jenkins_get("/dynamic-queue/api/json", user, token)
+    if status == 0:
+        return fail(f"jenkins-dev unreachable ({body[:120]})")
+    if status == 404:
+        return fail(
+            "404: the plugin is not installed on jenkins-dev. Rebuild the controller image after "
+            "`cd plugin && mvn -B verify`."
+        )
+    if status != 200:
+        return fail(f"GET /dynamic-queue/api/json returned {status}")
+
+    try:
+        payload = json.loads(body)
+        config = payload["configuration"]
+    except (ValueError, KeyError):
+        return fail("the response is not the documented shape")
+
+    # The running plugin must be using the report's published formula, not merely be present.
+    expected = {
+        "weightUrgency": 0.5,
+        "weightDependency": 0.3,
+        "weightExecutionTime": 0.2,
+        "agingBonusPerInterval": 0.05,
+        "agingCap": 0.15,
+        "similarityThreshold": 0.35,
+        "recencyLambdaPerDay": 0.1,
+    }
+    wrong = [
+        f"{name}={config.get(name)} (want {value})"
+        for name, value in expected.items()
+        if abs(float(config.get(name, -1)) - value) > 1e-6
+    ]
+    if wrong:
+        return fail("the running configuration is not the report's: " + ", ".join(wrong))
+    if not config.get("optimizerEnabled"):
+        return fail("optimizerEnabled is false on jenkins-dev")
+    return ok(f"200, queueLength={payload.get('queueLength')}, weights 0.5/0.3/0.2, aging 0.05 cap 0.15")
+
+
+@check(2, "the plugin health and metrics endpoints answer")
+def check_plugin_side_endpoints() -> Result:
+    credentials = _bot_credentials()
+    if isinstance(credentials, str):
+        return fail(credentials)
+    user, token = credentials
+
+    for path in ("/dynamic-queue/health", "/dynamic-queue/metrics/recent?limit=1"):
+        status, _ = _jenkins_get(path, user, token)
+        if status != 200:
+            return fail(f"GET {path} returned {status}")
+    return ok("both answer 200")
+
+
 IMPLEMENTED_PHASES = {0, 1, 2}
 
 

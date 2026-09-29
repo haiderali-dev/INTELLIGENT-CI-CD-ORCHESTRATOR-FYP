@@ -4,7 +4,10 @@
 # curl and jq, labelled `linux`. The label itself is assigned by JCasC on the controller, not here;
 # this image only has to be able to run what the service catalog's commands invoke.
 
-FROM jenkins/ssh-agent:6.31.0-jdk21
+# Pinned to a real published tag, checked against Docker Hub's tag list on 2026-09-29 rather than
+# assumed. Debian (trixie) based, which is what the apt commands below require; the alpine variants
+# would need apk and a different Docker CE repository.
+FROM jenkins/ssh-agent:9.0.0-jdk21
 
 USER root
 
@@ -57,13 +60,32 @@ https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_C
 # The agent user needs to reach the mounted Docker socket. The group id is overridden at run time
 # from the host's docker group where it differs; 999 is the usual value on Debian hosts.
 ARG DOCKER_GID=999
-RUN groupadd -g "${DOCKER_GID}" docker 2>/dev/null || true \
-    && usermod -aG docker jenkins
-
-# deploy.sh binds each service to a fixed port (payment-service 9001, auth-service 9002), so the
-# agent needs a writable workspace and nothing else.
-USER jenkins
-WORKDIR /home/jenkins
+# Three cases, all of which occur in practice:
+#   the group already exists in the base image  -> use it
+#   the requested GID is free                   -> create it with that GID
+#   the requested GID is taken by another group -> create it with any GID
+#
+# An earlier version was `groupadd -g 999 docker || true && usermod -aG docker jenkins`, which
+# swallowed the groupadd failure and then failed on usermod with a bare "exit code 6", because GID
+# 999 was already in use in this base image. `|| true` on a command whose success the next line
+# depends on just moves the error somewhere less informative.
+RUN set -eux; \
+    if ! getent group docker >/dev/null 2>&1; then \
+        groupadd -g "${DOCKER_GID}" docker 2>/dev/null || groupadd docker; \
+    fi; \
+    usermod -aG docker jenkins; \
+    getent group docker
 
 # Sanity: fail the build here rather than at the first job if a tool is missing.
 RUN git --version && python3 --version && node --version && jq --version && docker --version
+
+# Stay as root, deliberately.
+#
+# The base image's entrypoint (setup-sshd) runs sshd, which needs privileged port 22, and writes
+# /etc/environment so the SSH session inherits the container's environment. Ending this Dockerfile
+# with `USER jenkins` made that entrypoint fail with
+#   /usr/local/bin/setup-sshd: line 54: /etc/environment: Permission denied
+# and the container crash-looped. sshd drops to the jenkins user for the session itself, so builds
+# still run unprivileged; only the daemon needs root.
+USER root
+WORKDIR /home/jenkins

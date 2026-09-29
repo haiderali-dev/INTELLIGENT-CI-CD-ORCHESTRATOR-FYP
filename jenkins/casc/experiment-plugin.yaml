@@ -61,11 +61,14 @@ jenkins:
               - "Job/Create"
               - "Job/Configure"
               - "Agent/Build"
-              - "Computer/Read"
+              # 'Agent Read' in BUILD_PROMPT 4.2.2. The id is Agent/ExtendedRead: Jenkins renamed
+              # the Computer permission group to Agent, and there is no plain Agent/Read --
+              # 'Computer/Read' fails to parse and takes the whole controller down at boot.
+              - "Agent/ExtendedRead"
 
-  crumbIssuer:
-    standard:
-      excludeClientIPFromCrumb: false
+  # No crumbIssuer block: Jenkins installs its default CSRF crumb issuer already, and this
+  # version of DefaultCrumbIssuer exposes no excludeClientIPFromCrumb attribute, so configuring it
+  # explicitly fails the whole boot. The backend fetches a crumb at runtime (BUILD_PROMPT 4.4.5).
 
   nodes:
     - permanent:
@@ -100,12 +103,11 @@ credentials:
                 directEntry:
                   privateKey: "${AGENT_SSH_PRIVATE_KEY}"
 
-security:
-  # Disable the script console's remote entry points at the controller level. The backend never
-  # calls them (rule 1.5, enforced by tests), and turning them off means a leaked bot token cannot
-  # either.
-  globalJobDslSecurityConfiguration:
-    useScriptSecurity: true
+# No `security:` block. An earlier version set globalJobDslSecurityConfiguration, which this
+# baseline rejects outright and which this project does not need: Job DSL is never used, jobs are
+# created from rendered config.xml over REST. Script-console access is already prevented by the
+# bot holding no Overall/Administer, and rule 1.5 is enforced in our own code by
+# backend/tests/test_no_script_console.py and a verify.py check.
 
 unclassified:
   location:
