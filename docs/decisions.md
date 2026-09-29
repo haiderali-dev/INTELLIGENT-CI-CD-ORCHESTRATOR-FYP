@@ -9,6 +9,45 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ---
 
+## Phase 1
+
+### D-018 The frontend service sits behind a Compose profile until Phase 6
+**Date:** 2026-09-29 · **Status:** decided
+
+`BUILD_PROMPT.md` 4.2.3 lists `frontend` (5173) among the default Compose services. Phase 6 has not
+run, so `frontend/Dockerfile` does not exist, and a default service with a missing build context
+makes `docker compose up -d` fail outright rather than starting the nine services that are ready.
+
+**Decision.** `frontend` carries `profiles: ["frontend"]`. `docker compose up -d` brings up the
+default stack today; `docker compose --profile frontend up -d` includes it once Phase 6 builds the
+image, at which point the profile line is deleted and the service becomes a default again.
+
+The alternative, leaving it as a default and telling people to ignore the error, trains everyone to
+ignore Compose errors, which is the last habit this project needs.
+
+### D-019 JCasC sets only the optimizer's non-floating-point fields
+**Date:** 2026-09-29 · **Status:** decided, consequence of D-017
+
+The three JCasC files set `optimizerEnabled`, `agingIntervalMinutes`, `estimatorK`,
+`historyWindow`, `rescoreIntervalSeconds`, `metricsEnabled`, `metricsBackendUrl` and
+`metricsToken`, and deliberately omit the seven floating-point fields.
+
+**Why.** D-017: on `configuration-as-code:2130`, importing a YAML file silently drops this
+configuration's `double` fields. Writing `weightUrgency: 0.5` into `dev.yaml` would look correct,
+be discarded on import, and leave the value at its code default — a configuration file that lies
+about the running system. Omitting the field and documenting the intended value in a comment is
+honest about what the file actually controls.
+
+**Why it is safe here.** The code defaults *are* the report's Appendix D values, so all three
+controllers run the published formula. The intended values are listed as a comment in `dev.yaml` so
+the configuration remains reviewable.
+
+**What it does not cover.** The aging-ablation arm of the Part 4.8.2 matrix needs
+`agingBonusPerInterval` and `agingCap` set to non-default values. That arm cannot be configured from
+JCasC until D-017 is resolved, and is tracked under Needs human.
+
+---
+
 ## Phase 2
 
 ### D-014 A Pipeline job passes through the queue twice, not once

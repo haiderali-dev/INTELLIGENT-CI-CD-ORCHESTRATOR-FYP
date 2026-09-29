@@ -1,0 +1,32 @@
+# Controller plugins, pinned.
+#
+# Every version below was read from the Jenkins stable update centre for the 2.568.3 baseline on
+# 2026-09-29, not from memory, per BUILD_PROMPT rule 1.4. Each one's requiredCore is <= 2.568.3.
+# Regenerate with scripts/report/versions.py and record changes in docs/versions.md.
+#
+# The set required by BUILD_PROMPT 4.2.1 is listed first; the Pipeline runtime plugins that
+# workflow-aggregator pulls in are pinned explicitly so a transitive bump cannot change the
+# behaviour the plugin's integration tests were written against.
+
+# --- Required by 4.2.1 ---
+configuration-as-code:2130.v3ef02f16a_34b_
+workflow-aggregator:608.v67378e9d3db_1
+pipeline-model-definition:2.2293.v6e7193cec599
+pipeline-stage-view:2.41
+git:5.10.1
+ssh-slaves:3.1097.v868116049892
+matrix-auth:3.3
+credentials-binding:728.v902a_273b_8947
+timestamper:1.30
+ws-cleanup:0.49
+structs:362.va_b_695ef4fdf9
+
+# --- Pipeline runtime, pinned explicitly rather than left transitive ---
+workflow-job:1602.v2a_70b_80a_2396
+workflow-cps:4383.v04fa_a_3d67b_d9
+workflow-durable-task-step:1479.v56e587f413a_7
+workflow-basic-steps:1098.v808b_fd7f8cf4
+
+# --- Supporting ---
+# Renders the plugin's own help text safely on the configuration pages.
+antisamy-markup-formatter:173.v680e3a_b_69ff3

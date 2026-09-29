@@ -622,7 +622,292 @@ def check_hpi_built() -> Result:
     return ok(f"{hpi[0].name} ({size_kb} KB)")
 
 
-IMPLEMENTED_PHASES = {0, 2}
+# ---------------------------------------------------------------------------
+# Phase 1: infrastructure
+#
+# Split deliberately into checks that need only the repository and checks that
+# need a Docker daemon. The first group runs today; the second reports the exact
+# missing prerequisite rather than a generic failure, because "Docker is not
+# installed" and "Jenkins rejected the bot token" need different fixes.
+# ---------------------------------------------------------------------------
+
+DOCKER_FILES = [
+    "docker-compose.yml",
+    ".dockerignore",
+    "jenkins/controller/Dockerfile",
+    "jenkins/controller/plugins.txt",
+    "jenkins/agent/Dockerfile",
+    "jenkins/casc/dev.yaml",
+    "jenkins/casc/experiment-baseline.yaml",
+    "jenkins/casc/experiment-plugin.yaml",
+    "backend/Dockerfile",
+]
+
+# Secrets that must never be silently defaulted by Compose.
+COMPOSE_REQUIRED_SECRETS = [
+    "JENKINS_ADMIN_PASSWORD",
+    "JENKINS_BOT_PASSWORD",
+    "METRICS_TOKEN",
+    "POSTGRES_PASSWORD",
+    "JWT_SECRET",
+    "SEED_ADMIN_PASSWORD",
+]
+
+CASC_FILES = ("dev.yaml", "experiment-baseline.yaml", "experiment-plugin.yaml")
+
+
+def _load_yaml(path: Path) -> tuple[Any, str | None]:
+    """Parse a YAML file, returning (document, error-message)."""
+    try:
+        import yaml
+    except ImportError:
+        return None, "PyYAML is not installed; run `python -m pip install pyyaml`"
+    try:
+        return yaml.safe_load(path.read_text(encoding="utf-8")), None
+    except Exception as exc:
+        return None, f"{type(exc).__name__}: {str(exc).splitlines()[0]}"
+
+
+@check(1, "Docker and Compose files exist")
+def check_docker_files_exist() -> Result:
+    missing = [f for f in DOCKER_FILES if not (REPO_ROOT / f).is_file()]
+    if missing:
+        return fail(f"{len(missing)} missing: {', '.join(missing)}")
+    return ok(f"all {len(DOCKER_FILES)} present")
+
+
+@check(1, "docker-compose.yml is valid and matches Part 4.2.3")
+def check_compose_shape() -> Result:
+    path = REPO_ROOT / "docker-compose.yml"
+    if not path.is_file():
+        return fail("docker-compose.yml does not exist")
+    doc, error = _load_yaml(path)
+    if error:
+        return fail(error)
+    if not isinstance(doc, dict) or "services" not in doc:
+        return fail("no `services` mapping")
+
+    services = doc["services"]
+    profiled = {name for name, node in services.items() if node.get("profiles")}
+    default = set(services) - profiled
+    problems: list[str] = []
+
+    for name in ("postgres", "jenkins-dev", "agent-1", "agent-2", "backend"):
+        if name not in default:
+            problems.append(f"{name} is not a default service")
+    for name in ("jenkins-baseline", "jenkins-plugin"):
+        if name not in profiled:
+            problems.append(f"{name} should sit behind the experiment profile")
+
+    published = {
+        name: " ".join(str(p) for p in node.get("ports", [])) for name, node in services.items()
+    }
+    for name, port in (
+        ("jenkins-dev", "8087"),
+        ("backend", "8000"),
+        ("jenkins-baseline", "8085"),
+        ("jenkins-plugin", "8086"),
+    ):
+        if port not in published.get(name, ""):
+            problems.append(f"{name} does not publish {port}")
+
+    for name in ("postgres", "jenkins-dev", "backend"):
+        if "healthcheck" not in services.get(name, {}):
+            problems.append(f"{name} has no healthcheck")
+
+    backend_deps = services.get("backend", {}).get("depends_on", {})
+    if not (
+        isinstance(backend_deps, dict)
+        and backend_deps.get("postgres", {}).get("condition") == "service_healthy"
+    ):
+        problems.append("backend does not wait for postgres to be healthy")
+
+    for volume in ("postgres-data", "jenkins-dev-home"):
+        if volume not in (doc.get("volumes") or {}):
+            problems.append(f"named volume {volume} is missing")
+
+    if problems:
+        return fail("; ".join(problems))
+    return ok(f"{len(services)} services, {len(default)} default, {len(profiled)} profiled")
+
+
+@check(1, "Compose refuses to start rather than defaulting a secret")
+def check_compose_secret_guards() -> Result:
+    """A defaulted password is worse than a failed start: it starts, and it is insecure."""
+    path = REPO_ROOT / "docker-compose.yml"
+    if not path.is_file():
+        return fail("docker-compose.yml does not exist")
+    text = path.read_text(encoding="utf-8")
+
+    unguarded = [name for name in COMPOSE_REQUIRED_SECRETS if "${" + name + ":?" not in text]
+    if unguarded:
+        return fail("not using the fail-loud form: " + ", ".join(unguarded))
+    return ok(f"all {len(COMPOSE_REQUIRED_SECRETS)} secrets fail loudly when unset")
+
+
+@check(1, "JCasC files are valid and the two arms differ only in optimizerEnabled")
+def check_casc_files() -> Result:
+    casc = REPO_ROOT / "jenkins" / "casc"
+    docs: dict[str, Any] = {}
+    for name in CASC_FILES:
+        path = casc / name
+        if not path.is_file():
+            return fail(f"missing jenkins/casc/{name}")
+        doc, error = _load_yaml(path)
+        if error:
+            return fail(f"{name}: {error}")
+        docs[name] = doc
+
+    dev = docs["dev.yaml"]
+    if dev.get("jenkins", {}).get("numExecutors") != 0:
+        return fail("dev.yaml must set numExecutors: 0; the controller runs zero builds")
+
+    entries = dev["jenkins"]["authorizationStrategy"]["globalMatrix"]["entries"]
+    bot = next(
+        (
+            e["user"]["permissions"]
+            for e in entries
+            if e.get("user", {}).get("name") == "orchestrator-bot"
+        ),
+        None,
+    )
+    if bot is None:
+        return fail("dev.yaml grants the orchestrator-bot no permissions")
+    if "Overall/Administer" in bot:
+        return fail("the bot must not hold Overall/Administer; it is a least-privilege account")
+
+    baseline = docs["experiment-baseline.yaml"]["unclassified"]["dynamicQueueOptimizer"]
+    plugin = docs["experiment-plugin.yaml"]["unclassified"]["dynamicQueueOptimizer"]
+    if baseline.get("optimizerEnabled") is not False:
+        return fail("the baseline arm must set optimizerEnabled: false")
+    if plugin.get("optimizerEnabled") is not True:
+        return fail("the plugin arm must set optimizerEnabled: true")
+
+    differing = {k for k in set(baseline) | set(plugin) if baseline.get(k) != plugin.get(k)}
+    extra = differing - {"optimizerEnabled"}
+    if extra:
+        return fail(
+            "the two arms must differ only in optimizerEnabled, but also differ in: "
+            + ", ".join(sorted(extra))
+        )
+    return ok("dev plus two arms differing only in optimizerEnabled")
+
+
+@check(1, "JCasC sets no floating-point optimizer field (D-017)")
+def check_casc_avoids_floats() -> Result:
+    """JCasC silently drops this configuration's double fields, so setting one would lie.
+
+    See docs/decisions.md D-017 and D-019. The code defaults are the report's Appendix D values,
+    so omitting them is correct; setting them would produce a file that disagrees with the
+    running system.
+    """
+    problems: list[str] = []
+    for name in CASC_FILES:
+        path = REPO_ROOT / "jenkins" / "casc" / name
+        if not path.is_file():
+            return fail(f"missing jenkins/casc/{name}")
+        doc, error = _load_yaml(path)
+        if error:
+            return fail(f"{name}: {error}")
+        block = doc.get("unclassified", {}).get("dynamicQueueOptimizer", {})
+        floats = sorted(k for k, v in block.items() if isinstance(v, float))
+        if floats:
+            problems.append(f"{name} sets {', '.join(floats)}")
+    if problems:
+        return fail("; ".join(problems) + " -- JCasC drops these silently (D-017)")
+    return ok("no float fields set; the code defaults are the report's values")
+
+
+@check(1, "the controller image installs the built plugin")
+def check_controller_installs_plugin() -> Result:
+    dockerfile = REPO_ROOT / "jenkins" / "controller" / "Dockerfile"
+    if not dockerfile.is_file():
+        return fail("jenkins/controller/Dockerfile does not exist")
+    text = dockerfile.read_text(encoding="utf-8")
+    if "dynamic-queue-optimizer.hpi" not in text:
+        return fail("the Dockerfile does not copy the plugin into the reference directory")
+    if "/usr/share/jenkins/ref/plugins/" not in text:
+        return fail("the plugin must be copied into /usr/share/jenkins/ref/plugins/")
+
+    hpi = REPO_ROOT / "plugin" / "target" / "dynamic-queue-optimizer.hpi"
+    if not hpi.is_file():
+        return fail("plugin/target/*.hpi is missing; run `cd plugin && mvn -B verify` first")
+    return ok(f"COPY present and the .hpi exists ({hpi.stat().st_size // 1024} KB)")
+
+
+@check(1, "controller plugins are pinned")
+def check_plugins_pinned() -> Result:
+    path = REPO_ROOT / "jenkins" / "controller" / "plugins.txt"
+    if not path.is_file():
+        return fail("jenkins/controller/plugins.txt does not exist")
+
+    entries = [
+        line.strip()
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.strip().startswith("#")
+    ]
+    unpinned = [e for e in entries if ":" not in e]
+    if unpinned:
+        return fail("not pinned to a version: " + ", ".join(unpinned))
+
+    names = {e.split(":", 1)[0] for e in entries}
+    required = {
+        "configuration-as-code",
+        "workflow-aggregator",
+        "pipeline-model-definition",
+        "pipeline-stage-view",
+        "git",
+        "ssh-slaves",
+        "matrix-auth",
+        "credentials-binding",
+        "timestamper",
+        "ws-cleanup",
+        "structs",
+    }
+    missing = required - names
+    if missing:
+        return fail("Part 4.2.1 requires: " + ", ".join(sorted(missing)))
+    return ok(f"{len(entries)} plugins, all pinned")
+
+
+@check(1, "Docker is available")
+def check_docker_available() -> Result:
+    """The prerequisite every remaining Phase 1 check depends on.
+
+    Its own check so the output distinguishes "Docker is missing" from "Docker is here and
+    something in the stack is wrong". Those need completely different fixes.
+    """
+    if not have("docker"):
+        return fail(
+            "the docker CLI is not on PATH. Install Docker Desktop, which needs Administrator: "
+            "`winget install --id Docker.DockerDesktop --source winget`, then reboot and launch it. "
+            "Every check below needs a running daemon."
+        )
+    info = run(["docker", "info", "--format", "{{.ServerVersion}}"], timeout=60)
+    if info.returncode != 0:
+        return fail(
+            "the CLI is installed but the daemon is not responding; start Docker Desktop. "
+            + info.stderr.strip()[:160]
+        )
+    return ok(f"daemon {info.stdout.strip()}")
+
+
+@check(1, "docker compose config validates")
+def check_compose_config() -> Result:
+    if not have("docker"):
+        return fail("blocked: Docker is not installed (see the check above)")
+    if not (REPO_ROOT / ".env").is_file():
+        return fail(
+            "no .env file. Copy .env.example and fill it in; Compose cannot resolve the required "
+            "secrets without it."
+        )
+    result = run(["docker", "compose", "config", "--quiet"], timeout=120)
+    if result.returncode != 0:
+        return fail(result.stderr.strip()[:300] or "docker compose config failed")
+    return ok("the merged configuration is valid")
+
+
+IMPLEMENTED_PHASES = {0, 1, 2}
 
 
 # ---------------------------------------------------------------------------

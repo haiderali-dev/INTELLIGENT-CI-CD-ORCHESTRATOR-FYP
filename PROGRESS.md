@@ -3,9 +3,30 @@
 Updated: 2026-09-29 · Current phase: 3 · Branch: phase-3-backend
 
 ## Needs human
-- [ ] **Install Docker Desktop and start it.** Blocks Phase 1 entirely (T1.1 to T1.10) and every
-      acceptance check from Phase 3 onward. Waiting on it: `jenkins-dev`, the reference-config export
-      (T1.9), the `.hpi` install (T2.14), and all integration and end-to-end tests.
+- [ ] **Install Docker Desktop.** Diagnosed 2026-09-29: Docker is **not installed** on this machine.
+      No `docker` on PATH, no `com.docker.service`, no uninstall entry, and no binaries under
+      `C:\Program Files\Docker`. Only ~94 MB of orphaned data remains under
+      `%LOCALAPPDATA%\Docker`, `%ProgramData%\DockerDesktop` and `~/.docker`, so it was installed
+      and later removed.
+      **Prerequisites are already satisfied:** Windows 11 Pro build 26200, WSL 2.6.3.0 with kernel
+      6.6.87.2-1, default WSL version 2, `HypervisorPresent: True`, 64 GB free on C:. (The
+      `VirtualizationFirmwareEnabled: False` reading is the known artefact of a hypervisor already
+      running, not a disabled BIOS setting — WSL2 could not run otherwise.)
+      **This session cannot install it: the shell is not elevated** (`HAIDER-HP\haide`,
+      `IsElevated: False`) and Docker Desktop is a machine-scope installer.
+      Run in an **Administrator** PowerShell:
+      ```
+      winget install --id Docker.DockerDesktop --source winget --accept-package-agreements --accept-source-agreements
+      ```
+      Then reboot, launch Docker Desktop once, wait for "Engine running", and confirm with
+      `docker version && docker info && docker compose version`.
+      Still waiting on it: `docker compose config`/`up`, the reference-config export (T1.9), the
+      `.hpi` install on `jenkins-dev` (T2.14), and every integration and end-to-end test.
+- [ ] **Create `.env`.** It does not exist. `cp .env.example .env`, then fill in `GROQ_API_KEY`
+      (optional; `LLM_MODE=fake` works without it), `JENKINS_ADMIN_PASSWORD`,
+      `JENKINS_BOT_PASSWORD`, `JWT_SECRET`, `METRICS_TOKEN`, `POSTGRES_PASSWORD`, `SEED_ADMIN_EMAIL`
+      and `SEED_ADMIN_PASSWORD`. Compose uses the `${VAR:?}` form for all six secrets, so it refuses
+      to start with a named variable rather than silently defaulting a password.
 - [ ] **Put the secrets in `.env`.** Needed: `GROQ_API_KEY`, `JENKINS_ADMIN_PASSWORD`,
       `JENKINS_BOT_PASSWORD`, `JWT_SECRET`, `METRICS_TOKEN`, `POSTGRES_PASSWORD`, `SEED_ADMIN_EMAIL`,
       `SEED_ADMIN_PASSWORD`. Never paste them into the chat. Blocks the live AI path in Phase 4 and
@@ -65,6 +86,40 @@ Updated: 2026-09-29 · Current phase: 3 · Branch: phase-3-backend
 
 **Acceptance:** `python scripts/verify.py --phase 0` prints ALL CHECKS PASSED.
 **Met** on 2026-09-28: 11 of 11 checks pass, exit code 0.
+
+## Phase 1: Infrastructure
+Branch `phase-3-backend` (the Docker layer was written here while Phase 3 was in progress; it
+belongs to Phase 1 and is listed under it).
+
+- [x] T1.1 Controller image in `jenkins/controller/` — evidence: `python scripts/verify.py --phase 1`
+      → "Docker and Compose files exist" all 9 present, "the controller image installs the built
+      plugin" PASS, "controller plugins are pinned" 16 plugins all pinned. Jenkins 2.568.3-lts-jdk21,
+      plugins installed with `jenkins-plugin-cli`, setup wizard disabled, `CASC_JENKINS_CONFIG` set,
+      and the built `.hpi` copied to `/usr/share/jenkins/ref/plugins/`.
+- [x] T1.2 Agent image in `jenkins/agent/` — `jenkins/ssh-agent:6.31.0-jdk21` plus Git, Python 3,
+      Node.js 24, the Docker CLI, curl and jq, with a build-time smoke check on each tool.
+- [x] T1.3 JCasC files `dev.yaml`, `experiment-baseline.yaml`, `experiment-plugin.yaml` — evidence:
+      `verify.py --phase 1` → "JCasC files are valid and the two arms differ only in
+      optimizerEnabled" PASS and "JCasC sets no floating-point optimizer field (D-017)" PASS.
+      Controller `numExecutors: 0`, local realm with `admin` and `orchestrator-bot`, matrix auth
+      granting the bot no `Overall/Administer`, both agents on credential `agent-ssh-key`.
+- [x] T1.5 `docker-compose.yml` with the default services and the `experiment` profile — evidence:
+      `verify.py --phase 1` → "docker-compose.yml is valid and matches Part 4.2.3" (10 services,
+      5 default, 5 profiled) and "Compose refuses to start rather than defaulting a secret" PASS.
+      Every build context and `COPY` source resolves except `frontend`, which is profile-gated until
+      Phase 6 (D-018).
+- [x] T1.10 (part) Phase 1 checks in `verify.py` — 9 checks. 7 pass offline; the 2 that fail are
+      "Docker is available" and "docker compose config validates", which name the missing
+      prerequisite rather than failing generically.
+- [ ] T1.4 `scripts/bootstrap.py`: SSH keys, waiting for Jenkins, creating the bot API token
+- [ ] T1.6 Sample service `payment-service` (Python)
+- [ ] T1.7 Sample service `auth-service` (Node.js)
+- [ ] T1.8 `catalog/services.yaml` plus its JSON Schema and `scripts/validate_catalog.py`
+- [ ] T1.9 Export reference `config.xml` from hand-made jobs — **needs a running Jenkins**
+
+**Acceptance:** `verify.py --phase 1` confirms `jenkins-dev` answers with the bot token, both agents
+online, controller executors 0, reference configs exist, the catalog validates, and both services'
+tests pass. **Not met:** blocked on Docker, then on T1.4 and T1.6 to T1.9.
 
 ## Phase 2: Plugin v2
 Branch `phase-2-plugin`, stacked on the unmerged `phase-0-foundation`.
