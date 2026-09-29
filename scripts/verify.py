@@ -1387,6 +1387,64 @@ def check_backend_quality_bars() -> Result:
     return ok("ruff, ruff format, mypy and pytest all clean")
 
 
+@check(3, "the auth endpoints and role guards exist")
+def check_auth_surface() -> Result:
+    """Part 4.4.4's four endpoints, plus the three role guards 4.5.5's policy table needs.
+
+    Read from the source rather than by importing the app, so the check needs no database and no
+    settings: a gate that only runs when the stack is up is a gate that stops being run.
+    """
+    api = REPO_ROOT / "backend" / "app" / "api" / "auth.py"
+    deps = REPO_ROOT / "backend" / "app" / "api" / "deps.py"
+    service = REPO_ROOT / "backend" / "app" / "services" / "auth.py"
+    for path in (api, deps, service):
+        if not path.is_file():
+            return fail(f"{path.relative_to(REPO_ROOT).as_posix()} does not exist")
+
+    api_text = api.read_text(encoding="utf-8")
+    routes = ('"/auth/login"', '"/auth/refresh"', '"/auth/logout"', '"/me"')
+    missing = [route.strip('"') for route in routes if route not in api_text]
+    if missing:
+        return fail("no route for: " + ", ".join(missing))
+
+    deps_text = deps.read_text(encoding="utf-8")
+    guards = ("DeveloperUser", "DevOpsUser", "AdminUser")
+    absent = [guard for guard in guards if f"{guard} = " not in deps_text]
+    if absent:
+        return fail("no role guard for: " + ", ".join(absent))
+
+    service_text = service.read_text(encoding="utf-8")
+    if "durable=True" not in service_text:
+        return fail("refused sign-ins do not commit their audit entry; see D-022")
+    if 'action="auth.login.failed"' not in service_text:
+        return fail("failed sign-ins are not audited, which 4.4.3 requires")
+
+    main_text = (REPO_ROOT / "backend" / "app" / "main.py").read_text(encoding="utf-8")
+    if "auth" not in main_text:
+        return fail("the auth router is not wired into the app")
+
+    return ok("login, refresh, logout and /api/me, with three role guards")
+
+
+@check(3, "the auth endpoints are rate limited")
+def check_auth_rate_limits() -> Result:
+    """4.4.4 requires rate limits on the auth endpoints."""
+    limits = REPO_ROOT / "backend" / "app" / "core" / "ratelimit.py"
+    if not limits.is_file():
+        return fail("backend/app/core/ratelimit.py does not exist")
+    text = limits.read_text(encoding="utf-8")
+    for name in ("LOGIN_LIMIT", "REFRESH_LIMIT", "API_LIMIT"):
+        if f"{name} = RateLimit(" not in text:
+            return fail(f"{name} is not defined")
+
+    api_text = (REPO_ROOT / "backend" / "app" / "api" / "auth.py").read_text(encoding="utf-8")
+    if "rate_limit(LOGIN_LIMIT)" not in api_text:
+        return fail("the login endpoint is not rate limited")
+    if "rate_limit(REFRESH_LIMIT)" not in api_text:
+        return fail("the refresh endpoint is not rate limited")
+    return ok("login 5/min, refresh 30/min, general 300/min")
+
+
 IMPLEMENTED_PHASES = {0, 1, 2, 3}
 
 

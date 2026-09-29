@@ -9,6 +9,59 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ---
 
+## Phase 3
+
+### D-022 A refused sign-in commits its audit entry before raising
+**Date:** 2026-09-29 · **Status:** decided
+
+`get_db` commits on success and rolls back on any exception, so that a request failing halfway
+leaves nothing behind. A policy denial is an exception, which meant every `auth.login.failed` and
+`auth.login.denied` row was added to the session and then rolled back with the refusal — the audit
+trail recorded successful sign-ins and nothing else. Part 4.4.3 asks for an entry on every policy
+denial, so this was a real defect, found by `test_login_records_success_and_failure_in_the_audit_log`.
+
+**Decision.** `app.services.auth._audit` takes `durable=True` at the three denial sites and commits
+the entry immediately. Committing mid-request is safe here precisely because a refused sign-in has
+written nothing else: there is no half-finished work for the commit to make permanent.
+
+The alternative — moving auditing into the exception handler — was rejected because the session is
+already closed by the time a handler runs, so the handler would need a second one, and the entry
+would then be written outside the request's own transaction in every case rather than only in the
+cases where that is what is wanted.
+
+### D-021 Refresh-token revocation is held in memory
+**Date:** 2026-09-29 · **Status:** decided
+
+Part 4.4.3 lists fourteen tables and none of them holds sessions or tokens, so signing out has no
+specified place to record that a refresh token is dead. `RevokedTokens` keeps the `jti` values in
+process memory until the token would expire anyway.
+
+**Consequences, both accepted.** A backend restart forgets the list, so a refresh token revoked
+before the restart works again after it; and with more than one backend instance a sign-out on one
+would not be seen by the others. The project runs a single backend container.
+
+Access tokens are deliberately *not* checked against the list. Doing so would add a lookup to every
+single request in order to shorten a fifteen-minute window. What sign-out has to stop is a refresh
+token being replayed for seven days, and that is what this stops. Adding the table instead is the
+right fix if the deployment ever grows a second instance.
+
+### D-020 Rate limiting is in-process rather than Redis-backed
+**Date:** 2026-09-29 · **Status:** decided
+
+Part 4.4.4 requires rate limits on the auth endpoints but names no store. `app.core.ratelimit` uses
+token buckets in process memory.
+
+**Why a token bucket, not a fixed window.** A fixed window lets a caller spend its whole allowance
+at the end of one window and again at the start of the next, so "5 per minute" permits 10 attempts
+in two seconds across the boundary. On a login endpoint that is most of the protection gone.
+
+**Why in-process.** The stack runs one backend container, and the report's Appendix E does not list
+Redis among the version 2 dependencies. With more than one instance each would keep its own buckets
+and the effective limit would multiply by the instance count — the same caveat as D-021, with the
+same fix.
+
+---
+
 ## Phase 1
 
 ### D-018 The frontend service sits behind a Compose profile until Phase 6

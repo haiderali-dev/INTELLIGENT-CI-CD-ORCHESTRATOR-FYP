@@ -221,7 +221,25 @@ Branch `phase-3-backend`, stacked on the unmerged `phase-2-plugin`.
       agree with no drift. `python -m app.db.seed` run twice, in the container, reported
       `2 created, 0 updated` then `0 created, 0 updated`. `verify.py --phase 3` → 6 Phase 3 checks
       pass; `pytest` → 30 passed, 1 skipped (the `integration`-marked live upgrade).
-- [ ] T3.3 Auth: login, refresh, logout, current user, role dependencies, rate limits
+- [x] T3.3 Auth: login, refresh, logout, current user, role dependencies, rate limits — evidence:
+      `uv run pytest -m "not live and not e2e"` → 67 passed, 1 skipped (37 of them auth tests);
+      `ruff check`, `ruff format --check` and `mypy app` (strict, 24 files) all clean;
+      `verify.py --phase 3` → 8 Phase 3 checks pass, including two new ones for the endpoint
+      surface and the rate limits. `POST /api/auth/login`, `/refresh`, `/logout` and `GET /api/me`
+      confirmed registered in the OpenAPI schema. Two real defects were found and fixed rather
+      than asserted around:
+      * failed sign-ins were audited into the session and then rolled back with the refusal, so
+        the trail held successes only — `get_db` rolls back on any exception. Denials now commit
+        their entry before raising (D-022). Verified by reverting the fix: both the test and the
+        new gate fail.
+      * the role-guard test returned 422 instead of 403 because it imported `DevOpsUser` inside
+        the test function; under postponed annotations FastAPI resolves endpoint hints against
+        module globals, so the name was unresolvable and `user` was read as a query parameter.
+        The guard itself was correct; the import moved to module scope. No assertion changed.
+      Sign-in returns one generic error whether the account is absent or the password is wrong,
+      and hashes even when there is no user, so the endpoint is not an account-existence oracle.
+      Refresh rotates and revokes the old token (D-021); deactivating an account ends its session
+      on the next request because the user is re-read each time rather than trusted from the token.
 - [ ] T3.5 `GitClient` and `CatalogService`
 - [ ] T3.6 `PluginClient` for the ranking endpoint and `POST /api/metrics` ingestion
 - [ ] T3.7 `RunTracker` background worker and the WebSocket hub
@@ -232,7 +250,7 @@ Branch `phase-3-backend`, stacked on the unmerged `phase-2-plugin`.
 
 **Acceptance:** all backend quality bars pass, `GET /api/health` reports database, Jenkins and LLM
 provider on the Compose stack, and integration tests create, trigger and read one freestyle job and
-one Pipeline job. **Two of three met** on 2026-09-29 (unchanged by T3.2): quality bars pass, and `GET /api/health` on
+one Pipeline job. **Two of three met** on 2026-09-29 (unchanged by T3.3): quality bars pass, and `GET /api/health` on
 the Compose stack returns `status: up` with database up, jenkins up (2.568.3, reached with the bot
 token) and llm disabled (fake mode). The integration-test clause needs T3.8's routers, which are
 not written yet.
