@@ -318,7 +318,33 @@ Branch `phase-3-backend`, stacked on the unmerged `phase-2-plugin`.
       The hub-blocking `verify.py` check also had a bug of its own: it matched the word "await" in
       `publish`'s docstring, which explains why there isn't one. It is line-anchored now and was
       negative-tested by making `publish` actually await.
-- [ ] T3.8 Jobs, runs, queue, analytics and admin routers
+- [x] T3.8 Jobs, runs, queue, analytics and admin routers — evidence:
+      `uv run python -m pytest -m "not live and not e2e"` → 283 passed, 1 skipped (54 router
+      tests); `ruff`, `ruff format --check` and `mypy app` (strict, 38 files) clean;
+      `verify.py --phase 3` → all pass, three checks new. 25 endpoints registered; every one
+      exercised against the live Compose stack as the seeded admin, including `GET /api/queue`
+      reading the real plugin (`available=true`, weights 0.5/0.3/0.2) and
+      `GET /api/services/payment-service/branches` degrading to `available=false` for the
+      repositories that are not pushed yet.
+      Decisions taken rather than guessed:
+      * cancelling needs DevOps. 4.5.5 does not name a role for it, but it says a Developer may
+        not cancel a running chain and an Admin may, so stopping someone else's build is not a
+        Developer action. The guard is the narrowest reading of that table.
+      * `GET /api/queue` answers 200 with `available: false` when the plugin cannot be read.
+        `jenkins-baseline` runs without it deliberately, and that controller is the baseline arm
+        of the experiment; a 500 there would look like a broken backend.
+      * `ServiceResponse` omits every shell command. They are the one security-relevant part of
+        the catalog, nothing in the UI runs them, and serving them would widen what a stolen
+        read-only token is worth. A test asserts no command string appears in the payload.
+      * policy settings are read-only and the catalog has no write endpoint (D-032): 4.4.3 has no
+        table for policy, and an API that could rewrite `services.yaml` would move the only source
+        of shell commands out of version control.
+      * analytics returns null, never zero, where nothing was measured — a 0 ms queue wait is a
+        build that started at once, and a chart drawing the two alike would be lying. The success
+        rate excludes runs still building, so reliability does not appear to drop when a build
+        starts.
+      The new role-guard gate was negative-tested by downgrading `cancel` to any signed-in user;
+      it fails with `found no role guard`.
 - [x] T3.9 (part) The `/scriptText` guard test — evidence: `pytest tests/test_no_script_console.py`
       → 4 passed. Scans `backend/` and `experiment/`, proves it detects a planted call, and proves
       it does not flag prose. Integration tests and the Phase 3 `verify.py` checks remain.

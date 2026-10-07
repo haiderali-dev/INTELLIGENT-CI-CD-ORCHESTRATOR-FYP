@@ -11,6 +11,30 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 3
 
+### D-032 Policy settings are reported, not editable
+**Date:** 2026-10-07 · **Status:** decided
+
+4.4.4 lists "policy settings" among the admin endpoints. 4.4.3 lists fourteen tables and none of
+them holds policy, so there is nowhere to persist an override.
+
+**Decision.** `GET /api/admin/policy` reports 4.5.5's five rules and the configured
+`HIGH_URGENCY_DAILY_QUOTA`, and carries `editable: false`. There is no PATCH.
+
+The rules in 4.5.5 are enforced in code and the one number is configuration. A writable endpoint
+would need a table the specification does not have, and a settings page whose saves do not persist
+would be worse than one that honestly says these are set elsewhere.
+
+`production_enabled` is reported as a constant `false`. It is in the response so the Admin page can
+show the state of the rule rather than omitting it, and constant because rule 1.5 refuses
+production deploys outright — an admin screen implying it could be switched on would misrepresent
+what the system does.
+
+**Also decided here: the service catalog has no write endpoint.** 4.4.4 mentions admin "create,
+update, resync" for the catalog, but only resync exists, and it pushes the *file* into the table.
+Commands the model may run have to be reviewable in version control (4.6.1); an API that could
+rewrite `catalog/services.yaml` at runtime would move the only source of shell commands out of the
+repository, which is the property D-025 exists to protect.
+
 ### D-031 Run history comes from polling, with plugin metrics refining the timings
 **Date:** 2026-10-07 · **Status:** decided
 

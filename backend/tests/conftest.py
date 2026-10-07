@@ -26,9 +26,18 @@ from app.db import session as db_session
 from app.db.base import Base
 from app.main import create_app
 from app.services.auth import get_revoked_tokens
-from app.services.dependencies import get_jenkins_client, get_settings_dep
+from app.services.catalog import Catalog, catalog_path
+from app.services.dependencies import (
+    get_catalog,
+    get_git_client,
+    get_jenkins_client,
+    get_plugin_client,
+    get_settings_dep,
+)
+from app.services.git import FakeGitClient
 from app.services.jenkins import FakeJenkinsClient
 from app.services.metrics import get_pending_timings
+from app.services.plugin import FakePluginClient
 
 
 @pytest.fixture(autouse=True)
@@ -94,8 +103,39 @@ def fake_jenkins() -> FakeJenkinsClient:
 
 
 @pytest.fixture
+def fake_plugin() -> FakePluginClient:
+    return FakePluginClient()
+
+
+@pytest.fixture
+def fake_git() -> FakeGitClient:
+    """A Git remote with both catalog repositories present.
+
+    Pre-populated because the real ones are not pushed yet: a test about branch listing should not
+    double as a test of whether someone created a GitHub repository.
+    """
+    client = FakeGitClient()
+    for name in ("payment-service", "auth-service"):
+        url = f"https://github.com/uit-group04/{name}.git"
+        client.add_branch(url, "main", "3f786850e387550fdab836ed7e6dc881de23001b")
+        client.add_branch(url, "demo/failing-tests", "89e6c98d92887913cadf06b2adb97f26cde4849b")
+    return client
+
+
+@pytest.fixture
+def catalog(settings: Settings) -> Catalog:
+    """The repository's own catalog, so tests exercise the real service definitions."""
+    return Catalog(catalog_path(settings))
+
+
+@pytest.fixture
 def app(
-    settings: Settings, engine: AsyncEngine, fake_jenkins: FakeJenkinsClient
+    settings: Settings,
+    engine: AsyncEngine,
+    fake_jenkins: FakeJenkinsClient,
+    fake_plugin: FakePluginClient,
+    fake_git: FakeGitClient,
+    catalog: Catalog,
 ) -> Generator[FastAPI]:
     """An application wired to the test database and the fake Jenkins."""
     db_session.configure(engine)
@@ -104,6 +144,9 @@ def app(
     application = create_app(settings)
     application.dependency_overrides[get_settings_dep] = lambda: settings
     application.dependency_overrides[get_jenkins_client] = lambda: fake_jenkins
+    application.dependency_overrides[get_plugin_client] = lambda: fake_plugin
+    application.dependency_overrides[get_git_client] = lambda: fake_git
+    application.dependency_overrides[get_catalog] = lambda: catalog
 
     yield application
 

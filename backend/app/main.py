@@ -13,7 +13,7 @@ from contextlib import asynccontextmanager
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, health, metrics
+from app.api import admin, analytics, auth, health, jobs, metrics, queue, services
 from app.core.errors import register_exception_handlers
 from app.core.logging import (
     REQUEST_ID_HEADER,
@@ -120,6 +120,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     api.include_router(health.router)
     api.include_router(auth.router)
     api.include_router(metrics.router)
+    api.include_router(jobs.router)
+    api.include_router(queue.router)
+    api.include_router(services.router)
+    api.include_router(analytics.router)
+    api.include_router(admin.router)
     app.include_router(api)
     # WS /ws sits at the root, not under /api: 4.4.4 lists it that way, and it is a different
     # protocol rather than another REST resource.

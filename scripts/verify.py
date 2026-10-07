@@ -1771,6 +1771,123 @@ def check_plugin_wait_wins() -> Result:
     return ok("the tracker fills queue_wait_ms only when it is unset")
 
 
+@check(3, "Part 4.4.4's endpoints are all registered")
+def check_api_surface() -> Result:
+    """Every path 4.4.4 lists for Phase 3, read from the source.
+
+    A source check rather than an import, so the gate runs without the backend's dependencies
+    installed and without a database.
+    """
+    api_dir = REPO_ROOT / "backend" / "app" / "api"
+    if not api_dir.is_dir():
+        return fail("backend/app/api/ does not exist")
+
+    sources = {
+        path.name: path.read_text(encoding="utf-8") for path in api_dir.glob("*.py")
+    }
+    combined = "\n".join(sources.values())
+
+    required = {
+        "/auth/login": "auth.py",
+        "/auth/refresh": "auth.py",
+        "/auth/logout": "auth.py",
+        "/me": "auth.py",
+        "/metrics": "metrics.py",
+        "/jobs": "jobs.py",
+        "/runs": "jobs.py",
+        "/runs/{run_id}/cancel": "jobs.py",
+        "/runs/{run_id}/log": "jobs.py",
+        "/queue": "queue.py",
+        "/services": "services.py",
+        "/services/{name}/branches": "services.py",
+        "/admin/users": "admin.py",
+        "/admin/audit": "admin.py",
+        "/admin/policy": "admin.py",
+        "/analytics/experiments": "analytics.py",
+        "/analytics/runs": "analytics.py",
+    }
+    missing = [route for route in required if f'"{route}"' not in combined]
+    if missing:
+        return fail("no route for: " + ", ".join(sorted(missing)))
+
+    main_text = (REPO_ROOT / "backend" / "app" / "main.py").read_text(encoding="utf-8")
+    not_wired = [
+        module
+        for module in ("jobs", "queue", "services", "analytics", "admin")
+        if f"{module}.router" not in main_text
+    ]
+    if not_wired:
+        return fail("routers not wired into the app: " + ", ".join(not_wired))
+
+    return ok(f"{len(required)} routes across {len(sources)} router modules")
+
+
+@check(3, "mutating endpoints carry a role guard")
+def check_role_guards_on_mutations() -> Result:
+    """4.5.5's table is cumulative, so every write needs a guard above the weakest role.
+
+    A route that forgets its guard is silently open, and that is invisible in a passing test suite
+    unless something looks for it. This looks for it.
+    """
+    api_dir = REPO_ROOT / "backend" / "app" / "api"
+    guards = ("DeveloperUser", "DevOpsUser", "AdminUser")
+
+    # (file, route) pairs that change state and must be guarded above a plain signed-in user.
+    expected = {
+        ("jobs.py", "/runs/{run_id}/cancel"): "DevOpsUser",
+        ("services.py", "/services/resync"): "AdminUser",
+        ("admin.py", "/admin/users"): "AdminUser",
+        ("admin.py", "/admin/users/{user_id}"): "AdminUser",
+    }
+
+    for (filename, route), required in expected.items():
+        path = api_dir / filename
+        if not path.is_file():
+            return fail(f"backend/app/api/{filename} does not exist")
+        text = path.read_text(encoding="utf-8")
+        if f'"{route}"' not in text:
+            return fail(f"{filename} has no route {route}")
+        # The handler follows its decorator; find the guard within the next few lines.
+        after = text.split(f'"{route}"', 1)[1][:1200]
+        if required not in after:
+            present = [guard for guard in guards if guard in after]
+            return fail(
+                f"{route} needs {required}; found {present or 'no role guard'}"
+            )
+
+    admin_text = (api_dir / "admin.py").read_text(encoding="utf-8")
+    if "admin: AdminUser" not in admin_text:
+        return fail("the admin router does not require the Admin role")
+
+    return ok("cancel needs DevOps; resync and every admin route need Admin")
+
+
+@check(3, "the queue endpoint degrades when the plugin is absent")
+def check_queue_degrades() -> Result:
+    """jenkins-baseline runs without the plugin on purpose.
+
+    A Queue page that 500s there would look like a broken backend rather than a fact about the
+    controller, and the baseline arm of the experiment runs on exactly that controller.
+    """
+    path = REPO_ROOT / "backend" / "app" / "api" / "queue.py"
+    if not path.is_file():
+        return fail("backend/app/api/queue.py does not exist")
+
+    text = path.read_text(encoding="utf-8")
+    if "available" not in text or "unavailable_reason" not in text:
+        return fail("the response cannot express an unreadable plugin")
+
+    plugin = (REPO_ROOT / "backend" / "app" / "services" / "plugin.py").read_text(
+        encoding="utf-8"
+    )
+    if "droppedMetricCount" not in plugin:
+        return fail(
+            "plugin health reads the wrong field name for dropped metrics; it would always "
+            "report zero. See docs/decisions.md D-026"
+        )
+    return ok("reports availability and a reason instead of failing")
+
+
 IMPLEMENTED_PHASES = {0, 1, 2, 3}
 
 
