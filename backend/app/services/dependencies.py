@@ -8,9 +8,13 @@ that tests never need the network; this module is how that is enforced structura
 from __future__ import annotations
 
 from app.core.settings import Settings, get_settings
+from app.services.catalog import Catalog, catalog_path
+from app.services.git import CliGitClient, GitClient
 from app.services.jenkins import HttpJenkinsClient, JenkinsClient
 
 _jenkins_client: JenkinsClient | None = None
+_git_client: GitClient | None = None
+_catalog: Catalog | None = None
 
 
 def get_settings_dep() -> Settings:
@@ -35,9 +39,48 @@ def set_jenkins_client(client: JenkinsClient | None) -> None:
     _jenkins_client = client
 
 
+def get_git_client() -> GitClient:
+    """The process-wide Git client.
+
+    One instance, because its ref cache is the thing that keeps a conversation from making a
+    network call per validation round.
+    """
+    global _git_client
+    if _git_client is None:
+        _git_client = CliGitClient()
+    return _git_client
+
+
+def set_git_client(client: GitClient | None) -> None:
+    """Install a client, or clear it. Used by tests."""
+    global _git_client
+    _git_client = client
+
+
+def get_catalog() -> Catalog:
+    """The process-wide catalog.
+
+    Loaded once and refreshed from disk when the file changes, so this provider is cheap enough to
+    depend on from any route.
+    """
+    global _catalog
+    if _catalog is None:
+        _catalog = Catalog(catalog_path(get_settings()))
+    return _catalog
+
+
+def set_catalog(catalog: Catalog | None) -> None:
+    """Install a catalog, or clear it. Used by tests."""
+    global _catalog
+    _catalog = catalog
+
+
 async def close_clients() -> None:
     """Release every outbound client on shutdown."""
-    global _jenkins_client
+    global _jenkins_client, _git_client
     if _jenkins_client is not None:
         await _jenkins_client.aclose()
     _jenkins_client = None
+    if _git_client is not None:
+        await _git_client.aclose()
+    _git_client = None

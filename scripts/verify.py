@@ -1373,11 +1373,15 @@ def check_backend_quality_bars() -> Result:
     else:
         runner = [str(uv)]
 
+    # `python -m <tool>` rather than `uv run <tool>`. The latter resolves to the console-script
+    # .exe shim in .venv/Scripts, and a Windows Application Control policy can block those while
+    # the packages themselves import fine -- which failed this check with "Application Control
+    # policy has blocked this file" even though every tool worked. The module form has no shim.
     stages = (
-        ("ruff check", [*runner, "run", "ruff", "check", "."]),
-        ("ruff format --check", [*runner, "run", "ruff", "format", "--check", "."]),
-        ("mypy app", [*runner, "run", "mypy", "app"]),
-        ("pytest", [*runner, "run", "pytest", "-m", "not live and not e2e", "-q"]),
+        ("ruff check", [*runner, "run", "python", "-m", "ruff", "check", "."]),
+        ("ruff format --check", [*runner, "run", "python", "-m", "ruff", "format", "--check", "."]),
+        ("mypy app", [*runner, "run", "python", "-m", "mypy", "app"]),
+        ("pytest", [*runner, "run", "python", "-m", "pytest", "-m", "not live and not e2e", "-q"]),
     )
     for label, command in stages:
         result = run(command, cwd=backend, timeout=600)
@@ -1443,6 +1447,73 @@ def check_auth_rate_limits() -> Result:
     if "rate_limit(REFRESH_LIMIT)" not in api_text:
         return fail("the refresh endpoint is not rate limited")
     return ok("login 5/min, refresh 30/min, general 300/min")
+
+
+@check(3, "the catalog loads through one schema-validated loader")
+def check_catalog_loader() -> Result:
+    """4.6.1 makes the catalog the only source of shell commands, so it is validated, not trusted.
+
+    Also checks that nothing parses the YAML on its own. A second loader means the seed can accept
+    a document the API rejects, and the bad catalog then reaches the database.
+    """
+    module = REPO_ROOT / "backend" / "app" / "services" / "catalog.py"
+    if not module.is_file():
+        return fail("backend/app/services/catalog.py does not exist")
+
+    text = module.read_text(encoding="utf-8")
+    if "jsonschema.validate" not in text:
+        return fail("the catalog is loaded without being validated against its schema")
+    if "yaml.safe_load" not in text:
+        return fail("the catalog must be read with yaml.safe_load, never yaml.load")
+
+    backend_app = REPO_ROOT / "backend" / "app"
+    strays = [
+        path.relative_to(REPO_ROOT).as_posix()
+        for path in backend_app.rglob("*.py")
+        if path != module and "yaml.safe_load" in path.read_text(encoding="utf-8")
+    ]
+    if strays:
+        return fail("a second catalog parser exists in: " + ", ".join(strays))
+
+    return ok("one loader, schema-validated, safe_load only")
+
+
+@check(3, "git refs are validated before reaching git")
+def check_git_ref_guard() -> Result:
+    """Branch and commit values arrive from a chat message by way of an LLM.
+
+    An argument list is not enough on its own: git reads a leading ``-`` as an option, and
+    ``--upload-pack=<command>`` makes ls-remote execute that command. The ref pattern is what stops
+    it, so this check fails if the pattern stops rejecting option-shaped refs.
+    """
+    module = REPO_ROOT / "backend" / "app" / "services" / "git.py"
+    if not module.is_file():
+        return fail("backend/app/services/git.py does not exist")
+
+    text = module.read_text(encoding="utf-8")
+    if "shell=True" in text:
+        return fail("git is invoked through a shell")
+    if "REF_PATTERN" not in text or "is_safe_ref" not in text:
+        return fail("there is no ref validation")
+
+    # Read the pattern out of the source and exercise it, rather than importing the module: the
+    # gate must run without the backend's dependencies installed.
+    found = re.search(r'REF_PATTERN: Final = re\.compile\(r"([^"]+)"\)', text)
+    if found is None:
+        return fail("REF_PATTERN is not a literal regex; this check cannot verify it")
+    pattern = re.compile(found.group(1))
+
+    hostile = ("--upload-pack=touch /tmp/x", "-u", "--exec=sh", "main;rm -rf /", "main$(id)")
+    accepted = [ref for ref in hostile if pattern.match(ref)]
+    if accepted:
+        return fail("REF_PATTERN accepts: " + ", ".join(accepted))
+
+    ordinary = ("main", "develop", "demo/failing-tests", "release-1.2")
+    rejected = [ref for ref in ordinary if not pattern.match(ref)]
+    if rejected:
+        return fail("REF_PATTERN rejects ordinary branches: " + ", ".join(rejected))
+
+    return ok("option-shaped refs rejected, ordinary branches accepted, no shell")
 
 
 IMPLEMENTED_PHASES = {0, 1, 2, 3}

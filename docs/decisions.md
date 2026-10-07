@@ -11,6 +11,59 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 3
 
+### D-025 The catalog has exactly one loader, and it validates
+**Date:** 2026-09-29 · **Status:** decided
+
+`app/db/seed.py` parsed `catalog/services.yaml` itself while `app/services/catalog.py` was being
+written to parse it again. Two loaders meant the seed could accept a document the API would reject,
+so a catalog with a shell metacharacter in a command would reach the `services` table and fail at
+request time instead of at seed time.
+
+**Decision.** `app.services.catalog` is the only parser. It validates against
+`catalog/services.schema.json` on every load and `seed.py` calls it. `verify.py` fails if any other
+module under `backend/app/` calls `yaml.safe_load`, so the second loader cannot come back quietly.
+
+The catalog is reloaded when its mtime changes rather than on restart, because adding a service
+mid-demo should not need a container restart. A reload that fails validation keeps the last good
+copy and logs loudly: a typo in the catalog must not take the API down.
+
+### D-024 `GitClient` resolves refs with `ls-remote` and never clones
+**Date:** 2026-09-29 · **Status:** decided
+
+4.5.3 needs to know that a branch exists and what commit it points at. A clone would answer that
+too, at the cost of disk, latency and a cleanup path, for information one network round trip
+already provides.
+
+**Consequence, accepted.** `ls-remote` reports ref tips, not history, so `commit_exists` can
+confirm a commit that *is* a tip and cannot confirm one further back. That is enough for validation
+before a job is generated; if a checkout later cannot find the commit, Jenkins fails the build
+honestly rather than the backend guessing.
+
+Refs are cached for 60 seconds per repository, with one lock per repository so a burst of
+validations makes one call. Short deliberately: the point of resolving a branch is to catch a name
+that does not exist, and a long cache would keep accepting a branch after it was deleted.
+
+### D-023 Git refs are validated against a pattern, not only passed as arguments
+**Date:** 2026-09-29 · **Status:** decided
+
+Branch and commit values reach `GitClient` from a chat message by way of an LLM. The subprocess is
+invoked with an argument list and `shell=False`, which is necessary and **not sufficient**: `git`
+reads a leading `-` as an option, and `--upload-pack=<command>` makes `ls-remote` execute that
+command. That is remote code execution through an argument no shell ever sees.
+
+**Decision.** `REF_PATTERN` requires a ref to start with an alphanumeric, which makes an
+option-shaped ref unrepresentable, and the check runs before the call so a hostile ref costs no
+round trip either. `ALLOWED_URL` restricts transports to `https://` and `git@`, because `ext::`
+executes its argument by design and a local path can point at a repository carrying hooks. That
+matters because a repo URL may arrive from the `services` table rather than the validated catalog.
+`verify.py` exercises the pattern against option-shaped refs directly.
+
+**Related bug, fixed here.** The subprocess first ran with a minimal environment (`PATH` only),
+which looked safer and was not: dropping `SystemRoot` breaks name resolution on Windows and every
+fetch failed with `getaddrinfo() thread failed to start`, which reads like a network outage rather
+than a missing variable. `scripts/validate_catalog.py` had the identical bug. The environment is
+now inherited with the credential-prompt suppressors added, and a test asserts nothing is dropped.
+
 ### D-022 A refused sign-in commits its audit entry before raising
 **Date:** 2026-09-29 · **Status:** decided
 

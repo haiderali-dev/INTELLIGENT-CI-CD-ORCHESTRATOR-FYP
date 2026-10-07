@@ -240,7 +240,27 @@ Branch `phase-3-backend`, stacked on the unmerged `phase-2-plugin`.
       and hashes even when there is no user, so the endpoint is not an account-existence oracle.
       Refresh rotates and revokes the old token (D-021); deactivating an account ends its session
       on the next request because the user is re-read each time rather than trusted from the token.
-- [ ] T3.5 `GitClient` and `CatalogService`
+- [x] T3.5 `GitClient` and `CatalogService` — evidence: `uv run pytest -m "not live and not e2e"`
+      → 130 passed, 1 skipped (22 catalog tests, 41 git tests); `ruff check`, `ruff format --check`
+      and `mypy app` (strict, 26 files) all clean; `verify.py --phase 3` → 10 checks pass, two of
+      them new. `python -m app.db.seed --catalog` in the container → `0 created, 0 updated`, so the
+      refactor kept the seed idempotent. `pytest -m integration tests/test_git.py` resolved a real
+      remote: 7 branches, `master` → a 40-character sha, and a bogus branch correctly absent.
+      * `app/services/catalog.py` is now the only parser of `catalog/services.yaml`; `seed.py` used
+        to parse it separately, which let the seed accept a document the API would reject (D-025).
+        It validates against the JSON Schema on every load and reloads on mtime, keeping the last
+        good copy when an edit is broken.
+      * `app/services/git.py` resolves refs with `git ls-remote` and never clones (D-024). Refs are
+        pattern-checked *before* the call, because an argument list is not sufficient on its own:
+        git reads a leading `-` as an option and `--upload-pack=<command>` makes ls-remote execute
+        it, which is code execution through an argument no shell sees (D-023).
+      One real bug found and fixed while checking against a live remote: the subprocess ran with a
+      minimal environment, and dropping `SystemRoot` broke DNS on Windows — every fetch failed with
+      `getaddrinfo() thread failed to start`. `scripts/validate_catalog.py` had the identical bug.
+      A test now asserts nothing is dropped from the inherited environment; reverting the fix fails
+      it.
+      Both new `verify.py` gates were negative-tested: loosening `REF_PATTERN` to allow a leading
+      dash fails the ref gate, and reintroducing a second `yaml.safe_load` fails the loader gate.
 - [ ] T3.6 `PluginClient` for the ranking endpoint and `POST /api/metrics` ingestion
 - [ ] T3.7 `RunTracker` background worker and the WebSocket hub
 - [ ] T3.8 Jobs, runs, queue, analytics and admin routers

@@ -20,10 +20,8 @@ from __future__ import annotations
 import argparse
 import asyncio
 import sys
-from pathlib import Path
 from typing import Any
 
-import yaml
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -32,6 +30,12 @@ from app.core.security import hash_password
 from app.core.settings import Settings, get_settings
 from app.db.models import Role, Service, User
 from app.db.session import create_engine
+from app.services.catalog import (
+    Catalog,
+    CatalogError,
+    CatalogService,
+    catalog_path,
+)
 
 logger = get_logger(__name__)
 
@@ -78,32 +82,17 @@ async def seed_admin(session: AsyncSession, settings: Settings) -> tuple[str, bo
 # ---------------------------------------------------------------------------
 
 
-def _catalog_path(settings: Settings) -> Path:
-    """Resolve the catalog path against the repository root when it is relative.
+def load_catalog(settings: Settings) -> tuple[CatalogService, ...]:
+    """The catalog entries, loaded and schema-validated by ``app.services.catalog``.
 
-    The backend runs from ``backend/`` on a developer machine and from ``/app`` in the container,
-    where the catalog is mounted at ``/app/catalog``. Both must work without a conditional in the
-    settings.
+    Deliberately the same loader the API uses. When this module parsed the YAML itself, the seed
+    would accept a document the API would later reject -- so a bad catalog reached the database and
+    failed at request time instead of at seed time, which is the wrong end of the run to find it.
     """
-    configured = Path(settings.catalog_path)
-    if configured.is_absolute():
-        return configured
-    for base in (Path.cwd(), Path.cwd().parent, Path(__file__).resolve().parents[3]):
-        candidate = base / configured
-        if candidate.is_file():
-            return candidate
-    return configured
-
-
-def load_catalog(settings: Settings) -> list[dict[str, Any]]:
-    path = _catalog_path(settings)
-    if not path.is_file():
-        raise SystemExit(f"catalog not found at {path}. Set CATALOG_PATH or check the mount.")
-    document = yaml.safe_load(path.read_text(encoding="utf-8"))
-    services: list[dict[str, Any]] = document.get("services", []) if document else []
-    if not services:
-        raise SystemExit(f"{path} declares no services")
-    return services
+    try:
+        return Catalog(catalog_path(settings)).services()
+    except CatalogError as exc:
+        raise SystemExit(str(exc)) from exc
 
 
 async def seed_catalog(session: AsyncSession, settings: Settings) -> tuple[int, int]:
@@ -117,18 +106,28 @@ async def seed_catalog(session: AsyncSession, settings: Settings) -> tuple[int, 
     created = updated = 0
 
     for entry in entries:
-        name = entry["name"]
+        name = entry.name
         existing = await session.scalar(select(Service).where(Service.name == name))
 
-        fields = {
-            "repo_url": entry["repo"],
-            "default_branch": entry.get("default_branch", "main"),
-            "agent_label": entry.get("agent_label", "linux"),
-            "build_command": entry["build_command"],
-            "test_suites": entry.get("test_suites", []),
-            "deploy_commands": entry.get("deploy", {}),
-            "allowed_environments": entry.get("allowed_environments", []),
-            "extra_stages": entry.get("extra_stages", {}),
+        fields: dict[str, Any] = {
+            "repo_url": entry.repo,
+            "default_branch": entry.default_branch,
+            "agent_label": entry.agent_label,
+            "build_command": entry.build_command,
+            "test_suites": [
+                {
+                    "name": suite.name,
+                    "command": suite.command,
+                    "approx_seconds": suite.approx_seconds,
+                }
+                for suite in entry.test_suites
+            ],
+            "deploy_commands": {
+                environment: {"command": target.command, "url": target.url}
+                for environment, target in entry.deploy.items()
+            },
+            "allowed_environments": list(entry.allowed_environments),
+            "extra_stages": dict(entry.extra_stages),
         }
 
         if existing is None:
