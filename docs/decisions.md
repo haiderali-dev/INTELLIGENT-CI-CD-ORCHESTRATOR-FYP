@@ -11,6 +11,68 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 3
 
+### D-031 Run history comes from polling, with plugin metrics refining the timings
+**Date:** 2026-10-07 · **Status:** decided
+
+4.4.5 has `RunTracker` poll every three seconds; 4.4.6 has plugin metrics "fill queue timings that
+polling can miss". Both, deliberately, because each alone leaves a hole.
+
+The plugin is not the system of record and must not be: it reports only on the controller it is
+installed on, only while installed, and `jenkins-baseline` runs without it on purpose. Metrics
+alone would therefore lose every run on a plugin-less controller — including the baseline arm of
+the experiment.
+
+Polling alone would put a three-second error bar on every queue wait, and the waiting-time KPIs are
+what the report's whole comparison rests on.
+
+**So the precedence is fixed:** the tracker writes `queue_wait_ms` *only* when it is unset. The
+plugin measured the wait from inside the queue; the tracker can only subtract two timestamps either
+side of a poll. `verify.py` fails if that guard disappears, because losing it would silently coarsen
+every figure rather than break anything visibly.
+
+Both writers target the same `(job_id, build_number)`, which carries a unique constraint, so the
+tracker upserts rather than inserting. A queue event always arrives before its run exists, so
+unmatched timings are parked (D-027) and the tracker attaches them once the row appears.
+
+### D-030 A slow WebSocket client loses events rather than slowing the tracker
+**Date:** 2026-10-07 · **Status:** decided
+
+`RunTracker` publishes from inside its tick, which also writes to the database. If a browser on a
+bad connection could apply backpressure to that, one slow client would slow down recording run
+history for everyone.
+
+**Decision.** Each connection has its own bounded queue (256 events). `Hub.publish` is synchronous,
+uses `put_nowait`, and on a full queue drops the *oldest* event to make room for the newest. A
+client that cannot keep up loses intermediate states, which for a live view is the right trade: the
+next event carries the current state anyway.
+
+`verify.py` fails if `publish` becomes a coroutine or grows an `await`. Its own first version
+matched the word "await" in the docstring explaining why there isn't one; it is line-anchored now.
+
+### D-029 The WebSocket authenticates with its first frame, not a query parameter
+**Date:** 2026-10-07 · **Status:** decided
+
+4.4.4 lists `WS /ws` but not how it authenticates, and the choice matters because **a browser
+cannot set headers on a WebSocket**. The common workaround is `/ws?token=...`.
+
+**Rejected.** A query string reaches proxy and server access logs, browser history, and any
+`Referer` sent onward. The access token would end up written down in several places nobody audits,
+and it stays valid for fifteen minutes.
+
+**Decision.** The socket is accepted, then has ten seconds to send one frame:
+`{"type": "auth", "token": "...", "topics": [...]}`. Nothing is delivered before it arrives, and
+anything else closes the connection. An unauthenticated socket can do exactly one thing.
+
+The connection is accepted *before* authentication so a refusal can be a close code the browser can
+read: 1008 means sign in again, 1011 means retry with backoff. Rejecting the handshake outright
+gives the client only an opaque failure, indistinguishable from the server being down.
+
+The close reason never says *why* a token failed — expired and forged are the same instruction, and
+distinguishing them over an unauthenticated socket would reveal which tokens are real.
+
+Cost: one extra `send` in the frontend hook (T6.2). `verify.py` fails if the endpoint ever reads
+`query_params`, so the reason this was chosen cannot be quietly forgotten.
+
 ### D-028 The plugin under test is reinstalled on every controller start
 **Date:** 2026-10-07 · **Status:** decided
 

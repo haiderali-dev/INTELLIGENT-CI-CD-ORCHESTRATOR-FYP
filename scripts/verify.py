@@ -1668,6 +1668,109 @@ def check_metrics_delivered_live() -> Result:
     return ok(f"{published} published, 0 failed, 0 dropped")
 
 
+@check(3, "the WebSocket never takes its token from the URL")
+def check_ws_token_not_in_url() -> Result:
+    """Guards D-029.
+
+    A browser cannot set headers on a WebSocket, so the usual workaround is ``/ws?token=...``.
+    That writes the access token into proxy access logs, browser history and any Referer sent
+    onward. The socket authenticates with its first frame instead, and this fails if that changes.
+    """
+    routes = REPO_ROOT / "backend" / "app" / "ws" / "routes.py"
+    hub = REPO_ROOT / "backend" / "app" / "ws" / "hub.py"
+    for path in (routes, hub):
+        if not path.is_file():
+            return fail(f"{path.relative_to(REPO_ROOT).as_posix()} does not exist")
+
+    text = routes.read_text(encoding="utf-8")
+    if 'websocket("/ws")' not in text:
+        return fail("there is no /ws route")
+
+    # query_params would mean the token, or something else trusted, is being read from the URL.
+    if "query_params" in text:
+        return fail("the socket reads the query string; the token must stay in the first frame")
+    if "_authenticate" not in text or '"auth"' not in text:
+        return fail("there is no auth-frame handshake")
+    if "AUTH_TIMEOUT_SECONDS" not in text:
+        return fail("an unauthenticated socket is never timed out")
+
+    main_text = (REPO_ROOT / "backend" / "app" / "main.py").read_text(encoding="utf-8")
+    if "ws_routes" not in main_text:
+        return fail("the /ws route is not wired into the app")
+
+    return ok("auth by first frame, timed out, nothing read from the query string")
+
+
+@check(3, "publishing to the hub cannot block the tracker")
+def check_hub_never_blocks() -> Result:
+    """The tracker publishes from inside its tick.
+
+    If a browser on a bad connection could apply backpressure, one slow client would slow down
+    recording run history for everyone. ``publish`` is therefore synchronous and drops.
+    """
+    hub = REPO_ROOT / "backend" / "app" / "ws" / "hub.py"
+    if not hub.is_file():
+        return fail("backend/app/ws/hub.py does not exist")
+
+    text = hub.read_text(encoding="utf-8")
+    if "async def publish" in text:
+        return fail("publish is a coroutine; it could suspend on a slow client")
+    if "put_nowait" not in text:
+        return fail("publish does not use put_nowait, so it can block")
+    # Line-anchored: the word "await" also appears in publish's docstring, explaining why there
+    # isn't one. Matching that was this check's first bug.
+    body = text.split("def publish")[1].split("\n    def ")[0]
+    if re.search(r"^\s+await ", body, re.M):
+        return fail("publish awaits something; it must not be able to suspend")
+    if "QUEUE_CAPACITY" not in text:
+        return fail("subscriber queues are unbounded")
+
+    return ok("synchronous, bounded, drops the oldest event")
+
+
+@check(3, "the tracker polls on the interval 4.4.5 fixes")
+def check_tracker_interval() -> Result:
+    """4.4.5: "polls in-flight runs every 3 seconds"."""
+    tracker = REPO_ROOT / "backend" / "app" / "services" / "tracker.py"
+    if not tracker.is_file():
+        return fail("backend/app/services/tracker.py does not exist")
+
+    text = tracker.read_text(encoding="utf-8")
+    found = re.search(r"POLL_SECONDS: Final = ([0-9.]+)", text)
+    if found is None:
+        return fail("POLL_SECONDS is not declared")
+    if abs(float(found.group(1)) - 3.0) > 1e-9:
+        return fail(f"POLL_SECONDS is {found.group(1)}; 4.4.5 fixes it at 3 seconds")
+
+    if "MAX_RUNS_PER_TICK" not in text:
+        return fail("a tick is unbounded; a backlog would stretch the interval")
+    if "QUEUE_ITEM_TIMEOUT_SECONDS" not in text:
+        return fail("a queue item that never resolves would be polled forever")
+
+    return ok("3 second interval, bounded tick, abandoned triggers time out")
+
+
+@check(3, "a polled queue wait never overwrites a plugin-measured one")
+def check_plugin_wait_wins() -> Result:
+    """4.4.6 exists because polling cannot see the queue precisely.
+
+    The plugin measured the wait from inside the queue; the tracker can only subtract two
+    timestamps either side of a three-second poll. If the coarse value could overwrite the exact
+    one, every waiting-time figure in the report would silently gain a three-second error bar.
+    """
+    tracker = REPO_ROOT / "backend" / "app" / "services" / "tracker.py"
+    if not tracker.is_file():
+        return fail("backend/app/services/tracker.py does not exist")
+
+    text = tracker.read_text(encoding="utf-8")
+    if "if run.queue_wait_ms is None:" not in text:
+        return fail(
+            "the tracker does not guard queue_wait_ms; a polled estimate could overwrite the "
+            "plugin's measurement (4.4.6)"
+        )
+    return ok("the tracker fills queue_wait_ms only when it is unset")
+
+
 IMPLEMENTED_PHASES = {0, 1, 2, 3}
 
 

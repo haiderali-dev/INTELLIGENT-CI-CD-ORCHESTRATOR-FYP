@@ -293,7 +293,31 @@ Branch `phase-3-backend`, stacked on the unmerged `phase-2-plugin`.
       `failedMetricCount` 0, `droppedMetricCount` 0, and four 202s in the backend log. A new
       `verify.py` check reads those counters, so a refusing backend fails the gate rather than
       quietly losing experiment data.
-- [ ] T3.7 `RunTracker` background worker and the WebSocket hub
+- [x] T3.7 `RunTracker` background worker and the WebSocket hub — evidence:
+      `uv run python -m pytest -m "not live and not e2e"` → 229 passed, 1 skipped (27 ws tests,
+      23 tracker tests); `ruff`, `ruff format --check` and `mypy app` (strict, 32 files) clean;
+      `verify.py --phase 3` → all pass, with four new checks.
+      * `app/ws/hub.py` fans out to connected clients on four topics. `publish` is synchronous and
+        drops the *oldest* event on a full 256-deep queue, because the tracker publishes from
+        inside its tick: a browser on a bad connection must not become backpressure on recording
+        run history (D-030).
+      * `app/ws/routes.py` authenticates with the first frame rather than `?token=` — a browser
+        cannot set WebSocket headers, and a query string reaches proxy logs, browser history and
+        `Referer` (D-029). The socket is accepted first so a refusal is a readable close code;
+        1008 means sign in again, 1011 retry. The reason never says *why* a token failed.
+      * `app/services/tracker.py` polls every 3 s, maps queue item ids to build numbers, upserts
+        `job_runs` and publishes events. It fills `queue_wait_ms` only when unset, so a polled
+        estimate can never overwrite the plugin's in-queue measurement (D-031).
+      Two real bugs found while testing, both on paths that exist to prevent failures:
+      * the `/ws` endpoint called `get_settings_dep()` directly, bypassing `dependency_overrides`
+        and falling back to a bare `Settings()` that fails validation — every endpoint test failed
+        on it. FastAPI supports `Depends` on WebSocket routes; it uses that now.
+      * `logger.exception("tracker_publish_failed", event=...)` raised `TypeError`, because
+        structlog reserves `event` for the message. The handler that exists so a hub fault cannot
+        crash a tick was itself crashing the tick. Caught by the test that breaks the hub on purpose.
+      The hub-blocking `verify.py` check also had a bug of its own: it matched the word "await" in
+      `publish`'s docstring, which explains why there isn't one. It is line-anchored now and was
+      negative-tested by making `publish` actually await.
 - [ ] T3.8 Jobs, runs, queue, analytics and admin routers
 - [x] T3.9 (part) The `/scriptText` guard test — evidence: `pytest tests/test_no_script_console.py`
       → 4 passed. Scans `backend/` and `experiment/`, proves it detects a planted call, and proves

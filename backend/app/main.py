@@ -23,7 +23,11 @@ from app.core.logging import (
 )
 from app.core.settings import Environment, Settings, get_settings
 from app.db import session as db_session
-from app.services.dependencies import close_clients
+from app.services.dependencies import close_clients, get_jenkins_client
+from app.services.metrics import get_pending_timings
+from app.services.tracker import RunTracker
+from app.ws import routes as ws_routes
+from app.ws.hub import get_hub
 
 logger = get_logger(__name__)
 
@@ -40,9 +44,25 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         llm_mode=settings.llm_mode.value,
         jenkins_url=settings.jenkins_url,
     )
+    tracker: RunTracker | None = None
+    # Not in tests: a background task polling Jenkins would make every test's timing depend on a
+    # worker it did not ask for, and the tests that want one construct it themselves.
+    if settings.environment is not Environment.TEST:
+        tracker = RunTracker(
+            session_factory=db_session.get_session_factory(),
+            jenkins=get_jenkins_client(),
+            hub=get_hub(),
+            pending_timings=get_pending_timings(),
+        )
+        tracker.start()
+    app.state.tracker = tracker
+
     try:
         yield
     finally:
+        if tracker is not None:
+            await tracker.stop()
+        await get_hub().close()
         await close_clients()
         await db_session.dispose()
         logger.info("shutdown")
@@ -101,6 +121,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     api.include_router(auth.router)
     api.include_router(metrics.router)
     app.include_router(api)
+    # WS /ws sits at the root, not under /api: 4.4.4 lists it that way, and it is a different
+    # protocol rather than another REST resource.
+    app.include_router(ws_routes.router)
 
     return app
 
