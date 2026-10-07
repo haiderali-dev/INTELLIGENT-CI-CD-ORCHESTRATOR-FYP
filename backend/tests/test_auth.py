@@ -15,20 +15,11 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import DevOpsUser
-from app.core.ratelimit import get_rate_limiter
 from app.core.security import TokenType, create_token, hash_password
 from app.core.settings import Settings
 from app.db.models import AuditLog, Role, User
-from app.services.auth import get_revoked_tokens
 
 PASSWORD = "correct-horse-battery-staple"
-
-
-@pytest.fixture(autouse=True)
-def _clean_process_state() -> None:
-    """Rate-limit buckets and the revocation list are process-wide, so reset them per test."""
-    get_rate_limiter().reset()
-    get_revoked_tokens().clear()
 
 
 async def make_user(

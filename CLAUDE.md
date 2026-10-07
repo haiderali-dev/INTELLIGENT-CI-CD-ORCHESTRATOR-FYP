@@ -12,7 +12,7 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
 
 ## Commands
 - Plugin: `cd plugin && mvn -B verify`
-- Backend: `cd backend && uv run ruff check . && uv run mypy app && uv run pytest -m "not live and not e2e"`
+- Backend: `cd backend && uv run python -m ruff check . && uv run python -m mypy app && uv run python -m pytest -m "not live and not e2e"`
 - Frontend: `cd frontend && npm run lint && npm run typecheck && npm run test`
 - Stack: `docker compose up -d` · Reset demo: `python scripts/demo_reset.py`
 - Phase check: `python scripts/verify.py --phase N`
@@ -36,12 +36,20 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
 - Java: one class per file, no Jenkins imports in heap or scoring packages.
 - Commits: Conventional Commits. Branches: phase-<n>-<slug>.
 
-## Environment facts (this machine, checked 2026-09-28)
-- Present: Java 21.0.11, Maven 3.9.16, Node 24.12.0, Python 3.14.2, Git.
-- Missing: docker, gh, uv. Docker blocks Phase 1 and every acceptance check from Phase 3 on.
-- Build order is Phase 0 → 2 → 1 → 3..8. Phase 2 comes first because JenkinsRule needs no Docker.
-- The Bash tool's sandbox blocks DNS. Network-touching commands (mvn, npm, pip) need the sandbox off.
+## Environment facts (this machine, checked 2026-10-07)
+- Present: Java 21.0.11, Maven 3.9.16, Node 24.12.0, Python 3.14.2, Git, Docker 29.8.0,
+  uv 0.12.20 at `.venv-tools/` (project-local; the backend venv is `backend/.venv`, Python 3.12.14).
+- Missing: gh. Four stacked PRs must be opened by hand until it is installed.
+- Docker Desktop does not start with Windows here. Launch
+  `%LOCALAPPDATA%/Programs/DockerDesktop/Docker Desktop.exe` and wait for `docker info` to succeed
+  (about 30 s) before any Phase 1 or Phase 3+ acceptance check.
+- A Windows Application Control policy blocks the console-script `.exe` shims in
+  `backend/.venv/Scripts` (pytest.exe, mypy.exe). Use `uv run python -m pytest` / `-m mypy`, never
+  `uv run pytest`. The packages themselves import and run fine; only the shims are blocked.
+- The Bash tool's sandbox blocks DNS. Network-touching commands (mvn, npm, pip, git ls-remote) need
+  the sandbox off.
 - Jenkins LTS baseline is pinned to 2.568.3. The report's Appendix E says 2.541.x and must be updated.
+- Build order was Phase 0 → 2 → 1 → 3..8, because JenkinsRule needs no Docker. Phases 0-2 are done.
 
 ## Lessons (add one line whenever a mistake repeats)
 - Pipeline queue items are placeholder tasks; resolve the job with getOwnerTask().
@@ -49,3 +57,6 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
   alias, so old config.xml still loads. Do not "fix" this back.
 - Report Appendix C prints the pre-inheritance score (0.633); the effective score after group
   inheritance is 0.650. Assert both.
+- Never hand a subprocess a minimal env. Dropping `SystemRoot` breaks DNS on Windows and reports
+  itself as `getaddrinfo() thread failed to start`, which reads like a network outage. Inherit
+  `os.environ` and overlay. This bit both validate_catalog.py and GitClient.

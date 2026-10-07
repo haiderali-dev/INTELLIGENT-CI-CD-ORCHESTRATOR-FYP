@@ -11,6 +11,75 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 3
 
+### D-028 The plugin under test is reinstalled on every controller start
+**Date:** 2026-10-07 · **Status:** decided
+
+Jenkins seeds `/usr/share/jenkins/ref/plugins` into `$JENKINS_HOME/plugins` only when a plugin is
+absent, or when the image carries a *newer version*. The plugin under test is always
+`2.0.0-SNAPSHOT`, so "newer" is never true. After the first boot of the `jenkins-dev-home` volume,
+every later `docker compose build jenkins-dev` produced an image whose plugin was silently ignored,
+and the controller kept running the `.hpi` from its first boot — with a `.pinned` marker beside it
+telling Jenkins to keep it.
+
+This was found the expensive way: the D-026 fix below appeared not to work, because the controller
+being tested still had the previous build. The volume held 88,217 bytes while the image held 88,346.
+
+**Decision.** `jenkins/controller/install-plugin-under-test.sh` wraps the stock entrypoint, removes
+the exploded directory, the `.jpi`, the `.pinned` marker and `.version_from_image`, copies the
+image's copy in, and then `exec`s `/usr/local/bin/jenkins.sh`. Scoped to this one plugin: everything
+in `plugins.txt` is version-pinned and must keep Jenkins' own upgrade semantics, which is the whole
+point of D-003.
+
+For a plugin rebuilt on nearly every task, replacing it on start is the correct behaviour rather
+than a convenience. The alternative — remembering to `docker volume rm` after each plugin change —
+is a step that will be forgotten exactly when a result depends on it.
+
+### D-027 Metric ingestion accepts what it does not understand
+**Date:** 2026-10-07 · **Status:** decided
+
+`MetricsPublisher` posts one event per request from a single background thread, counts any non-2xx
+as a failure, and moves on. Nothing retries. So the status code is not a place to report a problem
+with an event: a 422 on one unrecognised field makes the publisher drop that event and every later
+one of the same shape.
+
+**Decision.** `POST /api/metrics` accepts any object with a `kind`, allows unknown fields
+(`extra="allow"`), accepts unknown `kind` values, and accepts events for jobs the backend does not
+track — the experiment harness creates jobs straight against Jenkins and the plugin reports on
+those too. What was wrong with an event is logged and reported in the response body
+(`applied` / `parked` / `ignored`), not in the status.
+
+Returns 202, not 200: the event is recorded, but what it means for a run may depend on a row that
+does not exist yet.
+
+**Queue timings are parked, not dropped.** A queue event arrives the instant an item is queued,
+while `job_runs` cannot have a row until Jenkins has assigned a build number and `RunTracker` has
+polled. An unmatched timing is held in memory, bounded at 2000 entries with a 30-minute TTL, and
+attached when the run appears. Without that, `queue_entered_at` would essentially never be filled
+from metrics, which is the one thing 4.4.6 says this endpoint is for.
+
+### D-026 The plugin publishes metrics over HTTP/1.1, not Java's HTTP/2 default
+**Date:** 2026-10-07 · **Status:** decided, fixes a defect
+
+`HttpClient.newBuilder()` defaults to `HTTP_2`. For a cleartext `http://` URL, Java negotiates that
+with an HTTP/1.1 `Upgrade: h2c` request. The backend is served by uvicorn, which does not implement
+that upgrade: it logged "Unsupported upgrade request", then "Invalid HTTP request received", then
+returned **422 for every single metric event**.
+
+The metrics pipeline therefore published nothing at all. It had never been exercised, because until
+T3.6 there was no backend to post to, and `metricsBackendUrl` defaults to empty (D-006) so the
+publisher returned early. The only symptom was `failedMetricCount` rising, and nothing watched it.
+
+**Decision.** `MetricsPublisher.newHttpClient()` pins `HTTP_1_1`. The fix belongs in the plugin:
+uvicorn has no h2c support, and putting a proxy in front of the backend to translate a protocol
+nobody needs would be a much larger change for no benefit.
+
+`MetricsPublisherHttpVersionTest` asserts the pin, and also asserts that Java's default really is
+HTTP/2 — so a later reader cannot delete the `.version()` call believing it restates a default.
+
+Verified end to end on 2026-10-07: one triggered build produced `QUEUE_ENTERED`, `QUEUE_LEFT`,
+`BUILD_STARTED` and `BUILD_COMPLETED`, with `publishedMetricCount` 4, `failedMetricCount` 0,
+`droppedMetricCount` 0, and four 202s in the backend log.
+
 ### D-025 The catalog has exactly one loader, and it validates
 **Date:** 2026-09-29 · **Status:** decided
 

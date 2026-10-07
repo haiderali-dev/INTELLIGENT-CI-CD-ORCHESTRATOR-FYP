@@ -35,6 +35,13 @@ RUN jenkins-plugin-cli \
 COPY plugin/target/dynamic-queue-optimizer.hpi \
      /usr/share/jenkins/ref/plugins/dynamic-queue-optimizer.jpi
 
+# Jenkins seeds ref/plugins into a home only when the plugin is absent or the image carries a newer
+# version. The plugin under test is always 2.0.0-SNAPSHOT, so "newer" is never true and a
+# persistent volume keeps serving whatever it got on its first boot -- which made one rebuilt fix
+# appear not to work at all. This entrypoint replaces that one plugin on every start.
+COPY jenkins/controller/install-plugin-under-test.sh /usr/local/bin/install-plugin-under-test.sh
+RUN chmod +x /usr/local/bin/install-plugin-under-test.sh
+
 # --- Configuration as Code -----------------------------------------------------
 RUN mkdir -p /var/jenkins_conf /var/jenkins_keys \
     && chown -R jenkins:jenkins /var/jenkins_conf /var/jenkins_keys /usr/share/jenkins/ref
@@ -55,4 +62,6 @@ ENV JENKINS_OPTS=""
 
 EXPOSE 8080 50000
 
-# The stock image already sets the entrypoint; nothing to override.
+# Wraps the stock entrypoint rather than replacing it: the wrapper reinstalls the plugin under
+# test and then execs /usr/local/bin/jenkins.sh, so every other startup behaviour is unchanged.
+ENTRYPOINT ["/usr/local/bin/install-plugin-under-test.sh"]

@@ -261,7 +261,38 @@ Branch `phase-3-backend`, stacked on the unmerged `phase-2-plugin`.
       it.
       Both new `verify.py` gates were negative-tested: loosening `REF_PATTERN` to allow a leading
       dash fails the ref gate, and reintroducing a second `yaml.safe_load` fails the loader gate.
-- [ ] T3.6 `PluginClient` for the ranking endpoint and `POST /api/metrics` ingestion
+- [x] T3.6 `PluginClient` for the ranking endpoint and `POST /api/metrics` ingestion — evidence:
+      `uv run python -m pytest -m "not live and not e2e"` → 179 passed, 1 skipped (25 metrics
+      tests, 24 plugin-client tests); `ruff`, `ruff format --check` and `mypy app` (strict, 29
+      files) clean; `cd plugin && mvn -B verify` → 65 integration tests, BUILD SUCCESS;
+      `verify.py --phase 0/1/2/3` → all four pass, with four new Phase 3 checks.
+      **Three real defects found, two of them pre-existing and invisible until now:**
+      * **The metrics pipeline had never worked at all** (D-026). Java's `HttpClient` defaults to
+        HTTP/2 and negotiates it over cleartext with `Upgrade: h2c`, which uvicorn does not
+        implement — it logged "Unsupported upgrade request" and returned **422 for every single
+        event**. This was undetectable before T3.6 because `metricsBackendUrl` defaults to empty
+        (D-006), so the publisher returned early and never posted. Fixed by pinning `HTTP_1_1` in
+        `MetricsPublisher`, guarded by `MetricsPublisherHttpVersionTest`.
+      * **A rebuilt plugin never reached the running controller** (D-028). Jenkins seeds
+        `ref/plugins` only when a plugin is absent or the image is *newer*, and the plugin is
+        always `2.0.0-SNAPSHOT`, so a persistent home kept the `.hpi` from its first boot with a
+        `.pinned` marker beside it. The D-026 fix appeared not to work for this reason: the volume
+        held 88,217 bytes while the image held 88,346. `install-plugin-under-test.sh` now wraps the
+        stock entrypoint and replaces that one plugin on every start.
+      * `parse_health` read `droppedMetrics`, but the endpoint sends `droppedMetricCount`, so the
+        backend reported **zero dropped events however many were lost** — the one number whose
+        purpose is to say data went missing. Found by reading the live endpoint instead of the
+        specification's prose; the health test is now built from a recorded live payload.
+      Also fixed: `store = pending or _pending` silently discarded the injected store, because the
+      class defines `__len__` and an *empty* store is therefore falsy; and the process-wide state
+      reset moved into `conftest.py`, after `test_auth`'s rate-limit tests exhausted the five-a-
+      minute login bucket for the whole suite and a later file's sign-in got an unexplained 429
+      that reproduced only in a full run.
+      **Verified end to end on the live stack:** one triggered build produced `QUEUE_ENTERED`,
+      `QUEUE_LEFT`, `BUILD_STARTED` and `BUILD_COMPLETED` with `publishedMetricCount` 4,
+      `failedMetricCount` 0, `droppedMetricCount` 0, and four 202s in the backend log. A new
+      `verify.py` check reads those counters, so a refusing backend fails the gate rather than
+      quietly losing experiment data.
 - [ ] T3.7 `RunTracker` background worker and the WebSocket hub
 - [ ] T3.8 Jobs, runs, queue, analytics and admin routers
 - [x] T3.9 (part) The `/scriptText` guard test — evidence: `pytest tests/test_no_script_console.py`

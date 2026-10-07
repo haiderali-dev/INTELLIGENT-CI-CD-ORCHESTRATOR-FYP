@@ -11,10 +11,12 @@ from app.core.settings import Settings, get_settings
 from app.services.catalog import Catalog, catalog_path
 from app.services.git import CliGitClient, GitClient
 from app.services.jenkins import HttpJenkinsClient, JenkinsClient
+from app.services.plugin import HttpPluginClient, PluginClient
 
 _jenkins_client: JenkinsClient | None = None
 _git_client: GitClient | None = None
 _catalog: Catalog | None = None
+_plugin_client: PluginClient | None = None
 
 
 def get_settings_dep() -> Settings:
@@ -57,6 +59,24 @@ def set_git_client(client: GitClient | None) -> None:
     _git_client = client
 
 
+def get_plugin_client() -> PluginClient:
+    """The process-wide plugin client.
+
+    Separate from the Jenkins client although it talks to the same host: its timeout is shorter and
+    it never retries, because the ranking decorates a page that has already loaded.
+    """
+    global _plugin_client
+    if _plugin_client is None:
+        _plugin_client = HttpPluginClient(get_settings())
+    return _plugin_client
+
+
+def set_plugin_client(client: PluginClient | None) -> None:
+    """Install a client, or clear it. Used by tests."""
+    global _plugin_client
+    _plugin_client = client
+
+
 def get_catalog() -> Catalog:
     """The process-wide catalog.
 
@@ -77,10 +97,13 @@ def set_catalog(catalog: Catalog | None) -> None:
 
 async def close_clients() -> None:
     """Release every outbound client on shutdown."""
-    global _jenkins_client, _git_client
+    global _jenkins_client, _git_client, _plugin_client
     if _jenkins_client is not None:
         await _jenkins_client.aclose()
     _jenkins_client = None
     if _git_client is not None:
         await _git_client.aclose()
     _git_client = None
+    if _plugin_client is not None:
+        await _plugin_client.aclose()
+    _plugin_client = None

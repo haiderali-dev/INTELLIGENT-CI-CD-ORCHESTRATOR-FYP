@@ -1516,6 +1516,158 @@ def check_git_ref_guard() -> Result:
     return ok("option-shaped refs rejected, ordinary branches accepted, no shell")
 
 
+@check(3, "the metrics endpoint exists and accepts what it cannot parse")
+def check_metrics_endpoint_shape() -> Result:
+    """4.4.5's ``POST /api/metrics``, and the properties D-027 depends on.
+
+    The publisher counts any non-2xx as a failure and never retries, so a strict endpoint loses
+    data silently. These are source checks because the gate must run with the stack down.
+    """
+    api = REPO_ROOT / "backend" / "app" / "api" / "metrics.py"
+    service = REPO_ROOT / "backend" / "app" / "services" / "metrics.py"
+    for path in (api, service):
+        if not path.is_file():
+            return fail(f"{path.relative_to(REPO_ROOT).as_posix()} does not exist")
+
+    api_text = api.read_text(encoding="utf-8")
+    if '"/metrics"' not in api_text:
+        return fail("no /metrics route")
+    if 'extra": "allow"' not in api_text and "extra='allow'" not in api_text:
+        return fail("the event model rejects unknown fields; see D-027")
+    if "compare_digest" not in api_text:
+        return fail("the metrics token is not compared in constant time")
+    if "require_metrics_token" not in api_text:
+        return fail("the endpoint is not gated on METRICS_TOKEN")
+
+    service_text = service.read_text(encoding="utf-8")
+    for kind in ("QUEUE_ENTERED", "QUEUE_LEFT", "BUILD_STARTED", "BUILD_COMPLETED"):
+        if kind not in service_text:
+            return fail(f"the ingester does not handle {kind}")
+    if "PendingQueueTimings" not in service_text:
+        return fail("queue timings are not parked; see D-027")
+
+    main_text = (REPO_ROOT / "backend" / "app" / "main.py").read_text(encoding="utf-8")
+    if "metrics" not in main_text:
+        return fail("the metrics router is not wired into the app")
+
+    return ok("gated, constant-time, open to unknown fields, all four kinds handled")
+
+
+@check(3, "the plugin publishes metrics over HTTP/1.1")
+def check_publisher_http_version() -> Result:
+    """Guards D-026, which disabled the whole metrics pipeline.
+
+    Java's HttpClient defaults to HTTP/2 and negotiates it over cleartext with ``Upgrade: h2c``,
+    which uvicorn does not implement: every event came back 422 and the only symptom was a
+    counter nobody was watching.
+    """
+    publisher = (
+        REPO_ROOT
+        / "plugin"
+        / "src"
+        / "main"
+        / "java"
+        / "io"
+        / "jenkins"
+        / "plugins"
+        / "queueoptimizer"
+        / "metrics"
+        / "MetricsPublisher.java"
+    )
+    if not publisher.is_file():
+        return fail("MetricsPublisher.java does not exist")
+
+    text = publisher.read_text(encoding="utf-8")
+    if "HttpClient.Version.HTTP_1_1" not in text:
+        return fail("the publisher does not pin HTTP/1.1; uvicorn rejects Java's h2c upgrade")
+
+    test = (
+        REPO_ROOT
+        / "plugin"
+        / "src"
+        / "test"
+        / "java"
+        / "io"
+        / "jenkins"
+        / "plugins"
+        / "queueoptimizer"
+        / "metrics"
+        / "MetricsPublisherHttpVersionTest.java"
+    )
+    if not test.is_file():
+        return fail("MetricsPublisherHttpVersionTest.java is missing; the pin is unguarded")
+
+    return ok("pinned to HTTP/1.1 and asserted by a test")
+
+
+@check(3, "the controller reinstalls the plugin under test on start")
+def check_plugin_reinstall_entrypoint() -> Result:
+    """Guards D-028.
+
+    The plugin is always 2.0.0-SNAPSHOT, so Jenkins never treats an image copy as newer and a
+    persistent home keeps the .hpi from its first boot. A fix can then appear not to work.
+    """
+    script = REPO_ROOT / "jenkins" / "controller" / "install-plugin-under-test.sh"
+    if not script.is_file():
+        return fail("jenkins/controller/install-plugin-under-test.sh does not exist")
+
+    text = script.read_text(encoding="utf-8")
+    if ".pinned" not in text:
+        return fail("the script does not remove the .pinned marker, so the stale plugin wins")
+    if "jenkins.sh" not in text:
+        return fail("the script does not hand over to the stock entrypoint")
+
+    dockerfile = (REPO_ROOT / "jenkins" / "controller" / "Dockerfile").read_text(encoding="utf-8")
+    if "install-plugin-under-test.sh" not in dockerfile:
+        return fail("the Dockerfile does not use the reinstall entrypoint")
+    if "ENTRYPOINT" not in dockerfile:
+        return fail("the Dockerfile sets no ENTRYPOINT, so the script never runs")
+
+    return ok("entrypoint replaces the plugin and execs jenkins.sh")
+
+
+@check(3, "a live plugin event reaches the backend")
+def check_metrics_delivered_live() -> Result:
+    """The end-to-end check that would have caught D-026 on the day it was written.
+
+    Reads the plugin's own counters. A non-zero failure count means the backend is refusing what
+    the plugin sends, which is invisible from either side alone.
+    """
+    credentials = _bot_credentials()
+    if isinstance(credentials, str):
+        return fail(credentials)
+    user, token = credentials
+
+    status, body = _jenkins_get("/dynamic-queue/health", user, token)
+    if status != 200:
+        return fail(f"GET /dynamic-queue/health returned {status}")
+    try:
+        health = json.loads(body)
+    except ValueError:
+        return fail("the health endpoint did not return JSON")
+
+    if not health.get("metricsEnabled", False):
+        return fail("metrics are disabled on this controller")
+    if not health.get("metricsPublishable", False):
+        return fail("metricsBackendUrl or metricsToken is not configured; see JCasC")
+
+    failed = int(health.get("failedMetricCount", 0))
+    published = int(health.get("publishedMetricCount", 0))
+    dropped = int(health.get("droppedMetricCount", 0))
+
+    if failed:
+        return fail(
+            f"the backend refused {failed} event(s) ({published} published). "
+            "Check POST /api/metrics; see docs/decisions.md D-026"
+        )
+    if dropped:
+        return fail(f"the publisher dropped {dropped} event(s); its queue overflowed")
+    if not published:
+        return fail("no events published yet; trigger a build, then re-run this check")
+
+    return ok(f"{published} published, 0 failed, 0 dropped")
+
+
 IMPLEMENTED_PHASES = {0, 1, 2, 3}
 
 
