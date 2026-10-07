@@ -1,3 +1,4 @@
+<?xml version="1.1" encoding="UTF-8"?>
 <!--
   Exported from jenkins-dev with GET /job/reference-pipeline-payment-service/config.xml.
 
@@ -8,7 +9,6 @@
 
   Regenerate with: python scripts/export_reference_configs.py
 -->
-<?xml version="1.1" encoding="UTF-8"?>
 <flow-definition plugin="workflow-job@1602.v2a_70b_80a_2396">
   <description>Reference Pipeline job: build, test and deploy payment-service to staging.</description>
   <keepDependencies>false</keepDependencies>

@@ -320,6 +320,19 @@ class HttpJenkinsClient(JenkinsClient):
         return response.text
 
     async def delete_job(self, name: str) -> None:
+        """Delete a job. **Returns 403 with the bot token as configured.**
+
+        ``Job/Delete`` is deliberately not among the bot's grants in ``jenkins/casc/*.yaml``:
+        BUILD_PROMPT 4.1 calls for a "least-privilege ``orchestrator-bot`` API token", and 4.4.5's
+        method list does not include deletion, so a compromised backend token cannot destroy build
+        history.
+
+        The method is kept because an operator with a wider token may want it, but nothing in the
+        backend may depend on it. Callers that need a job gone should disable it, and callers that
+        want a clean slate should use ``scripts/demo_reset.py`` with the admin account. Discovered
+        the direct way: the Phase 3 integration tests tried to clean up after themselves and got a
+        403 (docs/decisions.md D-033).
+        """
         validate_job_name(name)
         await self._request("POST", f"/job/{name}/doDelete", expected=(200, 302))
         logger.info("jenkins_job_deleted", job=name)
@@ -407,21 +420,28 @@ class HttpJenkinsClient(JenkinsClient):
     async def list_labels(self) -> list[str]:
         """Every label offered by an online node.
 
-        Used by ``validate_catalog.py`` to check that a service's ``agent_label`` actually exists,
-        so a job is never created that can never be scheduled.
+        Checks that a service's ``agent_label`` actually exists, so a job is never created that
+        can never be scheduled.
+
+        ``/computer/api/json``, **not** ``/api/json``. The root endpoint reports only the
+        controller's own labels and has no ``nodes`` field, so querying it returned just
+        ``built-in`` and ``controller`` while both agents were online and carrying ``linux``.
+        ``scripts/validate_catalog.py`` had the identical bug and its fix never reached here.
+
+        Offline nodes are excluded: a label that exists only on a disconnected agent is a label no
+        build can be scheduled onto, which is exactly what this is asked to rule out.
         """
         response = await self._request(
             "GET",
-            "/api/json",
-            params={"tree": "assignedLabels[name],nodes[displayName,assignedLabels[name]]"},
+            "/computer/api/json",
+            params={"tree": "computer[displayName,offline,assignedLabels[name]]"},
         )
         payload = response.json()
         labels: set[str] = set()
-        for entry in payload.get("assignedLabels", []):
-            if name := entry.get("name"):
-                labels.add(name)
-        for node in payload.get("nodes", []):
-            for entry in node.get("assignedLabels", []):
+        for computer in payload.get("computer", []):
+            if computer.get("offline", False):
+                continue
+            for entry in computer.get("assignedLabels", []):
                 if name := entry.get("name"):
                     labels.add(name)
         return sorted(labels)

@@ -1,3 +1,4 @@
+<?xml version="1.1" encoding="UTF-8"?>
 <!--
   Exported from jenkins-dev with GET /job/reference-freestyle-payment-service/config.xml.
 
@@ -8,7 +9,6 @@
 
   Regenerate with: python scripts/export_reference_configs.py
 -->
-<?xml version="1.1" encoding="UTF-8"?>
 <project>
   <description>Reference freestyle job: build, test and deploy payment-service to staging.</description>
   <keepDependencies>false</keepDependencies>

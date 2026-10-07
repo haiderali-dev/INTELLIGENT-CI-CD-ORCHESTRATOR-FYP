@@ -12,7 +12,7 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
 
 ## Commands
 - Plugin: `cd plugin && mvn -B verify`
-- Backend: `cd backend && uv run python -m ruff check . && uv run python -m mypy app && uv run python -m pytest -m "not live and not e2e"`
+- Backend: `cd backend && uv run python -m ruff check . && uv run python -m mypy app && uv run python -m pytest -m "not live and not e2e and not integration"`
 - Frontend: `cd frontend && npm run lint && npm run typecheck && npm run test`
 - Stack: `docker compose up -d` · Reset demo: `python scripts/demo_reset.py`
 - Phase check: `python scripts/verify.py --phase N`

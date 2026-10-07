@@ -1377,11 +1377,31 @@ def check_backend_quality_bars() -> Result:
     # .exe shim in .venv/Scripts, and a Windows Application Control policy can block those while
     # the packages themselves import fine -- which failed this check with "Application Control
     # policy has blocked this file" even though every tool worked. The module form has no shim.
+    # `--no-sync` on every stage. Without it, uv re-resolves the project whenever pyproject.toml
+    # has changed, and on this machine a Windows Application Control policy blocks the temporary
+    # interpreter uv builds with -- so an unrelated dependency edit made every quality bar fail
+    # with "Application Control policy has blocked this file" instead of a lint error.
     stages = (
-        ("ruff check", [*runner, "run", "python", "-m", "ruff", "check", "."]),
-        ("ruff format --check", [*runner, "run", "python", "-m", "ruff", "format", "--check", "."]),
-        ("mypy app", [*runner, "run", "python", "-m", "mypy", "app"]),
-        ("pytest", [*runner, "run", "python", "-m", "pytest", "-m", "not live and not e2e", "-q"]),
+        ("ruff check", [*runner, "run", "--no-sync", "python", "-m", "ruff", "check", "."]),
+        ("ruff format --check", [*runner, "run", "--no-sync", "python", "-m", "ruff", "format", "--check", "."]),
+        ("mypy app", [*runner, "run", "--no-sync", "python", "-m", "mypy", "app"]),
+        (
+            "pytest",
+            # `integration` is excluded here deliberately: its marker says "Opt in with
+            # -m integration", and including it made this bar trigger real Jenkins builds
+            # and take a minute. The acceptance check below runs them instead.
+            [
+                *runner,
+                "run",
+                "--no-sync",
+                "python",
+                "-m",
+                "pytest",
+                "-m",
+                "not live and not e2e and not integration",
+                "-q",
+            ],
+        ),
     )
     for label, command in stages:
         result = run(command, cwd=backend, timeout=600)
@@ -1886,6 +1906,65 @@ def check_queue_degrades() -> Result:
             "report zero. See docs/decisions.md D-026"
         )
     return ok("reports availability and a reason instead of failing")
+
+
+@check(3, "integration tests create, trigger and read a freestyle and a Pipeline job")
+def check_phase3_integration() -> Result:
+    """Phase 3's third acceptance clause, run for real.
+
+    Excluded from the quality-bar check above so that bar stays fast, and gated here so the clause
+    is actually verified rather than assumed. The tests skip themselves when jenkins-dev is
+    unreachable; a skip is reported as a failure of *this* check, because an acceptance clause that
+    silently passes when it could not run is worse than no check.
+    """
+    backend = REPO_ROOT / "backend"
+    suite = backend / "tests" / "test_integration_jenkins.py"
+    if not suite.is_file():
+        return fail("backend/tests/test_integration_jenkins.py does not exist")
+
+    text = suite.read_text(encoding="utf-8")
+    for needed in ("freestyle", "flow-definition", "console_text", "lint_jenkinsfile"):
+        if needed not in text:
+            return fail(f"the integration suite does not cover {needed}")
+
+    uv = REPO_ROOT / ".venv-tools" / "Scripts" / "uv.exe"
+    runner = [str(uv)] if uv.is_file() else (["uv"] if have("uv") else [])
+    if not runner:
+        return fail("uv is not installed; see docs/decisions.md D-010")
+
+    result = run(
+        [
+            *runner,
+            "run",
+            "--no-sync",
+            "python",
+            "-m",
+            "pytest",
+            "tests/test_integration_jenkins.py",
+            "-m",
+            "integration",
+            # No -q: pyproject's addopts already has it, and a second one suppresses the
+            # "N passed" summary this check reads.
+        ],
+        cwd=backend,
+        timeout=900,
+    )
+    output = (result.stdout + result.stderr).strip()
+
+    if result.returncode != 0:
+        tail = [line for line in output.splitlines() if line.strip()][-3:]
+        return fail("integration tests failed: " + " / ".join(tail)[:300])
+
+    passed = re.search(r"(\d+) passed", output)
+    skipped = re.search(r"(\d+) skipped", output)
+    if skipped and int(skipped.group(1)) and not (passed and int(passed.group(1))):
+        return fail(
+            "the integration tests all skipped; is the stack up and is JENKINS_TOKEN set?"
+        )
+    if not passed:
+        return fail("pytest reported no passing integration tests")
+
+    return ok(f"{passed.group(1)} passed against the live controller")
 
 
 IMPLEMENTED_PHASES = {0, 1, 2, 3}

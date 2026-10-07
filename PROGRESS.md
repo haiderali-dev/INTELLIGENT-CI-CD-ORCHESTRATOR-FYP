@@ -345,16 +345,46 @@ Branch `phase-3-backend`, stacked on the unmerged `phase-2-plugin`.
         starts.
       The new role-guard gate was negative-tested by downgrading `cancel` to any signed-in user;
       it fails with `found no role guard`.
-- [x] T3.9 (part) The `/scriptText` guard test — evidence: `pytest tests/test_no_script_console.py`
-      → 4 passed. Scans `backend/` and `experiment/`, proves it detects a planted call, and proves
-      it does not flag prose. Integration tests and the Phase 3 `verify.py` checks remain.
+- [x] T3.9 Integration tests and the Phase 3 `verify.py` checks — evidence:
+      `uv run --no-sync python -m pytest tests/test_integration_jenkins.py -m integration` →
+      8 passed against the live `jenkins-dev`; `verify.py --phase 3` → ALL CHECKS PASSED, which
+      now includes running that suite; the fast bar is
+      `pytest -m "not live and not e2e and not integration"` → 282 passed, 10 deselected.
+      The `/scriptText` guard test (4 passed) scans `backend/` and `experiment/`, proves it
+      detects a planted call, and proves it does not flag prose.
+      **Four defects found by running against the real controller:**
+      * `list_labels()` queried `/api/json`, which reports only the controller's own labels and has
+        no `nodes` field — so it returned `['built-in', 'controller']` while both agents were
+        online carrying `linux`. `validate_catalog.py` had the identical bug and its fix had never
+        reached the client. Now `/computer/api/json`, excluding offline nodes.
+      * all three `jenkins/reference-configs/*.xml` were **invalid XML**: the exporter wrote its
+        provenance comment above the `<?xml?>` declaration (D-035). Rule 1.4 makes those files the
+        source of every template, Phase 5's golden-file tests parse them, and
+        `FakeJenkinsClient` validates well-formedness — so this would have broken all three.
+        Nothing had parsed them until now.
+      * the bot has no `Job/Delete` and must not (D-033): cleanup attempts returned 403. The
+        permission stays off, `delete_job` now documents that it 403s as configured, and the tests
+        recreate their jobs instead.
+      * a Pipeline job cannot be triggered with parameters until a build has run, and pushing its
+        config.xml again **wipes** the parameters a run registered (D-034). So Phase 5's Pipeline
+        generator must write a `ParametersDefinitionProperty` into config.xml — that is now the
+        only workable option, not one of two.
+      Also fixed: the fast quality bar was silently running the integration tests, triggering real
+      builds and taking a minute, although the marker says "Opt in with `-m integration`". The bar
+      excludes them and a separate acceptance check runs them, reporting an all-skip as a failure —
+      an acceptance clause that passes because it could not run is worse than no check. Every
+      `uv run` in `verify.py` now passes `--no-sync`, after an unrelated `pyproject.toml` edit made
+      every bar fail with "Application Control policy has blocked this file" rather than a lint
+      error.
 
 **Acceptance:** all backend quality bars pass, `GET /api/health` reports database, Jenkins and LLM
 provider on the Compose stack, and integration tests create, trigger and read one freestyle job and
-one Pipeline job. **Two of three met** on 2026-09-29 (unchanged by T3.3): quality bars pass, and `GET /api/health` on
+one Pipeline job. **All three met** on 2026-10-07: `verify.py --phase 3` passes every check,
+including the one that runs the integration suite (8 passed against the live controller). Earlier
+note, kept for the record — **two of three** on 2026-09-29: quality bars pass, and `GET /api/health` on
 the Compose stack returns `status: up` with database up, jenkins up (2.568.3, reached with the bot
-token) and llm disabled (fake mode). The integration-test clause needs T3.8's routers, which are
-not written yet.
+token) and llm disabled (fake mode). The integration-test clause needed T3.8's routers, which is
+what closed it.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not

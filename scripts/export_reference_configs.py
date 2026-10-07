@@ -289,6 +289,19 @@ def create(name: str, xml: str, creds: tuple[str, str]) -> bool:
     return True
 
 
+def _with_header(body: str, header: str) -> str:
+    """Insert the provenance comment after any XML declaration.
+
+    Jenkins emits ``<?xml version="1.1" encoding="UTF-8"?>`` as the first line. XML requires that
+    declaration to come first, so the comment follows it; a document without one simply gets the
+    comment at the top.
+    """
+    match = re.match(r"^\s*<\?xml[^>]*\?>[ \t]*\r?\n?", body)
+    if match is None:
+        return header + body
+    return body[: match.end()].rstrip("\r\n") + "\n" + header + body[match.end() :]
+
+
 def export(name: str, filename: str, creds: tuple[str, str]) -> bool:
     status, body = call(f"/job/{name}/config.xml", creds)
     if status != 200:
@@ -307,7 +320,12 @@ def export(name: str, filename: str, creds: tuple[str, str]) -> bool:
         "  Regenerate with: python scripts/export_reference_configs.py\n"
         "-->\n"
     )
-    target.write_text(header + body, encoding="utf-8", newline="\n")
+    # The comment goes *after* the XML declaration, never before it. A declaration must be the
+    # first thing in the document, so a leading comment makes the file invalid XML -- which these
+    # files were until 2026-10-07. That mattered: Phase 5's templates derive from them, the
+    # golden-file tests compare parsed XML, and FakeJenkinsClient validates well-formedness, so
+    # all three would have failed on a file that looked perfectly fine in an editor.
+    target.write_text(_with_header(body, header), encoding="utf-8", newline="\n")
     print(f"   exported {filename} ({len(body)} bytes)")
     return True
 

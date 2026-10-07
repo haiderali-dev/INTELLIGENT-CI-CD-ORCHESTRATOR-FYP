@@ -11,6 +11,61 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 3
 
+### D-035 The reference configs were not valid XML
+**Date:** 2026-10-07 · **Status:** decided, fixes a defect
+
+`scripts/export_reference_configs.py` wrote its provenance comment *above* the `<?xml version=...?>`
+declaration. XML requires the declaration to be the very first thing in a document, so all three
+files in `jenkins/reference-configs/` failed to parse.
+
+This was not cosmetic. Rule 1.4 makes those files the source of every `config.xml` template; Phase
+5's golden-file tests compare rendered output against them; and `FakeJenkinsClient` validates
+well-formedness, so a template derived verbatim would have failed its own unit test. The files
+looked perfectly fine in an editor, and nothing had parsed them until the Phase 3 integration tests
+did.
+
+**Decision.** The exporter emits the declaration first and the comment after it, and the three
+existing files were corrected by moving the comment only — no exported content was touched, so they
+remain exactly what Jenkins produced.
+
+### D-034 A generated Pipeline job must declare its parameters in config.xml
+**Date:** 2026-10-07 · **Status:** decided, constrains Phase 5
+
+4.6 says a Pipeline job takes its branch and commit as "parameters passed at trigger time". The
+live controller does not allow that on a new job: a declarative `parameters { ... }` block lives in
+the *script*, so Jenkins only registers the parameters once a build has executed it. The reference
+export's `<properties/>` is empty, and triggering a freshly created Pipeline job with parameters
+returns **400 "is not parameterized"**.
+
+Worse, it is not a one-time cost. Pushing the config.xml again wipes the parameters the first run
+registered, because the empty `<properties/>` overwrites them — so every *regenerate* would
+de-parameterize the job until its next build.
+
+**Decision.** Phase 5's Pipeline generator writes a `ParametersDefinitionProperty` into the
+config.xml rather than relying on the script's `parameters` block being discovered. That is the
+only option that survives a regenerate. `test_a_pipeline_job_accepts_parameters_only_after_its_first_run`
+pins the current behaviour so the constraint cannot be forgotten, and asserts the property appears
+after a run — if it ever appears on a brand-new job, the generator is writing it and the
+restriction is gone.
+
+### D-033 The bot has no `Job/Delete`, and nothing in the backend may need it
+**Date:** 2026-10-07 · **Status:** decided
+
+Found directly: the Phase 3 integration tests tried to delete the jobs they created and got 403.
+
+4.1 asks for a "least-privilege `orchestrator-bot` API token" and 4.4.5's method list does not
+include deletion, so `jenkins/casc/*.yaml` grants `Job/{Read,Build,Cancel,Create,Configure}` and
+deliberately not `Job/Delete`. A compromised backend token therefore cannot destroy build history —
+which is the evidence the whole report rests on.
+
+**Decision.** The permission stays off. Widening the bot's grants so a test can tidy up after
+itself would be the wrong trade. `JenkinsClient.delete_job` is kept for an operator with a wider
+token and its docstring now says plainly that it 403s as configured; nothing in the backend calls
+it. The integration tests recreate their jobs instead of deleting them, which makes a rerun
+idempotent and leaves two inert `it-` jobs on the controller.
+
+`scripts/demo_reset.py` is the supported way to get a clean controller, using the admin account.
+
 ### D-032 Policy settings are reported, not editable
 **Date:** 2026-10-07 · **Status:** decided
 
