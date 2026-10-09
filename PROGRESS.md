@@ -512,11 +512,31 @@ what closed it.
       Smoke run of the rule baseline over the unreviewed drafts — *not for reporting* — action
       0.90, behaviour 0.90, refusal 1.00; its misses are in typos and ambiguity, as a baseline's
       should be, and the rules were deliberately not tuned to those drafts.
-- [ ] T4.8 One opt-in live test and Phase 4 checks in `verify.py`
+- [x] T4.8 One opt-in live test and Phase 4 checks in `verify.py` — evidence:
+      `uv run python -m pytest -m live tests/test_ai_live.py` → 1 passed against the real
+      `gpt-oss-120b`: the real factory in live mode, the real prompt and strict schema, a correct
+      BUILD / payment-service / release/2.1 parse, READY, recorded as an `ok` call with real token
+      counts. The default selection deselects it. `verify.py --phase 4` → ALL CHECKS PASSED, 66
+      checks across phases 0-4, ten of them new: the AI modules, the prompt's 8-12 examples and
+      Appendix E rules, that neither the prompt context nor the schema ever reads a shell command,
+      that the SDK's retries stay off, the `llm_calls` migration, the draft cap, and the three
+      acceptance clauses each *run* rather than inferred. `eval/` is now linted and strictly
+      type-checked by the gate.
+      **A gate bug found and fixed:** the first `--phase 4` run failed one check and every rerun
+      passed. Not flaky — state-dependent. Confirmed by restarting `jenkins-dev`: the Phase 3 check
+      "a live plugin event reaches the backend" needs the plugin to have published something, the
+      plugin's counters reset on restart, and the check ran *before* the integration check that
+      triggers builds — so it passed only when another check had run first. It now triggers a build
+      itself when nothing has been published. Re-verified against the state that broke it: fresh
+      controller, first run, `4 published, 0 failed, 0 dropped`, gate green.
 
 **Acceptance:** AI unit and policy tests pass; with Groq unreachable, the rule parser answers and the
 response carries `ai_fallback: true`; `python -m eval run --parser rules --file
-eval/datasets/sample.jsonl` writes a metrics file.
+eval/datasets/sample.jsonl` writes a metrics file. **All three met** on 2026-10-09, each checked
+by running it: 828 AI tests pass across eight files; the fallback tests pass through the real factory
+(Groq unreachable, and live mode with no key); and the eval command writes
+`eval/results/sample__rules/metrics.json` — scoring 0 items, honestly, because none of the 30 drafts
+has been reviewed by a human yet.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
