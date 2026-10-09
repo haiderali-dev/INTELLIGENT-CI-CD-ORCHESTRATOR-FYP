@@ -455,7 +455,24 @@ what closed it.
       Three heuristics were cut before testing because they were wrong in ways the tests would not
       have caught: single quotes as quote marks (an apostrophe in "auth-service's" would have
       deleted the service name), `live` as production, and `make` as build ("make a coffee").
-- [ ] T4.5 `IntentParser` orchestration, `IntentValidator`, `ClarificationService`
+- [x] T4.5 `IntentParser` orchestration, `IntentValidator`, `ClarificationService` — evidence:
+      `pytest` → 1110 passed (47 guard/validator/clarifier tests, 24 parser tests); `ruff`,
+      `ruff format --check`, `mypy app` (strict, 56 files) clean.
+      **All nine rows of 4.6.5 run through the whole pipeline** — guard, chain, validator, policy,
+      clarification — and each produces the behaviour the table specifies: builds and tests READY
+      with branch and suite resolved, `"run the tests"` asking service then suite over two rounds,
+      the hotfix READY at HIGH with its justification, "latest" resolved to the tip SHA, production
+      REFUSED, the status question READY without generating, the rerun READY, and the injection
+      REFUSED with the attempt logged. The acceptance clause holds through the real factory: Groq
+      unreachable → rules answer → `ai_fallback: true`, and `LLM_MODE=live` with no key degrades
+      the same way instead of failing to start.
+      `interpret` (steps 1-5) touches no database and `record` (step 6) writes `nl_commands`, one
+      `llm_calls` row per attempt — failed ones included, each with `prompt_version` and `outcome`
+      — and the audit entries. Ordering decisions recorded as D-037: policy before clarification,
+      policy audit only when policy decided, an unreachable remote warns instead of blocking, and a
+      narrow, separately measurable correction for the model's false UNSUPPORTED on "deploy it".
+      The guard strips Unicode `Cc`/`Cf` characters, not just ASCII controls: bidirectional
+      overrides can make a message display differently from what the model reads.
 - [x] T4.6 `PolicyService` with table-driven tests — evidence: `pytest tests/test_ai_policy.py` →
       604 passed; full suite 1039 passed; `ruff`, `mypy app` (51 files) clean. Built ahead of T4.5
       because the parser's step 5 *is* this layer.

@@ -11,6 +11,36 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 4
 
+### D-037 The parser's ordering, and where code overrules the model
+**Date:** 2026-10-09 · **Status:** decided
+
+4.5.3 lists the steps; four choices about how they combine are not in it.
+
+**Policy runs before clarification.** A production deploy is refused whatever service it names, so
+asking "which service?" first would spend the user's time on a question whose answer cannot change
+the outcome.
+
+**Policy audit events are written only when the policy decided the outcome** — a refusal, a
+request for a justification, or a request that proceeds. A HIGH request still waiting on a
+clarification is not yet a request; auditing it each round would count it against the daily quota
+once per question asked. The quota itself counts only entries marked `granted`.
+
+**An unreachable remote is a warning, not a block.** A remote that answers and lacks the branch is
+a known problem and gets a question. A remote that cannot be reached is an unknown: the card warns
+and the request goes on, because Jenkins fails the checkout honestly if the branch is wrong — and
+because blocking would make the assistant unusable whenever GitHub is slow, or today, for as long
+as the catalog's sample repositories stay unpushed.
+
+**A model's UNSUPPORTED can be overruled, narrowly.** T4.3's live smoke run found
+`gpt-oss-120b` calling `"deploy it"` UNSUPPORTED at 0.9 confidence. A false UNSUPPORTED is a dead
+end; a question costs one round. So if the rule parser sees a CI/CD action *applied to something* —
+a service, an environment, a suite, or an object such as "it" or "the build" — the action is kept
+and the missing fields are asked for. A verb in small talk ("how do I build a birdhouse") does not
+qualify. The prompt was deliberately *not* edited for this: Appendix E restricts tuning to the
+development split, and "deploy it" is exactly what the evaluation's missing-field category will
+contain. The model's own answer is stored as `model_intent`, so the evaluation scores the model and
+not this correction.
+
 ### D-036 `llm_calls` gains `prompt_version` and `outcome`
 **Date:** 2026-10-09 · **Status:** decided
 
