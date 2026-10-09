@@ -1,0 +1,11 @@
+# The backend's ruff rules, applied to the evaluation package as well, so code whose numbers go
+# into the report meets the same bar as the application it measures.
+extend = "../backend/pyproject.toml"
+
+[lint.per-file-ignores]
+# The command-line entry point: its printed summary is its user interface, the same exception the
+# backend makes for app/db/seed.py.
+"__main__.py" = ["T201"]
+
+[lint.isort]
+known-first-party = ["app", "eval"]

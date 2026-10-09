@@ -490,7 +490,28 @@ what closed it.
       but if the daily quota counted those, a developer asking five times without a reason would
       spend the quota without ever getting HIGH. The entry now records `granted`, decided after all
       rules have run, and only granted ones count.
-- [ ] T4.7 `eval/` package skeleton
+- [x] T4.7 `eval/` package skeleton — evidence: `uv run --project backend python -m eval run
+      --parser rules --file eval/datasets/sample.jsonl` writes
+      `eval/results/sample__rules/metrics.json` (Phase 4 acceptance clause 3); `pytest` → 1153
+      passed (43 eval tests); `ruff` and strict `mypy` now run over `eval/` too, via an
+      `eval/ruff.toml` that extends the backend's config.
+      **Integrity rules, enforced in code rather than trusted:** the 30 drafted items (4.9's
+      ceiling, in its category mix) are all `needs_review: true`, and the loader *rejects* a
+      Claude Code draft that claims to be reviewed — so the acceptance run honestly scores zero
+      items, with every metric `null` and a note saying nothing was measured, rather than 0.
+      `--include-unreviewed` exercises the pipeline end to end but stamps the run
+      `for_reporting: false`, and `python -m eval report` lists such runs only under "Not
+      reportable". A model run uses a single-model chain, so a model failure is recorded as an
+      error — never scored with the rule parser's fallback answer in its place. The runner checks
+      dataset items against the prompt's few-shot examples and refuses to run on an overlap.
+      **Quota safety (4.9):** a disk cache by prompt hash in the replay-fixture format (so a
+      finished run doubles as a fixture set), 25 live calls a minute, per-item writes so an
+      interrupted run resumes, and a clean stop at a model's daily budget with progress saved.
+      **Methodology fix found by a test:** answers served from cache were being averaged into the
+      model's latency p50/p95; they are excluded from latency now, while still counted elsewhere.
+      Smoke run of the rule baseline over the unreviewed drafts — *not for reporting* — action
+      0.90, behaviour 0.90, refusal 1.00; its misses are in typos and ambiguity, as a baseline's
+      should be, and the rules were deliberately not tuned to those drafts.
 - [ ] T4.8 One opt-in live test and Phase 4 checks in `verify.py`
 
 **Acceptance:** AI unit and policy tests pass; with Groq unreachable, the rule parser answers and the
