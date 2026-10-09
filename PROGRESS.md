@@ -456,7 +456,23 @@ what closed it.
       have caught: single quotes as quote marks (an apostrophe in "auth-service's" would have
       deleted the service name), `live` as production, and `make` as build ("make a coffee").
 - [ ] T4.5 `IntentParser` orchestration, `IntentValidator`, `ClarificationService`
-- [ ] T4.6 `PolicyService` with table-driven tests
+- [x] T4.6 `PolicyService` with table-driven tests — evidence: `pytest tests/test_ai_policy.py` →
+      604 passed; full suite 1039 passed; `ruff`, `mypy app` (51 files) clean. Built ahead of T4.5
+      because the parser's step 5 *is* this layer.
+      4.5.5's rows are tested as a table, and then the full product — 3 roles × 8 actions ×
+      3 environments × 4 urgencies × 2 justification states, 576 cases — is checked against
+      invariants taken from 4.5.5's *wording* rather than recomputed by the same logic as the code,
+      which would only prove the code agrees with itself. Mutation-tested: letting admins deploy to
+      production fails exactly 17 cases — the explicit admin row plus the 16 sweep cases for
+      admin × {DEPLOY, BUILD_TEST_DEPLOY} × production — so the sweep engages where it should.
+      The service is pure (context in, decision and audit events out), so no database is needed
+      to test it. Every rule is evaluated even after one refuses, so the user sees every reason at
+      once. Production is refused only for deploy actions: building "for production" deploys
+      nothing.
+      One bug caught before it existed: every HIGH request writes the audit entry 4.4.3 requires,
+      but if the daily quota counted those, a developer asking five times without a reason would
+      spend the quota without ever getting HIGH. The entry now records `granted`, decided after all
+      rules have run, and only granted ones count.
 - [ ] T4.7 `eval/` package skeleton
 - [ ] T4.8 One opt-in live test and Phase 4 checks in `verify.py`
 
