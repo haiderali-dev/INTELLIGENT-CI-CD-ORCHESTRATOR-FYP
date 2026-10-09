@@ -386,6 +386,39 @@ the Compose stack returns `status: up` with database up, jenkins up (2.568.3, re
 token) and llm disabled (fake mode). The integration-test clause needed T3.8's routers, which is
 what closed it.
 
+## Phase 4: AI core
+
+- [x] T4.1 `LLMProvider` with `GroqProvider`, `ReplayProvider` and `FakeProvider`; fallback chain;
+      token accounting; response cache — evidence: `uv run --no-sync python -m pytest -m "not live
+      and not e2e and not integration"` → 353 passed (40 provider tests, 31 chain/quota/cache
+      tests); `ruff`, `ruff format --check` and `mypy app` (strict, 47 files) clean. Migration
+      `8c2f4d1e7a90` verified on the Compose PostgreSQL: upgrade, downgrade, re-upgrade, and an
+      autogenerate that came back empty (D-036).
+      Written against the live API, not assumptions: one call to `openai/gpt-oss-120b` on
+      2026-10-09 confirmed strict JSON schemas (including nullable enums) are honoured, that usage
+      counts reasoning tokens inside `completion_tokens`, and that every response carries
+      `x-ratelimit-*` headers — `limit-requests` 1000 and `limit-tokens` 8000, matching 4.5.1.
+      The quota tracker therefore trusts the server's headers over its own counters.
+      `GroqProvider` is tested through the real `openai` SDK (3.27.0) over a stubbed `httpx2`
+      transport, so the tests pin what the SDK actually raises for a 429 or a 503 rather than what
+      a mock was told to raise. The SDK's own retries are off (`max_retries=0`): left on, they
+      would double-count against the quota and hide the 429s the chain needs to see.
+      Acceptance clause pinned by `test_with_groq_unreachable_the_rule_parser_answers_with_ai_fallback`:
+      every model unreachable, three attempts each, rule parser answers, `ai_fallback` true.
+      Fixed along the way: replay fixture reads and writes ran synchronously inside async methods,
+      which would stall the server's event loop; they go through `asyncio.to_thread` now.
+- [ ] T4.2 Dynamic intent schema builder
+- [ ] T4.3 Versioned prompts in `backend/app/ai/prompts/`, starting from Appendix E
+- [ ] T4.4 `RuleBasedParser`
+- [ ] T4.5 `IntentParser` orchestration, `IntentValidator`, `ClarificationService`
+- [ ] T4.6 `PolicyService` with table-driven tests
+- [ ] T4.7 `eval/` package skeleton
+- [ ] T4.8 One opt-in live test and Phase 4 checks in `verify.py`
+
+**Acceptance:** AI unit and policy tests pass; with Groq unreachable, the rule parser answers and the
+response carries `ai_fallback: true`; `python -m eval run --parser rules --file
+eval/datasets/sample.jsonl` writes a metrics file.
+
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
   installed and every Phase 2 test except T2.14 runs on JenkinsRule without it. Approved by the user.

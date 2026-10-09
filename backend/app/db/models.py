@@ -202,6 +202,14 @@ class LlmCall(UuidPrimaryKey, TimestampedCreation, Base):
     completion_tokens: Mapped[int] = mapped_column(Integer, default=0)
     fallback_used: Mapped[bool] = mapped_column(Boolean, default=False)
     cached: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Not in 4.4.3's column list, but 4.5.6 requires "the version stored on every call", and this
+    # is the table that has a row per call. See docs/decisions.md D-036.
+    prompt_version: Mapped[str | None] = mapped_column(String(64), default=None)
+    # Also beyond 4.4.3, for the same reason: 4.5.1 says "every call is recorded", and a call that
+    # was rate limited or failed has no tokens. Without an outcome its row would read as a
+    # successful zero-token call and quietly flatten the latency and cost figures in the
+    # evaluation chapter.
+    outcome: Mapped[str] = mapped_column(String(16), default="ok", server_default="ok")
 
 
 class GeneratedPipeline(UuidPrimaryKey, TimestampedCreation, Base):

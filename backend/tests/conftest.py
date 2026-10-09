@@ -20,6 +20,8 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from app.ai.cache import get_response_cache
+from app.ai.quota import get_quota_tracker
 from app.core.ratelimit import get_rate_limiter
 from app.core.settings import Environment, LlmMode, Settings, get_settings
 from app.db import session as db_session
@@ -44,8 +46,8 @@ from app.services.plugin import FakePluginClient
 def _reset_process_state() -> None:
     """Clear every piece of process-wide state between tests.
 
-    Rate-limit buckets, the refresh-token denylist and parked queue timings all live in module
-    globals by design (D-020, D-021, D-027), so without this they leak across tests. That is not
+    Rate-limit buckets, the refresh-token denylist, parked queue timings, LLM quota counters and
+    the response cache all live in module globals by design (D-020, D-021, D-027, D-036), so without this they leak across tests. That is not
     hypothetical: the login limit is five a minute, so ``test_auth``'s rate-limit tests exhausted
     it for the whole suite and a later file's sign-in got a 429 it never asked about -- a failure
     that reproduced only in a full run and passed in isolation.
@@ -55,6 +57,10 @@ def _reset_process_state() -> None:
     get_rate_limiter().reset()
     get_revoked_tokens().clear()
     get_pending_timings().clear()
+    # The AI core's quota counters and response cache are process-wide too (Phase 4). A cached
+    # answer from one test would otherwise satisfy another test's parse without calling anything.
+    get_quota_tracker().reset()
+    get_response_cache().clear()
 
 
 @pytest.fixture

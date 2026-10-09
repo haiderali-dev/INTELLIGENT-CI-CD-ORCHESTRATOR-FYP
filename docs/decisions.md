@@ -9,6 +9,36 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ---
 
+## Phase 4
+
+### D-036 `llm_calls` gains `prompt_version` and `outcome`
+**Date:** 2026-10-09 · **Status:** decided
+
+**Conflict.** 4.4.3 lists `llm_calls` as command id, provider, model, latency, prompt tokens,
+completion tokens, fallback used, cached. 4.5.6 requires the prompt version "stored on every call",
+and 4.5.1 that "every call is recorded in `llm_calls`". Neither fits the 4.4.3 column list.
+
+**Decision.** One additive migration (`8c2f4d1e7a90`) adds two columns:
+
+* `prompt_version` — where 4.5.6's requirement can actually be met, since this is the table with a
+  row per call. The version is the prompt file's name plus a short content hash, so an edit to
+  `intent_v1.md` without a version bump is still distinguishable in the data.
+* `outcome` — `ok`, `rate_limited`, `unavailable`, `invalid`, `rejected`, `replay_miss`, `skipped`,
+  `cached` or `error`. Recording *every* call means recording failed ones, and a failed call has no
+  tokens. Without an outcome, its row reads as a successful zero-token call, and the evaluation
+  chapter's latency and tokens-per-command figures would be quietly flattened by every outage.
+
+`outcome` has a server default of `ok`, because every row written before this migration was a
+successful call — failed calls could not be recorded until now. Verified on the Compose
+PostgreSQL: upgrade, downgrade, re-upgrade, and an autogenerate that produced an empty diff.
+
+**Also decided: the quota tracker trusts the server over itself.** Local per-model counters are what
+4.5.1 asks for and they work before the first response. But Groq returns `x-ratelimit-*` headers on
+every response (observed live: `limit-requests` 1000, `limit-tokens` 8000, matching 4.5.1 exactly),
+and those see the eval harness's usage too. When the server says no requests remain, that wins.
+
+---
+
 ## Phase 3
 
 ### D-035 The reference configs were not valid XML
