@@ -443,7 +443,18 @@ what closed it.
       examples). Against 8,000 tokens a minute, the fifth request in any minute waited ~58 s in
       this run; interactively the chain caps waits at 10 s, so that request falls to the 20b model.
       This is what 4.9's "no few-shot examples" ablation will put a price on.
-- [ ] T4.4 `RuleBasedParser`
+- [x] T4.4 `RuleBasedParser` — evidence: `pytest` → 435 passed (47 rule-parser tests); `ruff`,
+      `ruff format --check`, `mypy app` (50 files) clean. All nine rows of 4.6.5's command table
+      parse as the specification expects, including `"run the tests"` with service and suite both
+      null so both get asked, production parsed faithfully, and the injection row parsing the
+      deploy around the instruction. It applies Appendix E's rules in code: quoted text, code spans
+      and commit-message tails are stripped before any keyword is matched; nothing outside the
+      catalog is produced; a bare action word (`"deploy it"`) is that action with null fields rather
+      than UNSUPPORTED — the exact case the model got wrong in T4.3's smoke run. Confidence is
+      capped at 0.85 so a rules answer is always distinguishable from a model's.
+      Three heuristics were cut before testing because they were wrong in ways the tests would not
+      have caught: single quotes as quote marks (an apostrophe in "auth-service's" would have
+      deleted the service name), `live` as production, and `make` as build ("make a coffee").
 - [ ] T4.5 `IntentParser` orchestration, `IntentValidator`, `ClarificationService`
 - [ ] T4.6 `PolicyService` with table-driven tests
 - [ ] T4.7 `eval/` package skeleton
