@@ -59,7 +59,7 @@ async def test_the_real_model_parses_a_command_through_the_whole_pipeline(
     catalog = Catalog(REPO_ROOT / "catalog" / "services.yaml")
     git = FakeGitClient()
     git.add_branch(
-        "https://github.com/uit-group04/payment-service.git",
+        "https://github.com/haiderali-dev/payment-service.git",
         "release/2.1",
         "3f786850e387550fdab836ed7e6dc881de23001b",
     )

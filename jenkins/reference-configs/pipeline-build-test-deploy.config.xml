@@ -31,7 +31,7 @@
             steps {
                 checkout([$class: &apos;GitSCM&apos;,
                           branches: [[name: params.COMMIT ?: params.BRANCH]],
-                          userRemoteConfigs: [[url: &apos;https://github.com/uit-group04/payment-service.git&apos;]]])
+                          userRemoteConfigs: [[url: &apos;https://github.com/haiderali-dev/payment-service.git&apos;]]])
             }
         }
         stage(&apos;Build&apos;) {

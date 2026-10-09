@@ -39,8 +39,8 @@ from app.services.catalog import Catalog
 from app.services.git import FakeGitClient
 
 REAL_CATALOG = Path(__file__).resolve().parents[2] / "catalog" / "services.yaml"
-PAYMENT_REPO = "https://github.com/uit-group04/payment-service.git"
-AUTH_REPO = "https://github.com/uit-group04/auth-service.git"
+PAYMENT_REPO = "https://github.com/haiderali-dev/payment-service.git"
+AUTH_REPO = "https://github.com/haiderali-dev/auth-service.git"
 MAIN_SHA = "3f786850e387550fdab836ed7e6dc881de23001b"
 BIG = "openai/gpt-oss-120b"
 SMALL = "openai/gpt-oss-20b"

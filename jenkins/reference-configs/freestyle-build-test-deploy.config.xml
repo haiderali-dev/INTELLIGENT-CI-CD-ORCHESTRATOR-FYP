@@ -47,7 +47,7 @@
     <configVersion>2</configVersion>
     <userRemoteConfigs>
       <hudson.plugins.git.UserRemoteConfig>
-        <url>https://github.com/uit-group04/payment-service.git</url>
+        <url>https://github.com/haiderali-dev/payment-service.git</url>
       </hudson.plugins.git.UserRemoteConfig>
     </userRemoteConfigs>
     <branches>

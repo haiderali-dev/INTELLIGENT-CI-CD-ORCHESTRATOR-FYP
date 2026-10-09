@@ -17,7 +17,7 @@ services:
   - name: payment-service
     # Set by a human once the repository exists; see Needs human in PROGRESS.md. Until then the
     # validator reports it as unreachable rather than silently accepting a placeholder.
-    repo: https://github.com/uit-group04/payment-service.git
+    repo: https://github.com/haiderali-dev/payment-service.git
     default_branch: main
     agent_label: linux
     build_command: "./scripts/build.sh"
@@ -41,7 +41,7 @@ services:
       security_scan: "./scripts/security_scan.sh"
 
   - name: auth-service
-    repo: https://github.com/uit-group04/auth-service.git
+    repo: https://github.com/haiderali-dev/auth-service.git
     default_branch: main
     agent_label: linux
     build_command: "./scripts/build.sh"

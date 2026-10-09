@@ -125,7 +125,7 @@ FREESTYLE_XML = """<?xml version='1.1' encoding='UTF-8'?>
     <configVersion>2</configVersion>
     <userRemoteConfigs>
       <hudson.plugins.git.UserRemoteConfig>
-        <url>https://github.com/uit-group04/payment-service.git</url>
+        <url>https://github.com/haiderali-dev/payment-service.git</url>
       </hudson.plugins.git.UserRemoteConfig>
     </userRemoteConfigs>
     <branches>
@@ -233,7 +233,7 @@ JENKINSFILE = """pipeline {
             steps {
                 checkout([$class: 'GitSCM',
                           branches: [[name: params.COMMIT ?: params.BRANCH]],
-                          userRemoteConfigs: [[url: 'https://github.com/uit-group04/payment-service.git']]])
+                          userRemoteConfigs: [[url: 'https://github.com/haiderali-dev/payment-service.git']]])
             }
         }
         stage('Build') {

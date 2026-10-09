@@ -24,7 +24,7 @@
   <description>Orders the Jenkins build queue by a weighted priority score of urgency,
     dependency grouping and estimated execution time, with an aging bonus that
     prevents starvation. Covers freestyle, Maven and Pipeline jobs.</description>
-  <url>https://github.com/uit-group04/intelligent-cicd-orchestrator</url>
+  <url>https://github.com/haiderali-dev/INTELLIGENT-CI-CD-ORCHESTRATOR-FYP</url>
 
   <licenses>
     <license>

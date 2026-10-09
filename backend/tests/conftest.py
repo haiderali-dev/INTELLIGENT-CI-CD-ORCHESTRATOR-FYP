@@ -122,7 +122,7 @@ def fake_git() -> FakeGitClient:
     """
     client = FakeGitClient()
     for name in ("payment-service", "auth-service"):
-        url = f"https://github.com/uit-group04/{name}.git"
+        url = f"https://github.com/haiderali-dev/{name}.git"
         client.add_branch(url, "main", "3f786850e387550fdab836ed7e6dc881de23001b")
         client.add_branch(url, "demo/failing-tests", "89e6c98d92887913cadf06b2adb97f26cde4849b")
     return client
