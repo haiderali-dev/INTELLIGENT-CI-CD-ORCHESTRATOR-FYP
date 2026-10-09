@@ -407,7 +407,18 @@ what closed it.
       every model unreachable, three attempts each, rule parser answers, `ai_fallback` true.
       Fixed along the way: replay fixture reads and writes ran synchronously inside async methods,
       which would stall the server's event loop; they go through `asyncio.to_thread` now.
-- [ ] T4.2 Dynamic intent schema builder
+- [x] T4.2 Dynamic intent schema builder — evidence: `pytest` → 369 passed (16 schema tests);
+      `ruff`, `ruff format --check`, `mypy app` (48 files) clean. Verified live before the tests
+      were written: Groq's strict mode accepted the full schema both with and without the catalog
+      enums, and `gpt-oss-120b` parsed 4.6.5's hotfix command correctly under each (DEPLOY,
+      auth-service, staging, HIGH, justification captured; ~1 s, ~520 prompt tokens).
+      Catalog services and suites are injected as enums, so strict decoding *cannot* emit an
+      invented service; the validator checks again in code as the second defence. `environment`
+      is deliberately not narrowed to the catalog's allowed environments: `production` has to stay
+      expressible, or the decoder would force a production request into staging — the silent
+      rewrite Appendix E forbids. `include_enums=False` implements 4.9's "no catalog enums"
+      ablation and is tested to change nothing else. `catalog_fingerprint` keys the response cache
+      so an answer built against an older catalog is never served.
 - [ ] T4.3 Versioned prompts in `backend/app/ai/prompts/`, starting from Appendix E
 - [ ] T4.4 `RuleBasedParser`
 - [ ] T4.5 `IntentParser` orchestration, `IntentValidator`, `ClarificationService`
