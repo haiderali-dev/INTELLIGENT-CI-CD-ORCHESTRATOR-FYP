@@ -419,7 +419,30 @@ what closed it.
       rewrite Appendix E forbids. `include_enums=False` implements 4.9's "no catalog enums"
       ablation and is tested to change nothing else. `catalog_fingerprint` keys the response cache
       so an answer built against an older catalog is never served.
-- [ ] T4.3 Versioned prompts in `backend/app/ai/prompts/`, starting from Appendix E
+- [x] T4.3 Versioned prompts in `backend/app/ai/prompts/`, starting from Appendix E — evidence:
+      `pytest tests/test_ai_prompts.py` → 19 passed; `ruff`, `mypy app` (49 files) clean.
+      `intent_v1.md` is Appendix E verbatim plus 12 few-shot examples (4.5.6 asks for 8 to 12)
+      covering clarification, refusal, multi-stage, both injection styles and unsupported. The
+      version stored on every call is `intent_v1@<sha256 prefix>` — currently
+      `intent_v1@9457338e` — so an edit without a rename is still distinguishable in `llm_calls`.
+      The examples deliberately do **not** reuse 4.6.5's wording: those commands will be in the
+      evaluation set, and an example matching an eval item would let the model copy the answer.
+      A test enforces it.
+      **Live smoke run** through the real `ModelChain`, on ten fresh phrasings that are neither
+      few-shots nor 4.6.5 commands (so it is not tuning against evaluation material): 9 of 10
+      correct — branch and suite extraction, HIGH urgency with the user's own justification,
+      production parsed faithfully rather than rewritten, a quoted "deploy to prod" inside a commit
+      message ignored, STATUS, CANCEL, UNSUPPORTED for a joke.
+      **One real failure, deliberately not fixed in the prompt:** `"deploy it"` → `UNSUPPORTED` at
+      0.9 confidence, where DEPLOY with a null service (one clarifying question) is right. Appendix
+      E says to tune against the development split only, and "deploy it" is exactly what a human
+      would put in the evaluation's missing-field category, so editing the prompt for it now could
+      contaminate that item. Handled in T4.5's parser logic instead, where it can be measured
+      separately.
+      **Measured cost:** ~1,700 prompt tokens per request with the 12 examples (~900 of them the
+      examples). Against 8,000 tokens a minute, the fifth request in any minute waited ~58 s in
+      this run; interactively the chain caps waits at 10 s, so that request falls to the 20b model.
+      This is what 4.9's "no few-shot examples" ablation will put a price on.
 - [ ] T4.4 `RuleBasedParser`
 - [ ] T4.5 `IntentParser` orchestration, `IntentValidator`, `ClarificationService`
 - [ ] T4.6 `PolicyService` with table-driven tests
