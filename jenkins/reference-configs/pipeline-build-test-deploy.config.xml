@@ -12,7 +12,24 @@
 <flow-definition plugin="workflow-job@1602.v2a_70b_80a_2396">
   <description>Reference Pipeline job: build, test and deploy payment-service to staging.</description>
   <keepDependencies>false</keepDependencies>
-  <properties/>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>BRANCH</name>
+          <description>Branch the revision belongs to</description>
+          <defaultValue>main</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>COMMIT</name>
+          <description>Revision to check out: a commit SHA, or refs/heads/BRANCH</description>
+          <defaultValue></defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
   <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@4383.v04fa_a_3d67b_d9">
     <script>pipeline {
     agent { label &apos;linux&apos; }
@@ -23,15 +40,34 @@
         timeout(time: 30, unit: &apos;MINUTES&apos;)
     }
     parameters {
-        string(name: &apos;BRANCH&apos;, defaultValue: &apos;main&apos;, description: &apos;Branch to build&apos;)
-        string(name: &apos;COMMIT&apos;, defaultValue: &apos;&apos;, description: &apos;Commit SHA or empty for head&apos;)
+        string(name: &apos;BRANCH&apos;, defaultValue: &apos;main&apos;, description: &apos;Branch the revision belongs to&apos;)
+        string(name: &apos;COMMIT&apos;, defaultValue: &apos;&apos;, description: &apos;Revision to check out: a commit SHA, or refs/heads/BRANCH&apos;)
     }
     stages {
         stage(&apos;Checkout&apos;) {
             steps {
-                checkout([$class: &apos;GitSCM&apos;,
-                          branches: [[name: params.COMMIT ?: params.BRANCH]],
-                          userRemoteConfigs: [[url: &apos;https://github.com/haiderali-dev/payment-service.git&apos;]]])
+                script {
+                    // D-041: COMMIT wins, else the head of BRANCH, else main. A given value that is
+                    // not valid stops the build; it never falls back. Never an empty spec: the Git
+                    // plugin reads one as &quot;any branch&quot;.
+                    def commit = (params.COMMIT ?: &apos;&apos;).trim()
+                    def branch = (params.BRANCH ?: &apos;&apos;).trim()
+                    if (branch.startsWith(&apos;refs/heads/&apos;)) {
+                        branch = branch.substring(&apos;refs/heads/&apos;.length())
+                    }
+                    if (branch &amp;&amp; !(branch.matches(&apos;[A-Za-z0-9][A-Za-z0-9._/-]{0,254}&apos;) &amp;&amp; !branch.contains(&apos;..&apos;) &amp;&amp; !branch.endsWith(&apos;/&apos;))) {
+                        error(&quot;BRANCH &apos;${branch}&apos; is not a branch name that can be used&quot;)
+                    }
+                    def revision = commit ?: (&apos;refs/heads/&apos; + (branch ?: &apos;main&apos;))
+                    def isCommit = revision.matches(&apos;[0-9a-fA-F]{7,40}&apos;)
+                    def isBranchRef = revision.matches(&apos;refs/heads/[A-Za-z0-9][A-Za-z0-9._/-]{0,254}&apos;) &amp;&amp; !revision.contains(&apos;..&apos;) &amp;&amp; !revision.endsWith(&apos;/&apos;)
+                    if (!isCommit &amp;&amp; !isBranchRef) {
+                        error(&quot;COMMIT &apos;${commit}&apos; is not a commit SHA or refs/heads/&lt;branch&gt;&quot;)
+                    }
+                    checkout([$class: &apos;GitSCM&apos;,
+                              branches: [[name: revision]],
+                              userRemoteConfigs: [[url: &apos;https://github.com/haiderali-dev/payment-service.git&apos;]]])
+                }
             }
         }
         stage(&apos;Build&apos;) {

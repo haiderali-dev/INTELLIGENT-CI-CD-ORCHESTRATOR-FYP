@@ -11,6 +11,90 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 5
 
+### D-041 One revision rule for both job types, applied by the backend
+**Date:** 2026-10-12 · **Status:** decided and implemented (T5.1). Refines D-038, implements D-034
+
+**The rule** (decided by the project owner at the start of T5.1):
+1. A given `COMMIT` is checked out exactly, and wins over `BRANCH`.
+2. Otherwise the head of the given `BRANCH`.
+3. Otherwise the head of `main`.
+4. Both job types use the same validation and error handling. A commit or branch that was given
+   but is invalid or missing is an error. It never silently falls back to another revision.
+
+**What the old references actually did.** Measured on jenkins-dev before any change, with two
+probe jobs derived from the reference exports that print `git rev-parse HEAD`:
+
+| BRANCH / COMMIT | Freestyle (`${COMMIT}`) | Pipeline (`COMMIT ?: BRANCH`) |
+| --- | --- | --- |
+| main / demo tip | demo tip | demo tip |
+| main / missing SHA | FAILURE at checkout | FAILURE at checkout |
+| demo / blank | demo tip, by accident (BRANCH ignored) | demo tip |
+| missing branch / blank | **SUCCESS on another branch** | FAILURE at checkout |
+| blank / blank | some branch | **SUCCESS on `demo/failing-tests`** |
+
+An empty branch spec is not an error to the Git plugin; it means "any branch". Both job types
+could therefore build an unrequested revision and report success.
+
+**Conflict with D-038.** D-038 found that a freestyle Git SCM can follow only one variable. The Git
+plugin expands `${VAR}` and nothing else, and no installed plugin can compute a value before
+checkout. So "COMMIT, else BRANCH, else main" cannot be written inside a freestyle job. Spec 4.6
+already points to the answer: a freestyle chain's branch and commit are "parameter defaults written
+on every chain job before triggering the first". The rule is therefore applied *before* Jenkins,
+where those values are chosen. The owner chose this option over a fixed verify step in every
+freestyle job, or replacing the Git SCM with a shell checkout, which 4.6.3 rules out.
+
+**Decision.**
+- **One function.** `app/generation/revision.py` `select_revision(commit, branch)` applies the
+  rule. A blank value counts as not given, as Jenkins trims parameters. The commit must be 7 to 40
+  hexadecimal characters (lower-cased). The branch must pass the `GitClient` ref pattern, with no
+  `..` and no trailing `/`. An invalid given value raises `RevisionError` naming the field. Both
+  are checked even when the commit wins, because the branch is still written into the job.
+- **Identical values for both job types.** `Revision.parameters()` gives `BRANCH` (the branch the
+  revision belongs to) and `COMMIT` (the commit SHA, or `refs/heads/<branch>`). `COMMIT` is never
+  empty, so an empty branch spec never reaches Jenkins. The fully qualified ref means a branch
+  name is never read as a SHA or a tag, and a missing branch fails the checkout instead of
+  matching another one.
+- **Freestyle.** The Git SCM keeps `${COMMIT}`. The backend writes both values as defaults on
+  every chain job. The reference default is `refs/heads/main`, the rule's third clause.
+- **Pipeline.** The Jenkinsfile applies the rule itself, with the same patterns as the backend
+  (a unit test compares them). It stops with `error()` *before* checkout on an invalid `COMMIT` or
+  `BRANCH`. A blank pair builds `main`, not "any branch". `COMMIT` defaults to empty so a run
+  started by hand with only `BRANCH` changed builds that branch. The parameters are now also in
+  config.xml, which implements D-034: the job is parameterized from creation and keeps its
+  parameters when the config is pushed again.
+- **The spec.** `GenerationSpec` (T5.1) runs the rule at validation, so a hand-edited YAML naming
+  an invalid commit or branch is rejected rather than built from something else.
+
+**Known gap.** A freestyle job started by hand from the Jenkins UI with only `BRANCH` changed still
+checks out its `COMMIT`. Nothing in the system starts a job that way. The rule holds for every
+path the backend uses, and for both job types when run by hand except that one.
+
+**Tests changed, and why.** The old reference made the Pipeline job unparameterized until a first
+run. `test_integration_jenkins.py` was written around that:
+- `test_a_pipeline_job_is_created_triggered_and_read` triggered *without* parameters. A
+  parameterized job answers that with 400, so it now triggers with the backend's parameters, and
+  gains an assertion that the job is parameterized from creation. Its other assertions are
+  unchanged.
+- `test_a_pipeline_job_accepts_parameters_only_after_its_first_run` described a restriction that
+  no longer exists. It is renamed `test_a_pipeline_job_still_accepts_parameters_after_a_run`, its
+  docstring is corrected, and its assertions are unchanged.
+
+**Evidence, 2026-10-12.**
+- Re-exported both references from jenkins-dev. Jenkins kept the Pipeline's
+  `ParametersDefinitionProperty`.
+- `tests/test_integration_revision.py`: 17 passed on jenkins-dev. Both job types land on the same
+  commit for commit-wins, branch-head, neither and both-blank. Both fail at checkout, with nothing
+  checked out, for a missing commit or branch. The Pipeline applies the rule to raw parameters and
+  refuses invalid ones before checkout. A chain job triggered without parameters follows its
+  written defaults. A config pushed twice keeps its parameters and accepts them straight away.
+
+**A guard check changed, and why.** `verify.py`'s "catalog loads through one schema-validated
+loader" treated any `yaml.safe_load` outside `catalog.py` as a second catalog parser. The spec is
+YAML the user edits (4.6.2 step 4), so `spec.py` must parse it. The check now names
+`app/generation/spec.py` as the one other YAML document allowed, with its reason, and fails if
+that file ever reads the catalog file. Any other new parser still fails: proven by adding a
+throwaway parser, which the check rejected.
+
 ### D-040 T5.8's command list is Part 4.6.5, not 4.6.7
 **Date:** 2026-10-11 · **Status:** decided, corrects the specification
 

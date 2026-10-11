@@ -85,6 +85,43 @@ def crumb(creds: tuple[str, str]) -> dict[str, str]:
 # The jobs, as posted. Jenkins rewrites these on save; the export is the artifact.
 # ---------------------------------------------------------------------------
 
+# The revision rule (D-041): COMMIT wins, else the head of BRANCH, else main; a given value that is
+# not valid is an error, never a fallback. Both job types carry the same two parameters, with the
+# same names and descriptions, and receive the same values from the backend
+# (app/generation/revision.py). Only the defaults differ, and why is written next to each.
+BRANCH_DESCRIPTION = "Branch the revision belongs to"
+COMMIT_DESCRIPTION = "Revision to check out: a commit SHA, or refs/heads/BRANCH"
+
+
+def string_parameter(name: str, description: str, default: str) -> str:
+    return f"""        <hudson.model.StringParameterDefinition>
+          <name>{name}</name>
+          <description>{description}</description>
+          <defaultValue>{default}</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>"""
+
+
+# Freestyle: the Git SCM follows ${COMMIT} alone, because the Git plugin cannot express "COMMIT,
+# else BRANCH" (D-038, D-041). The backend therefore always writes COMMIT itself. Its default here
+# is the rule's third clause, as a fully qualified ref: an empty value would be read by the Git
+# plugin as "any branch".
+FREESTYLE_PARAMETERS = "\n".join(
+    (
+        string_parameter("BRANCH", BRANCH_DESCRIPTION, "main"),
+        string_parameter("COMMIT", COMMIT_DESCRIPTION, "refs/heads/main"),
+    )
+)
+
+# Pipeline: COMMIT defaults to empty, because the Jenkinsfile applies the whole rule itself. A run
+# started by hand with only BRANCH changed therefore builds that branch, as the rule says.
+PIPELINE_PARAMETERS = "\n".join(
+    (
+        string_parameter("BRANCH", BRANCH_DESCRIPTION, "main"),
+        string_parameter("COMMIT", COMMIT_DESCRIPTION, ""),
+    )
+)
+
 # Commands come from catalog/services.yaml, never invented here. That is the same rule the
 # generator follows at runtime (4.6.1): the model picks stages, the catalog supplies commands.
 FREESTYLE_XML = """<?xml version='1.1' encoding='UTF-8'?>
@@ -98,18 +135,7 @@ FREESTYLE_XML = """<?xml version='1.1' encoding='UTF-8'?>
     </io.jenkins.plugins.queueoptimizer.property.JobPriorityProperty>
     <hudson.model.ParametersDefinitionProperty>
       <parameterDefinitions>
-        <hudson.model.StringParameterDefinition>
-          <name>BRANCH</name>
-          <description>Branch the revision belongs to; checkout follows COMMIT</description>
-          <defaultValue>main</defaultValue>
-          <trim>true</trim>
-        </hudson.model.StringParameterDefinition>
-        <hudson.model.StringParameterDefinition>
-          <name>COMMIT</name>
-          <description>Revision to check out: a commit SHA, or a branch name for its head</description>
-          <defaultValue>main</defaultValue>
-          <trim>true</trim>
-        </hudson.model.StringParameterDefinition>
+{parameters}
       </parameterDefinitions>
     </hudson.model.ParametersDefinitionProperty>
     <jenkins.model.BuildDiscarderProperty>
@@ -185,7 +211,7 @@ FREESTYLE_XML = """<?xml version='1.1' encoding='UTF-8'?>
     </hudson.plugins.ws__cleanup.PreBuildCleanup>
   </buildWrappers>
 </project>
-""".replace("{downstream}", DOWNSTREAM_JOB)
+""".replace("{downstream}", DOWNSTREAM_JOB).replace("{parameters}", FREESTYLE_PARAMETERS)
 
 # A minimal downstream job, so the BuildTrigger above names something real. Jenkins drops a
 # trigger pointing at a job that does not exist, which would silently remove the very element the
@@ -225,15 +251,34 @@ JENKINSFILE = """pipeline {
         timeout(time: 30, unit: 'MINUTES')
     }
     parameters {
-        string(name: 'BRANCH', defaultValue: 'main', description: 'Branch to build')
-        string(name: 'COMMIT', defaultValue: '', description: 'Commit SHA or empty for head')
+        string(name: 'BRANCH', defaultValue: 'main', description: 'Branch the revision belongs to')
+        string(name: 'COMMIT', defaultValue: '', description: 'Revision to check out: a commit SHA, or refs/heads/BRANCH')
     }
     stages {
         stage('Checkout') {
             steps {
-                checkout([$class: 'GitSCM',
-                          branches: [[name: params.COMMIT ?: params.BRANCH]],
-                          userRemoteConfigs: [[url: 'https://github.com/haiderali-dev/payment-service.git']]])
+                script {
+                    // D-041: COMMIT wins, else the head of BRANCH, else main. A given value that is
+                    // not valid stops the build; it never falls back. Never an empty spec: the Git
+                    // plugin reads one as "any branch".
+                    def commit = (params.COMMIT ?: '').trim()
+                    def branch = (params.BRANCH ?: '').trim()
+                    if (branch.startsWith('refs/heads/')) {
+                        branch = branch.substring('refs/heads/'.length())
+                    }
+                    if (branch && !(branch.matches('[A-Za-z0-9][A-Za-z0-9._/-]{0,254}') && !branch.contains('..') && !branch.endsWith('/'))) {
+                        error("BRANCH '${branch}' is not a branch name that can be used")
+                    }
+                    def revision = commit ?: ('refs/heads/' + (branch ?: 'main'))
+                    def isCommit = revision.matches('[0-9a-fA-F]{7,40}')
+                    def isBranchRef = revision.matches('refs/heads/[A-Za-z0-9][A-Za-z0-9._/-]{0,254}') && !revision.contains('..') && !revision.endsWith('/')
+                    if (!isCommit && !isBranchRef) {
+                        error("COMMIT '${commit}' is not a commit SHA or refs/heads/<branch>")
+                    }
+                    checkout([$class: 'GitSCM',
+                              branches: [[name: revision]],
+                              userRemoteConfigs: [[url: 'https://github.com/haiderali-dev/payment-service.git']]])
+                }
             }
         }
         stage('Build') {
@@ -262,7 +307,13 @@ def pipeline_xml() -> str:
 <flow-definition plugin="workflow-job">
   <description>Reference Pipeline job: build, test and deploy payment-service to staging.</description>
   <keepDependencies>false</keepDependencies>
-  <properties/>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+{PIPELINE_PARAMETERS}
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
   <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps">
     <script>{escaped}</script>
     <sandbox>true</sandbox>

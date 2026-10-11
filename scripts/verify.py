@@ -1525,11 +1525,23 @@ def check_catalog_loader() -> Result:
         return fail("the catalog must be read with yaml.safe_load, never yaml.load")
 
     backend_app = REPO_ROOT / "backend" / "app"
-    strays = [
-        path.relative_to(REPO_ROOT).as_posix()
-        for path in backend_app.rglob("*.py")
-        if path != module and "yaml.safe_load" in path.read_text(encoding="utf-8")
-    ]
+    # YAML documents that are not the catalog, each with the reason it is parsed. Listed by path,
+    # so a new parser anywhere else still fails, and a listed file that starts reading the catalog
+    # fails too (below).
+    other_documents = {
+        "backend/app/generation/spec.py": "the generation spec the user edits in the preview (4.6.1)",
+    }
+    strays = []
+    for path in backend_app.rglob("*.py"):
+        source = path.read_text(encoding="utf-8")
+        if path == module or "yaml.safe_load" not in source:
+            continue
+        relative = path.relative_to(REPO_ROOT).as_posix()
+        if relative not in other_documents:
+            strays.append(relative)
+        elif "services.yaml" in source or "catalog_path" in source:
+            return fail(f"{relative} may parse YAML only for {other_documents[relative]}, but it "
+                        "reads the catalog file")
     if strays:
         return fail("a second catalog parser exists in: " + ", ".join(strays))
 

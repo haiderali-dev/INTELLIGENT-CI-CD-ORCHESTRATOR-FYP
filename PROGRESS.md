@@ -1,6 +1,6 @@
 # Progress
 
-Updated: 2026-10-11 · Current phase: 5 (preparation done, T5.1 next) · Branch: phase-5-assistants
+Updated: 2026-10-12 · Current phase: 5 (T5.1 done, T5.2 next) · Branch: phase-5-assistants
 
 ## Needs human
 - [x] **Create the two sample-service GitHub repositories**, push them, create the
@@ -558,8 +558,54 @@ has been reviewed by a human yet.
 
 ## Phase 5: Freestyle Assistant and Pipeline Assistant
 
-Not started. Groundwork recorded on 2026-10-11, **no task checked off** — the generator does not
-exist yet, so this does not satisfy T5.8:
+In progress on `phase-5-assistants`. T5.1 done; T5.2 next.
+
+- [x] T5.1 Spec model (Pydantic) with YAML round-trip and the planner schema, plus one revision
+      rule for both job types (D-041). Evidence, all run on 2026-10-12:
+      - **Code:**
+        - `app/generation/spec.py`: `GenerationSpec`, the 4.6.1 spec field for field, and
+          `Stage`. A suite is only valid on a test stage and an environment only on a deploy.
+          Stages cannot carry their own commands. YAML is dumped in 4.6.1's own layout.
+          `build_planner_schema` is strict, per service, and offers only stages and templates,
+          with catalog enums. `PlannerOutput` re-checks the plan in code.
+        - `app/generation/revision.py`: `select_revision`. COMMIT wins, else the head of BRANCH,
+          else main. An invalid given value is an error, never a fallback. Both job types get the
+          same `BRANCH` and `COMMIT` (a SHA or `refs/heads/<branch>`, never empty).
+      - **Reference configs:** re-exported from jenkins-dev. Freestyle `COMMIT` defaults to
+        `refs/heads/main`. The Pipeline Jenkinsfile applies the same rule and validation, stopping
+        before checkout on bad input. Its parameters are now in config.xml, which implements D-034.
+      - **Offline tests:** `test_generation_spec.py` and `test_generation_revision.py`, 82 passed.
+        They cover 4.6.1 parsing, round-trip and layout, commit priority, branch fallback, default
+        main, blank values, invalid commits and branches, parity, and the reference configs
+        carrying the rule.
+      - **Live tests:** `pytest -m integration tests/test_integration_revision.py`, 17 passed on
+        jenkins-dev:
+        - Both job types check out the same commit for commit-wins, branch-head, neither and
+          both-blank.
+        - Both fail at checkout with nothing checked out for a missing commit or branch.
+        - The Pipeline applies the rule to raw parameters, and refuses invalid ones before checkout.
+        - A chain job triggered without parameters follows its written defaults.
+        - A config pushed twice keeps its parameters.
+      - **Existing integration suite:** 8 passed. Two Pipeline tests were updated for the
+        parameterized-from-creation job; why is recorded in D-041.
+      - **Regression checks:**
+        - Offline suite: 1241 passed.
+        - `accept_failing_tests.py`: 4/4.
+        - `verify.py --phase 4`: 66/66.
+        - The catalog-loader check now names the spec as the one other YAML document allowed. It
+          still fails a stray parser: proven with a throwaway file.
+      - **Known gap (D-041):** a freestyle job started by hand in the Jenkins UI with only BRANCH
+        changed follows its COMMIT.
+- [ ] T5.2 Planner with default plans per action and a repair loop.
+- [ ] T5.3 Jinja2 templates derived from the reference configs, with golden-file tests.
+- [ ] T5.4 `FreestyleValidator` and `PipelineValidator`, including the declarative linter call.
+- [ ] T5.5 Conversation and message endpoints for both assistants; intent editing.
+- [ ] T5.6 Generate, regenerate, streamed explain, and approve with an idempotency key.
+- [ ] T5.7 Per-service chain lock; chain triggering and tracking; stage tracking for Pipeline.
+- [ ] T5.8 End-to-end backend tests (`e2e`) for every command in Part 4.6.5.
+- [ ] T5.9 Stretch: "Explain failure" for failed runs.
+
+Groundwork recorded on 2026-10-11, before T5.1:
 
 - `demo/failing-tests` exists in both service repositories: one intentional failing unit test each
   (`auth-service` ab50e0e, `payment-service` 2b4e686), every other test still passing.
@@ -587,7 +633,7 @@ Preparation, 2026-10-11, after PR #9 merged. Still **no task checked off**.
   pass, exit 0.
 - **Left for the start of T5.1:** one revision rule for the shared spec. The freestyle reference
   checks out `${COMMIT}` (default `main`, D-038). The Pipeline reference uses
-  `params.COMMIT ?: params.BRANCH`.
+  `params.COMMIT ?: params.BRANCH`. Settled in T5.1 by D-041.
 - **Not a Phase 5 prerequisite:** labelling the evaluation set is Phase 8. All 30 drafts are still
   `needs_review: true`, and no Phase 5 acceptance clause uses them.
 

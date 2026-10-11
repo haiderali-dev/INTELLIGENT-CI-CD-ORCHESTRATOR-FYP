@@ -75,3 +75,5 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
 - A Pipeline reports `building: false` and its result before `Finished: SUCCESS` is in the log.
   Wait on progressiveText's `X-More-Data`, never on `building`, before treating a log as whole
   (D-039).
+- An empty Git branch spec means "any branch" to the Git plugin, and the build reports SUCCESS
+  on whatever it picked. A revision must never reach Jenkins empty. Use `select_revision` (D-041).
