@@ -9,6 +9,52 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ---
 
+## Phase 5
+
+### D-038 Four defects found by the first real checkout of the service repos
+**Date:** 2026-10-11 · **Status:** all fixed
+
+`scripts/accept_failing_tests.py` assembled 4.6's freestyle chain (build -> test -> deploy-staging,
+success-only triggers) from the reference export and ran it against the newly pushed repositories,
+with a control run on `main` alongside each `demo/failing-tests` run. The control is what exposed
+these: without it, "deploy never started" would have passed three times for the wrong reasons.
+
+1. **The reference branch spec never worked.** `freestyle-build-test-deploy.config.xml` used
+   `${COMMIT:-${BRANCH}}`. The Git plugin expands only plain `${VAR}`: it expanded `${BRANCH}` and
+   left `${COMMIT:-main}` as a literal revision, so every checkout failed with "Couldn't find any
+   revision to build". Unnoticed until now because the repositories did not exist and every
+   checkout failed at clone anyway. **Fixed** in `export_reference_configs.py` and re-exported from
+   what Jenkins stored: the branch spec is `${COMMIT}`, and `COMMIT` is the revision to check out --
+   a commit SHA, or a branch name for its head, defaulting to `main`. One parameter has to carry the
+   revision because no plugin-supported syntax expresses "commit if given, else branch". This also
+   suits Phase 5: the validator already resolves "latest" to a SHA at approval, so the generator
+   writes that SHA into `COMMIT` and the job builds exactly the approved commit. The exporter's
+   `create()` was also fixed: it deleted then created, the delete silently 403'd (D-033), and every
+   re-export after the first failed with "already exists". It now updates in place.
+2. **No script was executable.** Every `.sh` file in both services was committed as `100644`
+   (authored on Windows), so every catalog command failed with "Permission denied". **Fixed:** a
+   mode-only commit on `main` of both service repositories, cherry-picked onto
+   `demo/failing-tests`, and the same change in `sample-services/`.
+3. **Agents could not reach the Docker socket.** Docker Desktop mounts `/var/run/docker.sock` as
+   `root:root 660`; the agent's `jenkins` user is in a `docker` group (gid 1001) fixed at build
+   time, which can never match a GID only known at run time. The Dockerfile's comment claimed the
+   group "is overridden at run time"; nothing did that. **Fixed:** `jenkins/agent/docker-socket-access.sh`
+   wraps the base `setup-sshd` entrypoint and, before sshd accepts a session, matches the socket:
+   on Docker Desktop (gid 0) it hands the socket to the agent's `docker` group rather than putting
+   `jenkins` in the root group; elsewhere it joins `jenkins` to whichever group owns it.
+4. **The deploy health probe looked at the wrong host.** `deploy.sh` waited on
+   `http://localhost:PORT/health`, but inside an agent container the service's port is published on
+   the Docker host, so every deploy timed out after 60 s even with the service running. Proven with
+   a throwaway container first: `localhost` gave no answer, `host.docker.internal` gave 200.
+   **Fixed:** the probe host is `DEPLOY_HEALTH_HOST` (default `localhost`, so deploying from the
+   host behaves as before); the agents set it to `host.docker.internal`, with `extra_hosts:
+   host-gateway` so the name also resolves on a plain Linux host. Pushed to `main` of both service
+   repositories and cherry-picked onto `demo/failing-tests`.
+
+**Also learned:** each chain job checks out into its own workspace, so payment-service's test job
+has no `.venv` from the build job and must run the catalog's build command first. T5.3's freestyle
+template has to account for that.
+
 ## Phase 4
 
 ### D-037 The parser's ordering, and where code overrules the model

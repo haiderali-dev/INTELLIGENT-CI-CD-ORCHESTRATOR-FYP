@@ -1,0 +1,104 @@
+{
+  "checked_at": "2026-10-11T11:48:29.060307+00:00",
+  "results": [
+    {
+      "service": "payment-service",
+      "branch": "main",
+      "run": "control",
+      "jobs": {
+        "build": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 4252,
+          "number": 1,
+          "result": "FAILURE"
+        },
+        "deploy-staging": {
+          "result": "NOT_STARTED"
+        }
+      },
+      "deploy_started": false
+    },
+    {
+      "service": "payment-service",
+      "branch": "demo/failing-tests",
+      "run": "demo",
+      "jobs": {
+        "build": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 1395,
+          "number": 2,
+          "result": "FAILURE"
+        },
+        "deploy-staging": {
+          "result": "NOT_STARTED"
+        }
+      },
+      "deploy_started": false
+    },
+    {
+      "service": "auth-service",
+      "branch": "main",
+      "run": "control",
+      "jobs": {
+        "build": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 1174,
+          "number": 1,
+          "result": "FAILURE"
+        },
+        "deploy-staging": {
+          "result": "NOT_STARTED"
+        }
+      },
+      "deploy_started": false
+    },
+    {
+      "service": "auth-service",
+      "branch": "demo/failing-tests",
+      "run": "demo",
+      "jobs": {
+        "build": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 1252,
+          "number": 2,
+          "result": "FAILURE"
+        },
+        "deploy-staging": {
+          "result": "NOT_STARTED"
+        }
+      },
+      "deploy_started": false
+    }
+  ],
+  "verdicts": [
+    {
+      "service": "payment-service",
+      "run": "control",
+      "pass": false,
+      "why": "control did NOT reach deploy, so the demo result would prove nothing"
+    },
+    {
+      "service": "payment-service",
+      "run": "demo",
+      "pass": false,
+      "why": "unexpected outcome"
+    },
+    {
+      "service": "auth-service",
+      "run": "control",
+      "pass": false,
+      "why": "control did NOT reach deploy, so the demo result would prove nothing"
+    },
+    {
+      "service": "auth-service",
+      "run": "demo",
+      "pass": false,
+      "why": "unexpected outcome"
+    }
+  ],
+  "pass": false
+}

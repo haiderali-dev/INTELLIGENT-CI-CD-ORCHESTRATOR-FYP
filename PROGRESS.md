@@ -551,6 +551,25 @@ by running it: 828 AI tests pass across eight files; the fallback tests pass thr
 `eval/results/sample__rules/metrics.json` — scoring 0 items, honestly, because none of the 30 drafts
 has been reviewed by a human yet.
 
+## Phase 5: Freestyle Assistant and Pipeline Assistant
+
+Not started. Groundwork recorded on 2026-10-11, **no task checked off** — the generator does not
+exist yet, so this does not satisfy T5.8:
+
+- `demo/failing-tests` exists in both service repositories: one intentional failing unit test each
+  (`auth-service` ab50e0e, `payment-service` 2b4e686), every other test still passing.
+- `python scripts/accept_failing_tests.py` → 4 of 4 verdicts pass, on the fourth attempt (the
+  first three are kept in `docs/evidence/2026-10-11-demo-failing-tests/` as evidence of what each
+  exposed). **Control on `main`:** build, test and deploy-staging all SUCCESS for both services,
+  the deploy log reports healthy, and from the host `localhost:9001/health` and
+  `localhost:9002/health` answer 200 with `/version` reporting the exact `main` commits pushed
+  (payment `998844b`, auth `6413c6f`). **Demo on `demo/failing-tests`:** the test job fails on the
+  intentional assertion (1 failed, 7 passed in each service) and the deploy job never starts.
+- Four defects found and fixed (D-038): the reference branch spec never worked (now `${COMMIT}`,
+  re-exported from Jenkins), no service script was executable, agents could not reach Docker
+  Desktop's socket, and the deploy health probe looked at the agent's own localhost.
+- `verify.py --phase 4` re-run after the agent and compose changes → ALL CHECKS PASSED, 66 checks.
+
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
   installed and every Phase 2 test except T2.14 runs on JenkinsRule without it. Approved by the user.

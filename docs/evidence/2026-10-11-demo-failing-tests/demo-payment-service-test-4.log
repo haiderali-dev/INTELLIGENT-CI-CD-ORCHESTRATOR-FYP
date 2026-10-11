@@ -1,0 +1,57 @@
+Started by upstream project "acc-fs-payment-service-build" build number 8
+originally caused by:
+ Started by user Orchestrator Backend
+Running as SYSTEM
+Building remotely on agent-1 (linux) in workspace /home/jenkins/agent/workspace/acc-fs-payment-service-test
+[WS-CLEANUP] Deleting project workspace...
+[WS-CLEANUP] Deferred wipeout is used...
+[WS-CLEANUP] Done
+The recommended git tool is: NONE
+No credentials specified
+Cloning the remote Git repository
+Cloning repository https://github.com/haiderali-dev/payment-service.git
+ > git init /home/jenkins/agent/workspace/acc-fs-payment-service-test # timeout=10
+Fetching upstream changes from https://github.com/haiderali-dev/payment-service.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.47.3'
+ > git fetch --tags --force --progress -- https://github.com/haiderali-dev/payment-service.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git config remote.origin.url https://github.com/haiderali-dev/payment-service.git # timeout=10
+ > git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* # timeout=10
+Avoid second fetch
+ > git rev-parse refs/remotes/origin/demo/failing-tests^{commit} # timeout=10
+ > git rev-parse demo/failing-tests^{commit} # timeout=10
+Checking out Revision da997c8be894b8058c9c88068295964b81f2d846 (refs/remotes/origin/demo/failing-tests)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f da997c8be894b8058c9c88068295964b81f2d846 # timeout=10
+Commit message: "fix(deploy): probe /health on a configurable host"
+ > git rev-list --no-walk 2b4e68697b5b70aef9d8f063014e0b232fe2ee97 # timeout=10
+[acc-fs-payment-service-test] $ /bin/sh -xe /tmp/jenkins13280069482653602588.sh
++ ./scripts/build.sh
+[build] payment-service
+[build] ok
+[acc-fs-payment-service-test] $ /bin/sh -xe /tmp/jenkins5920194377541800702.sh
++ ./scripts/test.sh unit
+[test] unit suite (about 8s)
+.......F                                                                 [100%]
+=================================== FAILURES ===================================
+___________________ test_demo_failing_tests_fails_on_purpose ___________________
+
+    def test_demo_failing_tests_fails_on_purpose() -> None:
+>       assert 1 + 1 == 3, "intentional failure: the deploy job must never start after this"
+E       AssertionError: intentional failure: the deploy job must never start after this
+E       assert (1 + 1) == 3
+
+tests/test_unit.py:75: AssertionError
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/fastapi/testclient.py:1
+  /home/jenkins/agent/workspace/acc-fs-payment-service-test/.venv/lib/python3.13/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_unit.py::test_demo_failing_tests_fails_on_purpose - AssertionError: intentional failure: the deploy job must never start after this
+assert (1 + 1) == 3
+1 failed, 7 passed, 1 warning in 7.80s
+Build step 'Execute shell' marked build as failure
+Archiving artifacts
+Finished: FAILURE

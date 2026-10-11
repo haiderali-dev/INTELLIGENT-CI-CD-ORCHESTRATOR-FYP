@@ -1,0 +1,45 @@
+Started by upstream project "acc-fs-payment-service-test" build number 3
+originally caused by:
+ Started by upstream project "acc-fs-payment-service-build" build number 7
+ originally caused by:
+  Started by user Orchestrator Backend
+Running as SYSTEM
+Building remotely on agent-1 (linux) in workspace /home/jenkins/agent/workspace/acc-fs-payment-service-deploy-staging
+[WS-CLEANUP] Deleting project workspace...
+[WS-CLEANUP] Deferred wipeout is used...
+[WS-CLEANUP] Done
+The recommended git tool is: NONE
+No credentials specified
+Cloning the remote Git repository
+Cloning repository https://github.com/haiderali-dev/payment-service.git
+ > git init /home/jenkins/agent/workspace/acc-fs-payment-service-deploy-staging # timeout=10
+Fetching upstream changes from https://github.com/haiderali-dev/payment-service.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.47.3'
+ > git fetch --tags --force --progress -- https://github.com/haiderali-dev/payment-service.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git config remote.origin.url https://github.com/haiderali-dev/payment-service.git # timeout=10
+ > git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* # timeout=10
+Avoid second fetch
+ > git rev-parse origin/main^{commit} # timeout=10
+Checking out Revision 998844b0159c13bf8ab32e1e2da2f4a187b7eb61 (origin/main)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f 998844b0159c13bf8ab32e1e2da2f4a187b7eb61 # timeout=10
+Commit message: "fix(deploy): probe /health on a configurable host"
+ > git rev-list --no-walk 0acbe29b3c4042cd45b79cad4ec8532db86e00fc # timeout=10
+[acc-fs-payment-service-deploy-staging] $ /bin/sh -xe /tmp/jenkins15793766055200408436.sh
++ ./deploy.sh staging
+[deploy] building payment-service:staging at commit 998844b
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+sha256:93630b828cbd6f5133d8d68a604fdd78d415b8af36a2ea77425abce700764c22
+[deploy] starting payment-service-staging on port 9001
+[deploy] waiting for /health on host.docker.internal:9001
+[deploy] healthy
+{"service":"payment-service","version":"1.0.0","commit":"998844b","environment":"staging"}
+[deploy] payment-service is live on staging at http://localhost:9001
+Archiving artifacts
+‘**/*.log’ doesn’t match anything: ‘**’ exists but not ‘**/*.log’
+No artifacts found that match the file pattern "**/*.log". Configuration error?
+Finished: SUCCESS

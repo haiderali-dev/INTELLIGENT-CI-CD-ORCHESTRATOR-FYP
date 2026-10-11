@@ -1,0 +1,47 @@
+Started by upstream project "acc-fs-payment-service-build" build number 7
+originally caused by:
+ Started by user Orchestrator Backend
+Running as SYSTEM
+Building remotely on agent-1 (linux) in workspace /home/jenkins/agent/workspace/acc-fs-payment-service-test
+[WS-CLEANUP] Deleting project workspace...
+[WS-CLEANUP] Deferred wipeout is used...
+[WS-CLEANUP] Done
+The recommended git tool is: NONE
+No credentials specified
+Cloning the remote Git repository
+Cloning repository https://github.com/haiderali-dev/payment-service.git
+ > git init /home/jenkins/agent/workspace/acc-fs-payment-service-test # timeout=10
+Fetching upstream changes from https://github.com/haiderali-dev/payment-service.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.47.3'
+ > git fetch --tags --force --progress -- https://github.com/haiderali-dev/payment-service.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git config remote.origin.url https://github.com/haiderali-dev/payment-service.git # timeout=10
+ > git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* # timeout=10
+Avoid second fetch
+ > git rev-parse origin/main^{commit} # timeout=10
+Checking out Revision 998844b0159c13bf8ab32e1e2da2f4a187b7eb61 (origin/main)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f 998844b0159c13bf8ab32e1e2da2f4a187b7eb61 # timeout=10
+Commit message: "fix(deploy): probe /health on a configurable host"
+ > git rev-list --no-walk 0acbe29b3c4042cd45b79cad4ec8532db86e00fc # timeout=10
+[acc-fs-payment-service-test] $ /bin/sh -xe /tmp/jenkins3355416626663847747.sh
++ ./scripts/build.sh
+[build] payment-service
+  WARNING: Retrying (Retry(total=4, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<pip._vendor.urllib3.connection.HTTPSConnection object at 0x7f56faa46350>: Failed to establish a new connection: [Errno -5] No address associated with hostname')': /packages/f3/6e/1736e5b4ae2b778ef2f81c47d797de9f891d4d8acb047a24ca37a60294dd/pip-26.2.1-py3-none-any.whl.metadata
+[build] ok
+[acc-fs-payment-service-test] $ /bin/sh -xe /tmp/jenkins10196136773287944165.sh
++ ./scripts/test.sh unit
+[test] unit suite (about 8s)
+.......                                                                  [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/fastapi/testclient.py:1
+  /home/jenkins/agent/workspace/acc-fs-payment-service-test/.venv/lib/python3.13/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+7 passed, 1 warning in 7.80s
+[test] unit ok
+Archiving artifacts
+No artifacts found that match the file pattern "**/*.log". Configuration error?
+Triggering a new build of acc-fs-payment-service-deploy-staging
+Finished: SUCCESS

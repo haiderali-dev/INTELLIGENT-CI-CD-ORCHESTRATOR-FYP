@@ -52,12 +52,18 @@ docker run -d \
     -e "GIT_COMMIT=${COMMIT}" \
     "$IMAGE" >/dev/null
 
-echo "[deploy] waiting for /health on port $PORT"
+# Where /health is probed from. On the host itself the published port is on localhost; inside a
+# Jenkins agent container it is not -- the port is published on the Docker host, which the agent
+# reaches as host.docker.internal. The agents set DEPLOY_HEALTH_HOST for that; anywhere else the
+# default keeps the old behaviour.
+HEALTH_HOST="${DEPLOY_HEALTH_HOST:-localhost}"
+
+echo "[deploy] waiting for /health on ${HEALTH_HOST}:$PORT"
 i=0
 while [ "$i" -lt 30 ]; do
-    if curl -fsS "http://localhost:${PORT}/health" >/dev/null 2>&1; then
+    if curl -fsS "http://${HEALTH_HOST}:${PORT}/health" >/dev/null 2>&1; then
         echo "[deploy] healthy"
-        curl -fsS "http://localhost:${PORT}/version" || true
+        curl -fsS "http://${HEALTH_HOST}:${PORT}/version" || true
         echo
         echo "[deploy] $SERVICE is live on $ENVIRONMENT at http://localhost:${PORT}"
         exit 0

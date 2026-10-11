@@ -1,0 +1,34 @@
+Started by user Orchestrator Backend
+Running as SYSTEM
+Building remotely on agent-2 (linux) in workspace /home/jenkins/agent/workspace/acc-fs-auth-service-build
+[WS-CLEANUP] Deleting project workspace...
+[WS-CLEANUP] Deferred wipeout is used...
+[WS-CLEANUP] Done
+The recommended git tool is: NONE
+No credentials specified
+Cloning the remote Git repository
+Cloning repository https://github.com/haiderali-dev/auth-service.git
+ > git init /home/jenkins/agent/workspace/acc-fs-auth-service-build # timeout=10
+Fetching upstream changes from https://github.com/haiderali-dev/auth-service.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.47.3'
+ > git fetch --tags --force --progress -- https://github.com/haiderali-dev/auth-service.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git config remote.origin.url https://github.com/haiderali-dev/auth-service.git # timeout=10
+ > git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* # timeout=10
+Avoid second fetch
+ > git rev-parse refs/remotes/origin/demo/failing-tests^{commit} # timeout=10
+ > git rev-parse demo/failing-tests^{commit} # timeout=10
+Checking out Revision d4c4560a1eeae7913bde93d9eb65b7265defff14 (refs/remotes/origin/demo/failing-tests)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f d4c4560a1eeae7913bde93d9eb65b7265defff14 # timeout=10
+Commit message: "fix(deploy): probe /health on a configurable host"
+ > git rev-list --no-walk ab50e0ece2124ec7985d0c2edeb858dcbe66e744 # timeout=10
+[acc-fs-auth-service-build] $ /bin/sh -xe /tmp/jenkins14500219537020988036.sh
++ ./scripts/build.sh
+[build] auth-service
+[build] ok
+Archiving artifacts
+‘**/*.log’ doesn’t match anything: ‘**’ exists but not ‘**/*.log’
+No artifacts found that match the file pattern "**/*.log". Configuration error?
+Triggering a new build of acc-fs-auth-service-test
+Finished: SUCCESS

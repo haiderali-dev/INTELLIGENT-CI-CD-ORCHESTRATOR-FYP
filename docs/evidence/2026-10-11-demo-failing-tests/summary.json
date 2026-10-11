@@ -1,0 +1,148 @@
+{
+  "checked_at": "2026-10-11T12:24:44.010198+00:00",
+  "results": [
+    {
+      "service": "payment-service",
+      "branch": "main",
+      "run": "control",
+      "jobs": {
+        "build": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 90419,
+          "number": 7,
+          "result": "SUCCESS"
+        },
+        "test": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 105545,
+          "number": 3,
+          "result": "SUCCESS"
+        },
+        "deploy-staging": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 79694,
+          "number": 2,
+          "result": "SUCCESS"
+        }
+      },
+      "intentional_failure_in_log": false,
+      "deploy_log_healthy": true,
+      "deploy_started": true,
+      "staging_health": "200 http://localhost:9001/health"
+    },
+    {
+      "service": "payment-service",
+      "branch": "demo/failing-tests",
+      "run": "demo",
+      "jobs": {
+        "build": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 11354,
+          "number": 8,
+          "result": "SUCCESS"
+        },
+        "test": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 18396,
+          "number": 4,
+          "result": "FAILURE"
+        },
+        "deploy-staging": {
+          "result": "NOT_STARTED"
+        }
+      },
+      "intentional_failure_in_log": true,
+      "deploy_started": false
+    },
+    {
+      "service": "auth-service",
+      "branch": "main",
+      "run": "control",
+      "jobs": {
+        "build": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 1641,
+          "number": 7,
+          "result": "SUCCESS"
+        },
+        "test": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 7583,
+          "number": 3,
+          "result": "SUCCESS"
+        },
+        "deploy-staging": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 122916,
+          "number": 2,
+          "result": "SUCCESS"
+        }
+      },
+      "intentional_failure_in_log": false,
+      "deploy_log_healthy": true,
+      "deploy_started": true,
+      "staging_health": "200 http://localhost:9002/health"
+    },
+    {
+      "service": "auth-service",
+      "branch": "demo/failing-tests",
+      "run": "demo",
+      "jobs": {
+        "build": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 2124,
+          "number": 8,
+          "result": "SUCCESS"
+        },
+        "test": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 8036,
+          "number": 4,
+          "result": "FAILURE"
+        },
+        "deploy-staging": {
+          "result": "NOT_STARTED"
+        }
+      },
+      "intentional_failure_in_log": true,
+      "deploy_started": false
+    }
+  ],
+  "verdicts": [
+    {
+      "service": "payment-service",
+      "run": "control",
+      "pass": true,
+      "why": "control deployed and the service answers (200 http://localhost:9001/health)"
+    },
+    {
+      "service": "payment-service",
+      "run": "demo",
+      "pass": true,
+      "why": "test failed on the intentional assertion and deploy never started"
+    },
+    {
+      "service": "auth-service",
+      "run": "control",
+      "pass": true,
+      "why": "control deployed and the service answers (200 http://localhost:9002/health)"
+    },
+    {
+      "service": "auth-service",
+      "run": "demo",
+      "pass": true,
+      "why": "test failed on the intentional assertion and deploy never started"
+    }
+  ],
+  "pass": true
+}
