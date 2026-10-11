@@ -72,19 +72,16 @@ def job_xml(service: str, branch: str, commands: list[str], child: str | None, d
         "https://github.com/haiderali-dev/payment-service.git", SERVICES[service]["repo"]
     )
     # 4.6: branch and commit are written as parameter defaults on every chain job, because a
-    # downstream trigger does not pass parameters on.
-    xml = xml.replace(
-        "<name>BRANCH</name>\n          <description>Branch to build</description>\n"
-        "          <defaultValue>main</defaultValue>",
-        "<name>BRANCH</name>\n          <description>Branch to build</description>\n"
-        f"          <defaultValue>{escape(branch)}</defaultValue>",
-    )
-    # The reference export's branch spec is ${COMMIT:-${BRANCH}}, shell default syntax the Git
-    # plugin does not support: it expands ${BRANCH} and leaves "${COMMIT:-main}" as a literal
-    # revision, so every checkout fails with "Couldn't find any revision to build". Found by this
-    # script's control run on 2026-10-11; the fix belongs in export_reference_configs.py before
-    # Phase 5 derives templates from it (docs/decisions.md D-038). This check never sets COMMIT.
-    xml = xml.replace("<name>${COMMIT:-${BRANCH}}</name>", "<name>${BRANCH}</name>")
+    # downstream trigger does not pass parameters on. Checkout follows COMMIT (D-038): a branch
+    # name here means its head; Phase 5's generator will write the approved commit's SHA instead.
+    for name in ("BRANCH", "COMMIT"):
+        xml = re.sub(
+            rf"(<name>{name}</name>\s*<description>[^<]*</description>\s*<defaultValue>)[^<]*(</defaultValue>)",
+            lambda m: m.group(1) + escape(branch) + m.group(2),
+            xml,
+        )
+    if "<name>${COMMIT}</name>" not in xml:
+        raise SystemExit("the reference branch spec is not ${COMMIT}; re-run export_reference_configs.py")
     xml = xml.replace("<dependsOn></dependsOn>", f"<dependsOn>{escape(depends_on)}</dependsOn>")
     steps = "".join(
         f"\n    <hudson.tasks.Shell>\n      <command>{escape(c)}</command>\n"
@@ -179,7 +176,7 @@ def run_chain(jenkins: Jenkins, service: str, branch: str, label: str, out: Path
     before = {stage: jenkins.last_build(name) for stage, name in names.items()}
     status, _ = jenkins.call(
         f"/job/{names['build']}/buildWithParameters",
-        urllib.parse.urlencode({"BRANCH": branch, "COMMIT": ""}).encode(),
+        urllib.parse.urlencode({"BRANCH": branch, "COMMIT": branch}).encode(),
         "application/x-www-form-urlencoded",
     )
     if status != 201:
@@ -208,10 +205,25 @@ def run_chain(jenkins: Jenkins, service: str, branch: str, label: str, out: Path
     jobs["deploy-staging"] = deploy_info or {"result": "NOT_STARTED"}
     if deploy_info:
         log = jenkins.log(names["deploy-staging"], int(deploy_info["number"]))
+        result["deploy_log_healthy"] = "[deploy] healthy" in log
         (out / f"{label}-{service}-deploy-staging-{deploy_info['number']}.log").write_text(log, encoding="utf-8")
     result["jobs"] = jobs
     result["deploy_started"] = after_deploy > before["deploy-staging"]
     return result
+
+
+def staging_health(service: str) -> str:
+    """GET <catalog staging url>/health from this machine, as a user would reach the service."""
+    text = (REPO_ROOT / "catalog" / "services.yaml").read_text(encoding="utf-8")
+    block = text.split(f"- name: {service}", 1)[1].split("\n  - name:", 1)[0]
+    url = re.search(r'url:\s*"([^"]+)"', block)
+    if not url:
+        return "no staging url in the catalog"
+    try:
+        with urllib.request.urlopen(url.group(1) + "/health", timeout=10) as response:  # noqa: S310
+            return f"{response.status} {url.group(1)}/health"
+    except Exception as exc:
+        return f"unreachable {url.group(1)}/health ({type(exc).__name__})"
 
 
 def credentials() -> tuple[str, str]:
@@ -244,8 +256,23 @@ def main() -> int:
     for outcome in results:
         jobs = outcome["jobs"]
         if outcome["run"] == "control":
-            ok = jobs["build"].get("result") == "SUCCESS" and jobs["test"].get("result") == "SUCCESS" and outcome["deploy_started"]  # type: ignore[index,union-attr]
-            why = "control reached deploy" if ok else "control did NOT reach deploy, so the demo result would prove nothing"
+            # Not just "deploy started": the deploy must succeed and the service must answer on
+            # its catalog staging URL from the host, which is how a user would reach it.
+            health = staging_health(str(outcome["service"]))
+            outcome["staging_health"] = health
+            ok = (
+                jobs["build"].get("result") == "SUCCESS"  # type: ignore[index,union-attr]
+                and jobs["test"].get("result") == "SUCCESS"  # type: ignore[index,union-attr]
+                and outcome["deploy_started"]
+                and jobs["deploy-staging"].get("result") == "SUCCESS"  # type: ignore[index,union-attr]
+                and bool(outcome.get("deploy_log_healthy"))
+                and health.startswith("200")
+            )
+            why = (
+                f"control deployed and the service answers ({health})"
+                if ok
+                else f"control did not deploy cleanly (deploy={jobs['deploy-staging'].get('result')}, health={health})"  # type: ignore[index,union-attr]
+            )
         else:
             ok = (
                 jobs["build"].get("result") == "SUCCESS"  # type: ignore[index,union-attr]

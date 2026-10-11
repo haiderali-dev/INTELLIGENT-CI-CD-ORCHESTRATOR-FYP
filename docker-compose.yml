@@ -60,6 +60,12 @@ x-agent-common: &agent-common
   environment: &agent-env
     # The controller authenticates with the private half of this pair; bootstrap.py writes both.
     JENKINS_AGENT_SSH_PUBKEY: ${AGENT_SSH_PUBLIC_KEY:?run scripts/bootstrap.py to generate the agent SSH key}
+    # deploy.sh probes /health on this host. A deployed service's port is published on the Docker
+    # host, not inside the agent, so localhost from here never answers (D-038).
+    DEPLOY_HEALTH_HOST: host.docker.internal
+  # Makes host.docker.internal resolve on a plain Linux Docker host too, not only Docker Desktop.
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
   volumes:
     # The agents run docker build and deploy.sh, so they need the host daemon. This grants anything
     # on an agent effective root on the host; it is acceptable only because this is a single

@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-10-11T11:58:49.629377+00:00",
+  "checked_at": "2026-10-11T12:24:44.010198+00:00",
   "results": [
     {
       "service": "payment-service",
@@ -9,27 +9,29 @@
         "build": {
           "_class": "hudson.model.FreeStyleBuild",
           "building": false,
-          "duration": 40484,
-          "number": 5,
+          "duration": 90419,
+          "number": 7,
           "result": "SUCCESS"
         },
         "test": {
           "_class": "hudson.model.FreeStyleBuild",
           "building": false,
-          "duration": 46065,
-          "number": 1,
+          "duration": 105545,
+          "number": 3,
           "result": "SUCCESS"
         },
         "deploy-staging": {
           "_class": "hudson.model.FreeStyleBuild",
           "building": false,
-          "duration": 1456,
-          "number": 1,
-          "result": "FAILURE"
+          "duration": 79694,
+          "number": 2,
+          "result": "SUCCESS"
         }
       },
       "intentional_failure_in_log": false,
-      "deploy_started": true
+      "deploy_log_healthy": true,
+      "deploy_started": true,
+      "staging_health": "200 http://localhost:9001/health"
     },
     {
       "service": "payment-service",
@@ -39,15 +41,15 @@
         "build": {
           "_class": "hudson.model.FreeStyleBuild",
           "building": false,
-          "duration": 7972,
-          "number": 6,
+          "duration": 11354,
+          "number": 8,
           "result": "SUCCESS"
         },
         "test": {
           "_class": "hudson.model.FreeStyleBuild",
           "building": false,
-          "duration": 16101,
-          "number": 2,
+          "duration": 18396,
+          "number": 4,
           "result": "FAILURE"
         },
         "deploy-staging": {
@@ -65,27 +67,29 @@
         "build": {
           "_class": "hudson.model.FreeStyleBuild",
           "building": false,
-          "duration": 1523,
-          "number": 5,
+          "duration": 1641,
+          "number": 7,
           "result": "SUCCESS"
         },
         "test": {
           "_class": "hudson.model.FreeStyleBuild",
           "building": false,
-          "duration": 7464,
-          "number": 1,
+          "duration": 7583,
+          "number": 3,
           "result": "SUCCESS"
         },
         "deploy-staging": {
           "_class": "hudson.model.FreeStyleBuild",
           "building": false,
-          "duration": 1357,
-          "number": 1,
-          "result": "FAILURE"
+          "duration": 122916,
+          "number": 2,
+          "result": "SUCCESS"
         }
       },
       "intentional_failure_in_log": false,
-      "deploy_started": true
+      "deploy_log_healthy": true,
+      "deploy_started": true,
+      "staging_health": "200 http://localhost:9002/health"
     },
     {
       "service": "auth-service",
@@ -95,15 +99,15 @@
         "build": {
           "_class": "hudson.model.FreeStyleBuild",
           "building": false,
-          "duration": 1393,
-          "number": 6,
+          "duration": 2124,
+          "number": 8,
           "result": "SUCCESS"
         },
         "test": {
           "_class": "hudson.model.FreeStyleBuild",
           "building": false,
-          "duration": 7416,
-          "number": 2,
+          "duration": 8036,
+          "number": 4,
           "result": "FAILURE"
         },
         "deploy-staging": {
@@ -119,7 +123,7 @@
       "service": "payment-service",
       "run": "control",
       "pass": true,
-      "why": "control reached deploy"
+      "why": "control deployed and the service answers (200 http://localhost:9001/health)"
     },
     {
       "service": "payment-service",
@@ -131,7 +135,7 @@
       "service": "auth-service",
       "run": "control",
       "pass": true,
-      "why": "control reached deploy"
+      "why": "control deployed and the service answers (200 http://localhost:9002/health)"
     },
     {
       "service": "auth-service",

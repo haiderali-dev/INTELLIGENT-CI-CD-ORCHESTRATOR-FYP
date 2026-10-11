@@ -100,14 +100,14 @@ FREESTYLE_XML = """<?xml version='1.1' encoding='UTF-8'?>
       <parameterDefinitions>
         <hudson.model.StringParameterDefinition>
           <name>BRANCH</name>
-          <description>Branch to build</description>
+          <description>Branch the revision belongs to; checkout follows COMMIT</description>
           <defaultValue>main</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>COMMIT</name>
-          <description>Commit SHA, or empty for the branch head</description>
-          <defaultValue></defaultValue>
+          <description>Revision to check out: a commit SHA, or a branch name for its head</description>
+          <defaultValue>main</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
       </parameterDefinitions>
@@ -130,7 +130,7 @@ FREESTYLE_XML = """<?xml version='1.1' encoding='UTF-8'?>
     </userRemoteConfigs>
     <branches>
       <hudson.plugins.git.BranchSpec>
-        <name>${COMMIT:-${BRANCH}}</name>
+        <name>${COMMIT}</name>
       </hudson.plugins.git.BranchSpec>
     </branches>
     <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
@@ -274,18 +274,28 @@ def pipeline_xml() -> str:
 
 
 def create(name: str, xml: str, creds: tuple[str, str]) -> bool:
-    call(f"/job/{name}/doDelete", creds, data=b"", headers=crumb(creds))
+    """Create the job, or update it in place if it already exists.
+
+    Not delete-then-create: the bot has no Job/Delete (D-033), so the delete silently returned 403
+    and the create then failed with "already exists" on every re-export after the first.
+    """
+    exists, _ = call(f"/job/{name}/api/json?tree=name", creds)
+    path = (
+        f"/job/{urllib.parse.quote(name)}/config.xml"
+        if exists == 200
+        else "/createItem?name=" + urllib.parse.quote(name)
+    )
     status, body = call(
-        "/createItem?name=" + urllib.parse.quote(name),
+        path,
         creds,
         data=xml.encode("utf-8"),
         headers={"Content-Type": "application/xml; charset=utf-8", **crumb(creds)},
     )
     if status not in (200, 201):
-        print(f"   create {name} -> {status}")
+        print(f"   save {name} -> {status}")
         print(f"   {body[:400]}")
         return False
-    print(f"   created {name}")
+    print(f"   {'updated' if exists == 200 else 'created'} {name}")
     return True
 
 

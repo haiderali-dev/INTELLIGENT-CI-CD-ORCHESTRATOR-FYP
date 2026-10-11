@@ -57,8 +57,9 @@ https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_C
     && apt-get install -y --no-install-recommends docker-ce-cli docker-compose-plugin \
     && rm -rf /var/lib/apt/lists/*
 
-# The agent user needs to reach the mounted Docker socket. The group id is overridden at run time
-# from the host's docker group where it differs; 999 is the usual value on Debian hosts.
+# The agent user needs to reach the mounted Docker socket. This creates the docker group; the
+# socket's actual group is matched at run time by docker-socket-access.sh, because it is only known
+# then (D-038). 999 is the usual value on Debian hosts.
 ARG DOCKER_GID=999
 # Three cases, all of which occur in practice:
 #   the group already exists in the base image  -> use it
@@ -89,3 +90,8 @@ RUN git --version && python3 --version && node --version && jq --version && dock
 # still run unprivileged; only the daemon needs root.
 USER root
 WORKDIR /home/jenkins
+
+# Wraps the base image's setup-sshd entrypoint: fixes socket access, then execs it unchanged.
+COPY docker-socket-access.sh /usr/local/bin/docker-socket-access.sh
+RUN chmod 755 /usr/local/bin/docker-socket-access.sh
+ENTRYPOINT ["/usr/local/bin/docker-socket-access.sh"]

@@ -545,14 +545,17 @@ exist yet, so this does not satisfy T5.8:
 
 - `demo/failing-tests` exists in both service repositories: one intentional failing unit test each
   (`auth-service` ab50e0e, `payment-service` 2b4e686), every other test still passing.
-- `python scripts/accept_failing_tests.py` → 4 of 4 verdicts pass. On `main` (control) the chain
-  reaches the deploy job for both services; on `demo/failing-tests` the test job fails on the
-  intentional assertion and the deploy job never starts. Logs and `summary.json` are in
-  `docs/evidence/2026-10-11-demo-failing-tests/`, with the two failed earlier attempts kept beside
-  them as evidence of the defects they exposed.
-- Three defects found (D-038): the reference branch spec never worked (open, must be fixed before
-  T5.3), no service script was executable (fixed), and agents cannot reach the Docker socket so
-  every deploy fails (open, must be fixed before any Phase 5 deploy succeeds).
+- `python scripts/accept_failing_tests.py` → 4 of 4 verdicts pass, on the fourth attempt (the
+  first three are kept in `docs/evidence/2026-10-11-demo-failing-tests/` as evidence of what each
+  exposed). **Control on `main`:** build, test and deploy-staging all SUCCESS for both services,
+  the deploy log reports healthy, and from the host `localhost:9001/health` and
+  `localhost:9002/health` answer 200 with `/version` reporting the exact `main` commits pushed
+  (payment `998844b`, auth `6413c6f`). **Demo on `demo/failing-tests`:** the test job fails on the
+  intentional assertion (1 failed, 7 passed in each service) and the deploy job never starts.
+- Four defects found and fixed (D-038): the reference branch spec never worked (now `${COMMIT}`,
+  re-exported from Jenkins), no service script was executable, agents could not reach Docker
+  Desktop's socket, and the deploy health probe looked at the agent's own localhost.
+- `verify.py --phase 4` re-run after the agent and compose changes → ALL CHECKS PASSED, 66 checks.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not

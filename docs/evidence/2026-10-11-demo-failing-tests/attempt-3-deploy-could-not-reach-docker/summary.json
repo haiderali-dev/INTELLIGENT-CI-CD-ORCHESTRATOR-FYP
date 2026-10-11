@@ -1,0 +1,144 @@
+{
+  "checked_at": "2026-10-11T11:58:49.629377+00:00",
+  "results": [
+    {
+      "service": "payment-service",
+      "branch": "main",
+      "run": "control",
+      "jobs": {
+        "build": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 40484,
+          "number": 5,
+          "result": "SUCCESS"
+        },
+        "test": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 46065,
+          "number": 1,
+          "result": "SUCCESS"
+        },
+        "deploy-staging": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 1456,
+          "number": 1,
+          "result": "FAILURE"
+        }
+      },
+      "intentional_failure_in_log": false,
+      "deploy_started": true
+    },
+    {
+      "service": "payment-service",
+      "branch": "demo/failing-tests",
+      "run": "demo",
+      "jobs": {
+        "build": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 7972,
+          "number": 6,
+          "result": "SUCCESS"
+        },
+        "test": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 16101,
+          "number": 2,
+          "result": "FAILURE"
+        },
+        "deploy-staging": {
+          "result": "NOT_STARTED"
+        }
+      },
+      "intentional_failure_in_log": true,
+      "deploy_started": false
+    },
+    {
+      "service": "auth-service",
+      "branch": "main",
+      "run": "control",
+      "jobs": {
+        "build": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 1523,
+          "number": 5,
+          "result": "SUCCESS"
+        },
+        "test": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 7464,
+          "number": 1,
+          "result": "SUCCESS"
+        },
+        "deploy-staging": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 1357,
+          "number": 1,
+          "result": "FAILURE"
+        }
+      },
+      "intentional_failure_in_log": false,
+      "deploy_started": true
+    },
+    {
+      "service": "auth-service",
+      "branch": "demo/failing-tests",
+      "run": "demo",
+      "jobs": {
+        "build": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 1393,
+          "number": 6,
+          "result": "SUCCESS"
+        },
+        "test": {
+          "_class": "hudson.model.FreeStyleBuild",
+          "building": false,
+          "duration": 7416,
+          "number": 2,
+          "result": "FAILURE"
+        },
+        "deploy-staging": {
+          "result": "NOT_STARTED"
+        }
+      },
+      "intentional_failure_in_log": true,
+      "deploy_started": false
+    }
+  ],
+  "verdicts": [
+    {
+      "service": "payment-service",
+      "run": "control",
+      "pass": true,
+      "why": "control reached deploy"
+    },
+    {
+      "service": "payment-service",
+      "run": "demo",
+      "pass": true,
+      "why": "test failed on the intentional assertion and deploy never started"
+    },
+    {
+      "service": "auth-service",
+      "run": "control",
+      "pass": true,
+      "why": "control reached deploy"
+    },
+    {
+      "service": "auth-service",
+      "run": "demo",
+      "pass": true,
+      "why": "test failed on the intentional assertion and deploy never started"
+    }
+  ],
+  "pass": true
+}
