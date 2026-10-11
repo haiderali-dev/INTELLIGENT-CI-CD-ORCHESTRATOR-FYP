@@ -26,7 +26,7 @@ from app.db.models import (
     User,
 )
 from app.services.auth import role_allows
-from app.services.jenkins import FakeJenkinsClient, JenkinsError
+from app.services.jenkins import ConsoleChunk, FakeJenkinsClient, JenkinsError
 from app.services.plugin import FakePluginClient, RankedItem, Ranking, ScoreComponents
 
 PASSWORD = "correct-horse-battery-staple"
@@ -342,6 +342,28 @@ async def test_the_log_returns_an_offset_to_continue_from(
     assert body["text"] == "world"
     assert body["next_offset"] == 11
     assert body["more_data"] is False
+
+
+async def test_a_finished_run_keeps_tailing_while_jenkins_is_still_writing(
+    client: AsyncClient, db: AsyncSession, fake_jenkins: FakeJenkinsClient
+) -> None:
+    """A Pipeline reports a result before its log closes, so the run row can say SUCCESS while
+    "Finished: SUCCESS" is not written yet. Jenkins's X-More-Data must keep the client tailing,
+    or the UI drops the log's last line (seen live: 3 of 25 Pipeline builds)."""
+    token = await token_for(client, db)
+    job = await make_job(db)
+    run = await make_run(db, job, build=3, result=RunResult.SUCCESS.value)
+
+    async def console_window(name: str, number: int, start: int = 0) -> ConsoleChunk:
+        return ConsoleChunk(text="[Pipeline] End of Pipeline\n", more_data=True)
+
+    fake_jenkins.console_window = console_window  # type: ignore[method-assign]
+
+    response = await client.get(f"/api/runs/{run.id}/log", headers=auth(token))
+
+    body = response.json()
+    assert body["text"] == "[Pipeline] End of Pipeline\n"
+    assert body["more_data"] is True
 
 
 # ---------------------------------------------------------------------------

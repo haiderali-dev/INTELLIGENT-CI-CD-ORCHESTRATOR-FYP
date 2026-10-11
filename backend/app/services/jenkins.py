@@ -64,6 +64,20 @@ class BuildInfo:
 
 
 @dataclass(frozen=True)
+class ConsoleChunk:
+    """A piece of a console log, and whether Jenkins is still writing to it.
+
+    ``more_data`` is Jenkins's own ``X-More-Data`` answer, not ``BuildInfo.building``. The two
+    disagree for a moment at the end of every Pipeline build: ``WorkflowRun`` marks itself completed
+    (so the API reports ``building: false`` and a result) *before* it writes ``Finished: SUCCESS``
+    to the log. A reader that stops at ``building: false`` sometimes misses that last line.
+    """
+
+    text: str
+    more_data: bool
+
+
+@dataclass(frozen=True)
 class LintResult:
     ok: bool
     message: str
@@ -134,6 +148,14 @@ class JenkinsClient(ABC):
 
     @abstractmethod
     async def console_text(self, name: str, number: int, start: int = 0) -> str: ...
+
+    async def console_window(self, name: str, number: int, start: int = 0) -> ConsoleChunk:
+        """The log from ``start``, with Jenkins's view of whether more is coming.
+
+        The default suits clients whose logs are complete when written (the fake): it reports no
+        more data. The HTTP client overrides it to read ``X-More-Data``.
+        """
+        return ConsoleChunk(text=await self.console_text(name, number, start), more_data=False)
 
     @abstractmethod
     async def cancel_queue_item(self, item_id: int) -> None: ...
@@ -402,11 +424,20 @@ class HttpJenkinsClient(JenkinsClient):
         ``progressiveText`` rather than ``consoleText`` so the run view can tail a long log without
         re-downloading it on every poll.
         """
+        return (await self.console_window(name, number, start)).text
+
+    async def console_window(self, name: str, number: int, start: int = 0) -> ConsoleChunk:
+        """``progressiveText`` from ``start``, keeping its ``X-More-Data`` header.
+
+        Jenkins sends ``X-More-Data: true`` until the log is closed, which for a Pipeline is
+        slightly *after* the build reports itself finished. See ``ConsoleChunk``.
+        """
         validate_job_name(name)
         response = await self._request(
             "GET", f"/job/{name}/{number}/logText/progressiveText", params={"start": start}
         )
-        return response.text
+        more = response.headers.get("X-More-Data", "").strip().lower() == "true"
+        return ConsoleChunk(text=response.text, more_data=more)
 
     async def cancel_queue_item(self, item_id: int) -> None:
         await self._request(

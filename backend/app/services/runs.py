@@ -260,7 +260,7 @@ async def run_log(
     offset = max(0, start)
 
     try:
-        text = await jenkins.console_text(job.jenkins_name, run.build_number, offset)
+        chunk = await jenkins.console_window(job.jenkins_name, run.build_number, offset)
     except JenkinsError as exc:
         raise conflict(
             ErrorCode.JENKINS_UNAVAILABLE,
@@ -268,11 +268,16 @@ async def run_log(
             run_id=run.id,
         ) from exc
 
+    text = chunk.text
     window = text[:LOG_WINDOW_BYTES]
     return LogWindow(
         text=window,
         next_offset=offset + len(window.encode("utf-8", "replace")),
-        # More to come either because this window was truncated, or because the build is still
-        # producing output.
-        more_data=len(text) > LOG_WINDOW_BYTES or run.result == RunResult.RUNNING.value,
+        # More to come because this window was truncated, because the run is still marked running,
+        # or because Jenkins says it is still writing the log. The last one matters at the end of a
+        # Pipeline: the tracker can record SUCCESS before "Finished: SUCCESS" is in the log, and a
+        # client that stopped tailing then would never see that line (ConsoleChunk).
+        more_data=(
+            len(text) > LOG_WINDOW_BYTES or run.result == RunResult.RUNNING.value or chunk.more_data
+        ),
     )

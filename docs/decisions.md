@@ -71,6 +71,39 @@ and those see the eval harness's usage too. When the server says no requests rem
 
 ## Phase 3
 
+### D-039 A Pipeline reports itself finished before its log is complete
+**Date:** 2026-10-11 · **Status:** decided, fixes a defect
+
+(Numbered D-039 because `phase-5-assistants` already uses D-038.)
+
+**Symptom.** `test_a_pipeline_job_is_created_triggered_and_read` failed about once in 20 runs
+(2 in about 45). It failed only on `assert "Finished: SUCCESS" in log`, even though the build's
+result was SUCCESS.
+
+**Cause.** Jenkins's `WorkflowRun` marks the run completed, so the API reports `building: false`
+and a result, *before* it writes `Finished: SUCCESS` to the console. Freestyle builds write the
+line first, which is why only the Pipeline test failed. Measured directly on jenkins-dev by
+polling every 50 ms and reading the log as soon as `building` turned false:
+
+- The log still ended at `[Pipeline] End of Pipeline` in 3 of 25 builds, then 5 of 30.
+- `progressiveText` returned `X-More-Data: true` in every one of those cases.
+
+**The same defect was in production code.** `run_log` decided `more_data` from the run row only.
+Once the tracker recorded SUCCESS, the UI stopped tailing and could lose the last line of a
+Pipeline log for good.
+
+**Decision.** Jenkins's `X-More-Data` is the authority on whether a log is complete:
+- `JenkinsClient.console_window` returns a `ConsoleChunk` (text plus `more_data`). Its default
+  wraps `console_text`, so the fake client and existing overrides are unchanged.
+  `HttpJenkinsClient` reads the header.
+- `run_log` reports `more_data` if the window was truncated, if the run is still RUNNING, **or**
+  if Jenkins says it is still writing.
+- The integration test reads the Pipeline log through `wait_for_complete_log`, which waits for
+  `X-More-Data` to clear. Its assertions are unchanged.
+
+**Rejected.** A sleep or retry around the assertion: it shortens the window without removing it.
+Asserting less: it would stop checking the line that proves the build finished.
+
 ### D-035 The reference configs were not valid XML
 **Date:** 2026-10-07 · **Status:** decided, fixes a defect
 

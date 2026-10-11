@@ -47,6 +47,8 @@ PIPELINE_JOB = "it-pipeline-create-trigger-read"
 # script. Each poll is cheap, so waiting longer costs nothing when things are healthy.
 BUILD_TIMEOUT_SECONDS = 180.0
 POLL_SECONDS = 2.0
+# The gap between a Pipeline reporting finished and its log closing is milliseconds.
+LOG_POLL_SECONDS = 0.2
 
 
 def read_env() -> dict[str, str]:
@@ -230,6 +232,23 @@ async def wait_for_finish(client: HttpJenkinsClient, name: str, number: int) -> 
     pytest.fail(f"{name}#{number}: still building after {BUILD_TIMEOUT_SECONDS:.0f}s")
 
 
+async def wait_for_complete_log(client: HttpJenkinsClient, name: str, number: int) -> str:
+    """The whole console log, read once Jenkins says it has stopped writing it.
+
+    Needed after ``wait_for_finish`` for a Pipeline: ``WorkflowRun`` reports ``building: false``
+    before it writes ``Finished: SUCCESS``. Reading the log at that instant missed the line in
+    3 of 25 probes, which made the Pipeline test flaky (about 1 run in 20 at this poll rate).
+    ``X-More-Data`` stays true until the line is written; see ``ConsoleChunk``.
+    """
+    deadline = asyncio.get_running_loop().time() + BUILD_TIMEOUT_SECONDS
+    while asyncio.get_running_loop().time() < deadline:
+        chunk = await client.console_window(name, number)
+        if not chunk.more_data:
+            return chunk.text
+        await asyncio.sleep(LOG_POLL_SECONDS)
+    pytest.fail(f"{name}#{number}: log still open after {BUILD_TIMEOUT_SECONDS:.0f}s")
+
+
 # ---------------------------------------------------------------------------
 # The acceptance clause
 # ---------------------------------------------------------------------------
@@ -302,7 +321,7 @@ async def test_a_pipeline_job_is_created_triggered_and_read(
 
     assert result == "SUCCESS", f"the build finished {result}"
 
-    log = await jenkins.console_text(PIPELINE_JOB, number)
+    log = await wait_for_complete_log(jenkins, PIPELINE_JOB, number)
     assert "integration-test stage ok" in log
     assert "Finished: SUCCESS" in log
 
