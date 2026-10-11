@@ -39,7 +39,8 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
 ## Environment facts (this machine, checked 2026-10-09)
 - Present: Java 21.0.11, Maven 3.9.16, Node 24.12.0, Python 3.14.2, Git, Docker 29.8.1,
   uv 0.12.20 at `.venv-tools/` (project-local; the backend venv is `backend/.venv`, Python 3.12.14).
-- Missing: gh. Four stacked PRs must be opened by hand until it is installed.
+- gh 2.102.0 is installed and logged in (checked 2026-10-11). Open each phase PR against `main`:
+  stacked PRs merged into intermediate branches and kept Phases 2 to 4 out of `main`.
 - Docker Desktop does not start with Windows here. Launch
   `%LOCALAPPDATA%/Programs/DockerDesktop/Docker Desktop.exe` and wait for `docker info` to succeed
   (about 30 s) before any Phase 1 or Phase 3+ acceptance check.

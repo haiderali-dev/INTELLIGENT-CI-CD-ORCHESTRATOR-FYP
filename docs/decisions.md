@@ -11,6 +11,20 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 5
 
+### D-040 T5.8's command list is Part 4.6.5, not 4.6.7
+**Date:** 2026-10-11 · **Status:** decided, corrects the specification
+
+**Conflict.** T5.8 asks for end-to-end tests of "every command in Part 4.6.7", but Part 4.6 ends
+at 4.6.5. The only command list in Part 4.6 is 4.6.5, "Commands version 1 must handle": nine
+messages with their expected behaviour. Nothing else in the specification, report or legacy code
+refers to a 4.6.7.
+
+**Decision.** 4.6.5 is the intended reference. `BUILD_PROMPT.md` line 256 is corrected to say so.
+This is the only edit to the specification since it was committed with `m2-final`, and it changes
+a section number only, not the requirement. T5.8 therefore covers all nine 4.6.5 messages,
+including the three that must *not* generate a job (production refusal, the status question, and
+the injection attempt).
+
 ### D-038 Four defects found by the first real checkout of the service repos
 **Date:** 2026-10-11 · **Status:** all fixed
 

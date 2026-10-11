@@ -1,11 +1,14 @@
 # Progress
 
-Updated: 2026-09-29 · Current phase: 3 · Branch: phase-3-backend
+Updated: 2026-10-11 · Current phase: 5 (preparation done, T5.1 next) · Branch: phase-5-assistants
 
 ## Needs human
-- [ ] **Create the two sample-service GitHub repositories**, push them, create the
+- [x] **Create the two sample-service GitHub repositories**, push them, create the
       `demo/failing-tests` branch, and put the URLs in `catalog/services.yaml`. Blocks T1.8's
       `git ls-remote` check and the Phase 5 failing-branch acceptance test.
+      Done, checked 2026-10-11 with `git ls-remote`. `haiderali-dev/payment-service` has `main`
+      998844b and `demo/failing-tests` da997c8. `haiderali-dev/auth-service` has `main` 6413c6f
+      and `demo/failing-tests` d4c4560. `catalog/services.yaml` points at both.
 - [ ] **Resolve or work around the JCasC floating-point defect (D-017).** Importing a YAML file
       silently ignores `weightUrgency`, `weightDependency`, `weightExecutionTime`,
       `agingBonusPerInterval`, `agingCap`, `similarityThreshold` and `recencyLambdaPerDay`, while
@@ -15,8 +18,10 @@ Updated: 2026-09-29 · Current phase: 3 · Branch: phase-3-backend
       from JCasC and needs another route (the global configuration form, or a decision to drop that
       arm). `ConfigAsCodeIT.floatingPointAttributesAreNotAppliedKnownDefect` pins the current
       behaviour and will fail loudly when it is fixed.
-- [ ] **Install `gh`, or open pull requests by hand.** Not blocking; each phase still ends on its
-      own branch.
+- [x] **Install `gh`, or open pull requests by hand.** Not blocking; each phase still ends on its
+      own branch. Done, checked 2026-10-11: `gh` 2.102.0 is logged in as `haiderali-dev`. PRs
+      #5 to #9 were opened with it. Open each phase PR against `main`, never against the previous
+      phase branch: stacking them is what kept Phases 2 to 4 out of `main` (PRs #2 to #4).
 - [ ] **Approve `frontend/DESIGN.md`** when T6.1 produces it. No screen is built before that.
 - [ ] **Label and review the evaluation gold answers** (Phase 8). At most 30 drafted items, each
       marked `needs_review: true` and excluded from scoring until a human clears the flag.
@@ -569,6 +574,22 @@ exist yet, so this does not satisfy T5.8:
   re-exported from Jenkins), no service script was executable, agents could not reach Docker
   Desktop's socket, and the deploy health probe looked at the agent's own localhost.
 - `verify.py --phase 4` re-run after the agent and compose changes → ALL CHECKS PASSED, 66 checks.
+
+Preparation, 2026-10-11, after PR #9 merged. Still **no task checked off**.
+- **Branch:** `phase-5-assistants` was fast-forwarded to `main` (357f1aa: Phases 0 to 4, the
+  D-039 log fix and the Phase 5 groundwork).
+- **Agent images:** rebuilt and the agents force-recreated. The `jenkins` user reaches Docker in
+  both, and both are online.
+- **Spec reference:** T5.8's "Part 4.6.7" corrected to 4.6.5, the nine-command list (D-040).
+- **Acceptance script:** `accept_failing_tests.py` exited 1 after all four verdicts passed whenever
+  `--out` was outside the repo or relative. A `relative_to` call raised on the final print. Fixed
+  with `display_path`. Rerun on the rebuilt agents with `--out` outside the repo: 4/4 verdicts
+  pass, exit 0.
+- **Left for the start of T5.1:** one revision rule for the shared spec. The freestyle reference
+  checks out `${COMMIT}` (default `main`, D-038). The Pipeline reference uses
+  `params.COMMIT ?: params.BRANCH`.
+- **Not a Phase 5 prerequisite:** labelling the evaluation set is Phase 8. All 30 drafts are still
+  `needs_review: true`, and no Phase 5 acceptance clause uses them.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
