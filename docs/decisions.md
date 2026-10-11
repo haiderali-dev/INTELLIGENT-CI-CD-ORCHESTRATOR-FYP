@@ -9,6 +9,66 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ---
 
+## Phase 4
+
+### D-037 The parser's ordering, and where code overrules the model
+**Date:** 2026-10-09 · **Status:** decided
+
+4.5.3 lists the steps; four choices about how they combine are not in it.
+
+**Policy runs before clarification.** A production deploy is refused whatever service it names, so
+asking "which service?" first would spend the user's time on a question whose answer cannot change
+the outcome.
+
+**Policy audit events are written only when the policy decided the outcome** — a refusal, a
+request for a justification, or a request that proceeds. A HIGH request still waiting on a
+clarification is not yet a request; auditing it each round would count it against the daily quota
+once per question asked. The quota itself counts only entries marked `granted`.
+
+**An unreachable remote is a warning, not a block.** A remote that answers and lacks the branch is
+a known problem and gets a question. A remote that cannot be reached is an unknown: the card warns
+and the request goes on, because Jenkins fails the checkout honestly if the branch is wrong — and
+because blocking would make the assistant unusable whenever GitHub is slow, or today, for as long
+as the catalog's sample repositories stay unpushed.
+
+**A model's UNSUPPORTED can be overruled, narrowly.** T4.3's live smoke run found
+`gpt-oss-120b` calling `"deploy it"` UNSUPPORTED at 0.9 confidence. A false UNSUPPORTED is a dead
+end; a question costs one round. So if the rule parser sees a CI/CD action *applied to something* —
+a service, an environment, a suite, or an object such as "it" or "the build" — the action is kept
+and the missing fields are asked for. A verb in small talk ("how do I build a birdhouse") does not
+qualify. The prompt was deliberately *not* edited for this: Appendix E restricts tuning to the
+development split, and "deploy it" is exactly what the evaluation's missing-field category will
+contain. The model's own answer is stored as `model_intent`, so the evaluation scores the model and
+not this correction.
+
+### D-036 `llm_calls` gains `prompt_version` and `outcome`
+**Date:** 2026-10-09 · **Status:** decided
+
+**Conflict.** 4.4.3 lists `llm_calls` as command id, provider, model, latency, prompt tokens,
+completion tokens, fallback used, cached. 4.5.6 requires the prompt version "stored on every call",
+and 4.5.1 that "every call is recorded in `llm_calls`". Neither fits the 4.4.3 column list.
+
+**Decision.** One additive migration (`8c2f4d1e7a90`) adds two columns:
+
+* `prompt_version` — where 4.5.6's requirement can actually be met, since this is the table with a
+  row per call. The version is the prompt file's name plus a short content hash, so an edit to
+  `intent_v1.md` without a version bump is still distinguishable in the data.
+* `outcome` — `ok`, `rate_limited`, `unavailable`, `invalid`, `rejected`, `replay_miss`, `skipped`,
+  `cached` or `error`. Recording *every* call means recording failed ones, and a failed call has no
+  tokens. Without an outcome, its row reads as a successful zero-token call, and the evaluation
+  chapter's latency and tokens-per-command figures would be quietly flattened by every outage.
+
+`outcome` has a server default of `ok`, because every row written before this migration was a
+successful call — failed calls could not be recorded until now. Verified on the Compose
+PostgreSQL: upgrade, downgrade, re-upgrade, and an autogenerate that produced an empty diff.
+
+**Also decided: the quota tracker trusts the server over itself.** Local per-model counters are what
+4.5.1 asks for and they work before the first response. But Groq returns `x-ratelimit-*` headers on
+every response (observed live: `limit-requests` 1000, `limit-tokens` 8000, matching 4.5.1 exactly),
+and those see the eval harness's usage too. When the server says no requests remain, that wins.
+
+---
+
 ## Phase 3
 
 ### D-035 The reference configs were not valid XML

@@ -386,6 +386,158 @@ the Compose stack returns `status: up` with database up, jenkins up (2.568.3, re
 token) and llm disabled (fake mode). The integration-test clause needed T3.8's routers, which is
 what closed it.
 
+## Phase 4: AI core
+
+- [x] T4.1 `LLMProvider` with `GroqProvider`, `ReplayProvider` and `FakeProvider`; fallback chain;
+      token accounting; response cache — evidence: `uv run --no-sync python -m pytest -m "not live
+      and not e2e and not integration"` → 353 passed (40 provider tests, 31 chain/quota/cache
+      tests); `ruff`, `ruff format --check` and `mypy app` (strict, 47 files) clean. Migration
+      `8c2f4d1e7a90` verified on the Compose PostgreSQL: upgrade, downgrade, re-upgrade, and an
+      autogenerate that came back empty (D-036).
+      Written against the live API, not assumptions: one call to `openai/gpt-oss-120b` on
+      2026-10-09 confirmed strict JSON schemas (including nullable enums) are honoured, that usage
+      counts reasoning tokens inside `completion_tokens`, and that every response carries
+      `x-ratelimit-*` headers — `limit-requests` 1000 and `limit-tokens` 8000, matching 4.5.1.
+      The quota tracker therefore trusts the server's headers over its own counters.
+      `GroqProvider` is tested through the real `openai` SDK (3.27.0) over a stubbed `httpx2`
+      transport, so the tests pin what the SDK actually raises for a 429 or a 503 rather than what
+      a mock was told to raise. The SDK's own retries are off (`max_retries=0`): left on, they
+      would double-count against the quota and hide the 429s the chain needs to see.
+      Acceptance clause pinned by `test_with_groq_unreachable_the_rule_parser_answers_with_ai_fallback`:
+      every model unreachable, three attempts each, rule parser answers, `ai_fallback` true.
+      Fixed along the way: replay fixture reads and writes ran synchronously inside async methods,
+      which would stall the server's event loop; they go through `asyncio.to_thread` now.
+- [x] T4.2 Dynamic intent schema builder — evidence: `pytest` → 369 passed (16 schema tests);
+      `ruff`, `ruff format --check`, `mypy app` (48 files) clean. Verified live before the tests
+      were written: Groq's strict mode accepted the full schema both with and without the catalog
+      enums, and `gpt-oss-120b` parsed 4.6.5's hotfix command correctly under each (DEPLOY,
+      auth-service, staging, HIGH, justification captured; ~1 s, ~520 prompt tokens).
+      Catalog services and suites are injected as enums, so strict decoding *cannot* emit an
+      invented service; the validator checks again in code as the second defence. `environment`
+      is deliberately not narrowed to the catalog's allowed environments: `production` has to stay
+      expressible, or the decoder would force a production request into staging — the silent
+      rewrite Appendix E forbids. `include_enums=False` implements 4.9's "no catalog enums"
+      ablation and is tested to change nothing else. `catalog_fingerprint` keys the response cache
+      so an answer built against an older catalog is never served.
+- [x] T4.3 Versioned prompts in `backend/app/ai/prompts/`, starting from Appendix E — evidence:
+      `pytest tests/test_ai_prompts.py` → 19 passed; `ruff`, `mypy app` (49 files) clean.
+      `intent_v1.md` is Appendix E verbatim plus 12 few-shot examples (4.5.6 asks for 8 to 12)
+      covering clarification, refusal, multi-stage, both injection styles and unsupported. The
+      version stored on every call is `intent_v1@<sha256 prefix>` — currently
+      `intent_v1@9457338e` — so an edit without a rename is still distinguishable in `llm_calls`.
+      The examples deliberately do **not** reuse 4.6.5's wording: those commands will be in the
+      evaluation set, and an example matching an eval item would let the model copy the answer.
+      A test enforces it.
+      **Live smoke run** through the real `ModelChain`, on ten fresh phrasings that are neither
+      few-shots nor 4.6.5 commands (so it is not tuning against evaluation material): 9 of 10
+      correct — branch and suite extraction, HIGH urgency with the user's own justification,
+      production parsed faithfully rather than rewritten, a quoted "deploy to prod" inside a commit
+      message ignored, STATUS, CANCEL, UNSUPPORTED for a joke.
+      **One real failure, deliberately not fixed in the prompt:** `"deploy it"` → `UNSUPPORTED` at
+      0.9 confidence, where DEPLOY with a null service (one clarifying question) is right. Appendix
+      E says to tune against the development split only, and "deploy it" is exactly what a human
+      would put in the evaluation's missing-field category, so editing the prompt for it now could
+      contaminate that item. Handled in T4.5's parser logic instead, where it can be measured
+      separately.
+      **Measured cost:** ~1,700 prompt tokens per request with the 12 examples (~900 of them the
+      examples). Against 8,000 tokens a minute, the fifth request in any minute waited ~58 s in
+      this run; interactively the chain caps waits at 10 s, so that request falls to the 20b model.
+      This is what 4.9's "no few-shot examples" ablation will put a price on.
+- [x] T4.4 `RuleBasedParser` — evidence: `pytest` → 435 passed (47 rule-parser tests); `ruff`,
+      `ruff format --check`, `mypy app` (50 files) clean. All nine rows of 4.6.5's command table
+      parse as the specification expects, including `"run the tests"` with service and suite both
+      null so both get asked, production parsed faithfully, and the injection row parsing the
+      deploy around the instruction. It applies Appendix E's rules in code: quoted text, code spans
+      and commit-message tails are stripped before any keyword is matched; nothing outside the
+      catalog is produced; a bare action word (`"deploy it"`) is that action with null fields rather
+      than UNSUPPORTED — the exact case the model got wrong in T4.3's smoke run. Confidence is
+      capped at 0.85 so a rules answer is always distinguishable from a model's.
+      Three heuristics were cut before testing because they were wrong in ways the tests would not
+      have caught: single quotes as quote marks (an apostrophe in "auth-service's" would have
+      deleted the service name), `live` as production, and `make` as build ("make a coffee").
+- [x] T4.5 `IntentParser` orchestration, `IntentValidator`, `ClarificationService` — evidence:
+      `pytest` → 1110 passed (47 guard/validator/clarifier tests, 24 parser tests); `ruff`,
+      `ruff format --check`, `mypy app` (strict, 56 files) clean.
+      **All nine rows of 4.6.5 run through the whole pipeline** — guard, chain, validator, policy,
+      clarification — and each produces the behaviour the table specifies: builds and tests READY
+      with branch and suite resolved, `"run the tests"` asking service then suite over two rounds,
+      the hotfix READY at HIGH with its justification, "latest" resolved to the tip SHA, production
+      REFUSED, the status question READY without generating, the rerun READY, and the injection
+      REFUSED with the attempt logged. The acceptance clause holds through the real factory: Groq
+      unreachable → rules answer → `ai_fallback: true`, and `LLM_MODE=live` with no key degrades
+      the same way instead of failing to start.
+      `interpret` (steps 1-5) touches no database and `record` (step 6) writes `nl_commands`, one
+      `llm_calls` row per attempt — failed ones included, each with `prompt_version` and `outcome`
+      — and the audit entries. Ordering decisions recorded as D-037: policy before clarification,
+      policy audit only when policy decided, an unreachable remote warns instead of blocking, and a
+      narrow, separately measurable correction for the model's false UNSUPPORTED on "deploy it".
+      The guard strips Unicode `Cc`/`Cf` characters, not just ASCII controls: bidirectional
+      overrides can make a message display differently from what the model reads.
+- [x] T4.6 `PolicyService` with table-driven tests — evidence: `pytest tests/test_ai_policy.py` →
+      604 passed; full suite 1039 passed; `ruff`, `mypy app` (51 files) clean. Built ahead of T4.5
+      because the parser's step 5 *is* this layer.
+      4.5.5's rows are tested as a table, and then the full product — 3 roles × 8 actions ×
+      3 environments × 4 urgencies × 2 justification states, 576 cases — is checked against
+      invariants taken from 4.5.5's *wording* rather than recomputed by the same logic as the code,
+      which would only prove the code agrees with itself. Mutation-tested: letting admins deploy to
+      production fails exactly 17 cases — the explicit admin row plus the 16 sweep cases for
+      admin × {DEPLOY, BUILD_TEST_DEPLOY} × production — so the sweep engages where it should.
+      The service is pure (context in, decision and audit events out), so no database is needed
+      to test it. Every rule is evaluated even after one refuses, so the user sees every reason at
+      once. Production is refused only for deploy actions: building "for production" deploys
+      nothing.
+      One bug caught before it existed: every HIGH request writes the audit entry 4.4.3 requires,
+      but if the daily quota counted those, a developer asking five times without a reason would
+      spend the quota without ever getting HIGH. The entry now records `granted`, decided after all
+      rules have run, and only granted ones count.
+- [x] T4.7 `eval/` package skeleton — evidence: `uv run --project backend python -m eval run
+      --parser rules --file eval/datasets/sample.jsonl` writes
+      `eval/results/sample__rules/metrics.json` (Phase 4 acceptance clause 3); `pytest` → 1153
+      passed (43 eval tests); `ruff` and strict `mypy` now run over `eval/` too, via an
+      `eval/ruff.toml` that extends the backend's config.
+      **Integrity rules, enforced in code rather than trusted:** the 30 drafted items (4.9's
+      ceiling, in its category mix) are all `needs_review: true`, and the loader *rejects* a
+      Claude Code draft that claims to be reviewed — so the acceptance run honestly scores zero
+      items, with every metric `null` and a note saying nothing was measured, rather than 0.
+      `--include-unreviewed` exercises the pipeline end to end but stamps the run
+      `for_reporting: false`, and `python -m eval report` lists such runs only under "Not
+      reportable". A model run uses a single-model chain, so a model failure is recorded as an
+      error — never scored with the rule parser's fallback answer in its place. The runner checks
+      dataset items against the prompt's few-shot examples and refuses to run on an overlap.
+      **Quota safety (4.9):** a disk cache by prompt hash in the replay-fixture format (so a
+      finished run doubles as a fixture set), 25 live calls a minute, per-item writes so an
+      interrupted run resumes, and a clean stop at a model's daily budget with progress saved.
+      **Methodology fix found by a test:** answers served from cache were being averaged into the
+      model's latency p50/p95; they are excluded from latency now, while still counted elsewhere.
+      Smoke run of the rule baseline over the unreviewed drafts — *not for reporting* — action
+      0.90, behaviour 0.90, refusal 1.00; its misses are in typos and ambiguity, as a baseline's
+      should be, and the rules were deliberately not tuned to those drafts.
+- [x] T4.8 One opt-in live test and Phase 4 checks in `verify.py` — evidence:
+      `uv run python -m pytest -m live tests/test_ai_live.py` → 1 passed against the real
+      `gpt-oss-120b`: the real factory in live mode, the real prompt and strict schema, a correct
+      BUILD / payment-service / release/2.1 parse, READY, recorded as an `ok` call with real token
+      counts. The default selection deselects it. `verify.py --phase 4` → ALL CHECKS PASSED, 66
+      checks across phases 0-4, ten of them new: the AI modules, the prompt's 8-12 examples and
+      Appendix E rules, that neither the prompt context nor the schema ever reads a shell command,
+      that the SDK's retries stay off, the `llm_calls` migration, the draft cap, and the three
+      acceptance clauses each *run* rather than inferred. `eval/` is now linted and strictly
+      type-checked by the gate.
+      **A gate bug found and fixed:** the first `--phase 4` run failed one check and every rerun
+      passed. Not flaky — state-dependent. Confirmed by restarting `jenkins-dev`: the Phase 3 check
+      "a live plugin event reaches the backend" needs the plugin to have published something, the
+      plugin's counters reset on restart, and the check ran *before* the integration check that
+      triggers builds — so it passed only when another check had run first. It now triggers a build
+      itself when nothing has been published. Re-verified against the state that broke it: fresh
+      controller, first run, `4 published, 0 failed, 0 dropped`, gate green.
+
+**Acceptance:** AI unit and policy tests pass; with Groq unreachable, the rule parser answers and the
+response carries `ai_fallback: true`; `python -m eval run --parser rules --file
+eval/datasets/sample.jsonl` writes a metrics file. **All three met** on 2026-10-09, each checked
+by running it: 828 AI tests pass across eight files; the fallback tests pass through the real factory
+(Groq unreachable, and live mode with no key); and the eval command writes
+`eval/results/sample__rules/metrics.json` — scoring 0 items, honestly, because none of the 30 drafts
+has been reviewed by a human yet.
+
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
   installed and every Phase 2 test except T2.14 runs on JenkinsRule without it. Approved by the user.
