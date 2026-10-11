@@ -88,6 +88,15 @@ each one attaches to Jenkins.
       refreshes aging at least once a minute.
 - [ ] **Section 6.3: note that only the first registered `QueueSorter` is consulted**, and that the
       plugin warns at startup if another is present.
+- [ ] **Section 6.5.1: qualify the cold-start claim.** The text says a job with nothing similar
+      returns UNKNOWN and takes the neutral factor 0.5. That is true, but reaching it requires the
+      history to differ in **agent label** as well as in name. Because two unparameterised builds
+      have identical (empty) parameter sets, the parameter term contributes its full 0.3 and a shared
+      label adds 0.2, so any two unparameterised builds on the same label score 0.5 and clear the
+      0.35 threshold before their names are compared. On a single-label, unparameterised workload —
+      which is exactly what `freestyle-30` is — the threshold filters almost nothing and name
+      similarity acts as a ranking weight instead. Measured in `SimilarityEstimatorTest`; see
+      `docs/decisions.md` D-016.
 - [ ] **Section 6.4: state that a missing upstream job is flagged unresolved and never treated as
       satisfied.** Milestone 2 counted a missing upstream as satisfied, which is the opposite of safe.
       State also that a declared cycle never blocks at runtime; it is rejected by form validation and

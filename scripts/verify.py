@@ -509,7 +509,113 @@ def check_no_script_console() -> Result:
 # rather than passing vacuously.
 # ---------------------------------------------------------------------------
 
-IMPLEMENTED_PHASES = {0}
+# ---------------------------------------------------------------------------
+# Phase 2: plugin
+#
+# The checks here that need a running Jenkins live in T2.14 and are blocked on
+# Docker. Everything below is static or local, so it runs today.
+# ---------------------------------------------------------------------------
+
+# From BUILD_PROMPT Part 4.3.10. Every one of these must exist as a test class.
+REQUIRED_PLUGIN_TESTS = [
+    "AppendixCExampleTest",
+    "ScoreComponentTest",
+    "AgingTest",
+    "UnionFindKahnTest",
+    "SimilarityEstimatorTest",
+    "PriorityJobHeapTest",
+    "SchedulerOverheadTest",
+    "FreestylePriorityIT",
+    "PipelinePriorityIT",
+    "MultiExecutorIT",
+    "DependencyGateIT",
+    "MissingUpstreamIT",
+    "DeclarativeOptionsIT",
+    "ObserveOnlyIT",
+    "CacheEvictionRegressionIT",
+    "ConfigAsCodeIT",
+    "ApiJsonIT",
+]
+
+
+@check(2, "every test named in Part 4.3.10 exists")
+def check_required_plugin_tests() -> Result:
+    """A named test that does not exist is a requirement nobody noticed was unmet."""
+    test_root = REPO_ROOT / "plugin" / "src" / "test" / "java"
+    if not test_root.is_dir():
+        return fail("plugin/src/test/java does not exist")
+
+    present = {path.stem for path in test_root.rglob("*.java")}
+    missing = [name for name in REQUIRED_PLUGIN_TESTS if name not in present]
+    if missing:
+        return fail(f"{len(missing)} missing: {', '.join(missing)}")
+    return ok(f"all {len(REQUIRED_PLUGIN_TESTS)} present")
+
+
+@check(2, "integration tests are bound to the Maven lifecycle")
+def check_failsafe_bound() -> Result:
+    """Guards the specific hollow-green this project hit.
+
+    Surefire matches *Test only. Without Failsafe bound, `mvn verify` reports BUILD SUCCESS over
+    the unit tests while silently skipping every *IT class, and the phase's acceptance criterion
+    passes vacuously.
+    """
+    pom = REPO_ROOT / "plugin" / "pom.xml"
+    if not pom.is_file():
+        return fail("plugin/pom.xml does not exist")
+    text = pom.read_text(encoding="utf-8")
+
+    if "maven-failsafe-plugin" not in text:
+        return fail("maven-failsafe-plugin is not declared; `mvn verify` would skip every *IT")
+    if "<goal>integration-test</goal>" not in text:
+        return fail("Failsafe is declared but its integration-test goal is not bound")
+    if "<goal>verify</goal>" not in text:
+        return fail("Failsafe's verify goal is not bound, so a failing IT would not fail the build")
+    return ok("integration-test and verify goals both bound")
+
+
+@check(2, "the scoring formula matches the report")
+def check_scoring_constants() -> Result:
+    """The one thing Milestone 2 got wrong that nothing detected.
+
+    A static guard, complementing AppendixCExampleTest: the published weights and urgency values
+    must appear in the source. Cheap, and it fails on a careless edit even before the tests run.
+    """
+    calculator = (
+        REPO_ROOT
+        / "plugin/src/main/java/io/jenkins/plugins/queueoptimizer/scoring/PriorityScoreCalculator.java"
+    )
+    level = REPO_ROOT / "plugin/src/main/java/io/jenkins/plugins/queueoptimizer/model/PriorityLevel.java"
+    for path in (calculator, level):
+        if not path.is_file():
+            return fail(f"missing {path.relative_to(REPO_ROOT)}")
+
+    level_text = level.read_text(encoding="utf-8")
+    for name, value in (("HIGH", "1.0"), ("MEDIUM", "0.6"), ("LOW", "0.3")):
+        if f"{name}({value})" not in level_text:
+            return fail(f"PriorityLevel.{name} is not {value}; the report's U values are 1.0/0.6/0.3")
+
+    calc_text = calculator.read_text(encoding="utf-8")
+    if "withReportDefaults" not in calc_text:
+        return fail("PriorityScoreCalculator has no withReportDefaults factory")
+    if "0.5, 0.3, 0.2, 0.05, 5, 0.15" not in calc_text:
+        return fail(
+            "the report defaults (0.5 U, 0.3 D, 0.2 T, aging 0.05 per 5 min capped 0.15) "
+            "are not the ones withReportDefaults uses"
+        )
+    return ok("U = 1.0/0.6/0.3 and weights 0.5/0.3/0.2 with aging 0.05 per 5 min, cap 0.15")
+
+
+@check(2, "plugin artifact was built")
+def check_hpi_built() -> Result:
+    hpi = list((REPO_ROOT / "plugin" / "target").glob("*.hpi")) if (REPO_ROOT / "plugin" / "target").is_dir() else []
+    if not hpi:
+        return fail("no .hpi under plugin/target/; run `cd plugin && mvn -B verify`")
+    size_kb = hpi[0].stat().st_size // 1024
+    return ok(f"{hpi[0].name} ({size_kb} KB)")
+
+
+IMPLEMENTED_PHASES = {0, 2}
 
 
 # ---------------------------------------------------------------------------

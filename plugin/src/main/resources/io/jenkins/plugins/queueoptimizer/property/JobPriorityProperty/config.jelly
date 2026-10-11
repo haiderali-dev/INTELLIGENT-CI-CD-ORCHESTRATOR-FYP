@@ -1,0 +1,20 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+
+  <!--
+    field="level", not Milestone 2's "priority". @Symbol derives the Pipeline parameter name from
+    the data-bound constructor, and both the report's Appendix D and BUILD_PROMPT 4.3.2 publish
+    dynamicQueuePriority(level: 'HIGH'). Old job configurations still load: readResolve folds a
+    stored <priority> element onto level. See docs/decisions.md D-005.
+  -->
+  <f:entry title="${%Job priority}" field="level"
+           description="${%HIGH runs before MEDIUM, and MEDIUM before LOW. Jobs that wait gain a small aging bonus so lower priorities are not starved.}">
+    <f:select default="MEDIUM" />
+  </f:entry>
+
+  <f:entry title="${%Depends on}" field="dependsOn"
+           description="${%Comma-separated names of jobs that must finish before this one starts. Dependent jobs are grouped and move through the queue together. Example: build-api, run-unit-tests}">
+    <f:textbox />
+  </f:entry>
+
+</j:jelly>

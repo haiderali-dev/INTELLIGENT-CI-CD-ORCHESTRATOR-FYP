@@ -1,0 +1,5 @@
+# The shape jenkins/casc/experiment-baseline.yaml uses: the two experiment arms differ by exactly
+# this one line, and everything else must stay at the report's Appendix D defaults.
+unclassified:
+  dynamicQueueOptimizer:
+    optimizerEnabled: false

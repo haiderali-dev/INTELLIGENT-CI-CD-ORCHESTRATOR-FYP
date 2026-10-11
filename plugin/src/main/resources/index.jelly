@@ -1,0 +1,6 @@
+<?jelly escape-by-default='true'?>
+<div>
+  Orders the Jenkins build queue by a weighted priority score of urgency, dependency grouping and
+  estimated execution time, with an aging bonus that prevents low-priority jobs from starving.
+  Covers freestyle, Maven and Pipeline jobs under one formula.
+</div>

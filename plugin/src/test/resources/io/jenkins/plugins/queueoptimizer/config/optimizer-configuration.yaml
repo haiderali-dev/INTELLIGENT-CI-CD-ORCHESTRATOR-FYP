@@ -1,0 +1,20 @@
+# Every field set to a non-default value, so the round-trip test can tell a real export from a
+# default one. Deliberately not the report's numbers: if export silently fell back to defaults,
+# a file using the defaults would still pass.
+unclassified:
+  dynamicQueueOptimizer:
+    optimizerEnabled: false
+    weightUrgency: 0.6
+    weightDependency: 0.25
+    weightExecutionTime: 0.15
+    agingBonusPerInterval: 0.08
+    agingIntervalMinutes: 3
+    agingCap: 0.24
+    estimatorK: 7
+    similarityThreshold: 0.4
+    recencyLambdaPerDay: 0.2
+    historyWindow: 25
+    rescoreIntervalSeconds: 30
+    metricsEnabled: true
+    metricsBackendUrl: "http://backend:8000/api/metrics"
+    metricsToken: "s3cr3t-metrics-token"
