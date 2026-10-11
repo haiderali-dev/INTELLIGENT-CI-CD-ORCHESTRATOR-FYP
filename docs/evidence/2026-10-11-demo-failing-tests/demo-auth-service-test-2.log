@@ -1,0 +1,74 @@
+Started by upstream project "acc-fs-auth-service-build" build number 6
+originally caused by:
+ Started by user Orchestrator Backend
+Running as SYSTEM
+Building remotely on agent-2 (linux) in workspace /home/jenkins/agent/workspace/acc-fs-auth-service-test
+[WS-CLEANUP] Deleting project workspace...
+[WS-CLEANUP] Deferred wipeout is used...
+[WS-CLEANUP] Done
+The recommended git tool is: NONE
+No credentials specified
+Cloning the remote Git repository
+Cloning repository https://github.com/haiderali-dev/auth-service.git
+ > git init /home/jenkins/agent/workspace/acc-fs-auth-service-test # timeout=10
+Fetching upstream changes from https://github.com/haiderali-dev/auth-service.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.47.3'
+ > git fetch --tags --force --progress -- https://github.com/haiderali-dev/auth-service.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git config remote.origin.url https://github.com/haiderali-dev/auth-service.git # timeout=10
+ > git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* # timeout=10
+Avoid second fetch
+ > git rev-parse refs/remotes/origin/demo/failing-tests^{commit} # timeout=10
+ > git rev-parse demo/failing-tests^{commit} # timeout=10
+Checking out Revision ab50e0ece2124ec7985d0c2edeb858dcbe66e744 (refs/remotes/origin/demo/failing-tests)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f ab50e0ece2124ec7985d0c2edeb858dcbe66e744 # timeout=10
+Commit message: "fix: make the shell scripts executable"
+First time build. Skipping changelog.
+[acc-fs-auth-service-test] $ /bin/sh -xe /tmp/jenkins5125585067371955490.sh
++ ./scripts/build.sh
+[build] auth-service
+[build] ok
+[acc-fs-auth-service-test] $ /bin/sh -xe /tmp/jenkins14660598197604705318.sh
++ ./scripts/test.sh unit
+[test] unit suite (about 6s)
+✖ demo/failing-tests: this test fails on purpose (1.257397ms)
+✔ health reports ok (853.33309ms)
+✔ version exposes the commit (851.591015ms)
+✔ login issues a token (852.570336ms)
+✔ login without a username is rejected (851.370397ms)
+✔ a valid token verifies (854.281826ms)
+✔ an unknown token does not verify (852.106618ms)
+✔ an unknown path is a 404 (851.440405ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 7
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6037.7637
+
+✖ failing tests:
+
+test at test/demo-failure.test.js:9:1
+✖ demo/failing-tests: this test fails on purpose (1.257397ms)
+  AssertionError [ERR_ASSERTION]: intentional failure: the deploy job must never start after this
+  
+  2 !== 3
+  
+      at TestContext.<anonymous> (file:///home/jenkins/agent/workspace/acc-fs-auth-service-test/test/demo-failure.test.js:10:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 3,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+Build step 'Execute shell' marked build as failure
+Archiving artifacts
+Finished: FAILURE

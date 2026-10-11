@@ -9,6 +9,39 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ---
 
+## Phase 5
+
+### D-038 Three defects found by the first real checkout of the service repos
+**Date:** 2026-10-11 · **Status:** two fixed, one open
+
+`scripts/accept_failing_tests.py` assembled 4.6's freestyle chain (build -> test -> deploy-staging,
+success-only triggers) from the reference export and ran it against the newly pushed repositories,
+with a control run on `main` alongside each `demo/failing-tests` run. The control is what exposed
+these: without it, "deploy never started" would have passed three times for the wrong reasons.
+
+1. **The reference branch spec never worked.** `freestyle-build-test-deploy.config.xml` uses
+   `${COMMIT:-${BRANCH}}`. The Git plugin does not support shell default syntax: it expands
+   `${BRANCH}` and leaves `${COMMIT:-main}` as a literal revision, so every checkout fails with
+   "Couldn't find any revision to build". Unnoticed until now because the repositories did not
+   exist and every checkout failed at clone anyway. **Open:** the fix belongs in
+   `scripts/export_reference_configs.py` (the job it creates), followed by a re-export, *before*
+   T5.3 derives templates from it. A commit has to be selected some other way -- a separate
+   parameter the branch spec does not reference, or writing the SHA into the spec at generation.
+2. **No script was executable.** Every `.sh` file in both services was committed as `100644`
+   (authored on Windows), so every catalog command failed with "Permission denied". **Fixed:** a
+   mode-only commit on `main` of both service repositories, cherry-picked onto
+   `demo/failing-tests`, and the same change in `sample-services/`.
+3. **Agents cannot reach the Docker socket.** Docker Desktop mounts `/var/run/docker.sock` as
+   `root:root 660`; the agent's `jenkins` user is in a `docker` group with gid 1001, which grants
+   nothing. Every `./deploy.sh staging` fails with "permission denied ... docker.sock". **Open:**
+   the agent image has to match the socket's group at start-up (or use a socket proxy) before any
+   Phase 5 deploy can succeed. Not a blocker for the failing-tests acceptance, which is about the
+   deploy job *starting*.
+
+**Also learned:** each chain job checks out into its own workspace, so payment-service's test job
+has no `.venv` from the build job and must run the catalog's build command first. T5.3's freestyle
+template has to account for that.
+
 ## Phase 4
 
 ### D-037 The parser's ordering, and where code overrules the model

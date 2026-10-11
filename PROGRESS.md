@@ -538,6 +538,22 @@ by running it: 828 AI tests pass across eight files; the fallback tests pass thr
 `eval/results/sample__rules/metrics.json` — scoring 0 items, honestly, because none of the 30 drafts
 has been reviewed by a human yet.
 
+## Phase 5: Freestyle Assistant and Pipeline Assistant
+
+Not started. Groundwork recorded on 2026-10-11, **no task checked off** — the generator does not
+exist yet, so this does not satisfy T5.8:
+
+- `demo/failing-tests` exists in both service repositories: one intentional failing unit test each
+  (`auth-service` ab50e0e, `payment-service` 2b4e686), every other test still passing.
+- `python scripts/accept_failing_tests.py` → 4 of 4 verdicts pass. On `main` (control) the chain
+  reaches the deploy job for both services; on `demo/failing-tests` the test job fails on the
+  intentional assertion and the deploy job never starts. Logs and `summary.json` are in
+  `docs/evidence/2026-10-11-demo-failing-tests/`, with the two failed earlier attempts kept beside
+  them as evidence of the defects they exposed.
+- Three defects found (D-038): the reference branch spec never worked (open, must be fixed before
+  T5.3), no service script was executable (fixed), and agents cannot reach the Docker socket so
+  every deploy fails (open, must be fixed before any Phase 5 deploy succeeds).
+
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
   installed and every Phase 2 test except T2.14 runs on JenkinsRule without it. Approved by the user.
