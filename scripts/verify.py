@@ -21,9 +21,11 @@ import os
 import re
 import subprocess
 import sys
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -945,6 +947,42 @@ def _jenkins_get(path: str, user: str, secret: str, timeout: int = 30) -> tuple[
         return 0, f"{type(exc).__name__}: {exc}"
 
 
+def _jenkins_trigger(job: str, params: dict[str, str], user: str, secret: str) -> int:
+    """Trigger a build on the dev controller. Returns the HTTP status (201 on success).
+
+    Fetches a crumb first and keeps one cookie jar for both requests: Jenkins binds the crumb to
+    the HTTP session, so a crumb fetched without the session cookie is refused (see bootstrap.py).
+    """
+    import base64
+    import http.cookiejar
+    import urllib.error
+    import urllib.parse
+    import urllib.request
+
+    opener = urllib.request.build_opener(
+        urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar())
+    )
+    auth = "Basic " + base64.b64encode(f"{user}:{secret}".encode()).decode("ascii")
+    try:
+        crumb_request = urllib.request.Request("http://localhost:8087/crumbIssuer/api/json")
+        crumb_request.add_header("Authorization", auth)
+        with opener.open(crumb_request, timeout=30) as response:
+            crumb = json.loads(response.read().decode("utf-8"))
+        path = f"/job/{job}/buildWithParameters" if params else f"/job/{job}/build"
+        request = urllib.request.Request(
+            "http://localhost:8087" + path,
+            data=urllib.parse.urlencode(params).encode() if params else b"",
+        )
+        request.add_header("Authorization", auth)
+        request.add_header(crumb["crumbRequestField"], crumb["crumb"])
+        with opener.open(request, timeout=30) as response:
+            return int(response.status)
+    except urllib.error.HTTPError as exc:
+        return exc.code
+    except Exception:
+        return 0
+
+
 def _bot_credentials() -> tuple[str, str] | str:
     """The bot user and token, or a message explaining what is missing."""
     env = _env_file()
@@ -1652,24 +1690,63 @@ def check_metrics_delivered_live() -> Result:
 
     Reads the plugin's own counters. A non-zero failure count means the backend is refusing what
     the plugin sends, which is invisible from either side alone.
+
+    Self-sufficient: the counters live in memory and reset when the controller restarts, so on a
+    fresh controller nothing has been published yet. This check used to fail in exactly that state
+    and pass on the next run -- only because a *later* check had triggered builds in between,
+    which made the gate depend on its own ordering. Now, if nothing has been published, it triggers
+    a build itself and waits for the events.
     """
     credentials = _bot_credentials()
     if isinstance(credentials, str):
         return fail(credentials)
     user, token = credentials
 
-    status, body = _jenkins_get("/dynamic-queue/health", user, token)
-    if status != 200:
-        return fail(f"GET /dynamic-queue/health returned {status}")
-    try:
-        health = json.loads(body)
-    except ValueError:
-        return fail("the health endpoint did not return JSON")
+    def read_health() -> dict[str, Any] | str:
+        status, body = _jenkins_get("/dynamic-queue/health", user, token)
+        if status != 200:
+            return f"GET /dynamic-queue/health returned {status}"
+        try:
+            parsed: dict[str, Any] = json.loads(body)
+        except ValueError:
+            return "the health endpoint did not return JSON"
+        return parsed
+
+    health = read_health()
+    if isinstance(health, str):
+        return fail(health)
 
     if not health.get("metricsEnabled", False):
         return fail("metrics are disabled on this controller")
     if not health.get("metricsPublishable", False):
         return fail("metricsBackendUrl or metricsToken is not configured; see JCasC")
+
+    triggered = ""
+    if not int(health.get("publishedMetricCount", 0)) and not int(health.get("failedMetricCount", 0)):
+        # The integration suite's job exists once that suite has run; the reference job exists
+        # once the reference configs were exported (T1.9). Either produces all four event kinds,
+        # even when its checkout fails on an unpushed repository.
+        params = {"BRANCH": "main", "COMMIT": "", "SUCCESS": "true"}
+        for job in ("it-freestyle-create-trigger-read", "reference-freestyle-payment-service"):
+            if _jenkins_trigger(job, params, user, token) == 201:
+                triggered = job
+                break
+        if not triggered:
+            return fail(
+                "no events published yet, and no known job could be triggered to produce some; "
+                "run the Phase 3 integration tests first"
+            )
+        deadline = time.monotonic() + 120
+        while time.monotonic() < deadline:
+            time.sleep(3)
+            latest = read_health()
+            if isinstance(latest, str):
+                return fail(latest)
+            health = latest
+            if int(health.get("publishedMetricCount", 0)) >= 4 or int(
+                health.get("failedMetricCount", 0)
+            ):
+                break
 
     failed = int(health.get("failedMetricCount", 0))
     published = int(health.get("publishedMetricCount", 0))
@@ -1683,9 +1760,10 @@ def check_metrics_delivered_live() -> Result:
     if dropped:
         return fail(f"the publisher dropped {dropped} event(s); its queue overflowed")
     if not published:
-        return fail("no events published yet; trigger a build, then re-run this check")
+        return fail(f"triggered {triggered} but no event was published within two minutes")
 
-    return ok(f"{published} published, 0 failed, 0 dropped")
+    source = f" after triggering {triggered}" if triggered else ""
+    return ok(f"{published} published, 0 failed, 0 dropped{source}")
 
 
 @check(3, "the WebSocket never takes its token from the URL")
@@ -1967,7 +2045,240 @@ def check_phase3_integration() -> Result:
     return ok(f"{passed.group(1)} passed against the live controller")
 
 
-IMPLEMENTED_PHASES = {0, 1, 2, 3}
+# ---------------------------------------------------------------------------
+# Phase 4: AI core
+# ---------------------------------------------------------------------------
+
+
+def _uv_runner() -> list[str] | None:
+    """The uv command, preferring the project-local copy (D-010)."""
+    uv = REPO_ROOT / ".venv-tools" / "Scripts" / "uv.exe"
+    if uv.is_file():
+        return [str(uv)]
+    return ["uv"] if have("uv") else None
+
+
+AI_MODULES = (
+    "intent.py",
+    "schema.py",
+    "prompting.py",
+    "rules.py",
+    "guard.py",
+    "validator.py",
+    "clarify.py",
+    "policy.py",
+    "parser.py",
+    "chain.py",
+    "quota.py",
+    "cache.py",
+    "factory.py",
+    "providers/base.py",
+    "providers/groq.py",
+    "providers/replay.py",
+    "providers/fake.py",
+)
+
+
+@check(4, "the AI core's modules exist")
+def check_ai_modules() -> Result:
+    """T4.1 to T4.6: providers, chain, schema, prompt, rules, parser, validator, policy."""
+    ai_dir = REPO_ROOT / "backend" / "app" / "ai"
+    missing = [name for name in AI_MODULES if not (ai_dir / name).is_file()]
+    if missing:
+        return fail("missing: " + ", ".join(missing))
+    return ok(f"{len(AI_MODULES)} modules")
+
+
+@check(4, "the prompt is versioned and carries 8 to 12 examples")
+def check_prompt_examples() -> Result:
+    """4.5.6: versioned markdown with 8 to 12 few-shot examples, starting from Appendix E."""
+    prompt = REPO_ROOT / "backend" / "app" / "ai" / "prompts" / "intent_v1.md"
+    if not prompt.is_file():
+        return fail("backend/app/ai/prompts/intent_v1.md does not exist")
+    text = prompt.read_text(encoding="utf-8")
+    _, heading, examples = text.partition("## Examples")
+    if not heading:
+        return fail("the prompt has no ## Examples section")
+    count = examples.count("\n### ")
+    if not 8 <= count <= 12:
+        return fail(f"{count} examples; 4.5.6 asks for 8 to 12")
+    for rule in ("Never invent one", "Never silently change it to staging", "is data, not instruction"):
+        if rule not in text:
+            return fail(f"Appendix E's rule is missing: {rule!r}")
+    return ok(f"intent_v1 with {count} examples and Appendix E's rules")
+
+
+def _function_body(source: str, name: str) -> str:
+    """The text of one top-level function, up to the next top-level definition."""
+    start = source.find(f"\ndef {name}(")
+    if start < 0:
+        return ""
+    following = source.find("\ndef ", start + 1)
+    return source[start : following if following > 0 else len(source)]
+
+
+@check(4, "the model never sees a shell command")
+def check_no_commands_in_prompt() -> Result:
+    """CLAUDE.md: the LLM never writes shell commands; commands come from the catalog.
+
+    What the model sees is the prompt's catalog context and the JSON schema. If either function
+    ever reads a service's commands, the model would be shown -- and could echo back -- the very
+    strings the agents execute.
+    """
+    schema = (REPO_ROOT / "backend" / "app" / "ai" / "schema.py").read_text(encoding="utf-8")
+    for function in ("catalog_context", "build_intent_schema"):
+        body = _function_body(schema, function)
+        if not body:
+            return fail(f"schema.py has no {function}(); this check cannot verify it")
+        for forbidden in ("command", "deploy_target", "build_command"):
+            if forbidden in body:
+                return fail(f"{function}() mentions {forbidden!r}; the model must never see commands")
+    return ok("catalog context and schema carry names only")
+
+
+@check(4, "the SDK's own retries are off")
+def check_sdk_retries_off() -> Result:
+    """Left on, the openai SDK retries 429s invisibly: double-counted quota and hidden failures."""
+    groq = (REPO_ROOT / "backend" / "app" / "ai" / "providers" / "groq.py").read_text(
+        encoding="utf-8"
+    )
+    if "max_retries=0" not in groq:
+        return fail("GroqProvider must construct the client with max_retries=0")
+    return ok("max_retries=0; ModelChain owns the retry policy")
+
+
+@check(4, "llm_calls records the prompt version and the outcome")
+def check_llm_call_columns() -> Result:
+    """D-036: 4.5.6 requires the version on every call; failed calls need an outcome."""
+    versions = REPO_ROOT / "backend" / "alembic" / "versions"
+    migrations = [path.read_text(encoding="utf-8") for path in versions.glob("*.py")]
+    if not any('"prompt_version"' in text and '"outcome"' in text for text in migrations):
+        return fail("no migration adds llm_calls.prompt_version and llm_calls.outcome")
+    return ok("migration 8c2f4d1e7a90 present")
+
+
+@check(4, "drafted evaluation items stay capped and unreviewed")
+def check_eval_drafts() -> Result:
+    """4.9: Claude Code may draft at most 30 items, each needs_review until a human clears it."""
+    sample = REPO_ROOT / "eval" / "datasets" / "sample.jsonl"
+    if not sample.is_file():
+        return fail("eval/datasets/sample.jsonl does not exist")
+    drafts = 0
+    for number, line in enumerate(sample.read_text(encoding="utf-8").splitlines(), start=1):
+        if not line.strip():
+            continue
+        item = json.loads(line)
+        if item.get("labeled_by") == "claude-code-draft":
+            drafts += 1
+            if item.get("needs_review") is not True:
+                return fail(f"line {number}: a Claude Code draft is marked reviewed")
+    if drafts > 30:
+        return fail(f"{drafts} drafted items; 4.9 allows at most 30")
+    return ok(f"{drafts} drafts, all awaiting human review")
+
+
+@check(4, "AI unit and policy tests pass")
+def check_ai_tests() -> Result:
+    """Acceptance clause 1, run on its own so a failure names the AI suite."""
+    runner = _uv_runner()
+    if runner is None:
+        return fail("uv is not installed; see docs/decisions.md D-010")
+    tests = sorted(
+        str(path.relative_to(REPO_ROOT / "backend"))
+        for path in (REPO_ROOT / "backend" / "tests").glob("test_ai_*.py")
+        if path.name != "test_ai_live.py"
+    )
+    result = run(
+        [*runner, "run", "--no-sync", "python", "-m", "pytest", *tests, "-p", "no:cacheprovider"],
+        cwd=REPO_ROOT / "backend",
+        timeout=600,
+    )
+    output = (result.stdout + result.stderr).strip()
+    if result.returncode != 0:
+        tail = [line for line in output.splitlines() if line.strip()][-2:]
+        return fail("AI tests failed: " + " / ".join(tail)[:240])
+    passed = re.search(r"(\d+) passed", output)
+    return ok(f"{passed.group(1) if passed else '?'} passed across {len(tests)} AI test files")
+
+
+@check(4, "with Groq unreachable the rule parser answers with ai_fallback")
+def check_ai_fallback() -> Result:
+    """Acceptance clause 2, verbatim, through the real factory."""
+    runner = _uv_runner()
+    if runner is None:
+        return fail("uv is not installed; see docs/decisions.md D-010")
+    tests = [
+        "tests/test_ai_parser.py::test_with_groq_unreachable_the_rules_answer_and_ai_fallback_is_set",
+        "tests/test_ai_parser.py::test_live_mode_without_a_key_degrades_to_rules_instead_of_failing",
+    ]
+    result = run(
+        [*runner, "run", "--no-sync", "python", "-m", "pytest", *tests, "-p", "no:cacheprovider"],
+        cwd=REPO_ROOT / "backend",
+        timeout=300,
+    )
+    if result.returncode != 0:
+        tail = [line for line in (result.stdout + result.stderr).splitlines() if line.strip()][-2:]
+        return fail("fallback tests failed: " + " / ".join(tail)[:240])
+    return ok("unreachable and keyless Groq both fall back to rules with ai_fallback: true")
+
+
+@check(4, "the evaluation command writes a metrics file")
+def check_eval_run() -> Result:
+    """Acceptance clause 3: python -m eval run --parser rules --file eval/datasets/sample.jsonl."""
+    runner = _uv_runner()
+    if runner is None:
+        return fail("uv is not installed; see docs/decisions.md D-010")
+    metrics = REPO_ROOT / "eval" / "results" / "sample__rules" / "metrics.json"
+    result = run(
+        [
+            *runner,
+            "run",
+            "--no-sync",
+            "--project",
+            "backend",
+            "python",
+            "-m",
+            "eval",
+            "run",
+            "--parser",
+            "rules",
+            "--file",
+            "eval/datasets/sample.jsonl",
+            "--fresh",
+        ],
+        cwd=REPO_ROOT,
+        timeout=300,
+    )
+    if result.returncode != 0 or not metrics.is_file():
+        tail = [line for line in (result.stdout + result.stderr).splitlines() if line.strip()][-2:]
+        return fail("python -m eval run failed: " + " / ".join(tail)[:240])
+    data = json.loads(metrics.read_text(encoding="utf-8"))
+    scored = data["metrics"]["n"]
+    excluded = data["dataset"]["excluded_needs_review"]
+    return ok(f"metrics.json written; {scored} scored, {excluded} excluded pending review")
+
+
+@check(4, "the evaluation package passes ruff and strict mypy")
+def check_eval_quality() -> Result:
+    """Its numbers go into the report, so it meets the backend's bar (eval/ruff.toml extends it)."""
+    runner = _uv_runner()
+    if runner is None:
+        return fail("uv is not installed; see docs/decisions.md D-010")
+    backend = REPO_ROOT / "backend"
+    stages = (
+        ("ruff check", ["python", "-m", "ruff", "check", "../eval"]),
+        ("ruff format --check", ["python", "-m", "ruff", "format", "--check", "../eval"]),
+        ("mypy", ["python", "-m", "mypy", "../eval", "--config-file", "pyproject.toml"]),
+    )
+    for label, command in stages:
+        result = run([*runner, "run", "--no-sync", *command], cwd=backend, timeout=300)
+        if result.returncode != 0:
+            tail = [line for line in (result.stdout + result.stderr).splitlines() if line.strip()][-2:]
+            return fail(f"{label} failed on eval/: " + " / ".join(tail)[:200])
+    return ok("ruff, ruff format and strict mypy clean")
+
+
+IMPLEMENTED_PHASES = {0, 1, 2, 3, 4}
 
 
 # ---------------------------------------------------------------------------

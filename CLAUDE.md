@@ -36,8 +36,8 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
 - Java: one class per file, no Jenkins imports in heap or scoring packages.
 - Commits: Conventional Commits. Branches: phase-<n>-<slug>.
 
-## Environment facts (this machine, checked 2026-10-07)
-- Present: Java 21.0.11, Maven 3.9.16, Node 24.12.0, Python 3.14.2, Git, Docker 29.8.0,
+## Environment facts (this machine, checked 2026-10-09)
+- Present: Java 21.0.11, Maven 3.9.16, Node 24.12.0, Python 3.14.2, Git, Docker 29.8.1,
   uv 0.12.20 at `.venv-tools/` (project-local; the backend venv is `backend/.venv`, Python 3.12.14).
 - Missing: gh. Four stacked PRs must be opened by hand until it is installed.
 - Docker Desktop does not start with Windows here. Launch
@@ -46,6 +46,10 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
 - A Windows Application Control policy blocks the console-script `.exe` shims in
   `backend/.venv/Scripts` (pytest.exe, mypy.exe). Use `uv run python -m pytest` / `-m mypy`, never
   `uv run pytest`. The packages themselves import and run fine; only the shims are blocked.
+- The same policy blocks the temporary interpreter uv builds the project with, so any `uv run`
+  after a `pyproject.toml` change fails. Always `uv run --no-sync`. To add a dependency:
+  `uv add --no-sync <pkg>`, then `uv sync --no-install-project --inexact --all-extras` (the project
+  is already installed editable, so it never needs rebuilding).
 - The Bash tool's sandbox blocks DNS. Network-touching commands (mvn, npm, pip, git ls-remote) need
   the sandbox off.
 - Jenkins LTS baseline is pinned to 2.568.3. The report's Appendix E says 2.541.x and must be updated.
@@ -60,3 +64,8 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
 - Never hand a subprocess a minimal env. Dropping `SystemRoot` breaks DNS on Windows and reports
   itself as `getaddrinfo() thread failed to start`, which reads like a network outage. Inherit
   `os.environ` and overlay. This bit both validate_catalog.py and GitClient.
+- A verify.py check must not depend on another check having run first. One passed only after a
+  later check had triggered builds; after a controller restart it failed. Make checks set up
+  the state they assert on.
+- Never write escape sequences (`\n`, `\d`) through a bash heredoc into Python source: they
+  arrive as real newlines. Use the Write or Edit tool, then `ast.parse` the file.

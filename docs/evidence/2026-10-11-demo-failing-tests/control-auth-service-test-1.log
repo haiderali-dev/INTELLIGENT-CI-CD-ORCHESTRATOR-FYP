@@ -1,0 +1,53 @@
+Started by upstream project "acc-fs-auth-service-build" build number 5
+originally caused by:
+ Started by user Orchestrator Backend
+Running as SYSTEM
+Building remotely on agent-2 (linux) in workspace /home/jenkins/agent/workspace/acc-fs-auth-service-test
+[WS-CLEANUP] Deleting project workspace...
+[WS-CLEANUP] Deferred wipeout is used...
+The recommended git tool is: NONE
+No credentials specified
+Cloning the remote Git repository
+Cloning repository https://github.com/haiderali-dev/auth-service.git
+ > git init /home/jenkins/agent/workspace/acc-fs-auth-service-test # timeout=10
+Fetching upstream changes from https://github.com/haiderali-dev/auth-service.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.47.3'
+ > git fetch --tags --force --progress -- https://github.com/haiderali-dev/auth-service.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git config remote.origin.url https://github.com/haiderali-dev/auth-service.git # timeout=10
+ > git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* # timeout=10
+Avoid second fetch
+ > git rev-parse origin/main^{commit} # timeout=10
+Checking out Revision 86f403f4e80fa8a983ad5d5efe76e759e7bc31fb (origin/main)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f 86f403f4e80fa8a983ad5d5efe76e759e7bc31fb # timeout=10
+Commit message: "fix: make the shell scripts executable"
+First time build. Skipping changelog.
+[acc-fs-auth-service-test] $ /bin/sh -xe /tmp/jenkins2021340973859358730.sh
++ ./scripts/build.sh
+[build] auth-service
+[build] ok
+[acc-fs-auth-service-test] $ /bin/sh -xe /tmp/jenkins12396593675817388237.sh
++ ./scripts/test.sh unit
+[test] unit suite (about 6s)
+✔ health reports ok (858.202745ms)
+✔ version exposes the commit (851.87378ms)
+✔ login issues a token (870.977788ms)
+✔ login without a username is rejected (852.272544ms)
+✔ a valid token verifies (852.957356ms)
+✔ an unknown token does not verify (852.342784ms)
+✔ an unknown path is a 404 (851.669578ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6058.391602
+[test] unit ok
+Archiving artifacts
+‘**/*.log’ doesn’t match anything: ‘**’ exists but not ‘**/*.log’
+No artifacts found that match the file pattern "**/*.log". Configuration error?
+Triggering a new build of acc-fs-auth-service-deploy-staging
+Finished: SUCCESS
