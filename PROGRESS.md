@@ -386,6 +386,19 @@ the Compose stack returns `status: up` with database up, jenkins up (2.568.3, re
 token) and llm disabled (fake mode). The integration-test clause needed T3.8's routers, which is
 what closed it.
 
+**Follow-up 2026-10-11, flaky Pipeline integration test (D-039).**
+`test_a_pipeline_job_is_created_triggered_and_read` failed about once in 20 runs. The cause is a
+real race: a Pipeline reports `building: false` before it writes `Finished: SUCCESS`. The same
+race could cut the last line off a Pipeline log in `GET /api/runs/{id}/log`. Both now wait on
+Jenkins's `X-More-Data`.
+
+Evidence, all run on 2026-10-11:
+- A 50 ms stress probe hit the race window 3 times in 40 builds. Every time, the log was complete
+  once read.
+- The integration file passed 40/40 runs in a row.
+- The offline suite passed: 1159 passed, 6 of them new.
+- `verify.py --phase 4` passed.
+
 ## Phase 4: AI core
 
 - [x] T4.1 `LLMProvider` with `GroqProvider`, `ReplayProvider` and `FakeProvider`; fallback chain;
