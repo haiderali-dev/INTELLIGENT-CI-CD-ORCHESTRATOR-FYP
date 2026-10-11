@@ -1,0 +1,121 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "phase-*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# A second push to the same branch cancels the first. Nothing here is a deployment.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Every job below is skipped until its component has a build file. That keeps the
+  # workflow green through the early phases without pretending the component passed:
+  # a skipped job reports as skipped, not as success.
+  detect:
+    name: Detect components
+    runs-on: ubuntu-latest
+    outputs:
+      plugin: ${{ steps.check.outputs.plugin }}
+      backend: ${{ steps.check.outputs.backend }}
+      frontend: ${{ steps.check.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        name: Look for each component's build file
+        run: |
+          test -f plugin/pom.xml          && echo "plugin=true"   >> "$GITHUB_OUTPUT" || echo "plugin=false"   >> "$GITHUB_OUTPUT"
+          test -f backend/pyproject.toml  && echo "backend=true"  >> "$GITHUB_OUTPUT" || echo "backend=false"  >> "$GITHUB_OUTPUT"
+          test -f frontend/package.json   && echo "frontend=true" >> "$GITHUB_OUTPUT" || echo "frontend=false" >> "$GITHUB_OUTPUT"
+          cat "$GITHUB_OUTPUT"
+
+  verify:
+    name: Phase checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # check_legacy_frozen diffs against the m2-final tag, so the full history
+          # and its tags must be present.
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --quiet pyyaml
+      - name: verify.py --phase 0
+        run: python scripts/verify.py --phase 0
+
+  plugin:
+    name: Plugin
+    needs: detect
+    if: needs.detect.outputs.plugin == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: mvn -B verify
+        run: mvn -B verify
+        working-directory: plugin
+      - name: Upload the .hpi
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dynamic-queue-optimizer-hpi
+          path: plugin/target/*.hpi
+          if-no-files-found: error
+
+  backend:
+    name: Backend
+    needs: detect
+    if: needs.detect.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras
+        working-directory: backend
+      - run: uv run ruff check .
+        working-directory: backend
+      - run: uv run ruff format --check .
+        working-directory: backend
+      - run: uv run mypy app
+        working-directory: backend
+      # `live` needs a Groq key and `e2e` needs a running Jenkins. Neither belongs in CI.
+      - run: uv run pytest -m "not live and not e2e"
+        working-directory: backend
+
+  frontend:
+    name: Frontend
+    needs: detect
+    if: needs.detect.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run lint
+        working-directory: frontend
+      - run: npm run typecheck
+        working-directory: frontend
+      - run: npm run test
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
