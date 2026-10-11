@@ -1,0 +1,16 @@
+{
+  "name": "auth-service",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sample Node.js service for the Intelligent CI/CD Orchestrator. Staging only.",
+  "type": "module",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test test/*.test.js",
+    "lint": "node --check src/server.js && node --check src/app.js"
+  }
+}

@@ -1,15 +1,8 @@
 # Progress
 
-Updated: 2026-09-29 · Current phase: 2 · Branch: phase-2-plugin
+Updated: 2026-09-29 · Current phase: 3 · Branch: phase-3-backend
 
 ## Needs human
-- [ ] **Install Docker Desktop and start it.** Blocks Phase 1 entirely (T1.1 to T1.10) and every
-      acceptance check from Phase 3 onward. Waiting on it: `jenkins-dev`, the reference-config export
-      (T1.9), the `.hpi` install (T2.14), and all integration and end-to-end tests.
-- [ ] **Put the secrets in `.env`.** Needed: `GROQ_API_KEY`, `JENKINS_ADMIN_PASSWORD`,
-      `JENKINS_BOT_PASSWORD`, `JWT_SECRET`, `METRICS_TOKEN`, `POSTGRES_PASSWORD`, `SEED_ADMIN_EMAIL`,
-      `SEED_ADMIN_PASSWORD`. Never paste them into the chat. Blocks the live AI path in Phase 4 and
-      the whole stack in Phase 1. Fakes and replay fixtures cover everything else meanwhile.
 - [ ] **Create the two sample-service GitHub repositories**, push them, create the
       `demo/failing-tests` branch, and put the URLs in `catalog/services.yaml`. Blocks T1.8's
       `git ls-remote` check and the Phase 5 failing-branch acceptance test.
@@ -65,6 +58,65 @@ Updated: 2026-09-29 · Current phase: 2 · Branch: phase-2-plugin
 
 **Acceptance:** `python scripts/verify.py --phase 0` prints ALL CHECKS PASSED.
 **Met** on 2026-09-28: 11 of 11 checks pass, exit code 0.
+
+## Phase 1: Infrastructure
+Branch `phase-3-backend` (the Docker layer was written here while Phase 3 was in progress; it
+belongs to Phase 1 and is listed under it).
+
+- [x] T1.1 Controller image in `jenkins/controller/` — evidence: `python scripts/verify.py --phase 1`
+      → "Docker and Compose files exist" all 9 present, "the controller image installs the built
+      plugin" PASS, "controller plugins are pinned" 16 plugins all pinned. Jenkins 2.568.3-lts-jdk21,
+      plugins installed with `jenkins-plugin-cli`, setup wizard disabled, `CASC_JENKINS_CONFIG` set,
+      and the built `.hpi` copied to `/usr/share/jenkins/ref/plugins/`.
+- [x] T1.2 Agent image in `jenkins/agent/` — `jenkins/ssh-agent:6.31.0-jdk21` plus Git, Python 3,
+      Node.js 24, the Docker CLI, curl and jq, with a build-time smoke check on each tool.
+- [x] T1.3 JCasC files `dev.yaml`, `experiment-baseline.yaml`, `experiment-plugin.yaml` — evidence:
+      `verify.py --phase 1` → "JCasC files are valid and the two arms differ only in
+      optimizerEnabled" PASS and "JCasC sets no floating-point optimizer field (D-017)" PASS.
+      Controller `numExecutors: 0`, local realm with `admin` and `orchestrator-bot`, matrix auth
+      granting the bot no `Overall/Administer`, both agents on credential `agent-ssh-key`.
+- [x] T1.5 `docker-compose.yml` with the default services and the `experiment` profile — evidence:
+      `verify.py --phase 1` → "docker-compose.yml is valid and matches Part 4.2.3" (10 services,
+      5 default, 5 profiled) and "Compose refuses to start rather than defaulting a secret" PASS.
+      Every build context and `COPY` source resolves except `frontend`, which is profile-gated until
+      Phase 6 (D-018).
+- [x] T1.10 Phase 1 checks in `verify.py` — 17 checks, **all passing**: 9 offline, 3 live against
+      the running controller, and 5 covering the sample services, the catalog and the reference
+      configs.
+- [x] T1.4 `scripts/bootstrap.py`: SSH keys, waiting for Jenkins, creating the bot API token —
+      evidence: `python scripts/bootstrap.py` → generated an ed25519 pair, waited for the
+      controller, minted a 34-character token and verified the bot can authenticate with it.
+      No script console: the token comes from
+      `/user/<id>/descriptorByName/jenkins.security.ApiTokenProperty/generateNewToken`.
+- [x] T1.6 Sample service `payment-service` (Python) — evidence: `pytest tests/test_unit.py` →
+      7 passed in 9.01s and `pytest tests/test_integration.py` → 5 passed in 20.89s, matching the
+      catalog's approx_seconds of 8 and 20; `ruff check app tests` → All checks passed. FastAPI with
+      `/health` and `/version` (the latter returning the commit baked in at image build), build,
+      test, lint and security-scan scripts, a Dockerfile and `deploy.sh staging` on port 9001.
+- [x] T1.7 Sample service `auth-service` (Node.js) — evidence: `node --test test/*.test.js` →
+      7 passed in 6.11s, matching approx_seconds 6. Node standard library only, `/health`,
+      `/version`, `/login`, `/verify`, Dockerfile and `deploy.sh staging` on port 9002. Deliberately
+      the shorter service so the execution-time factor T has a real spread to normalise over.
+- [x] T1.8 `catalog/services.yaml` plus its JSON Schema and `scripts/validate_catalog.py` —
+      evidence: `python scripts/validate_catalog.py` → schema valid, production absent, both agent
+      labels exist on the live controller. The two repo-reachability checks fail because the GitHub
+      repositories do not exist yet (Needs human). The schema rejects `production` in
+      `allowed_environments` outright, so it cannot be enabled by editing the catalog alone.
+- [x] T1.9 Export reference `config.xml` from hand-made jobs — evidence:
+      `python scripts/export_reference_configs.py` created one freestyle and one Pipeline job
+      through the REST API on the live `jenkins-dev`, exported what Jenkins stored, and removed
+      them. `verify.py --phase 1` → "reference configs were exported from Jenkins" PASS. The
+      exports carry Jenkins' own `plugin="name@version"` stamps
+      (`dynamic-queue-optimizer@2.0.0-SNAPSHOT`, `git@5.10.1`, `timestamper@1.30`,
+      `ws-cleanup@0.49`), which is the evidence they were produced by Jenkins rather than written
+      by hand — exactly what rule 1.4 requires.
+
+**Acceptance:** `verify.py --phase 1` confirms `jenkins-dev` answers with the bot token, both agents
+online, controller executors 0, reference configs exist, the catalog validates, and both services'
+tests pass. **MET** on 2026-09-29: `python scripts/verify.py --phase 2` → ALL CHECKS PASSED,
+34 checks across phases 0, 1 and 2. The one outstanding item is outside the check: the two GitHub
+repositories do not exist, so `validate_catalog.py` reports both `git ls-remote` probes as failing
+until a human creates and pushes them.
 
 ## Phase 2: Plugin v2
 Branch `phase-2-plugin`, stacked on the unmerged `phase-0-foundation`.
@@ -130,15 +182,209 @@ Branch `phase-2-plugin`, stacked on the unmerged `phase-0-foundation`.
       `MissingUpstreamIT`, `DeclarativeOptionsIT`, `ObserveOnlyIT`, `CacheEvictionRegressionIT`,
       `ConfigAsCodeIT`, `ApiJsonIT`. Plus `Milestone2CompatibilityIT` and `QueueShapeProbeIT`,
       which are not required but earned their place.
-- [ ] T2.14 Build the `.hpi`, install it on `jenkins-dev`, add Phase 2 checks to `verify.py`
-      — **blocked on Docker**, deferred into Phase 1
+- [x] T2.14 Build the `.hpi`, install it on `jenkins-dev`, add Phase 2 checks to `verify.py` —
+      evidence: `docker compose build jenkins-dev && docker compose up -d` →
+      `dynamic-queue-optimizer 2.0.0-SNAPSHOT` reports `active=true enabled=true` among 80 plugins;
+      `python scripts/verify.py --phase 2` → "the ranking endpoint answers with the bot token" 200
+      with weights 0.5/0.3/0.2 and aging 0.05 cap 0.15, and "the plugin health and metrics endpoints
+      answer" both 200. A live end-to-end check created LOW, MEDIUM and HIGH freestyle jobs on the
+      `linux` label, filled all four executors with blockers, and confirmed the plugin ranked them
+      HIGH 0.600 / MEDIUM 0.400 / LOW 0.250 and dispatched them in that order despite worst-first
+      arrival.
 
 **Acceptance:** `mvn -B verify` passes; every test named in Part 4.3.10 exists and passes;
-`GET /dynamic-queue/api/json` on `jenkins-dev` returns 200 with the bot token (needs Docker).
-**Met except for the Docker-gated endpoint check**, 2026-09-29: `mvn -B -ntp verify` →
+`GET /dynamic-queue/api/json` on `jenkins-dev` returns 200 with the bot token.
+**MET in full**, 2026-09-29. The endpoint clause is now verified live; earlier detail: `mvn -B -ntp verify` →
 BUILD SUCCESS. Every one of the 17 tests named in Part 4.3.10 exists and passes. The remaining
 clause, `GET /dynamic-queue/api/json` returning 200 on `jenkins-dev` with the bot token, needs a
 running container; the endpoint itself is covered by `ApiJsonIT` against `JenkinsRule`.
+
+## Phase 3: Backend foundation
+Branch `phase-3-backend`, stacked on the unmerged `phase-2-plugin`.
+
+- [x] T3.1 Project skeleton with `uv`, settings, structured logging, error format, CORS and health
+      endpoint — evidence: `uv run ruff check .` → All checks passed; `uv run ruff format --check .`
+      → 23 files already formatted; `uv run mypy app` → no issues in 19 files (strict);
+      `uv run pytest -m "not live and not e2e"` → 16 passed. `uv` 0.12.20 installed into
+      `.venv-tools/` and Python 3.12.14 managed by it, per D-010.
+- [x] T3.4 `JenkinsClient` with a fake implementation for tests — evidence: the same pytest run.
+      `FakeJenkinsClient` keeps jobs, queue items and logs in memory and validates job names and
+      `config.xml` well-formedness, so a template bug fails in the unit suite rather than only
+      against a live Jenkins. The real client does basic auth with the bot token, a 10-second
+      timeout, three attempts with jittered backoff on connection errors and 5xx, and one crumb
+      retry on a 403.
+- [x] T3.2 SQLAlchemy models and Alembic migrations for every table in Part 4.4.3; seed scripts for
+      the admin user and the catalog — evidence: `alembic upgrade head` against the Compose
+      PostgreSQL created all 14 tables (`\dt` shows them plus `alembic_version`);
+      `alembic downgrade base` then `upgrade head` proved the migration reversible; a second
+      `--autogenerate` produced an empty upgrade/downgrade, proving the models and the migration
+      agree with no drift. `python -m app.db.seed` run twice, in the container, reported
+      `2 created, 0 updated` then `0 created, 0 updated`. `verify.py --phase 3` → 6 Phase 3 checks
+      pass; `pytest` → 30 passed, 1 skipped (the `integration`-marked live upgrade).
+- [x] T3.3 Auth: login, refresh, logout, current user, role dependencies, rate limits — evidence:
+      `uv run pytest -m "not live and not e2e"` → 67 passed, 1 skipped (37 of them auth tests);
+      `ruff check`, `ruff format --check` and `mypy app` (strict, 24 files) all clean;
+      `verify.py --phase 3` → 8 Phase 3 checks pass, including two new ones for the endpoint
+      surface and the rate limits. `POST /api/auth/login`, `/refresh`, `/logout` and `GET /api/me`
+      confirmed registered in the OpenAPI schema. Two real defects were found and fixed rather
+      than asserted around:
+      * failed sign-ins were audited into the session and then rolled back with the refusal, so
+        the trail held successes only — `get_db` rolls back on any exception. Denials now commit
+        their entry before raising (D-022). Verified by reverting the fix: both the test and the
+        new gate fail.
+      * the role-guard test returned 422 instead of 403 because it imported `DevOpsUser` inside
+        the test function; under postponed annotations FastAPI resolves endpoint hints against
+        module globals, so the name was unresolvable and `user` was read as a query parameter.
+        The guard itself was correct; the import moved to module scope. No assertion changed.
+      Sign-in returns one generic error whether the account is absent or the password is wrong,
+      and hashes even when there is no user, so the endpoint is not an account-existence oracle.
+      Refresh rotates and revokes the old token (D-021); deactivating an account ends its session
+      on the next request because the user is re-read each time rather than trusted from the token.
+- [x] T3.5 `GitClient` and `CatalogService` — evidence: `uv run pytest -m "not live and not e2e"`
+      → 130 passed, 1 skipped (22 catalog tests, 41 git tests); `ruff check`, `ruff format --check`
+      and `mypy app` (strict, 26 files) all clean; `verify.py --phase 3` → 10 checks pass, two of
+      them new. `python -m app.db.seed --catalog` in the container → `0 created, 0 updated`, so the
+      refactor kept the seed idempotent. `pytest -m integration tests/test_git.py` resolved a real
+      remote: 7 branches, `master` → a 40-character sha, and a bogus branch correctly absent.
+      * `app/services/catalog.py` is now the only parser of `catalog/services.yaml`; `seed.py` used
+        to parse it separately, which let the seed accept a document the API would reject (D-025).
+        It validates against the JSON Schema on every load and reloads on mtime, keeping the last
+        good copy when an edit is broken.
+      * `app/services/git.py` resolves refs with `git ls-remote` and never clones (D-024). Refs are
+        pattern-checked *before* the call, because an argument list is not sufficient on its own:
+        git reads a leading `-` as an option and `--upload-pack=<command>` makes ls-remote execute
+        it, which is code execution through an argument no shell sees (D-023).
+      One real bug found and fixed while checking against a live remote: the subprocess ran with a
+      minimal environment, and dropping `SystemRoot` broke DNS on Windows — every fetch failed with
+      `getaddrinfo() thread failed to start`. `scripts/validate_catalog.py` had the identical bug.
+      A test now asserts nothing is dropped from the inherited environment; reverting the fix fails
+      it.
+      Both new `verify.py` gates were negative-tested: loosening `REF_PATTERN` to allow a leading
+      dash fails the ref gate, and reintroducing a second `yaml.safe_load` fails the loader gate.
+- [x] T3.6 `PluginClient` for the ranking endpoint and `POST /api/metrics` ingestion — evidence:
+      `uv run python -m pytest -m "not live and not e2e"` → 179 passed, 1 skipped (25 metrics
+      tests, 24 plugin-client tests); `ruff`, `ruff format --check` and `mypy app` (strict, 29
+      files) clean; `cd plugin && mvn -B verify` → 65 integration tests, BUILD SUCCESS;
+      `verify.py --phase 0/1/2/3` → all four pass, with four new Phase 3 checks.
+      **Three real defects found, two of them pre-existing and invisible until now:**
+      * **The metrics pipeline had never worked at all** (D-026). Java's `HttpClient` defaults to
+        HTTP/2 and negotiates it over cleartext with `Upgrade: h2c`, which uvicorn does not
+        implement — it logged "Unsupported upgrade request" and returned **422 for every single
+        event**. This was undetectable before T3.6 because `metricsBackendUrl` defaults to empty
+        (D-006), so the publisher returned early and never posted. Fixed by pinning `HTTP_1_1` in
+        `MetricsPublisher`, guarded by `MetricsPublisherHttpVersionTest`.
+      * **A rebuilt plugin never reached the running controller** (D-028). Jenkins seeds
+        `ref/plugins` only when a plugin is absent or the image is *newer*, and the plugin is
+        always `2.0.0-SNAPSHOT`, so a persistent home kept the `.hpi` from its first boot with a
+        `.pinned` marker beside it. The D-026 fix appeared not to work for this reason: the volume
+        held 88,217 bytes while the image held 88,346. `install-plugin-under-test.sh` now wraps the
+        stock entrypoint and replaces that one plugin on every start.
+      * `parse_health` read `droppedMetrics`, but the endpoint sends `droppedMetricCount`, so the
+        backend reported **zero dropped events however many were lost** — the one number whose
+        purpose is to say data went missing. Found by reading the live endpoint instead of the
+        specification's prose; the health test is now built from a recorded live payload.
+      Also fixed: `store = pending or _pending` silently discarded the injected store, because the
+      class defines `__len__` and an *empty* store is therefore falsy; and the process-wide state
+      reset moved into `conftest.py`, after `test_auth`'s rate-limit tests exhausted the five-a-
+      minute login bucket for the whole suite and a later file's sign-in got an unexplained 429
+      that reproduced only in a full run.
+      **Verified end to end on the live stack:** one triggered build produced `QUEUE_ENTERED`,
+      `QUEUE_LEFT`, `BUILD_STARTED` and `BUILD_COMPLETED` with `publishedMetricCount` 4,
+      `failedMetricCount` 0, `droppedMetricCount` 0, and four 202s in the backend log. A new
+      `verify.py` check reads those counters, so a refusing backend fails the gate rather than
+      quietly losing experiment data.
+- [x] T3.7 `RunTracker` background worker and the WebSocket hub — evidence:
+      `uv run python -m pytest -m "not live and not e2e"` → 229 passed, 1 skipped (27 ws tests,
+      23 tracker tests); `ruff`, `ruff format --check` and `mypy app` (strict, 32 files) clean;
+      `verify.py --phase 3` → all pass, with four new checks.
+      * `app/ws/hub.py` fans out to connected clients on four topics. `publish` is synchronous and
+        drops the *oldest* event on a full 256-deep queue, because the tracker publishes from
+        inside its tick: a browser on a bad connection must not become backpressure on recording
+        run history (D-030).
+      * `app/ws/routes.py` authenticates with the first frame rather than `?token=` — a browser
+        cannot set WebSocket headers, and a query string reaches proxy logs, browser history and
+        `Referer` (D-029). The socket is accepted first so a refusal is a readable close code;
+        1008 means sign in again, 1011 retry. The reason never says *why* a token failed.
+      * `app/services/tracker.py` polls every 3 s, maps queue item ids to build numbers, upserts
+        `job_runs` and publishes events. It fills `queue_wait_ms` only when unset, so a polled
+        estimate can never overwrite the plugin's in-queue measurement (D-031).
+      Two real bugs found while testing, both on paths that exist to prevent failures:
+      * the `/ws` endpoint called `get_settings_dep()` directly, bypassing `dependency_overrides`
+        and falling back to a bare `Settings()` that fails validation — every endpoint test failed
+        on it. FastAPI supports `Depends` on WebSocket routes; it uses that now.
+      * `logger.exception("tracker_publish_failed", event=...)` raised `TypeError`, because
+        structlog reserves `event` for the message. The handler that exists so a hub fault cannot
+        crash a tick was itself crashing the tick. Caught by the test that breaks the hub on purpose.
+      The hub-blocking `verify.py` check also had a bug of its own: it matched the word "await" in
+      `publish`'s docstring, which explains why there isn't one. It is line-anchored now and was
+      negative-tested by making `publish` actually await.
+- [x] T3.8 Jobs, runs, queue, analytics and admin routers — evidence:
+      `uv run python -m pytest -m "not live and not e2e"` → 283 passed, 1 skipped (54 router
+      tests); `ruff`, `ruff format --check` and `mypy app` (strict, 38 files) clean;
+      `verify.py --phase 3` → all pass, three checks new. 25 endpoints registered; every one
+      exercised against the live Compose stack as the seeded admin, including `GET /api/queue`
+      reading the real plugin (`available=true`, weights 0.5/0.3/0.2) and
+      `GET /api/services/payment-service/branches` degrading to `available=false` for the
+      repositories that are not pushed yet.
+      Decisions taken rather than guessed:
+      * cancelling needs DevOps. 4.5.5 does not name a role for it, but it says a Developer may
+        not cancel a running chain and an Admin may, so stopping someone else's build is not a
+        Developer action. The guard is the narrowest reading of that table.
+      * `GET /api/queue` answers 200 with `available: false` when the plugin cannot be read.
+        `jenkins-baseline` runs without it deliberately, and that controller is the baseline arm
+        of the experiment; a 500 there would look like a broken backend.
+      * `ServiceResponse` omits every shell command. They are the one security-relevant part of
+        the catalog, nothing in the UI runs them, and serving them would widen what a stolen
+        read-only token is worth. A test asserts no command string appears in the payload.
+      * policy settings are read-only and the catalog has no write endpoint (D-032): 4.4.3 has no
+        table for policy, and an API that could rewrite `services.yaml` would move the only source
+        of shell commands out of version control.
+      * analytics returns null, never zero, where nothing was measured — a 0 ms queue wait is a
+        build that started at once, and a chart drawing the two alike would be lying. The success
+        rate excludes runs still building, so reliability does not appear to drop when a build
+        starts.
+      The new role-guard gate was negative-tested by downgrading `cancel` to any signed-in user;
+      it fails with `found no role guard`.
+- [x] T3.9 Integration tests and the Phase 3 `verify.py` checks — evidence:
+      `uv run --no-sync python -m pytest tests/test_integration_jenkins.py -m integration` →
+      8 passed against the live `jenkins-dev`; `verify.py --phase 3` → ALL CHECKS PASSED, which
+      now includes running that suite; the fast bar is
+      `pytest -m "not live and not e2e and not integration"` → 282 passed, 10 deselected.
+      The `/scriptText` guard test (4 passed) scans `backend/` and `experiment/`, proves it
+      detects a planted call, and proves it does not flag prose.
+      **Four defects found by running against the real controller:**
+      * `list_labels()` queried `/api/json`, which reports only the controller's own labels and has
+        no `nodes` field — so it returned `['built-in', 'controller']` while both agents were
+        online carrying `linux`. `validate_catalog.py` had the identical bug and its fix had never
+        reached the client. Now `/computer/api/json`, excluding offline nodes.
+      * all three `jenkins/reference-configs/*.xml` were **invalid XML**: the exporter wrote its
+        provenance comment above the `<?xml?>` declaration (D-035). Rule 1.4 makes those files the
+        source of every template, Phase 5's golden-file tests parse them, and
+        `FakeJenkinsClient` validates well-formedness — so this would have broken all three.
+        Nothing had parsed them until now.
+      * the bot has no `Job/Delete` and must not (D-033): cleanup attempts returned 403. The
+        permission stays off, `delete_job` now documents that it 403s as configured, and the tests
+        recreate their jobs instead.
+      * a Pipeline job cannot be triggered with parameters until a build has run, and pushing its
+        config.xml again **wipes** the parameters a run registered (D-034). So Phase 5's Pipeline
+        generator must write a `ParametersDefinitionProperty` into config.xml — that is now the
+        only workable option, not one of two.
+      Also fixed: the fast quality bar was silently running the integration tests, triggering real
+      builds and taking a minute, although the marker says "Opt in with `-m integration`". The bar
+      excludes them and a separate acceptance check runs them, reporting an all-skip as a failure —
+      an acceptance clause that passes because it could not run is worse than no check. Every
+      `uv run` in `verify.py` now passes `--no-sync`, after an unrelated `pyproject.toml` edit made
+      every bar fail with "Application Control policy has blocked this file" rather than a lint
+      error.
+
+**Acceptance:** all backend quality bars pass, `GET /api/health` reports database, Jenkins and LLM
+provider on the Compose stack, and integration tests create, trigger and read one freestyle job and
+one Pipeline job. **All three met** on 2026-10-07: `verify.py --phase 3` passes every check,
+including the one that runs the integration suite (8 passed against the live controller). Earlier
+note, kept for the record — **two of three** on 2026-09-29: quality bars pass, and `GET /api/health` on
+the Compose stack returns `status: up` with database up, jenkins up (2.568.3, reached with the bot
+token) and llm disabled (fake mode). The integration-test clause needed T3.8's routers, which is
+what closed it.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not

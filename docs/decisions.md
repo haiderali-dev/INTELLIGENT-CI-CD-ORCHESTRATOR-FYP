@@ -9,6 +9,361 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ---
 
+## Phase 3
+
+### D-035 The reference configs were not valid XML
+**Date:** 2026-10-07 · **Status:** decided, fixes a defect
+
+`scripts/export_reference_configs.py` wrote its provenance comment *above* the `<?xml version=...?>`
+declaration. XML requires the declaration to be the very first thing in a document, so all three
+files in `jenkins/reference-configs/` failed to parse.
+
+This was not cosmetic. Rule 1.4 makes those files the source of every `config.xml` template; Phase
+5's golden-file tests compare rendered output against them; and `FakeJenkinsClient` validates
+well-formedness, so a template derived verbatim would have failed its own unit test. The files
+looked perfectly fine in an editor, and nothing had parsed them until the Phase 3 integration tests
+did.
+
+**Decision.** The exporter emits the declaration first and the comment after it, and the three
+existing files were corrected by moving the comment only — no exported content was touched, so they
+remain exactly what Jenkins produced.
+
+### D-034 A generated Pipeline job must declare its parameters in config.xml
+**Date:** 2026-10-07 · **Status:** decided, constrains Phase 5
+
+4.6 says a Pipeline job takes its branch and commit as "parameters passed at trigger time". The
+live controller does not allow that on a new job: a declarative `parameters { ... }` block lives in
+the *script*, so Jenkins only registers the parameters once a build has executed it. The reference
+export's `<properties/>` is empty, and triggering a freshly created Pipeline job with parameters
+returns **400 "is not parameterized"**.
+
+Worse, it is not a one-time cost. Pushing the config.xml again wipes the parameters the first run
+registered, because the empty `<properties/>` overwrites them — so every *regenerate* would
+de-parameterize the job until its next build.
+
+**Decision.** Phase 5's Pipeline generator writes a `ParametersDefinitionProperty` into the
+config.xml rather than relying on the script's `parameters` block being discovered. That is the
+only option that survives a regenerate. `test_a_pipeline_job_accepts_parameters_only_after_its_first_run`
+pins the current behaviour so the constraint cannot be forgotten, and asserts the property appears
+after a run — if it ever appears on a brand-new job, the generator is writing it and the
+restriction is gone.
+
+### D-033 The bot has no `Job/Delete`, and nothing in the backend may need it
+**Date:** 2026-10-07 · **Status:** decided
+
+Found directly: the Phase 3 integration tests tried to delete the jobs they created and got 403.
+
+4.1 asks for a "least-privilege `orchestrator-bot` API token" and 4.4.5's method list does not
+include deletion, so `jenkins/casc/*.yaml` grants `Job/{Read,Build,Cancel,Create,Configure}` and
+deliberately not `Job/Delete`. A compromised backend token therefore cannot destroy build history —
+which is the evidence the whole report rests on.
+
+**Decision.** The permission stays off. Widening the bot's grants so a test can tidy up after
+itself would be the wrong trade. `JenkinsClient.delete_job` is kept for an operator with a wider
+token and its docstring now says plainly that it 403s as configured; nothing in the backend calls
+it. The integration tests recreate their jobs instead of deleting them, which makes a rerun
+idempotent and leaves two inert `it-` jobs on the controller.
+
+`scripts/demo_reset.py` is the supported way to get a clean controller, using the admin account.
+
+### D-032 Policy settings are reported, not editable
+**Date:** 2026-10-07 · **Status:** decided
+
+4.4.4 lists "policy settings" among the admin endpoints. 4.4.3 lists fourteen tables and none of
+them holds policy, so there is nowhere to persist an override.
+
+**Decision.** `GET /api/admin/policy` reports 4.5.5's five rules and the configured
+`HIGH_URGENCY_DAILY_QUOTA`, and carries `editable: false`. There is no PATCH.
+
+The rules in 4.5.5 are enforced in code and the one number is configuration. A writable endpoint
+would need a table the specification does not have, and a settings page whose saves do not persist
+would be worse than one that honestly says these are set elsewhere.
+
+`production_enabled` is reported as a constant `false`. It is in the response so the Admin page can
+show the state of the rule rather than omitting it, and constant because rule 1.5 refuses
+production deploys outright — an admin screen implying it could be switched on would misrepresent
+what the system does.
+
+**Also decided here: the service catalog has no write endpoint.** 4.4.4 mentions admin "create,
+update, resync" for the catalog, but only resync exists, and it pushes the *file* into the table.
+Commands the model may run have to be reviewable in version control (4.6.1); an API that could
+rewrite `catalog/services.yaml` at runtime would move the only source of shell commands out of the
+repository, which is the property D-025 exists to protect.
+
+### D-031 Run history comes from polling, with plugin metrics refining the timings
+**Date:** 2026-10-07 · **Status:** decided
+
+4.4.5 has `RunTracker` poll every three seconds; 4.4.6 has plugin metrics "fill queue timings that
+polling can miss". Both, deliberately, because each alone leaves a hole.
+
+The plugin is not the system of record and must not be: it reports only on the controller it is
+installed on, only while installed, and `jenkins-baseline` runs without it on purpose. Metrics
+alone would therefore lose every run on a plugin-less controller — including the baseline arm of
+the experiment.
+
+Polling alone would put a three-second error bar on every queue wait, and the waiting-time KPIs are
+what the report's whole comparison rests on.
+
+**So the precedence is fixed:** the tracker writes `queue_wait_ms` *only* when it is unset. The
+plugin measured the wait from inside the queue; the tracker can only subtract two timestamps either
+side of a poll. `verify.py` fails if that guard disappears, because losing it would silently coarsen
+every figure rather than break anything visibly.
+
+Both writers target the same `(job_id, build_number)`, which carries a unique constraint, so the
+tracker upserts rather than inserting. A queue event always arrives before its run exists, so
+unmatched timings are parked (D-027) and the tracker attaches them once the row appears.
+
+### D-030 A slow WebSocket client loses events rather than slowing the tracker
+**Date:** 2026-10-07 · **Status:** decided
+
+`RunTracker` publishes from inside its tick, which also writes to the database. If a browser on a
+bad connection could apply backpressure to that, one slow client would slow down recording run
+history for everyone.
+
+**Decision.** Each connection has its own bounded queue (256 events). `Hub.publish` is synchronous,
+uses `put_nowait`, and on a full queue drops the *oldest* event to make room for the newest. A
+client that cannot keep up loses intermediate states, which for a live view is the right trade: the
+next event carries the current state anyway.
+
+`verify.py` fails if `publish` becomes a coroutine or grows an `await`. Its own first version
+matched the word "await" in the docstring explaining why there isn't one; it is line-anchored now.
+
+### D-029 The WebSocket authenticates with its first frame, not a query parameter
+**Date:** 2026-10-07 · **Status:** decided
+
+4.4.4 lists `WS /ws` but not how it authenticates, and the choice matters because **a browser
+cannot set headers on a WebSocket**. The common workaround is `/ws?token=...`.
+
+**Rejected.** A query string reaches proxy and server access logs, browser history, and any
+`Referer` sent onward. The access token would end up written down in several places nobody audits,
+and it stays valid for fifteen minutes.
+
+**Decision.** The socket is accepted, then has ten seconds to send one frame:
+`{"type": "auth", "token": "...", "topics": [...]}`. Nothing is delivered before it arrives, and
+anything else closes the connection. An unauthenticated socket can do exactly one thing.
+
+The connection is accepted *before* authentication so a refusal can be a close code the browser can
+read: 1008 means sign in again, 1011 means retry with backoff. Rejecting the handshake outright
+gives the client only an opaque failure, indistinguishable from the server being down.
+
+The close reason never says *why* a token failed — expired and forged are the same instruction, and
+distinguishing them over an unauthenticated socket would reveal which tokens are real.
+
+Cost: one extra `send` in the frontend hook (T6.2). `verify.py` fails if the endpoint ever reads
+`query_params`, so the reason this was chosen cannot be quietly forgotten.
+
+### D-028 The plugin under test is reinstalled on every controller start
+**Date:** 2026-10-07 · **Status:** decided
+
+Jenkins seeds `/usr/share/jenkins/ref/plugins` into `$JENKINS_HOME/plugins` only when a plugin is
+absent, or when the image carries a *newer version*. The plugin under test is always
+`2.0.0-SNAPSHOT`, so "newer" is never true. After the first boot of the `jenkins-dev-home` volume,
+every later `docker compose build jenkins-dev` produced an image whose plugin was silently ignored,
+and the controller kept running the `.hpi` from its first boot — with a `.pinned` marker beside it
+telling Jenkins to keep it.
+
+This was found the expensive way: the D-026 fix below appeared not to work, because the controller
+being tested still had the previous build. The volume held 88,217 bytes while the image held 88,346.
+
+**Decision.** `jenkins/controller/install-plugin-under-test.sh` wraps the stock entrypoint, removes
+the exploded directory, the `.jpi`, the `.pinned` marker and `.version_from_image`, copies the
+image's copy in, and then `exec`s `/usr/local/bin/jenkins.sh`. Scoped to this one plugin: everything
+in `plugins.txt` is version-pinned and must keep Jenkins' own upgrade semantics, which is the whole
+point of D-003.
+
+For a plugin rebuilt on nearly every task, replacing it on start is the correct behaviour rather
+than a convenience. The alternative — remembering to `docker volume rm` after each plugin change —
+is a step that will be forgotten exactly when a result depends on it.
+
+### D-027 Metric ingestion accepts what it does not understand
+**Date:** 2026-10-07 · **Status:** decided
+
+`MetricsPublisher` posts one event per request from a single background thread, counts any non-2xx
+as a failure, and moves on. Nothing retries. So the status code is not a place to report a problem
+with an event: a 422 on one unrecognised field makes the publisher drop that event and every later
+one of the same shape.
+
+**Decision.** `POST /api/metrics` accepts any object with a `kind`, allows unknown fields
+(`extra="allow"`), accepts unknown `kind` values, and accepts events for jobs the backend does not
+track — the experiment harness creates jobs straight against Jenkins and the plugin reports on
+those too. What was wrong with an event is logged and reported in the response body
+(`applied` / `parked` / `ignored`), not in the status.
+
+Returns 202, not 200: the event is recorded, but what it means for a run may depend on a row that
+does not exist yet.
+
+**Queue timings are parked, not dropped.** A queue event arrives the instant an item is queued,
+while `job_runs` cannot have a row until Jenkins has assigned a build number and `RunTracker` has
+polled. An unmatched timing is held in memory, bounded at 2000 entries with a 30-minute TTL, and
+attached when the run appears. Without that, `queue_entered_at` would essentially never be filled
+from metrics, which is the one thing 4.4.6 says this endpoint is for.
+
+### D-026 The plugin publishes metrics over HTTP/1.1, not Java's HTTP/2 default
+**Date:** 2026-10-07 · **Status:** decided, fixes a defect
+
+`HttpClient.newBuilder()` defaults to `HTTP_2`. For a cleartext `http://` URL, Java negotiates that
+with an HTTP/1.1 `Upgrade: h2c` request. The backend is served by uvicorn, which does not implement
+that upgrade: it logged "Unsupported upgrade request", then "Invalid HTTP request received", then
+returned **422 for every single metric event**.
+
+The metrics pipeline therefore published nothing at all. It had never been exercised, because until
+T3.6 there was no backend to post to, and `metricsBackendUrl` defaults to empty (D-006) so the
+publisher returned early. The only symptom was `failedMetricCount` rising, and nothing watched it.
+
+**Decision.** `MetricsPublisher.newHttpClient()` pins `HTTP_1_1`. The fix belongs in the plugin:
+uvicorn has no h2c support, and putting a proxy in front of the backend to translate a protocol
+nobody needs would be a much larger change for no benefit.
+
+`MetricsPublisherHttpVersionTest` asserts the pin, and also asserts that Java's default really is
+HTTP/2 — so a later reader cannot delete the `.version()` call believing it restates a default.
+
+Verified end to end on 2026-10-07: one triggered build produced `QUEUE_ENTERED`, `QUEUE_LEFT`,
+`BUILD_STARTED` and `BUILD_COMPLETED`, with `publishedMetricCount` 4, `failedMetricCount` 0,
+`droppedMetricCount` 0, and four 202s in the backend log.
+
+### D-025 The catalog has exactly one loader, and it validates
+**Date:** 2026-09-29 · **Status:** decided
+
+`app/db/seed.py` parsed `catalog/services.yaml` itself while `app/services/catalog.py` was being
+written to parse it again. Two loaders meant the seed could accept a document the API would reject,
+so a catalog with a shell metacharacter in a command would reach the `services` table and fail at
+request time instead of at seed time.
+
+**Decision.** `app.services.catalog` is the only parser. It validates against
+`catalog/services.schema.json` on every load and `seed.py` calls it. `verify.py` fails if any other
+module under `backend/app/` calls `yaml.safe_load`, so the second loader cannot come back quietly.
+
+The catalog is reloaded when its mtime changes rather than on restart, because adding a service
+mid-demo should not need a container restart. A reload that fails validation keeps the last good
+copy and logs loudly: a typo in the catalog must not take the API down.
+
+### D-024 `GitClient` resolves refs with `ls-remote` and never clones
+**Date:** 2026-09-29 · **Status:** decided
+
+4.5.3 needs to know that a branch exists and what commit it points at. A clone would answer that
+too, at the cost of disk, latency and a cleanup path, for information one network round trip
+already provides.
+
+**Consequence, accepted.** `ls-remote` reports ref tips, not history, so `commit_exists` can
+confirm a commit that *is* a tip and cannot confirm one further back. That is enough for validation
+before a job is generated; if a checkout later cannot find the commit, Jenkins fails the build
+honestly rather than the backend guessing.
+
+Refs are cached for 60 seconds per repository, with one lock per repository so a burst of
+validations makes one call. Short deliberately: the point of resolving a branch is to catch a name
+that does not exist, and a long cache would keep accepting a branch after it was deleted.
+
+### D-023 Git refs are validated against a pattern, not only passed as arguments
+**Date:** 2026-09-29 · **Status:** decided
+
+Branch and commit values reach `GitClient` from a chat message by way of an LLM. The subprocess is
+invoked with an argument list and `shell=False`, which is necessary and **not sufficient**: `git`
+reads a leading `-` as an option, and `--upload-pack=<command>` makes `ls-remote` execute that
+command. That is remote code execution through an argument no shell ever sees.
+
+**Decision.** `REF_PATTERN` requires a ref to start with an alphanumeric, which makes an
+option-shaped ref unrepresentable, and the check runs before the call so a hostile ref costs no
+round trip either. `ALLOWED_URL` restricts transports to `https://` and `git@`, because `ext::`
+executes its argument by design and a local path can point at a repository carrying hooks. That
+matters because a repo URL may arrive from the `services` table rather than the validated catalog.
+`verify.py` exercises the pattern against option-shaped refs directly.
+
+**Related bug, fixed here.** The subprocess first ran with a minimal environment (`PATH` only),
+which looked safer and was not: dropping `SystemRoot` breaks name resolution on Windows and every
+fetch failed with `getaddrinfo() thread failed to start`, which reads like a network outage rather
+than a missing variable. `scripts/validate_catalog.py` had the identical bug. The environment is
+now inherited with the credential-prompt suppressors added, and a test asserts nothing is dropped.
+
+### D-022 A refused sign-in commits its audit entry before raising
+**Date:** 2026-09-29 · **Status:** decided
+
+`get_db` commits on success and rolls back on any exception, so that a request failing halfway
+leaves nothing behind. A policy denial is an exception, which meant every `auth.login.failed` and
+`auth.login.denied` row was added to the session and then rolled back with the refusal — the audit
+trail recorded successful sign-ins and nothing else. Part 4.4.3 asks for an entry on every policy
+denial, so this was a real defect, found by `test_login_records_success_and_failure_in_the_audit_log`.
+
+**Decision.** `app.services.auth._audit` takes `durable=True` at the three denial sites and commits
+the entry immediately. Committing mid-request is safe here precisely because a refused sign-in has
+written nothing else: there is no half-finished work for the commit to make permanent.
+
+The alternative — moving auditing into the exception handler — was rejected because the session is
+already closed by the time a handler runs, so the handler would need a second one, and the entry
+would then be written outside the request's own transaction in every case rather than only in the
+cases where that is what is wanted.
+
+### D-021 Refresh-token revocation is held in memory
+**Date:** 2026-09-29 · **Status:** decided
+
+Part 4.4.3 lists fourteen tables and none of them holds sessions or tokens, so signing out has no
+specified place to record that a refresh token is dead. `RevokedTokens` keeps the `jti` values in
+process memory until the token would expire anyway.
+
+**Consequences, both accepted.** A backend restart forgets the list, so a refresh token revoked
+before the restart works again after it; and with more than one backend instance a sign-out on one
+would not be seen by the others. The project runs a single backend container.
+
+Access tokens are deliberately *not* checked against the list. Doing so would add a lookup to every
+single request in order to shorten a fifteen-minute window. What sign-out has to stop is a refresh
+token being replayed for seven days, and that is what this stops. Adding the table instead is the
+right fix if the deployment ever grows a second instance.
+
+### D-020 Rate limiting is in-process rather than Redis-backed
+**Date:** 2026-09-29 · **Status:** decided
+
+Part 4.4.4 requires rate limits on the auth endpoints but names no store. `app.core.ratelimit` uses
+token buckets in process memory.
+
+**Why a token bucket, not a fixed window.** A fixed window lets a caller spend its whole allowance
+at the end of one window and again at the start of the next, so "5 per minute" permits 10 attempts
+in two seconds across the boundary. On a login endpoint that is most of the protection gone.
+
+**Why in-process.** The stack runs one backend container, and the report's Appendix E does not list
+Redis among the version 2 dependencies. With more than one instance each would keep its own buckets
+and the effective limit would multiply by the instance count — the same caveat as D-021, with the
+same fix.
+
+---
+
+## Phase 1
+
+### D-018 The frontend service sits behind a Compose profile until Phase 6
+**Date:** 2026-09-29 · **Status:** decided
+
+`BUILD_PROMPT.md` 4.2.3 lists `frontend` (5173) among the default Compose services. Phase 6 has not
+run, so `frontend/Dockerfile` does not exist, and a default service with a missing build context
+makes `docker compose up -d` fail outright rather than starting the nine services that are ready.
+
+**Decision.** `frontend` carries `profiles: ["frontend"]`. `docker compose up -d` brings up the
+default stack today; `docker compose --profile frontend up -d` includes it once Phase 6 builds the
+image, at which point the profile line is deleted and the service becomes a default again.
+
+The alternative, leaving it as a default and telling people to ignore the error, trains everyone to
+ignore Compose errors, which is the last habit this project needs.
+
+### D-019 JCasC sets only the optimizer's non-floating-point fields
+**Date:** 2026-09-29 · **Status:** decided, consequence of D-017
+
+The three JCasC files set `optimizerEnabled`, `agingIntervalMinutes`, `estimatorK`,
+`historyWindow`, `rescoreIntervalSeconds`, `metricsEnabled`, `metricsBackendUrl` and
+`metricsToken`, and deliberately omit the seven floating-point fields.
+
+**Why.** D-017: on `configuration-as-code:2130`, importing a YAML file silently drops this
+configuration's `double` fields. Writing `weightUrgency: 0.5` into `dev.yaml` would look correct,
+be discarded on import, and leave the value at its code default — a configuration file that lies
+about the running system. Omitting the field and documenting the intended value in a comment is
+honest about what the file actually controls.
+
+**Why it is safe here.** The code defaults *are* the report's Appendix D values, so all three
+controllers run the published formula. The intended values are listed as a comment in `dev.yaml` so
+the configuration remains reviewable.
+
+**What it does not cover.** The aging-ablation arm of the Part 4.8.2 matrix needs
+`agingBonusPerInterval` and `agingCap` set to non-default values. That arm cannot be configured from
+JCasC until D-017 is resolved, and is tracked under Needs human.
+
+---
+
 ## Phase 2
 
 ### D-014 A Pipeline job passes through the queue twice, not once

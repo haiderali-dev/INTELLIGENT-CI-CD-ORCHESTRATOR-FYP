@@ -1,0 +1,59 @@
+# The controller image's build context is the repository root, so without this every build ships
+# the frozen Milestone 2 copy, the Maven output and the virtualenvs to the daemon. That is slow and
+# it also risks baking a secret into a layer.
+
+# --- Never send secrets to the build daemon ---
+.env
+.env.*
+!.env.example
+.secrets/
+**/secret.key*
+**/secrets/
+
+# --- Version control and scratch ---
+.git/
+.gitignore
+.gitattributes
+.tmp/
+*.log
+
+# --- The frozen Milestone 2 copy: read-only evidence, never part of an image ---
+legacy/
+
+# --- Build output and caches ---
+# plugin/target is deliberately NOT excluded: the controller image copies the built .hpi from it.
+plugin/target/classes/
+plugin/target/test-classes/
+plugin/target/surefire-reports/
+plugin/target/failsafe-reports/
+plugin/target/maven-status/
+plugin/target/generated-sources/
+plugin/target/generated-test-sources/
+plugin/target/jetty/
+plugin/target/work/
+**/__pycache__/
+**/*.py[cod]
+.venv/
+.venv-tools/
+**/.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+node_modules/
+frontend/dist/
+
+# --- Documentation and reports: not needed at runtime ---
+docs/
+*.md
+!README.md
+
+# --- Editors and OS ---
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# --- Results, which are outputs rather than inputs ---
+experiment/results/
+eval/.cache/
+eval/results/

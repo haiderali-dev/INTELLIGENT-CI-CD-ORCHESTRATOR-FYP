@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://uit-group04.example/orchestrator/services.schema.json",
+  "title": "Service catalog",
+  "description": "Schema for catalog/services.yaml. Validated by scripts/validate_catalog.py. The catalog is the only source of shell commands in the system, so its shape is checked rather than trusted.",
+  "type": "object",
+  "required": ["version", "services"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Catalog format version. Bumping it is a breaking change for the intent schema builder."
+    },
+    "services": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/service" }
+    }
+  },
+  "$defs": {
+    "shellCommand": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "description": "A command run on an agent. Constrained because these strings are interpolated into a Jenkins config.xml; the generator additionally rejects shell metacharacters in interpolated values (BUILD_PROMPT 4.6.3).",
+      "not": {
+        "pattern": "[;&|`$><]|\\$\\(|\\|\\|"
+      }
+    },
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,63}$",
+      "description": "Lowercase, hyphen-separated. Used in Jenkins job names, which appear in URLs and on disk."
+    },
+    "testSuite": {
+      "type": "object",
+      "required": ["name", "command", "approx_seconds"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "$ref": "#/$defs/identifier" },
+        "command": { "$ref": "#/$defs/shellCommand" },
+        "approx_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600,
+          "description": "A hint for the UI before build history exists. The plugin's estimator learns real durations from history and ignores this."
+        }
+      }
+    },
+    "deployTarget": {
+      "type": "object",
+      "required": ["command", "url"],
+      "additionalProperties": false,
+      "properties": {
+        "command": { "$ref": "#/$defs/shellCommand" },
+        "url": { "type": "string", "format": "uri", "pattern": "^https?://" }
+      }
+    },
+    "service": {
+      "type": "object",
+      "required": [
+        "name",
+        "repo",
+        "default_branch",
+        "agent_label",
+        "build_command",
+        "test_suites",
+        "deploy",
+        "allowed_environments"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "$ref": "#/$defs/identifier" },
+        "repo": {
+          "type": "string",
+          "pattern": "^(https://|git@).+\\.git$",
+          "description": "Clone URL. Checked for reachability with `git ls-remote` by the validator."
+        },
+        "default_branch": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "agent_label": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Must exist on jenkins-dev, or a generated job could never be scheduled. The validator checks this against the live controller when one is reachable."
+        },
+        "build_command": { "$ref": "#/$defs/shellCommand" },
+        "test_suites": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/testSuite" }
+        },
+        "deploy": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": false,
+          "description": "Keyed by environment. `production` is deliberately not a permitted key: this project is scoped to staging only (rule 1.5).",
+          "properties": {
+            "staging": { "$ref": "#/$defs/deployTarget" }
+          }
+        },
+        "allowed_environments": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "enum": ["staging"] },
+          "description": "Only staging. `production` is rejected by the schema itself, so it cannot be enabled by editing the catalog alone."
+        },
+        "extra_stages": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/shellCommand" },
+          "propertyNames": {
+            "enum": ["lint", "security_scan", "integration_tests", "smoke_test"]
+          },
+          "description": "Optional stages the intent schema offers as extra_stages (BUILD_PROMPT 4.5.2)."
+        }
+      }
+    }
+  }
+}

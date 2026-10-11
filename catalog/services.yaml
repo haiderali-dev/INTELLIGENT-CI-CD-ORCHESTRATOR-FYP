@@ -1,0 +1,60 @@
+# Service catalog.
+#
+# This file is the source of truth for what the assistants may build, test and deploy, and it is
+# the reason the LLM never writes a shell command. BUILD_PROMPT 4.6.1: "Each template resolves to a
+# command from the catalog, so the model never writes shell commands." The model chooses a stage
+# and a template; the command comes from here.
+#
+# Every enum the intent schema offers is built from this file at request time (4.5.2), so a service,
+# branch, suite or environment that is not here cannot be named by a generated intent at all.
+#
+# `production` must never appear in allowed_environments. scripts/validate_catalog.py fails if it
+# does, and the policy layer refuses it independently (4.5.5).
+
+version: 1
+
+services:
+  - name: payment-service
+    # Set by a human once the repository exists; see Needs human in PROGRESS.md. Until then the
+    # validator reports it as unreachable rather than silently accepting a placeholder.
+    repo: https://github.com/uit-group04/payment-service.git
+    default_branch: main
+    agent_label: linux
+    build_command: "./scripts/build.sh"
+    test_suites:
+      - name: unit
+        command: "./scripts/test.sh unit"
+        # Measured, not guessed: 9.01s locally on 2026-09-29. The estimator learns real durations
+        # from build history; this value is only a hint for the UI before any history exists.
+        approx_seconds: 8
+      - name: integration
+        command: "./scripts/test.sh integration"
+        # Measured: 20.89s locally on 2026-09-29.
+        approx_seconds: 20
+    deploy:
+      staging:
+        command: "./deploy.sh staging"
+        url: "http://localhost:9001"
+    allowed_environments: [staging]
+    extra_stages:
+      lint: "./scripts/lint.sh"
+      security_scan: "./scripts/security_scan.sh"
+
+  - name: auth-service
+    repo: https://github.com/uit-group04/auth-service.git
+    default_branch: main
+    agent_label: linux
+    build_command: "./scripts/build.sh"
+    test_suites:
+      - name: unit
+        command: "./scripts/test.sh unit"
+        # Measured: 6.11s locally on 2026-09-29. Deliberately shorter than payment-service's, so
+        # the execution-time factor T in Algorithm 1 has a real spread to normalise over.
+        approx_seconds: 6
+    deploy:
+      staging:
+        command: "./deploy.sh staging"
+        url: "http://localhost:9002"
+    allowed_environments: [staging]
+    extra_stages:
+      lint: "./scripts/lint.sh"

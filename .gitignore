@@ -81,3 +81,6 @@ Thumbs.db
 
 # --- Claude Code local overrides ---
 .claude/settings.local.json
+
+# Project-local tool venv holding uv (D-010). Not part of the app.
+.venv-tools/

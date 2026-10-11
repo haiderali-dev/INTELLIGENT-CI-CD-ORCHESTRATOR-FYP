@@ -138,8 +138,27 @@ public class MetricsPublisher {
         }
     }
 
+    /**
+     * The HTTP client used to publish events.
+     *
+     * <p>Pinned to HTTP/1.1. {@link HttpClient#newBuilder()} defaults to HTTP/2, and for a cleartext
+     * {@code http://} URL Java negotiates that through an HTTP/1.1 {@code Upgrade: h2c} request.
+     * The backend is served by uvicorn, which does not implement that upgrade: it logs
+     * "Unsupported upgrade request", then misparses the request, and every event came back 422. The
+     * metrics pipeline therefore published nothing at all, which went unnoticed while no backend
+     * existed to post to.
+     *
+     * <p>Package-private so a test can assert the version rather than trusting this comment.
+     */
+    static HttpClient newHttpClient() {
+        return HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .connectTimeout(HTTP_TIMEOUT)
+                .build();
+    }
+
     private void drainForever() {
-        HttpClient client = HttpClient.newBuilder().connectTimeout(HTTP_TIMEOUT).build();
+        HttpClient client = newHttpClient();
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 MetricEvent event = pending.poll(30, TimeUnit.SECONDS);
