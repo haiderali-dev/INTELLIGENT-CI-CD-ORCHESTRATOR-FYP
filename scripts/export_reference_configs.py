@@ -308,6 +308,13 @@ def pipeline_xml() -> str:
   <description>Reference Pipeline job: build, test and deploy payment-service to staging.</description>
   <keepDependencies>false</keepDependencies>
   <properties>
+    <!-- 4.6: a Pipeline's priority is a property in config.xml *plus* the options block. The
+         options block only applies once the script runs, so without the property a new job's
+         first trip through the queue would be ranked at the default level. -->
+    <io.jenkins.plugins.queueoptimizer.property.JobPriorityProperty>
+      <level>HIGH</level>
+      <dependsOn></dependsOn>
+    </io.jenkins.plugins.queueoptimizer.property.JobPriorityProperty>
     <hudson.model.ParametersDefinitionProperty>
       <parameterDefinitions>
 {PIPELINE_PARAMETERS}

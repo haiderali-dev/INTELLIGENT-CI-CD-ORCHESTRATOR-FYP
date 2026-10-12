@@ -1,0 +1,59 @@
+pipeline {
+    agent { label 'linux' }
+    options {
+        dynamicQueuePriority(level: 'HIGH')
+        timestamps()
+        buildDiscarder(logRotator(numToKeepStr: '30'))
+        timeout(time: 30, unit: 'MINUTES')
+    }
+    parameters {
+        string(name: 'BRANCH', defaultValue: 'main', description: 'Branch the revision belongs to')
+        string(name: 'COMMIT', defaultValue: '', description: 'Revision to check out: a commit SHA, or refs/heads/BRANCH')
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    // D-041: COMMIT wins, else the head of BRANCH, else main. A given value that is
+                    // not valid stops the build; it never falls back. Never an empty spec: the Git
+                    // plugin reads one as "any branch".
+                    def commit = (params.COMMIT ?: '').trim()
+                    def branch = (params.BRANCH ?: '').trim()
+                    if (branch.startsWith('refs/heads/')) {
+                        branch = branch.substring('refs/heads/'.length())
+                    }
+                    if (branch && !(branch.matches('[A-Za-z0-9][A-Za-z0-9._/-]{0,254}') && !branch.contains('..') && !branch.endsWith('/'))) {
+                        error("BRANCH '${branch}' is not a branch name that can be used")
+                    }
+                    def revision = commit ?: ('refs/heads/' + (branch ?: 'main'))
+                    def isCommit = revision.matches('[0-9a-fA-F]{7,40}')
+                    def isBranchRef = revision.matches('refs/heads/[A-Za-z0-9][A-Za-z0-9._/-]{0,254}') && !revision.contains('..') && !revision.endsWith('/')
+                    if (!isCommit && !isBranchRef) {
+                        error("COMMIT '${commit}' is not a commit SHA or refs/heads/<branch>")
+                    }
+                    checkout([$class: 'GitSCM',
+                              branches: [[name: revision]],
+                              userRemoteConfigs: [[url: 'https://github.com/haiderali-dev/payment-service.git']]])
+                }
+            }
+        }
+        stage('Build') {
+            steps { sh './scripts/build.sh' }
+        }
+        stage('Security scan') {
+            steps { sh './scripts/security_scan.sh' }
+        }
+        stage('Unit tests') {
+            steps { sh './scripts/test.sh unit' }
+        }
+        stage('Integration tests') {
+            steps { sh './scripts/test.sh integration' }
+        }
+        stage('Deploy to staging') {
+            steps { sh './deploy.sh staging' }
+        }
+    }
+    post {
+        always { cleanWs() }
+    }
+}

@@ -1,0 +1,33 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<flow-definition plugin="workflow-job@1602.v2a_70b_80a_2396">
+  <description>{{ description }}</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <io.jenkins.plugins.queueoptimizer.property.JobPriorityProperty plugin="dynamic-queue-optimizer@2.0.0-SNAPSHOT">
+      <level>{{ priority }}</level>
+      <dependsOn></dependsOn>
+    </io.jenkins.plugins.queueoptimizer.property.JobPriorityProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>BRANCH</name>
+          <description>Branch the revision belongs to</description>
+          <defaultValue>{{ branch }}</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>COMMIT</name>
+          <description>Revision to check out: a commit SHA, or refs/heads/BRANCH</description>
+          <defaultValue></defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@4383.v04fa_a_3d67b_d9">
+    <script>{{ jenkinsfile }}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

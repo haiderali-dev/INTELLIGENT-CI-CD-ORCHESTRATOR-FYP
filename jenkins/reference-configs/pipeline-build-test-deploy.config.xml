@@ -13,6 +13,10 @@
   <description>Reference Pipeline job: build, test and deploy payment-service to staging.</description>
   <keepDependencies>false</keepDependencies>
   <properties>
+    <io.jenkins.plugins.queueoptimizer.property.JobPriorityProperty plugin="dynamic-queue-optimizer@2.0.0-SNAPSHOT">
+      <level>HIGH</level>
+      <dependsOn></dependsOn>
+    </io.jenkins.plugins.queueoptimizer.property.JobPriorityProperty>
     <hudson.model.ParametersDefinitionProperty>
       <parameterDefinitions>
         <hudson.model.StringParameterDefinition>

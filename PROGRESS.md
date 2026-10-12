@@ -1,6 +1,6 @@
 # Progress
 
-Updated: 2026-10-13 · Current phase: 5 (T5.2 done, T5.3 next) · Branch: phase-5-assistants
+Updated: 2026-10-13 · Current phase: 5 (T5.3 done, T5.4 next) · Branch: phase-5-assistants
 
 ## Needs human
 - [x] **Create the two sample-service GitHub repositories**, push them, create the
@@ -558,7 +558,7 @@ has been reviewed by a human yet.
 
 ## Phase 5: Freestyle Assistant and Pipeline Assistant
 
-In progress on `phase-5-assistants`. T5.1 and T5.2 done; T5.3 next.
+In progress on `phase-5-assistants`. T5.1 to T5.3 done; T5.4 next.
 
 - [x] T5.1 Spec model (Pydantic) with YAML round-trip and the planner schema, plus one revision
       rule for both job types (D-041). Evidence, all run on 2026-10-12:
@@ -628,7 +628,25 @@ In progress on `phase-5-assistants`. T5.1 and T5.2 done; T5.3 next.
         - Offline suite: 1305 passed.
         - `verify.py --phase 4`: 66/66, after starting Docker Desktop and the stack, which were
           down after a restart.
-- [ ] T5.3 Jinja2 templates derived from the reference configs, with golden-file tests.
+- [x] T5.3 Jinja2 templates derived from the reference configs, with golden-file tests (D-043).
+      Evidence, all run on 2026-10-13:
+      - **Code:**
+        - `app/generation/templates/`: `freestyle-job.xml.j2`, `pipeline-job.xml.j2` and
+          `Jenkinsfile.j2`, each the reference export with its variable parts replaced.
+        - `app/generation/render.py`: freestyle chains (`fs-<service>-<stage>`, suite-specific
+          test jobs, `dependsOn` the previous job, a SUCCESS-only trigger of the next, defaults on
+          every job, build prep in test, lint and scan jobs) and Pipeline jobs
+          (`pl-<service>-<action>[-<env>]`). Commands come only from the catalog.
+        - The Pipeline reference gained `JobPriorityProperty` in config.xml, re-exported from
+          jenkins-dev.
+      - **Tests:** `test_generation_render.py`, 33 passed. Derivation: the reference values
+        reproduce the exported Jenkinsfile byte for byte, the Pipeline job element for element,
+        and every chain job's static parts. Also golden files for 4 specs (9 config.xml files
+        and 2 Jenkinsfiles), chain wiring, escaping and refusals.
+      - **Regression checks:**
+        - Offline suite: 1338 passed.
+        - `pytest -m integration` (the Jenkins suite and the revision suite) against the
+          re-exported references: 25 passed.
 - [ ] T5.4 `FreestyleValidator` and `PipelineValidator`, including the declarative linter call.
 - [ ] T5.5 Conversation and message endpoints for both assistants; intent editing.
 - [ ] T5.6 Generate, regenerate, streamed explain, and approve with an idempotency key.

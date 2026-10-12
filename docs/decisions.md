@@ -11,6 +11,48 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 5
 
+### D-043 How a spec becomes Jenkins jobs
+**Date:** 2026-10-13 · **Status:** decided and implemented (T5.3)
+
+**Templates are the exports, and a test proves it.** `app/generation/templates/` holds three
+Jinja2 templates: a freestyle chain job, a Pipeline job and the Jenkinsfile. Each is the matching
+`jenkins/reference-configs/` export with its variable parts replaced. `test_generation_render.py`
+checks the derivation, not only the output:
+- The reference job's own values render the exported Jenkinsfile byte for byte.
+- They render the exported Pipeline job element for element, apart from the description.
+- Every chain job matches the exported freestyle job, apart from the parts that vary by design:
+  the description, `dependsOn`, parameter defaults, shell steps and the downstream trigger.
+
+**Deviations, each forced by something measured:**
+1. **Test jobs are named by suite**, `fs-<service>-test-<suite>`, not Appendix F's
+   `fs-<service>-test`. "Every suite" (D-042) can put two test stages in one chain, and the
+   appendix's name would give both the same job.
+2. **A freestyle test, lint or scan job runs the build command first.** Every chain job has its
+   own workspace, wiped before each build (the reference's `PreBuildCleanup`). `test.sh`, `lint.sh`
+   and `security_scan.sh` only activate the `.venv` that `build.sh` creates. The build *stage*
+   still runs first in the chain, so a broken build stops everything after it. This is what the
+   acceptance chain's test job always did. 4.6.3's "one shell build step per stage" holds for the
+   stage's own command; the second step is preparing the workspace.
+3. **The Pipeline reference now carries `JobPriorityProperty` in config.xml.** 4.6 asks for
+   "property in config.xml plus `options { dynamicQueuePriority(...) }`", but the export had only
+   the options block. That block applies only once the script runs, so a new job's first trip
+   through the queue would have been ranked at the default level. The property was added to the
+   exporter and re-exported, so it is in the template because Jenkins stored it.
+
+**Also decided:**
+- **Job names.** Freestyle: `fs-<service>-<stage>`, with `build`, `lint`, `security-scan`,
+  `test-<suite>`, `deploy-<env>`. Pipeline: `pl-<service>-<action>[-<env>]`, with `build`,
+  `test`, `deploy` or `build-test-deploy` as the action.
+- **No user text is written into Jenkins.** Job descriptions are built from the stage names and the
+  service, never the justification. The justification lives in the audit log and the pipeline
+  row. A HIGH request justified by a "production incident" must not trip the "no production
+  anywhere" validation (4.6.3), and free text has no place in a config file.
+- **Escaping.** Every value in an XML template is XML-escaped. Jenkinsfile values go through a
+  Groovy single-quote filter that escapes `\` and `'` and refuses line breaks. The script is
+  XML-escaped again when it goes into `<script>`.
+- **Golden files** for four specs (two chains, two Pipelines) live in `tests/golden/`. Every byte
+  is compared. `UPDATE_GOLDEN=1` rewrites them for an intended change, to be reviewed as a diff.
+
 ### D-042 What the planner plans, what code checks, and when the default plan takes over
 **Date:** 2026-10-13 · **Status:** decided and implemented (T5.2)
 
