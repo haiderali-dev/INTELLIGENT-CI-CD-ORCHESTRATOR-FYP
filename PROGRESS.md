@@ -1,6 +1,6 @@
 # Progress
 
-Updated: 2026-10-12 · Current phase: 5 (T5.1 done, T5.2 next) · Branch: phase-5-assistants
+Updated: 2026-10-13 · Current phase: 5 (T5.2 done, T5.3 next) · Branch: phase-5-assistants
 
 ## Needs human
 - [x] **Create the two sample-service GitHub repositories**, push them, create the
@@ -558,7 +558,7 @@ has been reviewed by a human yet.
 
 ## Phase 5: Freestyle Assistant and Pipeline Assistant
 
-In progress on `phase-5-assistants`. T5.1 done; T5.2 next.
+In progress on `phase-5-assistants`. T5.1 and T5.2 done; T5.3 next.
 
 - [x] T5.1 Spec model (Pydantic) with YAML round-trip and the planner schema, plus one revision
       rule for both job types (D-041). Evidence, all run on 2026-10-12:
@@ -596,7 +596,38 @@ In progress on `phase-5-assistants`. T5.1 done; T5.2 next.
           still fails a stray parser: proven with a throwaway file.
       - **Known gap (D-041):** a freestyle job started by hand in the Jenkins UI with only BRANCH
         changed follows its COMMIT.
-- [ ] T5.2 Planner with default plans per action and a repair loop.
+- [x] T5.2 Planner with default plans per action and a repair loop (D-042). Evidence, all run on
+      2026-10-13:
+      - **Code:**
+        - `app/generation/planner.py`: `required_stages` derives the stages a confirmed intent
+          needs, using the owner's four decisions (build first when needed; every suite when none
+          is named; checks before tests; the default plan after 2 failed repairs). `check_plan`
+          lists what is wrong with a model's plan. `Planner` plans through the existing
+          `ModelChain`, sends issues back for at most 2 repairs, and builds the `GenerationSpec`
+          with the stages from the plan and everything else from the intent and catalog.
+        - `app/generation/factory.py`: `build_planner`, with fake mode answering with the
+          default plan.
+        - `app/ai/prompts/planner_v1.md`: 7 examples, each the code's own default plan.
+        - `app/ai/prompting.py`: the example parser also accepts `Plan:`. The intent prompt is
+          unchanged, with the same 12 examples and the same version.
+      - **Offline tests:** `test_generation_planner.py`, 64 passed. They cover:
+        - default plans per action, every suite, extra-stage order and the smoke test;
+        - errors for unplannable requests, and every plannable catalog combination against the
+          order rule;
+        - plan checks;
+        - the repair loop: valid first, repaired, exhausted, ablation, model unavailable, second
+          model, model lost mid-repair;
+        - no free text reaching the model, no caching, the spec built from intent and catalog;
+        - the prompt agreeing with the code;
+        - fake, live-without-key and replay-miss modes, and a parsed command planned end to end.
+      - **Live test:** `pytest -m live tests/test_generation_planner_live.py`, 3 passed.
+        `gpt-oss-120b` gave a valid plan on the first attempt for all three requests (0 repairs),
+        about 1,700 to 1,800 tokens each.
+      - **Regression checks:**
+        - ruff, ruff format and mypy: clean.
+        - Offline suite: 1305 passed.
+        - `verify.py --phase 4`: 66/66, after starting Docker Desktop and the stack, which were
+          down after a restart.
 - [ ] T5.3 Jinja2 templates derived from the reference configs, with golden-file tests.
 - [ ] T5.4 `FreestyleValidator` and `PipelineValidator`, including the declarative linter call.
 - [ ] T5.5 Conversation and message endpoints for both assistants; intent editing.

@@ -37,8 +37,10 @@ HISTORY_CHARS_PER_TURN: Final = 300
 
 _PLACEHOLDER = re.compile(r"\{\{(\w+)\}\}")
 _COMMENT = re.compile(r"\A\s*<!--.*?-->\s*", re.S)
+# An example's answer is labelled for what it is: "Intent:" in the intent prompt, "Plan:" in the
+# planner's (T5.2). Either way it is the JSON the assistant turn carries.
 _EXAMPLE = re.compile(
-    r"^### (?P<title>.+?)\n+User: (?P<user>.+?)\n+Intent: (?P<intent>\{.*?\})\s*$",
+    r"^### (?P<title>.+?)\n+User: (?P<user>.+?)\n+(?:Intent|Plan): (?P<intent>\{.*?\})\s*$",
     re.M | re.S,
 )
 

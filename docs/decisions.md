@@ -11,6 +11,70 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 5
 
+### D-042 What the planner plans, what code checks, and when the default plan takes over
+**Date:** 2026-10-13 · **Status:** decided and implemented (T5.2)
+
+**What the specification leaves open.** 4.6.2 gives the planner two sentences: "the model turns the
+intent plus catalog into the spec through a strict schema. A fixed default plan per action takes
+over when the model is unavailable", and "errors caused by the model's plan go back to it for at
+most 2 repairs". It does not say what each action's plan contains, which suite runs when none is
+named, where extra stages go, or what happens when the repairs run out. The project owner decided
+all four at the start of T5.2:
+
+| Question | Decision |
+| --- | --- |
+| Stages per action | **Build first when needed.** BUILD: build. TEST: build, tests. DEPLOY: deploy. BUILD_TEST_DEPLOY: build, tests, deploy. Any test, lint or security_scan stage brings a build in front of it. |
+| Test stage, no suite named | **Every suite**, one test stage each, in catalog order |
+| Extra stages | **Checks before tests.** build, lint, security_scan, tests, deploy, then a smoke test |
+| Plan still invalid after 2 repairs | **The default plan**, marked `ai_fallback` with the reason |
+
+**Why a build comes first.** Measured from the repository, not assumed. `test.sh`, `lint.sh` and
+`security_scan.sh` only *activate* the `.venv` that `build.sh` creates. The agent image has
+Python, pip and venv but no pytest or ruff, so none of those stages can run without a build in
+the same workspace. `deploy.sh` runs `docker build` itself, so a deploy needs nothing before it.
+
+**What the model decides, and what code decides.** 4.6.1 gives the model "only stages and
+templates", and 4.5.3 says "code decides, never the model". `required_stages` derives the stage
+list the confirmed intent requires. The model's plan is checked against it, and the model names
+the stages. A missing stage, an unrequested one, a wrong suite or environment, a wrong order or a
+repeated name is a plan error, and the issues go back to the model word for word. The default plan
+is the required list with standard names, so it can always take over. The prompt restates the
+rules, but the code is what decides: a test fails if any few-shot example is not the code's own
+default plan.
+
+**Also decided while implementing:**
+- **No free text reaches the model.** The planner's request holds the action, service, suite,
+  environment and extra stages, each already checked against the catalog, plus what the service
+  offers. The branch, commit and justification go straight into the spec. A justification written
+  to steer a model has no model to steer.
+- **Planner calls are not cached.** A first answer that fails the checks would otherwise be served
+  again for ten minutes, and each repeat would start its repairs from a plan known to be wrong.
+- **An unplannable request is an error, not a guess.** A non-generating action, a deploy without an
+  allowed environment, or a suite or extra stage the service lacks raises `PlannerError` and is
+  never sent for repair. Validation, clarification and policy should already have stopped each one.
+- **Unresolved "latest".** When the validator could not reach the remote, it kept "latest" and
+  warned on the intent card that the newest commit at build time would be used. The spec then
+  carries no commit, so the job builds the branch head (D-041 rule 2), and the outcome repeats the
+  warning.
+- **Fake mode** answers through `FakeProvider` with the default plan, labelled `fake`. The intent
+  parser's fake responder answers every call with an intent, so the planner has its own.
+- **The evaluation hooks.** Every attempt is kept. `valid_before_repair` and `valid_after_repair`
+  are `None` when no model answered, never `False`. `max_repairs=0` is 4.9's "no repair loop"
+  ablation, and `include_examples=False` its "no few-shot examples".
+
+**Noted for T5.3.**
+- Each freestyle job has its own workspace, so a test, lint or scan job must run the build command
+  in that job too. The acceptance chain's test job already does (`build.sh`, then `test.sh`).
+- "Every suite" can give a freestyle chain more than one test job, so job names need the suite in
+  them.
+
+**Evidence, 2026-10-13.**
+- `tests/test_generation_planner.py`: 64 passed. That includes every plannable combination in the
+  catalog checked against the order rule.
+- `tests/test_generation_planner_live.py`: 3 passed against Groq. `gpt-oss-120b` produced a valid
+  plan on the first attempt for all three requests (no repairs), using about 1,700 to 1,800 tokens
+  each. Each request is a combination no prompt example shows.
+
 ### D-041 One revision rule for both job types, applied by the backend
 **Date:** 2026-10-12 · **Status:** decided and implemented (T5.1). Refines D-038, implements D-034
 

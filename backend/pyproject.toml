@@ -85,6 +85,8 @@ ignore = [
 "tests/test_integration_revision.py" = ["S105", "S106", "S107", "E501", "S314"]
 # Reads the same reference exports to check both job types carry the revision rule (D-041).
 "tests/test_generation_revision.py" = ["E501", "S314"]
+# Opt-in live test: what it prints (validity before repair, repairs, tokens) is the measurement.
+"tests/test_generation_planner_live.py" = ["T201"]
 # seed.py is a command-line entry point (`python -m app.db.seed`); its printed summary is its
 # user interface, not a stray debug statement. The same events are also logged structurally.
 "app/db/seed.py" = ["T201"]
