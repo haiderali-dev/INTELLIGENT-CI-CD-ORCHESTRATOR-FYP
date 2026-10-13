@@ -87,6 +87,10 @@ to what the code sends.
 - A network or DNS fault on the agent counts as infrastructure, not a checkout error. It is
   checked first, because "check the branch was pushed" is the wrong advice for it. This was found
   on a real failure.
+- The failing step is read first, against every rule. Only when it shows no cause do the
+  whole-log rules (infrastructure, checkout, timeout) look at the rest of the log. A clone error
+  that a retry recovered from cannot then take the blame for tests that failed afterwards. When no
+  shell step ran at all, the checkout is the failing step and the whole log is its section.
 
 Every call, including a failed attempt, is an `llm_calls` row, with the prompt version and the
 command its chain came from.

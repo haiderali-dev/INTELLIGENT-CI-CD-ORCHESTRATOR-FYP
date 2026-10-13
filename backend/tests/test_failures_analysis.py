@@ -6,6 +6,7 @@ rule here is tested against the format it was written for.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -22,6 +23,8 @@ from app.failures.analysis import (
 
 LOGS = Path(__file__).parent / "data" / "failure_logs"
 INFO = "\N{INFORMATION SOURCE}"
+# Jenkins's hidden console note: ESC[8m "ha:..." ESC[0m, invisible in the console.
+HIDDEN_NOTE = re.compile(r"\x1b\[8mha:[^\x1b\n]*\x1b\[0m")
 
 PAYMENT_TEST = "tests/test_unit.py::test_demo_failing_tests_fails_on_purpose"
 
@@ -180,11 +183,20 @@ def test_every_line_number_points_at_the_line_jenkins_printed(name: str) -> None
 
     assert analysis.evidence
     for line in analysis.evidence:
-        assert printed[line.number - 1].rstrip() == line.text
+        assert as_shown(printed[line.number - 1]) == line.text
     for shown in analysis.excerpt:
         if shown.number is not None:
-            assert printed[shown.number - 1].rstrip() == shown.original
+            assert as_shown(printed[shown.number - 1]) == shown.original
     assert analysis.lines == len(text.rstrip("\n").split("\n"))
+
+
+def as_shown(line: str) -> str:
+    """A printed line as Jenkins's console shows it: a hidden console note is metadata, not text.
+
+    Logs read through progressiveText keep the notes; the older captured logs were saved without
+    them. Comparing with the visible line keeps the check exact for both.
+    """
+    return HIDDEN_NOTE.sub("", line).rstrip()
 
 
 def test_a_test_failure_is_not_mistaken_for_lint_or_a_missing_script() -> None:
@@ -192,6 +204,33 @@ def test_a_test_failure_is_not_mistaken_for_lint_or_a_missing_script() -> None:
     analysis = analyse(log("payment-service-test-unit.log"), job_type="FREESTYLE")
 
     assert analysis.category is FailureCategory.TESTS
+
+
+def test_a_network_error_recovered_before_the_failing_step_is_not_blamed() -> None:
+    """A clone that failed once and was retried leaves its error in the log. The tests that then
+    failed are still the cause: the failing step is read before the rest of the log."""
+    text = log("payment-service-test-unit.log").replace(
+        "Avoid second fetch",
+        "fatal: unable to access 'https://github.com/haiderali-dev/payment-service.git/': "
+        "Could not resolve host: github.com\nRetrying after 10 seconds\nAvoid second fetch",
+    )
+
+    analysis = analyse(text, job_type="FREESTYLE")
+
+    assert analysis.category is FailureCategory.TESTS
+    assert analysis.failed_tests == (PAYMENT_TEST,)
+
+
+def test_an_earlier_infrastructure_error_counts_when_the_failing_step_shows_none() -> None:
+    text = log("auth-service-build-silent.log").replace(
+        "Cloning the remote Git repository",
+        "Cloning the remote Git repository\nfatal: write error: No space left on device",
+    )
+
+    analysis = analyse(text, job_type="FREESTYLE")
+
+    assert analysis.category is FailureCategory.INFRASTRUCTURE
+    assert "No space left on device" in analysis.evidence[0].text
 
 
 def test_a_deploy_with_no_recognisable_error_is_still_a_deploy_failure() -> None:

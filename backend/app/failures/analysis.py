@@ -124,9 +124,9 @@ class FailureAnalysis:
 class _Rule:
     category: FailureCategory
     pattern: re.Pattern[str]
-    # True: the cause can be anywhere in the log (a checkout runs before any step). False: only
-    # the failing step or stage counts, so a test that prints "SyntaxError" while passing does not
-    # turn a failed deploy into a build error.
+    # True: when the failing step shows no cause, this one may also be found elsewhere in the log
+    # (an agent lost mid-build, a timeout). False: only the failing step or stage counts, so a test
+    # that prints "SyntaxError" while passing does not turn a failed deploy into a build error.
     whole_log: bool
 
 
@@ -427,24 +427,36 @@ def _section(lines: Sequence[str], *, job_type: str, stage: str | None) -> range
         for start in range(count - 1, -1, -1):
             if _SHELL_STEP.match(lines[start]):
                 return range(start, count)
+        # No shell step ran: the checkout before them is what failed, and it is the whole log.
+        # A tail would let a long stack trace push the clone's own error out of view.
+        return range(count)
     return range(max(0, count - FALLBACK_TAIL_LINES), count)
 
 
 def _classify(
     lines: Sequence[str], section: range, stage_template: str | None
 ) -> tuple[FailureCategory, list[int]]:
-    """The category and the lines that show it. No match is UNKNOWN, never a guess."""
-    for rule in _RULES:
-        scope: Iterable[int] = range(len(lines)) if rule.whole_log else section
-        matched = _distinct(lines, [i for i in scope if rule.pattern.search(lines[i])])
-        if not matched:
-            continue
-        if rule.category is FailureCategory.TESTS:
-            details = _distinct(lines, [i for i in section if _TEST_DETAIL.search(lines[i])])[:2]
-            matched = _distinct(
-                lines, sorted(set(matched[: MAX_EVIDENCE - len(details)]) | set(details))
-            )
-        return rule.category, matched[:MAX_EVIDENCE]
+    """The category and the lines that show it. No match is UNKNOWN, never a guess.
+
+    The failing step or stage is read first, against every rule: a cause printed there is the
+    cause. Only when it shows none do the whole-log rules look at the rest. Otherwise a network
+    error that a retry recovered from early in the log would take the blame for a test that failed
+    afterwards.
+    """
+    passes = ((section, _RULES), (range(len(lines)), [r for r in _RULES if r.whole_log]))
+    for scope, rules in passes:
+        for rule in rules:
+            matched = _distinct(lines, [i for i in scope if rule.pattern.search(lines[i])])
+            if not matched:
+                continue
+            if rule.category is FailureCategory.TESTS:
+                details = _distinct(lines, [i for i in section if _TEST_DETAIL.search(lines[i])])[
+                    :2
+                ]
+                matched = _distinct(
+                    lines, sorted(set(matched[: MAX_EVIDENCE - len(details)]) | set(details))
+                )
+            return rule.category, matched[:MAX_EVIDENCE]
 
     # Nothing recognisable. A failed deploy is still a deploy failure: the stages before it passed,
     # so whatever went wrong went wrong there. Anything else is unknown, with the step's last lines
