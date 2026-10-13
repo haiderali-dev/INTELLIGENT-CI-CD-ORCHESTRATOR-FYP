@@ -9,6 +9,22 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ---
 
+## Phase 6
+
+### D-051 T6.8's test plan is Part 4.7.6, not 4.7.8
+**Date:** 2026-10-13 · **Status:** decided; the specification is left unchanged
+
+**Conflict.** T6.8 asks for "Vitest unit tests and Playwright flows (Part 4.7.8)", but Part 4.7
+ends at 4.7.6. Part 4.7.6, "Tests", is the only test plan in Part 4.7: Vitest for the intent card,
+clarification, score bar and composer, and seven Playwright flows run against the backend with
+`LLM_MODE=fake`. Nothing else in the specification refers to a 4.7.8.
+
+**Decision.** 4.7.6 is the intended reference, as with T5.8's 4.6.7 (D-040). Unlike D-040,
+`BUILD_PROMPT.md` is not edited: that correction was made at the user's request, and this one has
+none. Rule 1.4 asks only that the deviation be recorded. `PROGRESS.md` cites 4.7.6.
+
+---
+
 ## Phase 5
 
 ### D-050 jenkins-dev retries a failed SCM checkout twice (`scmCheckoutRetryCount: 2`)

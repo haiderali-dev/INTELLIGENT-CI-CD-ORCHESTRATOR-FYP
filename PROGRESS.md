@@ -1,7 +1,7 @@
 # Progress
 
-Updated: 2026-10-13 · Current phase: 5 done (T5.1 to T5.9; PR #10 awaiting review and merge) ·
-Branch: phase-5-assistants
+Updated: 2026-10-13 · Current phase: 6 (T6.1 next; Phase 5 merged as `8da58b9`) ·
+Branch: phase-6-frontend
 
 ## Needs human
 - [x] **Create the two sample-service GitHub repositories**, push them, create the
@@ -23,8 +23,11 @@ Branch: phase-5-assistants
       own branch. Done, checked 2026-10-11: `gh` 2.102.0 is logged in as `haiderali-dev`. PRs
       #5 to #9 were opened with it. Open each phase PR against `main`, never against the previous
       phase branch: stacking them is what kept Phases 2 to 4 out of `main` (PRs #2 to #4).
-- [ ] **Review and merge the Phase 5 PR (#10) into `main`.** Claude opens and updates it but
-      never merges.
+- [x] **Review and merge the Phase 5 PR (#10) into `main`.** Done 2026-10-13, at the user's
+      request: merged as merge commit `8da58b9` (`gh pr merge 10 --merge`, the method PR #9 used,
+      so every commit the Phase 5 records cite is in `main`'s history). CI on `main` passed:
+      Backend, Plugin and the phase checks. Frontend was skipped, as designed until Phase 6 adds
+      it.
 - [x] **Decide on a checkout retry for transient DNS failures** (Known gaps, "Agent DNS").
       Decided on 2026-10-13: `scmCheckoutRetryCount: 2` under `jenkins:` in
       `jenkins/casc/dev.yaml` (D-050).
@@ -580,7 +583,7 @@ has been reviewed by a human yet.
 
 ## Phase 5: Freestyle Assistant and Pipeline Assistant
 
-In progress on `phase-5-assistants`. T5.1 to T5.7 done; T5.8 next.
+Done. Built on `phase-5-assistants`, merged into `main` as `8da58b9` on 2026-10-13 (PR #10).
 
 - [x] T5.1 Spec model (Pydantic) with YAML round-trip and the planner schema, plus one revision
       rule for both job types (D-041). Evidence, all run on 2026-10-12:
@@ -855,8 +858,11 @@ Phase 5 close-out, 2026-10-13. Every item ran in this session:
   Every Phase 5 route is in its OpenAPI, and each refuses an unauthenticated request with 401.
 - **CI:** green on `b662871`, both the push and PR #10. It had been red on `f787450` until the
   fixtures were committed.
-- **PR:** #10 (`phase-5-assistants` → `main`) was retitled and described; it is open, mergeable
-  and **not merged**. Merging is under Needs human.
+- **PR:** #10 (`phase-5-assistants` → `main`) was retitled and described, then **merged on
+  2026-10-13 as merge commit `8da58b9`**, at the user's request. `main`'s tree is identical to the
+  branch head, `93b38cf`. CI on `main` passed after the merge: Backend, Plugin and the phase
+  checks, with Frontend skipped. `phase-5-assistants` is kept, and the `m2-final` tag is
+  untouched.
 
 Audit of T5.1 to T5.8, 2026-10-13. I re-read Part 3, 4.4.3 to 4.4.5, 4.5.5, 4.6 and 4.7.4
 against the code. Five gaps were found and fixed, each with a regression test that fails without
@@ -912,6 +918,28 @@ Preparation, 2026-10-11, after PR #9 merged. Still **no task checked off**.
   `params.COMMIT ?: params.BRANCH`. Settled in T5.1 by D-041.
 - **Not a Phase 5 prerequisite:** labelling the evaluation set is Phase 8. All 30 drafts are still
   `needs_review: true`, and no Phase 5 acceptance clause uses them.
+
+## Phase 6: Frontend
+
+In progress on `phase-6-frontend`, branched from `main` at `8da58b9`. T6.1 next.
+
+- [ ] T6.1 Write `frontend/DESIGN.md` using the process in Part 4.7.2, then stop and add "Approve
+      DESIGN.md" under Needs human. Build no screens before approval. Work on T6.2
+      infrastructure meanwhile.
+- [ ] T6.2 Vite, React and TypeScript project; tokens; app shell; routing; API client generated
+      from the backend OpenAPI schema; WebSocket hook.
+- [ ] T6.3 Sign in and session handling.
+- [ ] T6.4 Shared assistant workspace components (Part 4.7.4).
+- [ ] T6.5 Freestyle Assistant and Pipeline Assistant pages.
+- [ ] T6.6 Queue page with score bars.
+- [ ] T6.7 Jobs and runs, Analytics, Service catalog, Admin and Overview pages.
+- [ ] T6.8 Vitest unit tests and Playwright flows (Part 4.7.6), run against the backend in fake
+      mode.
+- [ ] T6.9 Screenshots of every screen in light and dark themes at 1440 px and 390 px, saved to
+      `docs/screenshots/`, reviewed against `DESIGN.md`, with fixes applied.
+
+**Acceptance:** all frontend quality bars pass; Lighthouse accessibility score of 95 or more on
+both assistant pages; screenshots committed.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
@@ -1019,3 +1047,10 @@ Details in `docs/decisions.md`.
   Five gate runs failed first, each on an intermittent DNS failure on this machine; the
   mitigations are under Needs human. Next: review and merge PR #10, then Phase 6, starting
   with T6.1's `DESIGN.md`.
+- 2026-10-13 PR #10 merged into `main` as merge commit `8da58b9` at the user's request; CI on
+  `main` passed. Phase 6 started on `phase-6-frontend`, branched from `main`:
+  - this file gains the Phase 6 tasks;
+  - T6.8's wrong section reference is recorded as D-051.
+
+  Next: T6.1's `frontend/DESIGN.md`, then stop for approval, with T6.2's infrastructure
+  meanwhile.
