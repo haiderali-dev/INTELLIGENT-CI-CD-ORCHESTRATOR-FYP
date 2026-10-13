@@ -79,8 +79,17 @@ def fail(message: str) -> Result:
     return Result(ok=False, message=message)
 
 
-def run(args: list[str], cwd: Path | None = None, timeout: int = 120) -> subprocess.CompletedProcess[str]:
-    """Run a command and capture its output. Never raises on a non-zero exit."""
+def run(
+    args: list[str],
+    cwd: Path | None = None,
+    timeout: int = 120,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    """Run a command and capture its output. Never raises on a non-zero exit.
+
+    ``env`` is laid over the inherited environment, never in place of it: a subprocess given a
+    minimal environment loses ``SystemRoot`` on Windows and with it DNS (CLAUDE.md).
+    """
     return subprocess.run(
         args,
         cwd=str(cwd or REPO_ROOT),
@@ -88,6 +97,7 @@ def run(args: list[str], cwd: Path | None = None, timeout: int = 120) -> subproc
         text=True,
         timeout=timeout,
         check=False,
+        env={**os.environ, **env} if env else None,
     )
 
 
@@ -2290,7 +2300,106 @@ def check_eval_quality() -> Result:
     return ok("ruff, ruff format and strict mypy clean")
 
 
-IMPLEMENTED_PHASES = {0, 1, 2, 3, 4}
+# ---------------------------------------------------------------------------
+# Phase 5: the assistants
+# ---------------------------------------------------------------------------
+
+
+def _pytest(arguments: list[str], *, timeout: int, env: dict[str, str] | None = None) -> tuple[
+    subprocess.CompletedProcess[str] | None, str
+]:
+    """Run pytest in backend/ through uv. Returns the process and its output, or None and why."""
+    runner = _uv_runner()
+    if runner is None:
+        return None, "uv is not installed; see docs/decisions.md D-010"
+    result = run(
+        # No -q: pyproject's addopts already has it, and a second one suppresses the summary.
+        [*runner, "run", "--no-sync", "python", "-m", "pytest", *arguments],
+        cwd=REPO_ROOT / "backend",
+        timeout=timeout,
+        env=env,
+    )
+    return result, (result.stdout + result.stderr).strip()
+
+
+def _all_passed(result: subprocess.CompletedProcess[str] | None, output: str, what: str) -> Result:
+    """Passed only if pytest exited 0, something passed, and nothing was skipped.
+
+    A skip is a failure here: an acceptance clause that passes because it could not run is worse
+    than no check (the same rule as Phase 3's integration check).
+    """
+    if result is None:
+        return fail(output)
+    if result.returncode != 0:
+        tail = [line for line in output.splitlines() if line.strip()][-3:]
+        return fail(f"{what} failed: " + " / ".join(tail)[:300])
+    passed = re.search(r"(\d+) passed", output)
+    skipped = re.search(r"(\d+) skipped", output)
+    if skipped and int(skipped.group(1)):
+        return fail(f"{what}: {skipped.group(1)} skipped; is the stack up and is .env complete?")
+    if not passed:
+        return fail(f"{what}: pytest reported nothing passing")
+    return ok(f"{passed.group(1)} passed")
+
+
+@check(5, "golden template tests pass, and the templates derive from the reference configs")
+def check_golden_templates() -> Result:
+    """Appendix D, Phase 5: "Golden template tests". The same file proves the derivation: the
+    reference job's own values render what Jenkins exported (rule 1.4)."""
+    golden = REPO_ROOT / "backend" / "tests" / "golden"
+    if not golden.is_dir() or not any(golden.rglob("*.config.xml")):
+        return fail("backend/tests/golden/ holds no golden config.xml files")
+    # UPDATE_GOLDEN would rewrite the files instead of comparing them; never let it leak in.
+    result, output = _pytest(
+        ["tests/test_generation_render.py"], timeout=600, env={"UPDATE_GOLDEN": "0"}
+    )
+    return _all_passed(result, output, "the golden template tests")
+
+
+@check(5, "the linter integration test passes against jenkins-dev")
+def check_linter_integration() -> Result:
+    """Appendix D, Phase 5: "linter integration test". Every Jenkinsfile the generator can produce
+    is put through jenkins-dev's declarative linter, and a broken one must be refused."""
+    result, output = _pytest(
+        ["tests/test_integration_generation.py", "-m", "integration"], timeout=900
+    )
+    return _all_passed(result, output, "the linter integration test")
+
+
+# The failing-branch test is its own check below; leaving it out here keeps the two independent
+# without running the longest chain twice.
+E2E_SELECTION = "not failing_branch"
+
+
+@check(5, "pytest -m e2e passes on the Compose stack")
+def check_e2e() -> Result:
+    """Appendix D, Phase 5: "pytest -m e2e". Every 4.6.5 command, through the real app, real
+    Jenkins and real agents. Replay fixtures, so the gate never spends model quota (T5.8)."""
+    result, output = _pytest(
+        ["tests/test_e2e_assistants.py", "-m", "e2e", "-k", E2E_SELECTION],
+        timeout=3600,
+        env={"E2E_LLM": "replay"},
+    )
+    return _all_passed(result, output, "the end-to-end tests")
+
+
+@check(5, "the failing-branch chain stops before deploy")
+def check_failing_branch() -> Result:
+    """Appendix D, Phase 5, and Phase 5's acceptance: "against demo/failing-tests the freestyle
+    deploy job never starts". Generated, approved and run through the assistant -- not the
+    hand-built chain of scripts/accept_failing_tests.py."""
+    result, output = _pytest(
+        ["tests/test_e2e_assistants.py", "-m", "e2e", "-k", "failing_branch"],
+        timeout=1800,
+        env={"E2E_LLM": "replay"},
+    )
+    verdict = _all_passed(result, output, "the failing-branch chain")
+    if verdict.ok:
+        return ok("test failed on demo/failing-tests and the deploy job never started")
+    return verdict
+
+
+IMPLEMENTED_PHASES = {0, 1, 2, 3, 4, 5}
 
 
 # ---------------------------------------------------------------------------

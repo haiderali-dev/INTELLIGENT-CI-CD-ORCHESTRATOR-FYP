@@ -488,3 +488,69 @@ async def test_only_granted_high_requests_count_towards_the_quota(
     assert asked.disposition is Disposition.NEEDS_JUSTIFICATION
     assert allowed.disposition is Disposition.READY
     assert await high_urgency_used_today(db, user.id) == 1
+
+
+# ---------------------------------------------------------------------------
+# Status, rerun and cancel act only on a service the user named (D-048)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("action", ["STATUS", "RERUN", "CANCEL"])
+async def test_a_service_the_message_never_names_is_dropped_for_run_actions(
+    catalog: Catalog, git: FakeGitClient, action: str
+) -> None:
+    """Recorded from gpt-oss-120b: "What's the status of my last deploy?" -> payment-service."""
+    provider = FakeProvider(script=[answer(action=action, service="payment-service")])
+
+    outcome = await parser_with(catalog, git, provider).interpret(
+        "What's the status of my last deploy?", context=DEVELOPER, has_recent_run=True
+    )
+
+    assert outcome.intent.service is None
+    assert outcome.model_intent.service == "payment-service", "the evaluation still sees the guess"
+    assert any("which the message does not" in note for note in outcome.notes)
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "what's the status of payment-service",
+        "status of the payment builds",
+        "status of paymnt-service",
+    ],
+)
+async def test_a_service_the_user_named_is_kept(
+    catalog: Catalog, git: FakeGitClient, message: str
+) -> None:
+    """By name, by its unique stem, or by a close typo -- whatever the rule parser recognises."""
+    provider = FakeProvider(script=[answer(action="STATUS", service="payment-service")])
+
+    outcome = await parser_with(catalog, git, provider).interpret(
+        message, context=DEVELOPER, has_recent_run=True
+    )
+
+    assert outcome.intent.service == "payment-service"
+
+
+async def test_a_service_given_as_an_answer_is_kept(catalog: Catalog, git: FakeGitClient) -> None:
+    provider = FakeProvider(script=[answer(action="RERUN", service="auth-service")])
+
+    outcome = await parser_with(catalog, git, provider).interpret(
+        "rerun the tests (service auth-service)",
+        context=DEVELOPER,
+        answers={"service": "auth-service"},
+        has_recent_run=True,
+    )
+
+    assert outcome.intent.service == "auth-service"
+
+
+async def test_a_generating_request_keeps_the_models_service(
+    catalog: Catalog, git: FakeGitClient
+) -> None:
+    """Not the guard's business: a generating request is confirmed on its intent card first."""
+    provider = FakeProvider(script=[answer(action="BUILD", service="payment-service")])
+
+    outcome = await parser_with(catalog, git, provider).interpret("build it", context=DEVELOPER)
+
+    assert outcome.intent.service == "payment-service"

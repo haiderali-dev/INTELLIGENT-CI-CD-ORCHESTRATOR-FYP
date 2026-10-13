@@ -1,0 +1,19 @@
+{
+  "completion_tokens": 78,
+  "data": {
+    "action": "TEST",
+    "branch": null,
+    "commit": null,
+    "confidence": 0.4,
+    "environment": null,
+    "extra_stages": [],
+    "justification": null,
+    "service": null,
+    "test_suite": null,
+    "urgency": null
+  },
+  "model": "openai/gpt-oss-120b",
+  "prompt_hash": "55cffffd5acd16f60e543b943d45fd13ef0935d7b883bf1d08f4b1f52a5068e6",
+  "prompt_tokens": 1700,
+  "recorded_at": "2026-10-13T00:49:29.458569+00:00"
+}

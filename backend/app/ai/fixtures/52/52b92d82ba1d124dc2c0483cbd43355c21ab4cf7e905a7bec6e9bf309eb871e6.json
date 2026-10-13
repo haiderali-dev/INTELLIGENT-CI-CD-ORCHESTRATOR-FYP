@@ -1,0 +1,17 @@
+{
+  "completion_tokens": 52,
+  "data": {
+    "stages": [
+      {
+        "environment": "staging",
+        "name": "Deploy to staging",
+        "suite": null,
+        "template": "deploy"
+      }
+    ]
+  },
+  "model": "openai/gpt-oss-120b",
+  "prompt_hash": "52b92d82ba1d124dc2c0483cbd43355c21ab4cf7e905a7bec6e9bf309eb871e6",
+  "prompt_tokens": 1589,
+  "recorded_at": "2026-10-13T00:52:36.077659+00:00"
+}

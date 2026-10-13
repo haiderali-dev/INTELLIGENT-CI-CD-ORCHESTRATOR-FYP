@@ -11,6 +11,25 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 5
 
+### D-048 Status, rerun and cancel act only on a service the user named
+**Date:** 2026-10-13 · **Status:** decided and implemented (found by T5.8)
+
+The first end-to-end recording showed gpt-oss-120b answering "What's the status of my last
+deploy?" with `service: payment-service`, a service the message never names. The status card then
+showed the wrong chain. A generating request is confirmed on its intent card before anything
+runs; status, rerun and cancel are not. A guessed service there would show, re-run or cancel the
+wrong chain.
+
+**Decision.** For those three actions, `IntentParser` keeps the model's service only when the
+user named it: either the rule parser finds it in the message (exact name, unique stem or close
+typo), or it was a clarification answer. Otherwise it is dropped to null, with a note, and the
+user's latest chain is used. This is narrow, like D-037's UNSUPPORTED rescue, and the prompt was
+not tuned. The model's answer stays in `model_intent`, so the evaluation still scores it.
+
+**Also found by the same run:** a harness bug, not a product one. Sharing one Groq client across
+tests, each on its own event loop, made the next request fail with "Event loop is closed". The
+e2e harness now gives each test its own provider.
+
 ### D-047 Chains: the lock, tracking, the run card and run commands
 **Date:** 2026-10-13 · **Status:** decided and implemented (T5.7)
 

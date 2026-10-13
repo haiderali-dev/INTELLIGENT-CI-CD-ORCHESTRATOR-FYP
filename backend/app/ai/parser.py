@@ -42,7 +42,7 @@ from app.ai.cache import cache_key
 from app.ai.chain import CallRecord, ModelChain
 from app.ai.clarify import Clarification, ClarificationService, HelpCard
 from app.ai.guard import guard_message
-from app.ai.intent import Action, Intent
+from app.ai.intent import RUN_ACTIONS, Action, Intent
 from app.ai.policy import (
     HIGH_URGENCY_AUDIT_ACTION,
     AuditEvent,
@@ -287,6 +287,7 @@ class IntentParser:
 
         intent = self._rescue(model_intent, rules_parse, message, parser, draft)
         intent = self._apply_answers(intent, answers, draft)
+        intent = self._ground_run_service(intent, rules_parse, answers, draft)
 
         base: _Common = {
             "text": message,
@@ -467,6 +468,32 @@ class IntentParser:
             "asking for the missing details instead"
         )
         return ruled.with_changes(confidence=min(ruled.confidence, 0.5))
+
+    @staticmethod
+    def _ground_run_service(
+        intent: Intent, rules_parse: RuleParse, answers: dict[str, str] | None, draft: _Draft
+    ) -> Intent:
+        """Status, rerun and cancel act at once, so they act only on a service the user named.
+
+        Found by the end-to-end suite (D-048): ``gpt-oss-120b`` answered "What's the status of my
+        last deploy?" with ``service: payment-service``, a service the message never mentions,
+        and the status card showed the wrong chain. A generating request is confirmed on its
+        intent card before anything runs; these three are not -- a rerun or cancel on a guessed
+        service would act on someone else's chain. "Named" is what the rule parser finds in the
+        message (exact name, unique stem or close typo) or a clarification answer. Narrow, like
+        the UNSUPPORTED rescue: the model's own answer stays in ``model_intent``.
+        """
+        if intent.action not in RUN_ACTIONS or intent.service is None:
+            return intent
+        if answers and "service" in answers:
+            return intent
+        if rules_parse.intent.service == intent.service:
+            return intent
+        draft.notes.append(
+            f"the model named {intent.service}, which the message does not; status, rerun and "
+            "cancel act only on a service the user named"
+        )
+        return intent.with_changes(service=None)
 
     @staticmethod
     def _apply_answers(intent: Intent, answers: dict[str, str] | None, draft: _Draft) -> Intent:

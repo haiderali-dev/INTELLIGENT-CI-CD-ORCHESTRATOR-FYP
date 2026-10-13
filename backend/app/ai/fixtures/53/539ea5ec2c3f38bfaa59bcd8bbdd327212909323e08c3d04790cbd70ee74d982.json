@@ -1,0 +1,17 @@
+{
+  "completion_tokens": 45,
+  "data": {
+    "stages": [
+      {
+        "environment": null,
+        "name": "Build",
+        "suite": null,
+        "template": "build"
+      }
+    ]
+  },
+  "model": "openai/gpt-oss-120b",
+  "prompt_hash": "539ea5ec2c3f38bfaa59bcd8bbdd327212909323e08c3d04790cbd70ee74d982",
+  "prompt_tokens": 1597,
+  "recorded_at": "2026-10-13T00:48:11.351381+00:00"
+}

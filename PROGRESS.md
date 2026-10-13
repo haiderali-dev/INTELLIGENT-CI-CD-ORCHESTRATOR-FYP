@@ -736,7 +736,30 @@ In progress on `phase-5-assistants`. T5.1 to T5.7 done; T5.8 next.
         - cancel stopping the running job and dequeuing the rest, and cancel permissions;
         - status and rerun messages.
       - **Regression checks:** offline suite 1438 passed; ruff, format and mypy clean.
-- [ ] T5.8 End-to-end backend tests (`e2e`) for every command in Part 4.6.5.
+- [ ] T5.8 End-to-end backend tests (`e2e`) for every command in Part 4.6.5. **Not checked:**
+      `python scripts/verify.py --phase 5` has not been run yet. Done so far, all on 2026-10-13:
+      - **Tests:** `tests/test_e2e_assistants.py` and `tests/e2e_support.py` cover all nine 4.6.5
+        commands, the failing-branch acceptance through the generator, and one Pipeline with its
+        stages tracked. They run against the real app, the stack's PostgreSQL (a migrated
+        `orchestrator_e2e` database), jenkins-dev and its agents, and real deploys.
+      - **Results:**
+        - Record mode against live Groq: 11 passed.
+        - Replay mode, no model access: **11 passed, 0 replay misses**.
+        - The failing branch: the test job failed, and the deploy job's last build number was
+          unchanged.
+      - **Fixtures:** recorded into `app/ai/fixtures/`.
+      - **Branch created:** `feature/refund` in payment-service, at `main` (998844b), because the
+        4.6.5 command names it.
+      - **Parser guard (D-048), found by e2e:** gpt-oss-120b invented a service for "status of my
+        last deploy". STATUS, RERUN and CANCEL now act only on a service the user named. 4 new
+        parser tests; parser suite 32 passed.
+      - **`verify.py`:** Phase 5 checks added (golden templates, linter integration, e2e,
+        failing branch), and `IMPLEMENTED_PHASES` now includes 5.
+      - **Still to do:**
+        1. Run `verify.py --phase 5` and the full offline suite, then check this task off.
+        2. Rebuild the backend image, then run `alembic upgrade head` in the container.
+        3. Phase 5 security review.
+        4. Open the Phase 5 PR. Do not merge.
 - [ ] T5.9 Stretch: "Explain failure" for failed runs.
 
 Groundwork recorded on 2026-10-11, before T5.1:
