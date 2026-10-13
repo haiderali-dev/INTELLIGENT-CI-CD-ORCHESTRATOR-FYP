@@ -1,6 +1,6 @@
 # Progress
 
-Updated: 2026-10-14 · Current phase: 6 (T6.1 done and awaiting approval; T6.2 next) ·
+Updated: 2026-10-14 · Current phase: 6 (T6.1 awaiting approval; T6.2 done; T6.3 waits for it) ·
 Branch: phase-6-frontend
 
 ## Needs human
@@ -964,8 +964,43 @@ for approval (Needs human); T6.2 next.
         back to rules after a replay miss. The cause was a checkout that Jenkins had retried
         (D-053), fixed in the next commit. A full re-run after that fix was stopped by Claude
         Code because the machine ran low on memory, and has not been repeated.
-- [ ] T6.2 Vite, React and TypeScript project; tokens; app shell; routing; API client generated
-      from the backend OpenAPI schema; WebSocket hook.
+- [x] T6.2 Vite, React and TypeScript project; tokens; app shell; routing; API client generated
+      from the backend OpenAPI schema; WebSocket hook. Evidence, all run on 2026-10-14:
+      - **Project:** Vite 8, React 19 and TypeScript 5.9 in strict mode, with
+        `noUncheckedIndexedAccess`. Every version is exact and recorded in `docs/versions.md`,
+        including why three trail the newest release.
+      - **Tokens:** `src/styles/tokens.css` holds DESIGN.md's colours for both themes. Tailwind's
+        own palette, radii, shadows, breakpoints and type scale are cleared, so only DESIGN.md's
+        values exist as utilities. A test compares all 13 colours with DESIGN.md's tables.
+      - **Shell and routing:** React Router 8 with a sidebar of every page. The two assistants
+        are separate entries in Spruce and Plum. The footer says Staging and has the
+        Light/Dark/System switch. Below 768 px a menu button opens the same sidebar as a Radix
+        dialog. Every route is a placeholder that names the task building it; no screen is
+        built before DESIGN.md's approval.
+      - **API client:** the schema is exported from the app object by
+        `python -m app.openapi_export`, needing no server and no `.env`, into
+        `frontend/openapi.json`. `openapi-typescript` turns that into `src/api/schema.d.ts`, the
+        only API types. The client, `openapi-fetch`, adds the bearer token, held in memory only.
+      - **WebSocket hook:** one shared `LiveEventsClient`:
+        - it authenticates in its first frame;
+        - it stops on close 1008;
+        - otherwise it reconnects with backoff from 1 s to 30 s;
+        - it closes a socket that misses two heartbeats.
+        `useLiveEvent` and `useLiveStatus` expose it.
+      - **Checks:** verify.py has three new Phase 6 checks, each run directly and each passing:
+        - "lint, typecheck and build clean; 49 tests passed";
+        - "openapi.json is the backend's schema (39 paths), and schema.d.ts is its output";
+        - "12 event types and 4 topics, the same on both sides".
+      - **The checks are negative-tested.** Four drifted copies each failed with the command
+        that fixes them: a stale `openapi.json`, a hand-edited `schema.d.ts`, a missing event
+        type, and no `node_modules`.
+      - **CI:** the backend job now fails if `openapi.json` is stale, and the frontend job fails if
+        `schema.d.ts` was hand-edited.
+      - **Backend:** ruff, format and mypy are clean, and the offline suite passed 1641, with 4 new
+        export tests.
+      - **Not yet done:** the shell has not been looked at in a browser; T6.9's screenshots cover
+        that. The full `verify.py --phase 6` was not re-run after these checks were added (see
+        T6.1).
 - [ ] T6.3 Sign in and session handling.
 - [ ] T6.4 Shared assistant workspace components (Part 4.7.4).
 - [ ] T6.5 Freestyle Assistant and Pipeline Assistant pages.
@@ -978,6 +1013,10 @@ for approval (Needs human); T6.2 next.
 
 **Acceptance:** all frontend quality bars pass; Lighthouse accessibility score of 95 or more on
 both assistant pages; screenshots committed.
+
+Open in Phase 6, outside any one task: `frontend/Dockerfile`, and removing the `frontend` service's
+Compose profile, which D-018 left for "once Phase 6 builds the image". Best done once the
+screens exist, before T6.8's Playwright flows run against the stack.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
@@ -1099,3 +1138,7 @@ Details in `docs/decisions.md`.
   `verify.py` check. It now waits for a person's approval; no screen is built before it. The
   Phase 6 gate passed 71 of 72. Its one failure, in Phase 5's Explain failure, is D-053. A
   re-run after the fix was stopped by Claude Code for low memory. Next: T6.2.
+- 2026-10-14 T6.2 done: the frontend project, tokens, shell, routing, generated API client and
+  WebSocket client, with three new `verify.py` checks run directly and passing, and CI guarding
+  the API types. Next: T6.3 onward builds screens, so it waits for DESIGN.md's approval. The full
+  Phase 6 gate also needs a re-run once the machine has the memory for it.

@@ -90,6 +90,9 @@ ignore = [
 # seed.py is a command-line entry point (`python -m app.db.seed`); its printed summary is its
 # user interface, not a stray debug statement. The same events are also logged structurally.
 "app/db/seed.py" = ["T201"]
+# Also a command-line entry point (`python -m app.openapi_export`). Its token and password are
+# placeholders that only satisfy Settings validation; the schema does not depend on them.
+"app/openapi_export.py" = ["T201", "S106"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]

@@ -1,0 +1,59 @@
+/*
+ * Design tokens. Every colour is DESIGN.md's, section 2, and src/styles/tokens.test.ts fails when
+ * one drifts from it. Light is the default; src/app/theme sets [data-theme="dark"] on <html>.
+ *
+ * Named values run the interface. The factor colours fill score bar segments and their legend
+ * keys only, and the state colours mark build states only (DESIGN.md, D-052).
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Named values */
+  --ground: #eef1f4;
+  --panel: #ffffff;
+  --ink: #111418;
+  --graphite: #4a5361;
+  --spruce: #127a6b;
+  --plum: #633f5f;
+  /* Derived: dividers only, never the only edge of a control. */
+  --rule: color-mix(in oklab, var(--graphite) 25%, var(--panel));
+
+  /* Score bar colours */
+  --factor-urgency: #187eee;
+  --factor-dependency: #d94787;
+  --factor-execution-time: #4c35b5;
+  --factor-aging: #1594ac;
+
+  /* Build-state colours */
+  --state-succeeded: #069c07;
+  --state-failed: #a51f1e;
+  --state-unstable: #b07800;
+
+  /* Floating layers only: menus, popovers, dialogs, drawers, toasts. */
+  --float-shadow: 0 8px 24px rgb(17 20 24 / 0.16);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --ground: #0d1014;
+  --panel: #171b21;
+  --ink: #e8ebef;
+  --graphite: #a9b2be;
+  --spruce: #7bd1ba;
+  --plum: #e3b6fe;
+  --rule: color-mix(in oklab, var(--graphite) 30%, var(--panel));
+
+  --factor-urgency: #187eee;
+  --factor-dependency: #c23492;
+  --factor-execution-time: #6859da;
+  --factor-aging: #0ca3be;
+
+  --state-succeeded: #0ca30c;
+  --state-failed: #f76046;
+  --state-unstable: #fab219;
+
+  /* Shadows do not read on a dark ground; floating layers take a Rule border instead. */
+  --float-shadow: none;
+}

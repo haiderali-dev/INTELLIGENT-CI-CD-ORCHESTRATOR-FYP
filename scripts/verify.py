@@ -2724,6 +2724,151 @@ def check_design_doc() -> Result:
     return ok(summary)
 
 
+FRONTEND = REPO_ROOT / "frontend"
+OPENAPI_COPY = FRONTEND / "openapi.json"
+API_TYPES = FRONTEND / "src" / "api" / "schema.d.ts"
+WS_HUB = REPO_ROOT / "backend" / "app" / "ws" / "hub.py"
+WS_PROTOCOL = FRONTEND / "src" / "ws" / "events.ts"
+# 1.6's quality bars, in the order CI's frontend job runs them.
+FRONTEND_BARS = ("lint", "typecheck", "test", "build")
+_ANSI_CODES = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def _npm() -> list[str] | None:
+    """npm, or None. On Windows it is a `.cmd` shim, which is only found by its full name."""
+    name = "npm.cmd" if os.name == "nt" else "npm"
+    return [name] if have(name) else None
+
+
+def _frontend_ready() -> tuple[list[str] | None, str]:
+    npm = _npm()
+    if npm is None:
+        return None, "npm is not installed"
+    if not (FRONTEND / "package.json").is_file():
+        return None, "frontend/package.json is missing (T6.2)"
+    if not (FRONTEND / "node_modules").is_dir():
+        # Never installed here: that needs the network and could change what is being checked.
+        return None, "frontend/node_modules is missing; run `npm ci` in frontend/ first"
+    return npm, ""
+
+
+@check(6, "the frontend passes lint, typecheck, test and build")
+def check_frontend_quality_bars() -> Result:
+    """T6.2 and 1.6: the four scripts CI's frontend job runs, run the same way. A skipped test is a
+    failure, as everywhere in this file."""
+    npm, why = _frontend_ready()
+    if npm is None:
+        return fail(why)
+    tests = ""
+    for script in FRONTEND_BARS:
+        result = run([*npm, "run", script], cwd=FRONTEND, timeout=900)
+        output = _ANSI_CODES.sub("", result.stdout + result.stderr).strip()
+        if result.returncode != 0:
+            tail = [line for line in output.splitlines() if line.strip()][-3:]
+            saved = _keep_output(f"frontend {script}", output)
+            return fail(f"npm run {script} failed: " + " / ".join(tail)[:300] + f" ({saved})")
+        if script == "test":
+            passed = re.search(r"Tests\s+(\d+) passed", output)
+            skipped = re.search(r"(\d+) skipped", output)
+            if not passed:
+                return fail("npm run test reported nothing passing")
+            if skipped and int(skipped.group(1)):
+                return fail(f"npm run test: {skipped.group(1)} skipped")
+            tests = passed.group(1)
+    return ok(f"lint, typecheck and build clean; {tests} tests passed")
+
+
+@check(6, "the frontend's API types are generated from the backend's current OpenAPI schema")
+def check_api_types_current() -> Result:
+    """4.7.1: "API types are generated from the backend OpenAPI schema; never hand-write them."
+
+    Two links, each regenerated into the scratch folder and compared byte for byte, never written
+    over the committed file: the backend's schema, exported from the app object, against
+    `frontend/openapi.json`; and the types `openapi-typescript` makes from that copy against
+    `src/api/schema.d.ts`. An API change that skipped either regeneration fails here.
+    """
+    runner = _uv_runner()
+    if runner is None:
+        return fail("uv is not installed; see docs/decisions.md D-010")
+    npm, why = _frontend_ready()
+    if npm is None:
+        return fail(why)
+    for path in (OPENAPI_COPY, API_TYPES):
+        if not path.is_file():
+            return fail(f"{path.relative_to(REPO_ROOT).as_posix()} is missing (T6.2)")
+    scratch = REPO_ROOT / ".tmp" / "verify"
+    scratch.mkdir(parents=True, exist_ok=True)
+
+    exported = scratch / "openapi.json"
+    result = run(
+        [*runner, "run", "--no-sync", "python", "-m", "app.openapi_export", str(exported)],
+        cwd=REPO_ROOT / "backend",
+        timeout=300,
+    )
+    if result.returncode != 0:
+        return fail("the schema export failed: " + (result.stderr or result.stdout).strip()[-300:])
+    if exported.read_bytes() != OPENAPI_COPY.read_bytes():
+        return fail(
+            "frontend/openapi.json is not the backend's current schema: in backend/ run "
+            "`uv run --no-sync python -m app.openapi_export ../frontend/openapi.json`, then "
+            "`npm run generate:api` in frontend/"
+        )
+
+    regenerated = scratch / "schema.d.ts"
+    result = run(
+        [*npm, "exec", "--", "openapi-typescript", "openapi.json", "--output", str(regenerated)],
+        cwd=FRONTEND,
+        timeout=300,
+    )
+    if result.returncode != 0:
+        return fail("openapi-typescript failed: " + (result.stderr or result.stdout).strip()[-300:])
+    if regenerated.read_bytes() != API_TYPES.read_bytes():
+        return fail("src/api/schema.d.ts is not generated from openapi.json: run `npm run generate:api`")
+    paths = len(json.loads(OPENAPI_COPY.read_text(encoding="utf-8"))["paths"])
+    return ok(f"openapi.json is the backend's schema ({paths} paths), and schema.d.ts is its output")
+
+
+def _python_enum_values(source: str, name: str) -> list[str]:
+    match = re.search(rf"^class {name}\(StrEnum\):\n(.*?)(?=^\S)", source, re.MULTILINE | re.DOTALL)
+    if not match:
+        return []
+    return re.findall(r'^\s+[A-Z_]+ = "([^"]+)"$', match.group(1), re.MULTILINE)
+
+
+def _ts_const_values(source: str, name: str) -> list[str]:
+    match = re.search(rf"export const {name} = \[(.*?)\] as const", source, re.DOTALL)
+    return re.findall(r'"([^"]+)"', match.group(1)) if match else []
+
+
+@check(6, "the frontend's WebSocket event and topic names are the backend's")
+def check_ws_protocol_names() -> Result:
+    """WebSocket messages are not in the OpenAPI schema, so `src/ws/events.ts` names them by hand.
+    This keeps those names equal to the backend's `EventType` and `Topic` enums, in both
+    directions: an event the frontend cannot parse is dropped silently."""
+    for path in (WS_HUB, WS_PROTOCOL):
+        if not path.is_file():
+            return fail(f"{path.relative_to(REPO_ROOT).as_posix()} is missing")
+    hub = WS_HUB.read_text(encoding="utf-8")
+    protocol = WS_PROTOCOL.read_text(encoding="utf-8")
+    problems = []
+    for enum, constant in (("EventType", "LIVE_EVENT_TYPES"), ("Topic", "LIVE_TOPICS")):
+        backend = set(_python_enum_values(hub, enum))
+        frontend = set(_ts_const_values(protocol, constant))
+        if not backend or not frontend:
+            problems.append(f"could not read {enum} or {constant}")
+        elif backend != frontend:
+            only_backend = ", ".join(sorted(backend - frontend)) or "none"
+            only_frontend = ", ".join(sorted(frontend - backend)) or "none"
+            problems.append(
+                f"{enum}: only in the backend {only_backend}; only in the frontend {only_frontend}"
+            )
+    if problems:
+        return fail("; ".join(problems))
+    events = len(_python_enum_values(hub, "EventType"))
+    topics = len(_python_enum_values(hub, "Topic"))
+    return ok(f"{events} event types and {topics} topics, the same on both sides")
+
+
 IMPLEMENTED_PHASES = {0, 1, 2, 3, 4, 5, 6}
 
 
