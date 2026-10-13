@@ -361,6 +361,21 @@ def test_the_code_s_explanation_names_the_test_and_what_never_started() -> None:
     assert suggestions == ("Fix the failing test or the code it checks, then rerun the tests.",)
 
 
+def test_a_network_fault_on_the_agent_points_at_the_agent_not_the_branch() -> None:
+    """Captured on jenkins-dev: the agent's DNS dropped github.com mid-clone. The branch was fine;
+    "check the branch was pushed" would have sent the developer the wrong way."""
+    text = (LOGS / "payment-service-test-unit-dns.log").read_text(encoding="utf-8")
+    analysis = analyse(text, job_type="FREESTYLE", stage="Unit tests", stage_template="test")
+
+    summary, suggestions = rules_explanation(analysis, PAYMENT)
+
+    assert summary.startswith("The failure came from the build agent or its environment")
+    assert "Could not resolve host: github.com" in summary
+    assert suggestions == (
+        "Ask an administrator to check the build agent, then rerun; the code may be fine.",
+    )
+
+
 def test_the_code_s_explanation_quotes_its_evidence_once() -> None:
     text = (LOGS / "payment-service-build-checkout.log").read_text(encoding="utf-8")
     analysis = analyse(text, job_type="FREESTYLE")

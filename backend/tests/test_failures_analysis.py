@@ -137,6 +137,16 @@ Finished: FAILURE
             (None, None),
             "[build] auth-service",
         ),
+        (
+            # The agent could not resolve github.com: a network fault, not a missing branch.
+            "payment-service-test-unit-dns.log",
+            "Unit tests",
+            "test",
+            FailureCategory.INFRASTRUCTURE,
+            (),
+            (None, None),
+            "Could not resolve host: github.com",
+        ),
     ],
 )
 def test_each_captured_failure_is_recognised(

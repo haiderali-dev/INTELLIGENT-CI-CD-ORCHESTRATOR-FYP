@@ -68,6 +68,20 @@ def test_credentials_in_a_clone_url_are_masked() -> None:
         ("api_key: 'abcdefghi'", f"api_key: {MASK}"),
         ('client_secret="s3cr3t value"', f"client_secret={MASK}"),
         ("Author: Jane Doe <jane.doe@example.com>", f"Author: Jane Doe <{EMAIL_MASK}>"),
+        # Credentials on a command line, the commonest way a build prints one by accident.
+        (
+            "+ curl -u bot:hunter2hunter2 https://x.test/api",
+            f"+ curl -u bot:{MASK} https://x.test/api",
+        ),
+        (
+            "+ curl --user=bot:s3cretvalue https://x.test",
+            f"+ curl --user=bot:{MASK} https://x.test",
+        ),
+        (
+            "+ docker login --password s3cretvalue --username bot",
+            f"+ docker login --password {MASK} --username bot",
+        ),
+        ("+ tool --api-key abcdef123456 run", f"+ tool --api-key {MASK} run"),
     ],
 )
 def test_secret_shaped_values_are_masked(line: str, expected: str) -> None:
@@ -83,6 +97,9 @@ def test_secret_shaped_values_are_masked(line: str, expected: str) -> None:
         "Cloning repository https://github.com/haiderali-dev/payment-service.git",
         "Fetching upstream changes from git@github.com:org/repo.git",  # an SSH remote, not a person
         "added react@18.3.1 and lodash@4.17.21",  # package pins, not addresses
+        "+ git push -u origin main",  # -u without a user:secret pair
+        "+ sort -u names.txt",
+        "+ docker login --password-stdin --username bot",  # the flag, with no value on the line
         "✔ login issues a token (854.48993ms)",
         "Checking out Revision da997c8be894b8058c9c88068295964b81f2d846",  # a SHA is not a secret
     ],

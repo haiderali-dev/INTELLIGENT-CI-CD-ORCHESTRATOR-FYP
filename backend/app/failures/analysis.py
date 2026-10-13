@@ -139,18 +139,10 @@ _ARROW: Final = "\N{SINGLE RIGHT-POINTING ANGLE QUOTATION MARK}"
 # In order: the first rule that matches decides. Causes that stop everything come first, so a
 # checkout error is not reported as the test failure it prevented from ever running.
 _RULES: Final = (
-    _Rule(
-        FailureCategory.CHECKOUT,
-        re.compile(
-            r"Couldn't find any revision to build"
-            r"|^ERROR: Error (?:cloning|fetching) remote repo"
-            r"|hudson\.plugins\.git\.GitException"
-            r"|^fatal: (?:repository|could not read|unable to access|couldn't find remote ref"
-            r"|reference is not a tree)"
-            r"|^ERROR: Checkout failed"
-        ),
-        whole_log=True,
-    ),
+    # The agent's own faults first. A clone that failed because the agent could not reach the
+    # network says nothing about the branch, and "check the branch was pushed" would send the
+    # developer the wrong way -- found on jenkins-dev, where Docker Desktop's DNS drops a lookup now
+    # and then (tests/data/failure_logs/payment-service-test-unit-dns.log).
     _Rule(
         FailureCategory.INFRASTRUCTURE,
         re.compile(
@@ -161,6 +153,21 @@ _RULES: Final = (
             r"|permission denied while trying to connect to the [Dd]ocker"
             r"|java\.lang\.OutOfMemoryError"
             r"|^Killed$"
+            r"|Could not resolve host|Could not resolve hostname"
+            r"|Temporary failure in name resolution|Name or service not known"
+            r"|Network is unreachable|Failed to connect to \S+ port \d+"
+        ),
+        whole_log=True,
+    ),
+    _Rule(
+        FailureCategory.CHECKOUT,
+        re.compile(
+            r"Couldn't find any revision to build"
+            r"|^ERROR: Error (?:cloning|fetching) remote repo"
+            r"|hudson\.plugins\.git\.GitException"
+            r"|^fatal: (?:repository|could not read|unable to access|couldn't find remote ref"
+            r"|reference is not a tree)"
+            r"|^ERROR: Checkout failed"
         ),
         whole_log=True,
     ),
@@ -323,14 +330,19 @@ def analyse(
     stage_template: str | None = None,
     known_secrets: Iterable[str] = (),
     complete: bool = True,
+    first_line: int = 1,
 ) -> FailureAnalysis:
     """Work out what ``log`` shows about why its build failed.
 
     ``stage`` is the failed stage's name (a freestyle chain job's stage, or the stage the Pipeline
     stage view reports as failed) and ``stage_template`` its template, when they are known.
-    ``complete`` is False when Jenkins was still writing the log.
+    ``complete`` is False when Jenkins was still writing the log. ``first_line`` is the number, in
+    Jenkins's whole log, of ``log``'s first line: more than 1 when only the end was read
+    (``JenkinsClient.console_tail``).
     """
     text, first_number, truncated = _tail(log)
+    first_number += first_line - 1
+    truncated = truncated or first_line > 1
     # Console notes and colour first: a Pipeline line can start with a hidden note, then a time.
     text = _TIMESTAMP.sub("", _ANSI.sub("", text.replace("\r\n", "\n")))
     redacted = redact(text, known_secrets)

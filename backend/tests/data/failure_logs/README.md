@@ -22,8 +22,18 @@ One more was captured during T5.9's first end-to-end run (2026-10-13), from
 | --- | --- |
 | `payment-service-pipeline-unit-tests.log` | A Pipeline's "Unit tests" stage. The later stages were skipped. |
 
-It is stored as Jenkins served it, apart from line endings: Jenkins sent CRLF, and the file uses
-LF like the others. It keeps every Timestamper prefix and every hidden console note
+Another real log was captured on 2026-10-13, from `it-failure-payment-service-test-unit` #5, the
+job of `test_integration_failures.py`:
+
+| File | What failed |
+| --- | --- |
+| `payment-service-test-unit-dns.log` | The checkout: the agent could not resolve `github.com`. |
+
+Docker Desktop's DNS intermittently drops a lookup from the agents. It showed up as a failed
+`verify.py` run.
+
+Both are stored as Jenkins served them, apart from line endings: Jenkins sent CRLF, and the files
+use LF like the others. They keep every Timestamper prefix and every hidden console note
 (`ESC[8mha:...ESC[0m`), because those are what the analysis must read through.
 
 One file is constructed rather than captured:

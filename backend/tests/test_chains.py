@@ -495,6 +495,30 @@ def test_every_chain_status_is_known() -> None:
     assert RunResult.FAILURE.value == "FAILURE"
 
 
+@pytest.mark.parametrize(
+    ("name", "service", "expected"),
+    [
+        ("fs-payment-service-test-unit", "payment-service", True),
+        ("fs-payment-service-test-integration", "payment-service", True),
+        ("fs-payment-service-deploy-staging", "payment-service", False),
+        ("fs-payment-service-build", "payment-service", False),
+        ("pl-payment-service-test", "payment-service", True),
+        ("pl-payment-service-build-test-deploy-staging", "payment-service", True),
+        ("pl-payment-service-deploy-staging", "payment-service", False),
+        # A service whose own name contains "-test-": reading the whole name made its deploy job
+        # look like a test job, so "rerun the failed tests" could re-run a deploy.
+        ("fs-load-test-service-deploy-staging", "load-test-service", False),
+        ("pl-load-test-service-deploy-staging", "load-test-service", False),
+        ("fs-load-test-service-test-unit", "load-test-service", True),
+        ("fs-auth-service-test-unit", "payment-service", False),
+    ],
+)
+def test_a_test_job_is_recognised_after_its_service_s_name(
+    name: str, service: str, expected: bool
+) -> None:
+    assert chains.is_test_job(name, service) is expected
+
+
 async def test_app_starts_with_the_chain_routes(app: FastAPI) -> None:
     paths = set(app.openapi()["paths"])
     assert {"/api/chains", "/api/chains/{chain_id}", "/api/chains/{chain_id}/cancel"} <= paths

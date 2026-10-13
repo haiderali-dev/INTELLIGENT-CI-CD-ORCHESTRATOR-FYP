@@ -35,6 +35,10 @@ logger = get_logger(__name__)
 LOG_SETTLE_ATTEMPTS: Final = 5
 LOG_SETTLE_SECONDS: Final = 1.0
 
+# How much of a log's end is read. The analysis needs only the end -- the failing step is the last
+# one -- and a build can print without limit, so the rest is never held in memory.
+MAX_LOG_BYTES: Final = 1_000_000
+
 _NOT_FAILED: Final = {
     RunResult.SUCCESS.value: "This run succeeded, so there is no failure to explain.",
     RunResult.RUNNING.value: "This run has not finished. Ask again if it fails.",
@@ -219,12 +223,12 @@ async def _read_and_analyse(
     if run.build_number <= 0:
         return unavailable("the run never started as a Jenkins build", stage=stage)
     try:
-        chunk = await jenkins.console_window(job.jenkins_name, run.build_number, 0)
+        chunk = await jenkins.console_tail(job.jenkins_name, run.build_number, MAX_LOG_BYTES)
         for _ in range(LOG_SETTLE_ATTEMPTS - 1):
             if not chunk.more_data:
                 break
             await asyncio.sleep(settle_seconds)
-            chunk = await jenkins.console_window(job.jenkins_name, run.build_number, 0)
+            chunk = await jenkins.console_tail(job.jenkins_name, run.build_number, MAX_LOG_BYTES)
     except JobNotFoundError:
         return unavailable("Jenkins no longer has this build", stage=stage)
     except JenkinsError as exc:
@@ -240,4 +244,5 @@ async def _read_and_analyse(
         stage_template=template,
         known_secrets=secrets,
         complete=not chunk.more_data,
+        first_line=chunk.lines_before + 1,
     )

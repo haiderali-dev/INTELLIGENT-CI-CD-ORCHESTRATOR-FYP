@@ -318,6 +318,24 @@ async def test_a_log_still_being_written_is_explained_and_marked_incomplete(
     assert failure.analysis.category.value == "test_failure"
 
 
+async def test_a_very_long_log_is_read_from_its_end_with_true_line_numbers(
+    client: AsyncClient, db: AsyncSession, fake_jenkins: FakeJenkinsClient, tracker: RunTracker
+) -> None:
+    """A build prints without limit: only the end is read, and line numbers still match Jenkins."""
+    head = "".join(f"collecting {number}\n" for number in range(400_000))  # about 7 MB
+    log_text = head + AUTH_LOG
+    token, card = await failed_chain(client, db, fake_jenkins, tracker, log_text=log_text)
+
+    body = (await explain(client, token, card["failed_run_id"])).json()
+
+    assert body["log"]["truncated"] is True
+    assert body["log"]["lines"] == 400_000 + 74
+    assert body["facts"]["category"] == "test_failure"
+    printed = log_text.split("\n")
+    for line in body["facts"]["evidence"]:
+        assert printed[line["line"] - 1].rstrip() == line["text"]
+
+
 async def test_explaining_shares_the_assistants_rate_limit(
     client: AsyncClient, db: AsyncSession, fake_jenkins: FakeJenkinsClient, tracker: RunTracker
 ) -> None:

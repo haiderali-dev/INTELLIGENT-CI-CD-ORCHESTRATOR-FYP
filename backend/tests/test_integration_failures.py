@@ -88,6 +88,33 @@ async def run_on_the_failing_branch(jenkins: HttpJenkinsClient) -> tuple[int, st
     return number, result, await wait_for_complete_log(jenkins, JOB, number)
 
 
+# Docker Desktop's DNS drops a lookup from the agents now and then, and a clone then fails before
+# any test runs. That is not the failure this test is about, so such a build is run again.
+MAX_ATTEMPTS = 3
+
+
+async def a_run_that_reached_its_tests(
+    jenkins: HttpJenkinsClient, *, stage: str, template: str, secrets: tuple[str, ...]
+) -> tuple[int, str, FailureAnalysis]:
+    """A failed build of ``JOB`` that got as far as its tests, with its log and analysis.
+
+    The analysis itself says whether the agent's environment failed first. Every attempt that did
+    is reported if none gets through, rather than skipped.
+    """
+    environment_faults: list[str] = []
+    for _ in range(MAX_ATTEMPTS):
+        number, result, text = await run_on_the_failing_branch(jenkins)
+        assert result == "FAILURE", f"{JOB}#{number}: the branch's test should fail"
+        analysis = analyse(
+            text, job_type="FREESTYLE", stage=stage, stage_template=template, known_secrets=secrets
+        )
+        if analysis.category is not FailureCategory.INFRASTRUCTURE:
+            return number, text, analysis
+        quoted = analysis.evidence[0].text if analysis.evidence else "no evidence"
+        environment_faults.append(f"#{number}: {quoted}")
+    pytest.fail(f"{JOB}: every run failed in the agent's environment first: {environment_faults}")
+
+
 async def test_a_real_failing_test_job_is_explained_from_its_real_log(
     jenkins: HttpJenkinsClient, live_settings: Settings
 ) -> None:
@@ -104,14 +131,11 @@ async def test_a_real_failing_test_job_is_explained_from_its_real_log(
 
     analyses: list[FailureAnalysis] = []
     for _ in range(2):
-        number, result, text = await run_on_the_failing_branch(jenkins)
-        assert result == "FAILURE", f"{JOB}#{number}: the branch's test should fail"
-        analysis = analyse(
-            text,
-            job_type="FREESTYLE",
+        number, text, analysis = await a_run_that_reached_its_tests(
+            jenkins,
             stage=job.stage.name,
-            stage_template=job.stage.template,
-            known_secrets=(live_settings.jenkins_token,),
+            template=job.stage.template,
+            secrets=(live_settings.jenkins_token,),
         )
         assert analysis.category is FailureCategory.TESTS
         assert analysis.failed_tests == (FAILING_TEST,)

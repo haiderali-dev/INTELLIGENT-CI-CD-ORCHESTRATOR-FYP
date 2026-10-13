@@ -78,6 +78,37 @@ class ConsoleChunk:
 
 
 @dataclass(frozen=True)
+class ConsoleTail:
+    """The end of a console log, read without holding the rest of it.
+
+    ``lines_before`` is how many whole lines were dropped before ``text`` starts, so line numbers
+    counted from it can be put back on Jenkins's own numbering.
+    """
+
+    text: str
+    more_data: bool
+    lines_before: int
+
+
+def keep_tail(buffer: bytearray, max_bytes: int) -> int:
+    """Trim ``buffer`` in place to at most ``max_bytes`` from its end, starting on a line.
+
+    Returns how many lines were dropped. A cut that falls inside a line drops the rest of that
+    line too, so the kept text never starts with half a line.
+    """
+    if len(buffer) <= max_bytes:
+        return 0
+    cut = len(buffer) - max_bytes
+    if buffer[cut - 1] != ord("\n"):
+        # The cut falls inside a line; the rest of that line goes too.
+        newline = buffer.find(b"\n", cut)
+        cut = len(buffer) if newline < 0 else newline + 1
+    dropped = buffer.count(b"\n", 0, cut)
+    del buffer[:cut]
+    return dropped
+
+
+@dataclass(frozen=True)
 class StageInfo:
     """One stage of a Pipeline run, as the stage view reports it (``wfapi/describe``)."""
 
@@ -165,6 +196,21 @@ class JenkinsClient(ABC):
         more data. The HTTP client overrides it to read ``X-More-Data``.
         """
         return ConsoleChunk(text=await self.console_text(name, number, start), more_data=False)
+
+    async def console_tail(self, name: str, number: int, max_bytes: int) -> ConsoleTail:
+        """The last ``max_bytes`` of the log, starting on a line, with ``X-More-Data``.
+
+        The default reads the whole window and trims it, which suits the fake's small logs. The
+        HTTP client overrides it to stream, so a log of any size costs at most twice ``max_bytes``.
+        """
+        chunk = await self.console_window(name, number, 0)
+        buffer = bytearray(chunk.text.encode("utf-8"))
+        dropped = keep_tail(buffer, max_bytes)
+        return ConsoleTail(
+            text=buffer.decode("utf-8", "replace"),
+            more_data=chunk.more_data,
+            lines_before=dropped,
+        )
 
     @abstractmethod
     async def downstream_build(
@@ -461,6 +507,62 @@ class HttpJenkinsClient(JenkinsClient):
         )
         more = response.headers.get("X-More-Data", "").strip().lower() == "true"
         return ConsoleChunk(text=response.text, more_data=more)
+
+    async def console_tail(self, name: str, number: int, max_bytes: int) -> ConsoleTail:
+        """Stream the log and keep its end: memory stays under twice ``max_bytes``, however long.
+
+        A build prints whatever its commit tells it to, so reading a whole log into memory would
+        let one commit exhaust the backend. Retries and errors follow ``_request``, except that an
+        error body is never read: it could be as large as the log.
+        """
+        validate_job_name(name)
+        path = f"/job/{name}/{number}/logText/progressiveText"
+        last_error: Exception | None = None
+        for attempt in range(1, MAX_ATTEMPTS + 1):
+            try:
+                async with self._client.stream("GET", path, params={"start": 0}) as response:
+                    if response.status_code == 404:
+                        raise JobNotFoundError(f"not found: {path}", status_code=404)
+                    if response.status_code >= 500:
+                        last_error = JenkinsError(
+                            f"Jenkins returned {response.status_code} for {path}",
+                            status_code=response.status_code,
+                        )
+                    elif response.status_code != 200:
+                        raise JenkinsError(
+                            f"GET {path} returned {response.status_code}",
+                            status_code=response.status_code,
+                        )
+                    else:
+                        buffer = bytearray()
+                        dropped = 0
+                        async for piece in response.aiter_bytes():
+                            buffer += piece
+                            if len(buffer) > 2 * max_bytes:
+                                dropped += keep_tail(buffer, max_bytes)
+                        dropped += keep_tail(buffer, max_bytes)
+                        more = response.headers.get("X-More-Data", "").strip().lower() == "true"
+                        return ConsoleTail(
+                            text=buffer.decode("utf-8", "replace"),
+                            more_data=more,
+                            lines_before=dropped,
+                        )
+            except (
+                httpx.ConnectError,
+                httpx.ReadError,
+                httpx.WriteError,
+                httpx.PoolTimeout,
+                httpx.TimeoutException,
+            ) as exc:
+                last_error = exc
+            await self._backoff(attempt, path, type(last_error).__name__)
+
+        raise unavailable(
+            ErrorCode.JENKINS_UNAVAILABLE,
+            f"Jenkins at {self._base} did not respond after {MAX_ATTEMPTS} attempts.",
+            path=path,
+            last_error=str(last_error),
+        )
 
     async def downstream_build(
         self, name: str, *, upstream: str, upstream_number: int

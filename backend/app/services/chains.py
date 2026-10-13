@@ -48,6 +48,7 @@ from app.db.models import (
     JobRun,
     Role,
     RunResult,
+    Service,
     User,
 )
 from app.services.auth import role_allows
@@ -558,27 +559,43 @@ async def cancel(
 # ---------------------------------------------------------------------------
 
 
-def _is_test_job(name: str) -> bool:
-    return "-test-" in name or name.endswith("-test")
+def is_test_job(name: str, service: str) -> bool:
+    """Whether a job runs tests, by D-043's naming, read *after* the service's own name.
+
+    ``fs-<service>-test-<suite>`` runs one suite; a Pipeline whose action includes testing is
+    ``pl-<service>-test`` or ``pl-<service>-build-test-deploy-<env>``. Reading the whole name
+    instead would let a service called, say, ``load-test-service`` make its deploy job look like a
+    test job, and "rerun the failed tests" would then re-run a deploy.
+    """
+    for prefix in (f"fs-{service}-", f"pl-{service}-"):
+        if name.startswith(prefix):
+            return "-test-" in f"-{name.removeprefix(prefix)}-"
+    return False
 
 
 async def last_failed_test(
     session: AsyncSession, *, service: str | None
 ) -> tuple[JobRun, Job, Chain | None] | None:
-    """4.6.5: "Re-trigger the last failed test job"."""
+    """4.6.5: "Re-trigger the last failed test job".
+
+    Whose job it is comes from the run's chain, which every assistant-started run has, or else from
+    the job's own service; a job with neither cannot be told apart from its service's name, so it
+    is passed over rather than guessed at.
+    """
     statement = (
-        select(JobRun, Job)
+        select(JobRun, Job, Chain.service, Service.name)
         .join(Job, JobRun.job_id == Job.id)
+        .outerjoin(Chain, JobRun.chain_id == Chain.id)
+        .outerjoin(Service, Job.service_id == Service.id)
         .where(JobRun.result.in_([RunResult.FAILURE.value, RunResult.UNSTABLE.value]))
         .order_by(JobRun.created_at.desc())
         .limit(50)
     )
-    for run, job in (await session.execute(statement)).all():
-        if not _is_test_job(job.jenkins_name):
+    for run, job, chain_service, job_service in (await session.execute(statement)).all():
+        owner = chain_service or job_service
+        if owner is None or (service is not None and owner != service):
             continue
-        if service is not None and not job.jenkins_name.startswith(
-            (f"fs-{service}-", f"pl-{service}-")
-        ):
+        if not is_test_job(job.jenkins_name, owner):
             continue
         chain = await session.get(Chain, run.chain_id) if run.chain_id else None
         return run, job, chain

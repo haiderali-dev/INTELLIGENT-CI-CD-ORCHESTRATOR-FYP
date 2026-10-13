@@ -79,6 +79,17 @@ _ASSIGNMENT = re.compile(
 )
 _ASSIGNMENT_HINTS: Final = ("pass", "secret", "token", "key", "credential")
 
+# A command line's credentials: `curl -u user:secret`, `--user=user:secret`, and a secret flag
+# followed by its value, `--password secret`. A pair is required after -u, so `git push -u origin`
+# and `sort -u` are left alone; a value starting with "-" is the next flag, not a secret.
+_USER_FLAG = re.compile(
+    r"(?P<flag>(?<!\S)(?:-u|--user)(?:[ \t]+|=))(?P<user>[^\s:'\"]{1,128}):(?P<secret>[^\s'\"]+)"
+)
+_SECRET_FLAG = re.compile(
+    r"(?P<flag>--(?:password|passwd|token|secret|api-key|access-key)[ \t]+)"
+    r"(?P<value>(?!-)[^\s'\"]+)"
+)
+
 # Personal data rather than a credential, but it has no place in a third party's prompt either.
 # git@host is an SSH remote, not a person, and the alphabetic last label keeps a package pin such
 # as react@18.3.1 out.
@@ -133,6 +144,9 @@ def redact(text: str, known_secrets: Iterable[str] = ()) -> Redacted:
             line = apply(_BEARER, lambda m: f"{m.group('kind')} {MASK}", line)
         if any(hint in lower for hint in _ASSIGNMENT_HINTS):
             line = apply(_ASSIGNMENT, lambda m: f"{m.group('name')}{m.group('sep')}{MASK}", line)
+            line = apply(_SECRET_FLAG, lambda m: f"{m.group('flag')}{MASK}", line)
+        if "-u" in line or "--user" in line:
+            line = apply(_USER_FLAG, lambda m: f"{m.group('flag')}{m.group('user')}:{MASK}", line)
         if "@" in line:
             line = apply(_EMAIL, EMAIL_MASK, line)
         lines.append(line)
