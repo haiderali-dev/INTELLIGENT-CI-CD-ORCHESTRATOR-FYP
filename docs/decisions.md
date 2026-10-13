@@ -11,6 +11,93 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 5
 
+### D-049 Explain failure: code decides the facts, the model words them, every quote is checked
+**Date:** 2026-10-13 · **Status:** decided and implemented (T5.9)
+
+Part 3 gives T5.9 one line: "Explain failure" for failed runs. The rest comes from the rules it
+sits under:
+- 4.4.4 lists the run endpoints.
+- 4.5.1 asks for a strict schema, every call in `llm_calls`, and quota limits.
+- 4.5.3 says "code decides, never the model".
+- 4.5.6 says text inside data is data, never instructions.
+- 4.5.5 confines deploys to staging.
+
+**Surface.**
+- `POST /api/runs/{id}/explain` sits with the other run endpoints. It is open to any signed-in
+  user, like the log it reads, and shares the assistants' 20-a-minute limit.
+- The run card gains `failed_run_id`, so Phase 6 can offer the action on a failed card.
+- No new intent action: 4.5.2's action list is the report's.
+- No UI: that is Phase 6.
+
+**Redaction first** (`app/failures/redact.py`). The excerpt goes to Groq, a third party, and quoted
+lines come back to the browser, so redaction runs before anything else reads the log. It masks:
+- the configured secrets, by value: the Jenkins token, Groq key, JWT secret and metrics token;
+- token formats: GitHub, Groq, OpenAI-style, AWS, Slack, JWT and Jenkins API tokens;
+- credentials in URLs, `Authorization` and `Bearer` values, secret-named assignments, private-key
+  blocks, and email addresses.
+
+It keeps line numbers (one line in, one line out) and runs in linear time. A pathological line
+written by a commit cannot stall the request: lines are capped, every pattern is literal-led or
+bounded, and costly patterns are prefiltered by keyword. The real logs pass through unchanged,
+and a test checks that.
+
+**Code decides the facts** (`app/failures/analysis.py`). The rules were written against logs
+captured on jenkins-dev, which are kept as test data. Code works out:
+- the category: checkout, infrastructure, timeout, tests, lint, security, script, build, deploy,
+  or unknown, and never a guess;
+- the failed stage. For freestyle it comes from the stored artifact; for a Pipeline, from the stage
+  view;
+- the failing tests and their counts, the exit code, and the evidence lines numbered as Jenkins
+  numbers them;
+- the stages a Pipeline skipped, read from its own "skipped due to earlier failure(s)" lines;
+- what a freestyle failure stopped, read from the chain's runs in the database. "The deploy job
+  never started" is the Phase 5 acceptance itself, stated by the explanation.
+
+**The excerpt is the same for every run of the same failure.** It holds the failing step or stage
+plus notable lines from elsewhere, and code removes or replaces everything that varies:
+- Timestamper prefixes and hidden console notes are stripped.
+- Durations, temporary script names, build numbers, clock times and SHAs become placeholders.
+- The `<log>` fence is defused inside the excerpt.
+
+That makes a recorded answer replay (T5.8) and keeps the prompt small. The integration test shows
+two real runs on jenkins-dev giving identical prompts.
+
+**The model words it, and is checked** (`app/failures/explainer.py`, prompt `failure_v1`). The
+schema is strict and has four fields: `cause_found`, `summary`, `evidence` and `suggestions`. The
+answer is dropped for the code's own explanation if:
+- any quoted line is not in the excerpt it was shown;
+- it says no cause is visible when the code found one;
+- the summary mentions production at all;
+- it is malformed or too long.
+
+Suggestions that look like commands, or that mention production, are dropped one by one. The
+three prompt examples are rendered by the code from captured logs, and a test keeps them identical
+to what the code sends.
+
+**Failures.**
+- When the log is gone (Jenkins 404), the explanation says so and the model is not asked.
+- When Jenkins is unreachable, the endpoint returns 409 `JENKINS_UNAVAILABLE`, asking for a retry.
+- When the model is unavailable, the code's explanation is used and the fallback is shown
+  (4.7.4).
+- A log Jenkins is still writing is read again for up to 5 seconds (D-039), then marked
+  incomplete.
+
+Every call, including a failed attempt, is an `llm_calls` row, with the prompt version and the
+command its chain came from.
+
+**Rejected.**
+- Streaming the explanation, as T5.6's does: streamed text cannot be checked before it is shown.
+- Letting the model choose the category: 4.5.3.
+- A response cache: an answer that fails the checks would be served again, the planner's reason.
+- Storing explanations: that needs a table 4.4.3 does not have, and a log does not change once a
+  run has finished, so asking again costs only quota, which the rate limit bounds.
+
+**Found on the way, by running against real output.** The first end-to-end run explained a real
+failed Pipeline as `unknown`. Jenkins prefixes every Pipeline step line with a Timestamper time
+(`[2026-10-13T06:28:51.225Z] FAILED ...`), so every rule anchored at the start of a line missed.
+The hand-made Pipeline fixture had no timestamps. The prefix is now stripped, and the real log is
+a test fixture.
+
 ### D-048 Status, rerun and cancel act only on a service the user named
 **Date:** 2026-10-13 · **Status:** decided and implemented (found by T5.8)
 

@@ -28,6 +28,8 @@ from app.core.ratelimit import (
 from app.core.settings import Settings
 from app.db.models import Role, User
 from app.db.session import get_db
+from app.failures.explainer import FailureExplainer
+from app.failures.factory import build_failure_explainer
 from app.generation.factory import build_planner
 from app.generation.planner import Planner
 from app.services.auth import load_user_from_access_token, role_allows
@@ -120,6 +122,17 @@ def get_planner(
     """A planner around the same provider and quota as the intent parser (T5.2)."""
     provider, has_models = get_llm_provider(settings, catalog, "plan")
     return build_planner(settings, catalog=catalog, provider=provider, has_models=has_models)
+
+
+def get_failure_explainer(
+    settings: Annotated[Settings, Depends(get_settings_dep)],
+    catalog: Annotated[Catalog, Depends(get_catalog)],
+) -> FailureExplainer:
+    """An explainer around the same provider and quota as the parser and planner (T5.9)."""
+    provider, has_models = get_llm_provider(settings, catalog, "failure")
+    return build_failure_explainer(
+        settings, catalog=catalog, provider=provider, has_models=has_models
+    )
 
 
 def get_clarifier(catalog: Annotated[Catalog, Depends(get_catalog)]) -> ClarificationService:

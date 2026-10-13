@@ -42,11 +42,12 @@ from app.ai.cache import ResponseCache
 from app.ai.factory import FIXTURES_DIR, build_intent_parser
 from app.ai.providers import GroqProvider, LLMProvider, RecordingProvider, ReplayProvider
 from app.ai.quota import QuotaTracker
-from app.api.deps import get_intent_parser, get_planner
+from app.api.deps import get_failure_explainer, get_intent_parser, get_planner
 from app.core.security import hash_password
 from app.core.settings import Environment, LlmMode, Settings, get_settings
 from app.db import session as db_session
 from app.db.models import Role, User
+from app.failures.factory import build_failure_explainer
 from app.generation.factory import build_planner
 from app.main import create_app
 from app.services.catalog import Catalog, catalog_path
@@ -209,6 +210,9 @@ async def stack() -> AsyncGenerator[Stack]:
         max_wait=65.0,
     )
     app.dependency_overrides[get_planner] = lambda: build_planner(
+        settings, catalog=catalog, provider=provider, has_models=True, quota=quota, max_wait=65.0
+    )
+    app.dependency_overrides[get_failure_explainer] = lambda: build_failure_explainer(
         settings, catalog=catalog, provider=provider, has_models=True, quota=quota, max_wait=65.0
     )
 

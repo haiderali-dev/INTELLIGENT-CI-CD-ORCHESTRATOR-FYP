@@ -760,7 +760,36 @@ In progress on `phase-5-assistants`. T5.1 to T5.7 done; T5.8 next.
         2. Rebuild the backend image, then run `alembic upgrade head` in the container.
         3. Phase 5 security review.
         4. Open the Phase 5 PR. Do not merge.
-- [ ] T5.9 Stretch: "Explain failure" for failed runs.
+- [ ] T5.9 Stretch: "Explain failure" for failed runs (D-049). **Not checked:** waiting on
+      `verify.py --phase 5`, which now runs its gate. Evidence so far, all run on 2026-10-13:
+      - **Surface:** `POST /api/runs/{id}/explain` (any signed-in user, the assistants' rate limit)
+        and `failed_run_id` on the run card. Live in the rebuilt backend container.
+      - **How it works:**
+        - Redaction runs first.
+        - Code decides the category, stage, failing tests, counts, exit code, evidence lines,
+          the Pipeline's skipped stages, and the chain jobs the failure stopped.
+        - The model words it through a strict schema (`failure_v1`). Its answer is dropped for
+          the code's own if a quote is not in the log, it contradicts the code, it mentions
+          production, or it is malformed.
+      - **Tests, offline:** 147 across `test_failures_redact.py` (38), `test_failures_analysis.py`
+        (42), `test_failures_explainer.py` (54) and `test_failures_api.py` (13). They run on six
+        logs captured from jenkins-dev, plus one constructed log (see
+        `tests/data/failure_logs/README.md`). Offline suite **1597 passed**, 49 deselected; ruff,
+        format and mypy clean.
+      - **Integration, live jenkins-dev:** `test_integration_failures.py` passed (63 s). The
+        generated payment-service test job ran twice on `demo/failing-tests`, and both real logs
+        gave the model **byte-identical prompts**.
+      - **End to end:** a failed freestyle test job and a failed Pipeline stage, each explained
+        through the API.
+        - Record mode, live Groq: both passed. The model's answers survived every check, and every
+          quoted line matched the real log.
+        - Replay mode: the whole suite, **13 passed, 0 replay misses**.
+        - The freestyle explanation lists the integration-test and deploy jobs as never started.
+        - The Pipeline explanation names "Unit tests" and the two skipped stages, with exit code 1.
+      - **Found by the first live run:** Jenkins prefixes every Pipeline step line with a
+        Timestamper time, so the real failure read as `unknown`. Fixed, and the real log is now a
+        fixture. Also: the Edit tool decoded a `\u` escape into the literal character
+        (CLAUDE.md lesson).
 
 Audit of T5.1 to T5.8, 2026-10-13. I re-read Part 3, 4.4.3 to 4.4.5, 4.5.5, 4.6 and 4.7.4
 against the code. Five gaps were found and fixed, each with a regression test that fails without

@@ -72,6 +72,10 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
   arrive as real newlines. Use the Write or Edit tool, then `ast.parse` the file.
   This repeated on 2026-10-11 with a `python - <<'EOF'` rewrite script. Its `open(p, "w")` also
   wrote CRLF, because text mode does that on Windows. Never patch source files from a heredoc.
+  The Write and Edit tools are not escape-proof either: on 2026-10-13 a backslash-u escape for
+  U+2139, typed into a regex, arrived as the literal character, while `\b`, `\d` and `\n`
+  survived. It happened again while recording this lesson. For non-ASCII in source, use a
+  `"\N{NAME}"` constant, then grep the file for the raw character.
 - A Pipeline reports `building: false` and its result before `Finished: SUCCESS` is in the log.
   Wait on progressiveText's `X-More-Data`, never on `building`, before treating a log as whole
   (D-039).

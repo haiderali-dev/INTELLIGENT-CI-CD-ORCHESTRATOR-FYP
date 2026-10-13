@@ -1,12 +1,14 @@
 """Jobs and runs.
 
 BUILD_PROMPT 4.4.4: ``GET /api/jobs``, ``GET /api/runs``, ``GET /api/runs/{id}``,
-``POST /api/runs/{id}/cancel`` and ``GET /api/runs/{id}/log``.
+``POST /api/runs/{id}/cancel`` and ``GET /api/runs/{id}/log``; and T5.9's
+``POST /api/runs/{id}/explain``.
 
 Reads are open to any signed-in user; cancelling needs DevOps. 4.5.5 does not name a role for
 cancelling a run, but it does say a Developer may not cancel a running chain and that an Admin may,
 so stopping someone else's build is not a Developer action. The guard is the narrowest reading of
-that table rather than an invention.
+that table rather than an invention. Explaining a failure is a read of the same log, so it is open
+to the same users.
 """
 
 from __future__ import annotations
@@ -18,11 +20,15 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import CurrentUser, DevOpsUser
+from app.api.deps import AssistantRateLimit, CurrentUser, DevOpsUser, get_failure_explainer
+from app.core.settings import Settings
 from app.db.models import Job, JobRun
 from app.db.session import get_db
+from app.failures.analysis import EvidenceLine
+from app.failures.explainer import FailureExplainer
+from app.services import failures as failures_service
 from app.services import runs as runs_service
-from app.services.dependencies import get_jenkins_client
+from app.services.dependencies import get_jenkins_client, get_settings_dep
 from app.services.jenkins import JenkinsClient
 
 router = APIRouter(tags=["jobs"])
@@ -114,6 +120,110 @@ class LogResponse(BaseModel):
     text: str
     next_offset: int
     more_data: bool
+
+
+class EvidenceLineResponse(BaseModel):
+    line: int = Field(description="1-based line number in the build's whole log")
+    text: str = Field(description="The line as printed, with secrets masked")
+
+    @classmethod
+    def of(cls, evidence: EvidenceLine) -> EvidenceLineResponse:
+        return cls(line=evidence.number, text=evidence.text)
+
+
+class FailureFacts(BaseModel):
+    """What code found in the log. The explanation may word it; it never decides it."""
+
+    category: str
+    stage: str | None
+    failed_tests: list[str]
+    tests_failed: int | None
+    tests_passed: int | None
+    exit_code: int | None
+    skipped_stages: list[str]
+    evidence: list[EvidenceLineResponse]
+
+
+class FailureWords(BaseModel):
+    summary: str
+    cause_found: bool
+    evidence: list[EvidenceLineResponse] = Field(
+        description="Lines that support the summary, each one checked to be in the log"
+    )
+    suggestions: list[str]
+    source: str = Field(description="model, or rules when code wrote the explanation")
+    provider: str
+    model: str | None
+    ai_fallback: bool
+    fallback_reasons: list[str]
+    prompt_version: str
+
+
+class FailureLog(BaseModel):
+    available: bool
+    complete: bool = Field(description="False if Jenkins was still writing the log")
+    lines: int
+    truncated: bool = Field(description="True if only the end of a very long log was read")
+    redactions: int = Field(description="How many values were masked as secrets")
+    unavailable_reason: str | None
+
+
+class RunFailureResponse(BaseModel):
+    run_id: str
+    job_name: str
+    job_type: str
+    build_number: int
+    result: str
+    url: str | None
+    chain_id: str | None
+    not_started: list[str] = Field(description="Chain jobs that never ran because of this failure")
+    facts: FailureFacts
+    explanation: FailureWords
+    log: FailureLog
+
+    @classmethod
+    def of(cls, failure: failures_service.RunFailure) -> RunFailureResponse:
+        analysis, words = failure.analysis, failure.explanation
+        return cls(
+            run_id=failure.run.id,
+            job_name=failure.job.jenkins_name,
+            job_type=failure.job.job_type,
+            build_number=failure.run.build_number,
+            result=failure.run.result,
+            url=failure.url,
+            chain_id=failure.chain.id if failure.chain is not None else None,
+            not_started=list(failure.not_started),
+            facts=FailureFacts(
+                category=analysis.category.value,
+                stage=analysis.stage,
+                failed_tests=list(analysis.failed_tests),
+                tests_failed=analysis.tests_failed,
+                tests_passed=analysis.tests_passed,
+                exit_code=analysis.exit_code,
+                skipped_stages=list(analysis.skipped_stages),
+                evidence=[EvidenceLineResponse.of(line) for line in analysis.evidence],
+            ),
+            explanation=FailureWords(
+                summary=words.summary,
+                cause_found=words.cause_found,
+                evidence=[EvidenceLineResponse.of(line) for line in words.evidence],
+                suggestions=list(words.suggestions),
+                source=words.source.value,
+                provider=words.provider,
+                model=words.model,
+                ai_fallback=words.ai_fallback,
+                fallback_reasons=list(words.fallback_reasons),
+                prompt_version=words.prompt_version,
+            ),
+            log=FailureLog(
+                available=analysis.log_available,
+                complete=analysis.log_complete,
+                lines=analysis.lines,
+                truncated=analysis.truncated,
+                redactions=analysis.redactions,
+                unavailable_reason=analysis.unavailable_reason,
+            ),
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -217,3 +327,31 @@ async def get_run_log(
         next_offset=window.next_offset,
         more_data=window.more_data,
     )
+
+
+@router.post(
+    "/runs/{run_id}/explain",
+    response_model=RunFailureResponse,
+    summary="Explain why a run failed",
+    dependencies=[AssistantRateLimit],
+)
+async def explain_run_failure(
+    run_id: str,
+    user: CurrentUser,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    jenkins: Annotated[JenkinsClient, Depends(get_jenkins_client)],
+    explainer: Annotated[FailureExplainer, Depends(get_failure_explainer)],
+    settings: Annotated[Settings, Depends(get_settings_dep)],
+) -> RunFailureResponse:
+    """T5.9: why a failed run failed, in plain words, with the log lines that show it.
+
+    Rate limited with the assistants: it calls the same model and spends the same quota (4.5.1).
+    """
+    failure = await failures_service.explain_run(
+        session,
+        jenkins,
+        explainer,
+        run_id=run_id,
+        secrets=failures_service.known_secrets(settings),
+    )
+    return RunFailureResponse.of(failure)

@@ -2399,6 +2399,28 @@ def check_failing_branch() -> Result:
     return verdict
 
 
+FAILURE_TESTS = (
+    "tests/test_failures_redact.py",
+    "tests/test_failures_analysis.py",
+    "tests/test_failures_explainer.py",
+    "tests/test_failures_api.py",
+    "tests/test_integration_failures.py",
+)
+
+
+@check(5, "Explain failure (T5.9): redaction, analysis, checks, endpoint and a live failing job")
+def check_explain_failure() -> Result:
+    """T5.9 is a stretch task with no Appendix D line of its own, so this is its gate. The
+    analysis is tested on logs captured from jenkins-dev, and once more on a job it runs there
+    twice: the two real logs must give the model the same prompt, or a recording never replays.
+    Explaining real failures through the API is in the end-to-end check above."""
+    result, output = _pytest(
+        [*FAILURE_TESTS, "-m", "not live and not e2e"],
+        timeout=900,
+    )
+    return _all_passed(result, output, "the Explain failure tests")
+
+
 IMPLEMENTED_PHASES = {0, 1, 2, 3, 4, 5}
 
 

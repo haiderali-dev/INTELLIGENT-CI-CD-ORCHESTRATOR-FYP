@@ -13,6 +13,7 @@ from app.ai.factory import build_provider
 from app.ai.providers import FakeProvider, LLMProvider
 from app.ai.rules import RuleBasedParser
 from app.core.settings import LlmMode, Settings, get_settings
+from app.failures.explainer import fake_failure_responder
 from app.generation.planner import default_plan_responder
 from app.services.catalog import Catalog, catalog_path
 from app.services.git import CliGitClient, GitClient
@@ -28,18 +29,20 @@ _llm_providers: dict[LlmMode, tuple[LLMProvider, bool]] = {}
 
 
 def get_llm_provider(
-    settings: Settings, catalog: Catalog, purpose: Literal["intent", "plan"]
+    settings: Settings, catalog: Catalog, purpose: Literal["intent", "plan", "failure"]
 ) -> tuple[LLMProvider, bool]:
     """The model provider, and whether it has models behind it.
 
-    Live and replay providers are shared: they answer any prompt, so the intent parser and the
-    planner use the same one. A fake provider is built per call instead, because it answers from
-    the catalog -- with an intent for the parser, with the default plan for the planner -- and a
-    test may hand in a different catalog.
+    Live and replay providers are shared: they answer any prompt, so the intent parser, the planner
+    and the failure explainer use the same one. A fake provider is built per call instead, because
+    it answers for its purpose -- an intent, the default plan, the code's failure explanation --
+    and a test may hand in a different catalog.
     """
     if settings.llm_mode is LlmMode.FAKE:
         if purpose == "plan":
             return FakeProvider(responder=default_plan_responder(catalog)), True
+        if purpose == "failure":
+            return FakeProvider(responder=fake_failure_responder), True
         return build_provider(settings, RuleBasedParser(catalog))
     if settings.llm_mode not in _llm_providers:
         _llm_providers[settings.llm_mode] = build_provider(settings, RuleBasedParser(catalog))

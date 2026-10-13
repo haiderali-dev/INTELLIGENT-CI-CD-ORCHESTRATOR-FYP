@@ -68,6 +68,9 @@ CHAIN_RERUN_AUDIT_ACTION: Final = "chain.rerun"
 CHAIN_RUNNING_AUDIT_ACTION: Final = "policy.chain_running"
 CANCEL_REFUSED_AUDIT_ACTION: Final = "chain.cancel_refused"
 
+# The results T5.9 can explain: a build that ran and did not pass.
+FAILED_RESULTS: Final = frozenset({RunResult.FAILURE.value, RunResult.UNSTABLE.value})
+
 
 def _now() -> datetime:
     return datetime.now(UTC)
@@ -232,6 +235,19 @@ async def chain_runs(session: AsyncSession, chain: Chain) -> dict[str, JobRun]:
     return {name: run for run, name in rows}
 
 
+async def not_started_after(session: AsyncSession, chain: Chain, job_name: str) -> tuple[str, ...]:
+    """The chain's jobs after ``job_name`` that never ran: what a failure there stopped.
+
+    Read from the chain's own runs, so a deploy is listed only if it truly has no run -- which is
+    the Phase 5 acceptance itself, "the freestyle deploy job never starts", seen from the database.
+    """
+    if job_name not in chain.jobs:
+        return ()
+    runs = await chain_runs(session, chain)
+    later = chain.jobs[chain.jobs.index(job_name) + 1 :]
+    return tuple(name for name in later if name not in runs)
+
+
 async def advance_all(session: AsyncSession, jenkins: JenkinsClient) -> list[ChainEvent]:
     """One tick's worth of chain decisions."""
     chains = (
@@ -349,7 +365,8 @@ def _run_view(run: JobRun | None, url: str | None = None) -> dict[str, Any] | No
     }
 
 
-async def _build_url(jenkins: JenkinsClient | None, name: str, run: JobRun) -> str | None:
+async def build_url(jenkins: JenkinsClient | None, name: str, run: JobRun) -> str | None:
+    """The URL Jenkins reports for ``run``'s build, or None when it cannot say."""
     if jenkins is None or run.build_number <= 0:
         return None
     try:
@@ -385,7 +402,7 @@ async def run_card(
             state = "waiting"
         else:
             state = "not_started"
-        url = await _build_url(jenkins, name, run) if run is not None else None
+        url = await build_url(jenkins, name, run) if run is not None else None
         jobs.append(
             {"name": name, "position": position, "state": state, "run": _run_view(run, url)}
         )
@@ -425,6 +442,11 @@ async def run_card(
                 break
 
     total = sum(run.duration_ms or 0 for run in runs.values())
+    # T5.9: the run "Explain failure" explains -- the first job in chain order that failed.
+    failed = next(
+        (runs[name] for name in chain.jobs if name in runs and runs[name].result in FAILED_RESULTS),
+        None,
+    )
     return {
         "id": chain.id,
         "pipeline_id": chain.pipeline_id,
@@ -440,6 +462,7 @@ async def run_card(
         "jobs": jobs,
         "stages": stages,
         "queue": queue,
+        "failed_run_id": failed.id if failed is not None else None,
     }
 
 

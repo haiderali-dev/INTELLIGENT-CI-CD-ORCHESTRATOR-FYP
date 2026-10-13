@@ -4,7 +4,7 @@
     "action": "BUILD_TEST_DEPLOY",
     "branch": "demo/failing-tests",
     "commit": null,
-    "confidence": 0.94,
+    "confidence": 0.96,
     "environment": "staging",
     "extra_stages": [],
     "justification": null,
@@ -15,5 +15,5 @@
   "model": "openai/gpt-oss-120b",
   "prompt_hash": "7f94040d294d0548a6bb368e07b2f754c190ae29b31ed5e2129ffeae6cdfdbb9",
   "prompt_tokens": 1710,
-  "recorded_at": "2026-10-13T00:54:20.088785+00:00"
+  "recorded_at": "2026-10-13T06:32:25.388940+00:00"
 }

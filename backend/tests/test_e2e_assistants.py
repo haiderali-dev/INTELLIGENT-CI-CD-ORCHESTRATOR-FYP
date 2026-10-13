@@ -20,7 +20,8 @@ Marked ``e2e``; runs on the Compose stack (``tests/e2e_support.py`` says exactly
 
 Generated jobs are approved and run on the real agents, and the tests wait for the chains. Plus
 Phase 5's acceptance clause, through the generator: against ``demo/failing-tests`` the freestyle
-deploy job never starts. And one Pipeline, end to end, with its stages tracked.
+deploy job never starts. And one Pipeline, end to end, with its stages tracked. And T5.9: a failed
+freestyle test job and a failed Pipeline stage, each explained from its real log.
 
 "Three stages" is the three stage kinds -- build, test, deploy. With D-042's "every suite",
 payment-service's two suites make that four jobs: build, unit tests, integration tests, deploy.
@@ -338,3 +339,90 @@ async def test_a_pipeline_builds_tests_and_deploys_with_its_stages_tracked(stack
     assert [name for name, _ in stages[1:]] == ["Build", "Unit tests", "Deploy to staging"]
     assert all(status == "SUCCESS" for _, status in stages)
     assert approval["chain_id"]
+
+
+# ---------------------------------------------------------------------------
+# T5.9: Explain failure, on real failures
+# ---------------------------------------------------------------------------
+
+PAYMENT_FAILING_TEST = "tests/test_unit.py::test_demo_failing_tests_fails_on_purpose"
+
+
+async def explained(
+    stack: Stack, headers: dict[str, str], run_id: str
+) -> tuple[dict[str, Any], list[str]]:
+    """The explanation of ``run_id``, and the log it explains, line by line."""
+    response = await stack.client.post(f"/api/runs/{run_id}/explain", headers=headers)
+    assert response.status_code == 200, response.text
+    log = await stack.client.get(f"/api/runs/{run_id}/log", headers=headers)
+    assert log.status_code == 200, log.text
+    return response.json(), log.json()["text"].split("\n")
+
+
+def assert_grounded(body: dict[str, Any], printed: list[str], mode: str) -> None:
+    """Every quoted line is a real line of the log, and the model's words survived the checks.
+
+    In record mode a fallback would leave a fixture that never replays as the model's answer, so
+    it fails here rather than in the next replay run.
+    """
+    words = body["explanation"]
+    for line in [*words["evidence"], *body["facts"]["evidence"]]:
+        # A Pipeline prefixes its lines with a timestamp and a hidden console note; a quote is the
+        # line as a reader sees it, so it is what the printed line ends with.
+        assert printed[line["line"] - 1].rstrip().endswith(line["text"]), line
+    assert words["cause_found"]
+    if mode in {"replay", "record"}:
+        assert words["source"] == "model", words["fallback_reasons"]
+        assert words["evidence"], "the model quoted the log"
+
+
+async def test_the_failed_tests_are_explained_from_their_real_log(stack: Stack) -> None:
+    headers = await e2e.sign_in(stack, Role.DEVOPS)
+    _, card, deploy_before = await failing_chain(stack, headers)
+    jobs = [job["name"] for job in card["jobs"]]
+    stopped = jobs[jobs.index("fs-payment-service-test-unit") + 1 :]
+
+    body, printed = await explained(stack, headers, card["failed_run_id"])
+
+    assert body["job_name"] == "fs-payment-service-test-unit"
+    assert body["not_started"] == stopped
+    assert body["not_started"][-1] == "fs-payment-service-deploy-staging"
+    facts = body["facts"]
+    assert facts["category"] == "test_failure"
+    assert facts["failed_tests"] == [PAYMENT_FAILING_TEST]
+    assert (facts["tests_failed"], facts["tests_passed"]) == (1, 7)
+    assert_grounded(body, printed, stack.mode)
+    deploy_after = await stack.jenkins.last_build("fs-payment-service-deploy-staging")
+    assert (deploy_after.number if deploy_after else None) == deploy_before
+
+
+async def test_a_failed_pipeline_stage_is_explained_with_the_stages_it_skipped(
+    stack: Stack,
+) -> None:
+    headers = await e2e.sign_in(stack, Role.DEVOPS)
+    body = await ready(
+        stack,
+        headers,
+        "Build, test and deploy payment-service from demo/failing-tests to staging",
+        assistant="pipeline",
+    )
+
+    _, _, card = await run_to_end(stack, headers, body["command"]["id"])
+
+    assert card["status"] == "FAILURE", card
+    names = [stage["name"] for stage in card["stages"]]
+    assert {stage["name"]: stage["status"] for stage in card["stages"]}["Unit tests"] == "FAILED"
+    later = names[names.index("Unit tests") + 1 :]
+    assert later[-1] == "Deploy to staging"
+
+    explanation, printed = await explained(stack, headers, card["failed_run_id"])
+
+    assert explanation["job_type"] == "PIPELINE"
+    assert explanation["not_started"] == [], "a Pipeline is one job; what it stopped are stages"
+    facts = explanation["facts"]
+    assert facts["stage"] == "Unit tests"
+    assert facts["skipped_stages"] == later, "Jenkins skipped every stage after it, deploy included"
+    assert facts["category"] == "test_failure"
+    assert facts["failed_tests"] == [PAYMENT_FAILING_TEST]
+    assert facts["exit_code"] == 1
+    assert_grounded(explanation, printed, stack.mode)
