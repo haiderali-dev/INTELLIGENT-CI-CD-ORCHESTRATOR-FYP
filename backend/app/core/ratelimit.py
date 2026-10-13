@@ -53,6 +53,11 @@ REFRESH_LIMIT = RateLimit(name="refresh", capacity=30, per_seconds=60.0)
 # A general ceiling for authenticated traffic, high enough that normal use never reaches it.
 API_LIMIT = RateLimit(name="api", capacity=300, per_seconds=60.0)
 
+# Assistant messages and generation call the model. Groq allows 30 requests a minute per model
+# (4.5.1), shared by everyone, so one client sending faster than one message every three seconds
+# is draining the whole team's quota rather than chatting.
+ASSISTANT_LIMIT = RateLimit(name="assistant", capacity=20, per_seconds=60.0)
+
 
 class RateLimiter:
     """Thread-safe token buckets keyed by (limit name, identifier)."""

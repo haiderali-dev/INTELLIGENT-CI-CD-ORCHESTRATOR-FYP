@@ -67,7 +67,7 @@ def clamp_page(limit: int | None, offset: int | None) -> tuple[int, int]:
     return max(1, min(resolved_limit, MAX_PAGE_SIZE)), max(0, offset or 0)
 
 
-async def _count(session: AsyncSession, statement: Select[Any]) -> int:
+async def count_rows(session: AsyncSession, statement: Select[Any]) -> int:
     """Total rows the statement would return, for the "showing 50 of 312" line.
 
     ``order_by(None)`` first: an ORDER BY inside a COUNT subquery is work the database does and
@@ -102,7 +102,7 @@ async def list_jobs(
     if job_type:
         statement = statement.where(Job.job_type == job_type.upper())
 
-    total = await _count(session, statement)
+    total = await count_rows(session, statement)
     rows = (
         await session.scalars(
             statement.order_by(Job.created_at.desc()).limit(resolved_limit).offset(resolved_offset)
@@ -148,7 +148,7 @@ async def list_runs(
     elif result:
         statement = statement.where(JobRun.result == result.upper())
 
-    total = await _count(session, statement)
+    total = await count_rows(session, statement)
     rows = (
         await session.scalars(
             statement.order_by(JobRun.created_at.desc())

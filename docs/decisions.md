@@ -11,6 +11,40 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 5
 
+### D-045 How a conversation turns messages into commands
+**Date:** 2026-10-13 · **Status:** decided and implemented (T5.5)
+
+- **Two reads beyond 4.4.4's list.** `GET /api/conversations/{id}` (a chat with its messages)
+  and `GET /api/commands/{id}` (an intent card). The workspace in 4.7.4 opens chats from a
+  history list and re-reads cards, and cannot do either with the listed endpoints alone (rule
+  1.4: implement the correct endpoint and record the deviation).
+- **When a reply is an answer.** 4.5.3 says to merge an answer with the original message and
+  re-parse, but not how to tell an answer from a new request. A reply counts as the answer to the
+  pending question if it is one of the offered buttons, is four words or fewer, or answers a
+  request for a justification, which is a sentence by nature. Anything longer starts a new
+  request: "deploy auth-service to staging" typed in reply to "Which service?" means the user
+  started over.
+- **Slash commands** (4.7.4). `/help` answers with the help card and parses nothing. `/status`
+  and `/rerun` become the sentences they stand for and go through the same validation, policy
+  and audit as typed words.
+- **Editing an intent** (`PATCH /api/commands/{id}/intent`) reruns 4.5.3 steps 3 to 5 through
+  `IntentParser.reconsider`, with no model call. It runs the same validation, policy and
+  clarification as a parse, now shared with `interpret` so the two cannot drift. The action
+  cannot be edited (a different action is a new request), unknown fields are refused rather than
+  ignored, and a request already approved cannot be edited. The model's own parse is kept as
+  `model_intent`, so the evaluation still scores the model rather than the user's correction.
+- **The running-chain rule needs the service, which is known only after parsing.** A request
+  that comes out READY is re-decided with the running chain for its service, reusing the parse
+  rather than calling the model again.
+- **Someone else's conversation or command is reported as not found**, not forbidden, so its
+  existence is not disclosed.
+- **Assistant traffic has its own rate limit:** 20 a minute per client. Every message can call the
+  model, and Groq's 30 requests a minute per model are shared by the whole team (4.5.1).
+- **Providers.** The live and replay providers are shared across the process, so there is one
+  Groq client and connection pool. A fake provider is built per request because it answers from
+  the catalog. The factories take `has_models` with a supplied provider, so live mode without a
+  key still goes straight to the rule parser and the default plan.
+
 ### D-044 What the validators check beyond the letter of 4.6.3
 **Date:** 2026-10-13 · **Status:** decided and implemented (T5.4)
 

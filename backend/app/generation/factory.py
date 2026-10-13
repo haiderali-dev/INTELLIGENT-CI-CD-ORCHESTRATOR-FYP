@@ -34,11 +34,13 @@ def build_planner(
     provider: LLMProvider | None = None,
     quota: QuotaTracker | None = None,
     max_wait: float | None = None,
+    has_models: bool | None = None,
 ) -> Planner:
     """A ``Planner`` for this configuration. ``provider`` and ``quota`` can be supplied by tests
-    and the evaluation harness; the backend uses the process-wide ones."""
+    and the evaluation harness; the backend uses the process-wide ones. ``has_models`` goes with a
+    supplied provider, as in ``build_intent_parser``."""
     if provider is not None:
-        has_models = True
+        has_models = True if has_models is None else has_models
     elif settings.llm_mode is LlmMode.FAKE:
         provider, has_models = FakeProvider(responder=default_plan_responder(catalog)), True
     else:

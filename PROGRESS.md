@@ -1,6 +1,6 @@
 # Progress
 
-Updated: 2026-10-13 · Current phase: 5 (T5.4 done, T5.5 next) · Branch: phase-5-assistants
+Updated: 2026-10-13 · Current phase: 5 (T5.5 done, T5.6 next) · Branch: phase-5-assistants
 
 ## Needs human
 - [x] **Create the two sample-service GitHub repositories**, push them, create the
@@ -558,7 +558,7 @@ has been reviewed by a human yet.
 
 ## Phase 5: Freestyle Assistant and Pipeline Assistant
 
-In progress on `phase-5-assistants`. T5.1 to T5.4 done; T5.5 next.
+In progress on `phase-5-assistants`. T5.1 to T5.5 done; T5.6 next.
 
 - [x] T5.1 Spec model (Pydantic) with YAML round-trip and the planner schema, plus one revision
       rule for both job types (D-041). Evidence, all run on 2026-10-12:
@@ -665,7 +665,28 @@ In progress on `phase-5-assistants`. T5.1 to T5.4 done; T5.5 next.
         - a chain created last-first keeps its triggers, `dependsOn`, priority and defaults, and
           the Pipeline job keeps its parameters, sandbox and priority.
       - **Regression checks:** offline suite 1371 passed; ruff, format and mypy clean.
-- [ ] T5.5 Conversation and message endpoints for both assistants; intent editing.
+- [x] T5.5 Conversation and message endpoints for both assistants; intent editing (D-045).
+      Evidence, all run on 2026-10-13:
+      - **Code:**
+        - `app/api/assistants.py`: `POST /api/assistants/{freestyle|pipeline}/conversations`,
+          `GET /api/conversations`, `GET /api/conversations/{id}`,
+          `POST /api/conversations/{id}/messages`, `GET /api/commands/{id}` and
+          `PATCH /api/commands/{id}/intent`.
+        - `app/services/conversations.py`: the message flow (clarification answers merged and
+          re-parsed, slash commands, the policy context, `IntentParser.record`) and intent
+          editing through the new `IntentParser.reconsider`.
+      - **Tests:** `test_assistants_api.py`, 21 passed in fake mode. They cover:
+        - conversation lifecycle and ownership;
+        - a clear request recorded with its `llm_calls`;
+        - "run the tests" asking for the service, then the suite (4.6.5);
+        - a new request in reply to a question starting over;
+        - production refused, and the injection attempt refused and audited;
+        - the HIGH justification flow, `/help`, `/status` and the 1,000-character guard;
+        - editing: re-decided, outside the catalog, to production, action locked, approved
+          locked, ownership.
+      - **Regression checks:** offline suite 1392 passed; ruff, format and mypy clean.
+      - **Not yet live:** the running-chain lookup returns "no chain" until the per-service lock
+        exists. It is wired in T5.7.
 - [ ] T5.6 Generate, regenerate, streamed explain, and approve with an idempotency key.
 - [ ] T5.7 Per-service chain lock; chain triggering and tracking; stage tracking for Pipeline.
 - [ ] T5.8 End-to-end backend tests (`e2e`) for every command in Part 4.6.5.
