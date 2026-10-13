@@ -17,7 +17,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -35,7 +35,13 @@ from app.db.models import Assistant as AssistantKind
 from app.db.models import Conversation, Message, NlCommand
 from app.db.session import get_db
 from app.services import conversations as service
-from app.services.dependencies import get_settings_dep
+from app.services.dependencies import (
+    get_jenkins_client,
+    get_plugin_client,
+    get_settings_dep,
+)
+from app.services.jenkins import JenkinsClient
+from app.services.plugin import PluginClient
 
 router = APIRouter(tags=["assistants"])
 
@@ -241,6 +247,9 @@ async def post_message(
     parser: Annotated[IntentParser, Depends(get_intent_parser)],
     clarifier: Annotated[ClarificationService, Depends(get_clarifier)],
     settings: Annotated[Settings, Depends(get_settings_dep)],
+    jenkins: Annotated[JenkinsClient, Depends(get_jenkins_client)],
+    plugin: Annotated[PluginClient, Depends(get_plugin_client)],
+    request: Request,
 ) -> MessageExchange:
     conversation = await service.get_conversation(
         session, user=user, conversation_id=conversation_id
@@ -253,6 +262,11 @@ async def post_message(
         parser=parser,
         clarifier=clarifier,
         settings=settings,
+        runs=service.RunContext(
+            jenkins=jenkins,
+            plugin=plugin,
+            tracker=getattr(request.app.state, "tracker", None),
+        ),
     )
     return MessageExchange(
         conversation=ConversationResponse.of(conversation),

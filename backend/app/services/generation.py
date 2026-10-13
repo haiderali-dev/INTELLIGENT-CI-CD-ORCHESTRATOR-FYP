@@ -43,6 +43,7 @@ from app.core.errors import ApiError, ErrorCode, conflict, not_found, unavailabl
 from app.core.logging import get_logger
 from app.db.models import (
     AuditLog,
+    ChainStatus,
     Conversation,
     GeneratedPipeline,
     Job,
@@ -65,6 +66,7 @@ from app.generation.validate import (
     parse_spec,
     validator_for,
 )
+from app.services import chains
 from app.services.catalog import Catalog
 from app.services.conversations import get_command, intent_summary
 from app.services.git import GitClient
@@ -518,12 +520,6 @@ class Approval:
     replayed: bool = False
 
 
-# Called once the chain has started, so the chain lock and tracker (T5.7) can take it over.
-ChainStarted = Callable[
-    [AsyncSession, GeneratedPipeline, list[Job], int], Awaitable[dict[str, Any]]
-]
-
-
 async def approve(
     session: AsyncSession,
     *,
@@ -533,10 +529,12 @@ async def approve(
     catalog: Catalog,
     jenkins: JenkinsClient,
     tracker: RunTracker | None,
-    before_start: Callable[[AsyncSession, GeneratedPipeline], Awaitable[None]] | None = None,
-    on_started: ChainStarted | None = None,
 ) -> Approval:
-    """Create or update the jobs and start the first one, exactly once per idempotency key."""
+    """Create or update the jobs and start the first one, exactly once per idempotency key.
+
+    The service's chain lock (T5.7) is claimed in the same commit as the approval, so a chain
+    already running for the service refuses this one before anything reaches Jenkins.
+    """
     key = key.strip()
     if not key or len(key) > MAX_IDEMPOTENCY_KEY:
         raise conflict(
@@ -575,12 +573,21 @@ async def approve(
     artifact = stored_artifact(pipeline)
     if spec is None or artifact is None:
         raise conflict(ErrorCode.VALIDATION_REJECTED, "This plan has nothing to run.")
-    if before_start is not None:
-        # The chain lock (T5.7): refuses while this service's chain is running.
-        await before_start(session, pipeline)
 
-    # Claim the approval and commit it before Jenkins is touched, so a concurrent second request
-    # sees it. The unique key makes a race between two identical keys lose cleanly.
+    # The chain lock: refuses while this service's chain is running (4.6.4).
+    chain = await chains.claim(
+        session,
+        service=spec.service,
+        job_type=artifact.job_type.value,
+        jobs=[job.name for job in artifact.jobs],
+        parameters=artifact.parameters,
+        user=user,
+        pipeline_id=pipeline.id,
+    )
+
+    # Claim the approval and commit it with the chain before Jenkins is touched, so a concurrent
+    # second request sees both. The unique key, and the one-running-chain-per-service index, make
+    # a race lose cleanly in the database.
     pipeline.status = PipelineStatus.APPROVED.value
     pipeline.idempotency_key = key
     pipeline.approved_by = user.id
@@ -589,6 +596,11 @@ async def approve(
         await session.commit()
     except IntegrityError as exc:
         await session.rollback()
+        if await chains.running_chain(session, spec.service) is not None:
+            raise conflict(
+                ErrorCode.CHAIN_ALREADY_RUNNING,
+                f"A chain started for {spec.service} a moment ago. Wait for it to finish.",
+            ) from exc
         raise conflict(
             ErrorCode.ALREADY_APPROVED, "This plan was approved by another request."
         ) from exc
@@ -597,6 +609,7 @@ async def approve(
         await _save_jobs(jenkins, artifact)
         queue_item_id = await jenkins.trigger(artifact.first_job.name, artifact.parameters)
     except JenkinsError as exc:
+        chains.finish(chain, ChainStatus.ABORTED)
         await _undo_approval(session, pipeline)
         logger.warning("approval_failed", pipeline_id=pipeline.id, error=str(exc)[:200])
         raise unavailable(
@@ -607,10 +620,17 @@ async def approve(
 
     jobs = await _upsert_jobs(session, artifact=artifact, spec=spec, user=user, catalog=catalog)
     first = jobs[0]
+    chain.queue_item_id = queue_item_id
     if tracker is not None:
-        tracker.track(queue_item_id=queue_item_id, job_id=first.id, job_name=first.jenkins_name)
+        tracker.track(
+            queue_item_id=queue_item_id,
+            job_id=first.id,
+            job_name=first.jenkins_name,
+            chain_id=chain.id,
+        )
 
     result: dict[str, Any] = {
+        "chain_id": chain.id,
         "jobs": [job.jenkins_name for job in jobs],
         "first_job": first.jenkins_name,
         "queue_item_id": queue_item_id,
@@ -618,8 +638,6 @@ async def approve(
         "priority": spec.priority.value,
         "approved_at": (pipeline.approved_at or datetime.now(UTC)).isoformat(),
     }
-    if on_started is not None:
-        result.update(await on_started(session, pipeline, jobs, queue_item_id))
     pipeline.validation_results = {**(pipeline.validation_results or {}), "approval": result}
 
     session.add(

@@ -18,6 +18,7 @@ from app.api import (
     analytics,
     assistants,
     auth,
+    chains,
     generation,
     health,
     jobs,
@@ -138,6 +139,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     api.include_router(admin.router)
     api.include_router(assistants.router)
     api.include_router(generation.router)
+    api.include_router(chains.router)
     app.include_router(api)
     # WS /ws sits at the root, not under /api: 4.4.4 lists it that way, and it is a different
     # protocol rather than another REST resource.

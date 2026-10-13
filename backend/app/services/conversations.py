@@ -28,15 +28,17 @@ from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.clarify import ClarificationService
-from app.ai.intent import Action, Intent
+from app.ai.intent import RUN_ACTIONS, Action, Intent
 from app.ai.parser import Disposition, IntentParser, ParseOutcome, high_urgency_used_today
 from app.ai.policy import PolicyContext, RunningChain
-from app.core.errors import ErrorCode, conflict, not_found
+from app.core.errors import ApiError, ErrorCode, conflict, not_found
 from app.core.logging import get_logger
 from app.core.settings import Settings
 from app.db.models import Assistant as AssistantKind
 from app.db.models import (
     AuditLog,
+    Chain,
+    ChainStatus,
     Conversation,
     GeneratedPipeline,
     Job,
@@ -47,7 +49,11 @@ from app.db.models import (
     Role,
     User,
 )
+from app.services import chains
+from app.services.jenkins import JenkinsClient
+from app.services.plugin import PluginClient
 from app.services.runs import Page, clamp_page, count_rows
+from app.services.tracker import RunTracker
 
 logger = get_logger(__name__)
 
@@ -232,18 +238,26 @@ class Exchange:
 async def has_recent_run(session: AsyncSession, user: User) -> bool:
     """Whether the user has started anything, which is what "a run the user already has" needs
     (4.5.4) for status, rerun and cancel."""
-    return bool(await session.scalar(select(exists().where(Job.created_by == user.id))))
+    started = await session.scalar(select(exists().where(Chain.started_by == user.id)))
+    created = await session.scalar(select(exists().where(Job.created_by == user.id)))
+    return bool(started or created)
 
 
 async def running_chain_for(session: AsyncSession, service: str | None) -> RunningChain | None:
-    """The chain running for a service, for the policy's "new request while its chain runs" rule.
-
-    None until the per-service chain lock exists (T5.7), which the policy reads as "no chain
-    running". Recorded in PROGRESS.md under T5.5 so it is not mistaken for done.
-    """
+    """The chain holding a service's lock, for the policy's "new request while its chain runs"
+    rule (4.5.5)."""
     if service is None:
         return None
-    return None
+    return await chains.running_chain(session, service)
+
+
+@dataclass(frozen=True)
+class RunContext:
+    """What acting on a status, rerun or cancel request needs (T5.7)."""
+
+    jenkins: JenkinsClient
+    plugin: PluginClient | None = None
+    tracker: RunTracker | None = None
 
 
 async def policy_context(
@@ -274,8 +288,13 @@ async def post_message(
     parser: IntentParser,
     clarifier: ClarificationService,
     settings: Settings,
+    runs: RunContext | None = None,
 ) -> Exchange:
-    """Store the message, interpret it, record the command and reply."""
+    """Store the message, interpret it, record the command and reply.
+
+    A confirmed status, rerun or cancel request is acted on at once when ``runs`` is given (4.6.5:
+    "Show the latest run card, no generation"; "Re-trigger the last failed test job").
+    """
     history = await history_for(session, conversation)
     stripped = text.strip()
 
@@ -318,11 +337,123 @@ async def post_message(
         session, outcome, message_id=user_message.id, actor_id=user.id
     )
     content, payload = describe(outcome)
+    if runs is not None:
+        acted = await act_on_run_request(session, outcome=outcome, user=user, runs=runs)
+        if acted is not None:
+            content, extra = acted
+            payload.update(extra)
     payload["command_id"] = command.id
     reply = _reply(conversation, content, payload)
     session.add(reply)
     await session.flush()
     return Exchange(user_message=user_message, assistant_message=reply, command=command)
+
+
+def _service_of(job_name: str) -> str | None:
+    """``fs-payment-service-test-unit`` -> ``payment-service``."""
+    for prefix in ("fs-", "pl-"):
+        if job_name.startswith(prefix):
+            rest = job_name[len(prefix) :]
+            for marker in ("-test-", "-test", "-build", "-deploy-", "-lint", "-security-scan"):
+                if marker in rest:
+                    return rest.split(marker, 1)[0]
+    return None
+
+
+async def act_on_run_request(
+    session: AsyncSession, *, outcome: ParseOutcome, user: User, runs: RunContext
+) -> tuple[str, dict[str, Any]] | None:
+    """Carry out a confirmed STATUS, RERUN or CANCEL. None for anything else."""
+    intent = outcome.intent
+    if outcome.disposition is not Disposition.READY or intent.action not in RUN_ACTIONS:
+        return None
+    try:
+        if intent.action is Action.STATUS:
+            return await _status(session, user=user, service=intent.service, runs=runs)
+        if intent.action is Action.RERUN:
+            return await _rerun(session, user=user, service=intent.service, runs=runs)
+        return await _cancel(session, user=user, service=intent.service, runs=runs)
+    except ApiError as exc:
+        # A refusal is an answer, not an error page: the chain lock, a permission, Jenkins down.
+        return exc.message, {"kind": "refusal", "error": exc.code.value}
+
+
+async def _status(
+    session: AsyncSession, *, user: User, service: str | None, runs: RunContext
+) -> tuple[str, dict[str, Any]]:
+    chain = await chains.latest_chain(session, user=user, service=service)
+    if chain is None:
+        return "There is no run to show yet. Generate one and approve it first.", {
+            "kind": "status",
+            "chain": None,
+        }
+    card = await chains.run_card(session, chain, jenkins=runs.jenkins, plugin=runs.plugin)
+    return status_sentence(card), {"kind": "status", "chain": card}
+
+
+def status_sentence(card: dict[str, Any]) -> str:
+    """One line for a run card, newest job first."""
+    jobs = [job for job in card["jobs"] if job["run"] is not None]
+    service = card["service"]
+    status = str(card["status"]).lower()
+    if not jobs:
+        return f"The {service} chain is {status}; its first job has not started yet."
+    newest = jobs[-1]
+    run = newest["run"]
+    return (
+        f"The {service} chain is {status}: {newest['name']} #{run['build_number']} "
+        f"is {str(run['result']).lower()}."
+    )
+
+
+async def _rerun(
+    session: AsyncSession, *, user: User, service: str | None, runs: RunContext
+) -> tuple[str, dict[str, Any]]:
+    found = await chains.last_failed_test(session, service=service)
+    if found is None:
+        return "There is no failed test job to re-run.", {"kind": "rerun", "chain": None}
+    run, job, previous = found
+    target = (previous.service if previous is not None else None) or _service_of(job.jenkins_name)
+    if target is None:
+        return "That test job does not belong to a known service.", {"kind": "refusal"}
+    chain, queue_item_id = await chains.rerun(
+        session,
+        jenkins=runs.jenkins,
+        user=user,
+        run=run,
+        job=job,
+        previous=previous,
+        service=target,
+    )
+    if runs.tracker is not None:
+        runs.tracker.track(
+            queue_item_id=queue_item_id,
+            job_id=job.id,
+            job_name=job.jenkins_name,
+            chain_id=chain.id,
+        )
+    return f"Re-run started: {job.jenkins_name} is queued.", {
+        "kind": "run",
+        "chain_id": chain.id,
+        "first_job": job.jenkins_name,
+        "queue_item_id": queue_item_id,
+        "jobs": chain.jobs,
+    }
+
+
+async def _cancel(
+    session: AsyncSession, *, user: User, service: str | None, runs: RunContext
+) -> tuple[str, dict[str, Any]]:
+    running = await chains.running_chain(session, service) if service else None
+    chain = (
+        await chains.get_chain(session, running.chain_id)
+        if running is not None
+        else await chains.latest_chain(session, user=user, service=service)
+    )
+    if chain is None or chain.status != ChainStatus.RUNNING.value:
+        return "Nothing is running to cancel.", {"kind": "cancel", "chain": None}
+    result = await chains.cancel(session, jenkins=runs.jenkins, chain=chain, actor=user)
+    return f"Cancelled the {chain.service} chain.", {"kind": "cancel", **result}
 
 
 async def _resolve_input(

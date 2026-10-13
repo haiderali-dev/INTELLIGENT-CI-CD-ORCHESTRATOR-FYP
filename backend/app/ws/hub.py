@@ -63,6 +63,9 @@ class EventType(StrEnum):
     RUN_UPDATED = "run.updated"
     RUN_FINISHED = "run.finished"
     RUN_QUEUED = "run.queued"
+    CHAIN_UPDATED = "chain.updated"
+    CHAIN_FINISHED = "chain.finished"
+    CHAIN_STAGES = "chain.stages"
     QUEUE_CHANGED = "queue.changed"
     NOTIFICATION = "notification"
     HELLO = "hello"
@@ -75,6 +78,9 @@ TOPIC_FOR_EVENT: Final[dict[EventType, Topic]] = {
     EventType.RUN_UPDATED: Topic.RUNS,
     EventType.RUN_FINISHED: Topic.RUNS,
     EventType.RUN_QUEUED: Topic.RUNS,
+    EventType.CHAIN_UPDATED: Topic.RUNS,
+    EventType.CHAIN_FINISHED: Topic.RUNS,
+    EventType.CHAIN_STAGES: Topic.RUNS,
     EventType.QUEUE_CHANGED: Topic.QUEUE,
     EventType.NOTIFICATION: Topic.NOTIFICATIONS,
     EventType.HELLO: Topic.SYSTEM,

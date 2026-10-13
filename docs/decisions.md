@@ -11,6 +11,39 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 5
 
+### D-047 Chains: the lock, tracking, the run card and run commands
+**Date:** 2026-10-13 · **Status:** decided and implemented (T5.7)
+
+- **A `chains` table, which 4.4.3 does not list.** 4.6.4 needs a per-service lock with a 30-minute
+  expiry, and the run card needs to know which builds belong to one chain. Jobs are reused by
+  every chain for their service, so neither fits an existing table. One additive migration
+  (`c4e1d07a5b92`) adds `chains` and a nullable `job_runs.chain_id`. Verified on the stack's
+  PostgreSQL in a scratch database: upgrade, downgrade, upgrade again, and `alembic check`
+  finding no difference between models and schema.
+- **The lock is the row.** A RUNNING chain holds its service's lock, and a partial unique index
+  allows one per service. Two approvals racing for the same service cannot both win, even if both
+  checked first. Approval claims the lock in the same commit as the approval, before Jenkins is
+  touched, and releases it (ABORTED) if Jenkins fails. After 30 minutes a running chain no longer
+  blocks: the next claim marks it EXPIRED.
+- **Tracking reads the database, not memory.** Each tick decides from the stored runs: wait while
+  the current build runs; on SUCCESS find the next job's build through the `UpstreamCause` its
+  downstream trigger recorded (confirmed live on jenkins-dev); on anything else stop the chain
+  there. A restarted backend finds a chain's first build again through the queue item stored on
+  the chain.
+- **Pipeline stages** come from the stage view (`wfapi/describe`, confirmed live), without
+  Declarative's own post-actions stage. The tracker publishes `chain.stages` only when they change.
+- **Endpoints beyond 4.4.4's table.** `GET /api/chains`, `GET /api/chains/{id}` (the run card:
+  job states, stages, and queue rank, score and waiting reason from the plugin) and
+  `POST /api/chains/{id}/cancel` (4.6.4: cancels queued members and stops the running one).
+  Chains are visible to any signed-in user, like runs. Cancelling is for the starter, DevOps and
+  Admin.
+- **Run commands act.** A confirmed STATUS shows the user's latest run card (4.6.5, "no
+  generation"). RERUN re-triggers the last failed test job as a new chain from that job onward,
+  with the original chain's parameters: if the tests now pass, the job's own trigger carries on
+  downstream, and the chain the user sees matches what Jenkins does. CANCEL cancels the running
+  chain. Each is refused by the lock and the permissions like anything else, and a refusal
+  comes back as a reply rather than an error.
+
 ### D-046 Generating, approving and explaining
 **Date:** 2026-10-13 · **Status:** decided and implemented (T5.6)
 

@@ -21,6 +21,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
@@ -91,6 +92,16 @@ class RunResult(StrEnum):
     ABORTED = "ABORTED"
     NOT_BUILT = "NOT_BUILT"
     RUNNING = "RUNNING"
+
+
+class ChainStatus(StrEnum):
+    """A chain's outcome. EXPIRED: its 30-minute lock ran out before it finished (4.6.4)."""
+
+    RUNNING = "RUNNING"
+    SUCCESS = "SUCCESS"
+    FAILURE = "FAILURE"
+    ABORTED = "ABORTED"
+    EXPIRED = "EXPIRED"
 
 
 # ---------------------------------------------------------------------------
@@ -274,6 +285,11 @@ class JobRun(UuidPrimaryKey, Base):
 
     job_id: Mapped[str] = mapped_column(ForeignKey("jobs.id", ondelete="CASCADE"), index=True)
     build_number: Mapped[int] = mapped_column(Integer)
+    # The chain this build belongs to, when an assistant started it (T5.7). A job is reused by
+    # every chain for its service, so the run, not the job, records which chain it was part of.
+    chain_id: Mapped[str | None] = mapped_column(
+        ForeignKey("chains.id", ondelete="SET NULL"), default=None, index=True
+    )
     queue_entered_at: Mapped[datetime | None] = mapped_column(default=None)
     started_at: Mapped[datetime | None] = mapped_column(default=None)
     finished_at: Mapped[datetime | None] = mapped_column(default=None)
@@ -285,6 +301,49 @@ class JobRun(UuidPrimaryKey, Base):
     created_at: Mapped[datetime] = mapped_column(default=utcnow, index=True)
 
     job: Mapped[Job] = relationship(back_populates="runs")
+
+
+class Chain(UuidPrimaryKey, TimestampedCreation, Base):
+    """One started chain: a freestyle chain of jobs, or one Pipeline run (T5.7).
+
+    It is also the per-service lock of 4.6.4: "A per-service lock with a 30-minute expiry blocks a
+    second chain while one is running." The partial unique index allows one RUNNING chain per
+    service, so two approvals racing for the same service cannot both claim it -- the database
+    refuses the second, whatever the application checked first. A chain past ``lock_expires_at``
+    no longer blocks: it is marked EXPIRED when the next one claims the lock.
+    """
+
+    __tablename__ = "chains"
+    __table_args__ = (
+        Index(
+            "uq_chains_one_running_per_service",
+            "service",
+            unique=True,
+            postgresql_where=text("status = 'RUNNING'"),
+            sqlite_where=text("status = 'RUNNING'"),
+        ),
+    )
+
+    pipeline_id: Mapped[str | None] = mapped_column(
+        ForeignKey("generated_pipelines.id", ondelete="SET NULL"), default=None, index=True
+    )
+    service: Mapped[str] = mapped_column(String(128), index=True)
+    job_type: Mapped[str] = mapped_column(String(16))
+    status: Mapped[str] = mapped_column(String(16), default=ChainStatus.RUNNING.value, index=True)
+    # Jenkins job names in the order they run; one name for a Pipeline.
+    jobs: Mapped[list[str]] = mapped_column(JSON, default=list)
+    # Where the chain has got to: the position of the newest job with a run.
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    # BRANCH and COMMIT, as triggered (D-041).
+    parameters: Mapped[dict[str, str]] = mapped_column(JSON, default=dict)
+    # The first job's queue item, so a restarted backend can still find its build.
+    queue_item_id: Mapped[int | None] = mapped_column(Integer, default=None)
+    started_by: Mapped[str | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), default=None, index=True
+    )
+    started_at: Mapped[datetime] = mapped_column(default=utcnow)
+    finished_at: Mapped[datetime | None] = mapped_column(default=None)
+    lock_expires_at: Mapped[datetime] = mapped_column(default=utcnow)
 
 
 # ---------------------------------------------------------------------------

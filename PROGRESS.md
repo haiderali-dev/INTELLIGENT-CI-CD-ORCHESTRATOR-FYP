@@ -1,6 +1,6 @@
 # Progress
 
-Updated: 2026-10-13 · Current phase: 5 (T5.6 done, T5.7 next) · Branch: phase-5-assistants
+Updated: 2026-10-13 · Current phase: 5 (T5.7 done, T5.8 next) · Branch: phase-5-assistants
 
 ## Needs human
 - [x] **Create the two sample-service GitHub repositories**, push them, create the
@@ -558,7 +558,7 @@ has been reviewed by a human yet.
 
 ## Phase 5: Freestyle Assistant and Pipeline Assistant
 
-In progress on `phase-5-assistants`. T5.1 to T5.6 done; T5.7 next.
+In progress on `phase-5-assistants`. T5.1 to T5.7 done; T5.8 next.
 
 - [x] T5.1 Spec model (Pydantic) with YAML round-trip and the planner schema, plus one revision
       rule for both job types (D-041). Evidence, all run on 2026-10-12:
@@ -685,8 +685,8 @@ In progress on `phase-5-assistants`. T5.1 to T5.6 done; T5.7 next.
         - editing: re-decided, outside the catalog, to production, action locked, approved
           locked, ownership.
       - **Regression checks:** offline suite 1392 passed; ruff, format and mypy clean.
-      - **Not yet live:** the running-chain lookup returns "no chain" until the per-service lock
-        exists. It is wired in T5.7.
+      - **Running-chain lookup:** returned "no chain" until the per-service lock existed. Wired in
+        T5.7, and tested there.
 - [x] T5.6 Generate, regenerate, streamed explain, and approve with an idempotency key (D-046).
       Evidence, all run on 2026-10-13:
       - **Code:**
@@ -709,8 +709,33 @@ In progress on `phase-5-assistants`. T5.1 to T5.6 done; T5.7 next.
           locked after approval).
         - `test_generation_explain.py`, 6 passed.
       - **Regression checks:** offline suite 1420 passed; ruff, format and mypy clean.
-      - **Wired in T5.7:** the chain lock at approval, and tracking past the first job.
-- [ ] T5.7 Per-service chain lock; chain triggering and tracking; stage tracking for Pipeline.
+      - **Chain lock at approval and tracking past the first job:** wired in T5.7.
+- [x] T5.7 Per-service chain lock; chain triggering and tracking; stage tracking for Pipeline
+      (D-047). Evidence, all run on 2026-10-13:
+      - **Code:**
+        - `app/services/chains.py`: claim and expiry, `advance` (downstream builds found through
+          `UpstreamCause`, the chain stopped at the first non-SUCCESS), the run card, cancel, and
+          rerun of the last failed test job.
+        - `chains` table and `job_runs.chain_id` (migration `c4e1d07a5b92`).
+        - `RunTracker`: chains advanced each tick, `chain.updated`, `chain.finished` and
+          `chain.stages` events.
+        - `JenkinsClient`: `downstream_build`, `pipeline_stages` (`wfapi`) and `queued_items`,
+          their shapes confirmed live first.
+        - Approval claims the lock in its own commit.
+        - `/api/chains` endpoints; STATUS, RERUN and CANCEL messages act.
+      - **Migration:** on a scratch PostgreSQL database, upgrade, downgrade, upgrade and
+        `alembic check` all succeed, with no model or schema difference.
+      - **Tests:** `test_chains.py`, 18 passed:
+        - the lock, its expiry, the Admin cancel offer, and the policy and approval refusing
+          while a chain runs;
+        - a failed test stopping the chain with the deploy job never started (fake);
+        - a full chain succeeding and releasing the lock;
+        - restart safety;
+        - Pipeline stages published only on change;
+        - the run card with queue rank and waiting reason;
+        - cancel stopping the running job and dequeuing the rest, and cancel permissions;
+        - status and rerun messages.
+      - **Regression checks:** offline suite 1438 passed; ruff, format and mypy clean.
 - [ ] T5.8 End-to-end backend tests (`e2e`) for every command in Part 4.6.5.
 - [ ] T5.9 Stretch: "Explain failure" for failed runs.
 

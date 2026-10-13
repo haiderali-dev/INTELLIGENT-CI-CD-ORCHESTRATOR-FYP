@@ -78,6 +78,15 @@ class ConsoleChunk:
 
 
 @dataclass(frozen=True)
+class StageInfo:
+    """One stage of a Pipeline run, as the stage view reports it (``wfapi/describe``)."""
+
+    name: str
+    status: str
+    duration_ms: int
+
+
+@dataclass(frozen=True)
 class LintResult:
     ok: bool
     message: str
@@ -156,6 +165,20 @@ class JenkinsClient(ABC):
         more data. The HTTP client overrides it to read ``X-More-Data``.
         """
         return ConsoleChunk(text=await self.console_text(name, number, start), more_data=False)
+
+    @abstractmethod
+    async def downstream_build(
+        self, name: str, *, upstream: str, upstream_number: int
+    ) -> int | None:
+        """The build of ``name`` that ``upstream`` #``upstream_number`` started, if it has one."""
+
+    @abstractmethod
+    async def pipeline_stages(self, name: str, number: int) -> tuple[StageInfo, ...]:
+        """A Pipeline run's stages in order, without Declarative's own post-action stage."""
+
+    @abstractmethod
+    async def queued_items(self) -> tuple[QueueItem, ...]:
+        """Everything waiting in the queue, each with its job name."""
 
     @abstractmethod
     async def cancel_queue_item(self, item_id: int) -> None: ...
@@ -439,6 +462,66 @@ class HttpJenkinsClient(JenkinsClient):
         more = response.headers.get("X-More-Data", "").strip().lower() == "true"
         return ConsoleChunk(text=response.text, more_data=more)
 
+    async def downstream_build(
+        self, name: str, *, upstream: str, upstream_number: int
+    ) -> int | None:
+        """Found through the build's ``UpstreamCause``, which a downstream trigger records.
+
+        Only the newest builds are read: a chain's next job is started seconds after the job before
+        it finishes, so its build is always among the most recent.
+        """
+        validate_job_name(name)
+        try:
+            response = await self._request(
+                "GET",
+                f"/job/{name}/api/json",
+                params={
+                    "tree": "builds[number,actions[causes[upstreamProject,upstreamBuild]]]{0,20}"
+                },
+            )
+        except JobNotFoundError:
+            return None
+        for build in response.json().get("builds") or []:
+            for action in build.get("actions") or []:
+                for cause in (action or {}).get("causes") or []:
+                    if (
+                        cause.get("upstreamProject") == upstream
+                        and cause.get("upstreamBuild") == upstream_number
+                    ):
+                        return int(build["number"])
+        return None
+
+    async def pipeline_stages(self, name: str, number: int) -> tuple[StageInfo, ...]:
+        validate_job_name(name)
+        response = await self._request("GET", f"/job/{name}/{number}/wfapi/describe")
+        return tuple(
+            StageInfo(
+                name=str(stage.get("name", "")),
+                status=str(stage.get("status", "")),
+                duration_ms=int(stage.get("durationMillis") or 0),
+            )
+            for stage in response.json().get("stages") or []
+            if not str(stage.get("name", "")).startswith("Declarative:")
+        )
+
+    async def queued_items(self) -> tuple[QueueItem, ...]:
+        response = await self._request(
+            "GET",
+            "/queue/api/json",
+            params={"tree": "items[id,blocked,buildable,stuck,why,task[name]]"},
+        )
+        return tuple(
+            QueueItem(
+                id=int(item["id"]),
+                blocked=bool(item.get("blocked", False)),
+                buildable=bool(item.get("buildable", False)),
+                stuck=bool(item.get("stuck", False)),
+                why=item.get("why"),
+                job_name=(item.get("task") or {}).get("name"),
+            )
+            for item in response.json().get("items") or []
+        )
+
     async def cancel_queue_item(self, item_id: int) -> None:
         await self._request(
             "POST", "/queue/cancelItem", params={"id": item_id}, expected=(200, 204, 302, 404)
@@ -507,6 +590,9 @@ class _FakeJob:
     config_xml: str
     builds: list[BuildInfo] = field(default_factory=list)
     logs: dict[int, str] = field(default_factory=dict)
+    # Build number -> (upstream job, upstream build), as a downstream trigger records it.
+    causes: dict[int, tuple[str, int]] = field(default_factory=dict)
+    stages: dict[int, tuple[StageInfo, ...]] = field(default_factory=dict)
 
 
 class FakeJenkinsClient(JenkinsClient):
@@ -607,6 +693,63 @@ class FakeJenkinsClient(JenkinsClient):
             job_name=name,
         )
         return info
+
+    def start_downstream(
+        self, name: str, *, upstream: str, upstream_number: int, result: str | None = None
+    ) -> BuildInfo:
+        """Test helper: what a downstream trigger does -- start ``name`` with an upstream cause.
+
+        ``result=None`` leaves the build running; ``finish_build`` ends it later.
+        """
+        job = self.jobs[name]
+        number = len(job.builds) + 1
+        info = BuildInfo(
+            number=number,
+            building=result is None,
+            result=result,
+            duration_ms=0 if result is None else 1234,
+            timestamp_ms=1_700_000_000_000,
+        )
+        job.builds.append(info)
+        job.causes[number] = (upstream, upstream_number)
+        return info
+
+    def finish_build(self, name: str, number: int, result: str) -> BuildInfo:
+        """Test helper: end a running build with a result."""
+        job = self.jobs[name]
+        index = next(i for i, build in enumerate(job.builds) if build.number == number)
+        finished = BuildInfo(
+            number=number,
+            building=False,
+            result=result,
+            duration_ms=4321,
+            timestamp_ms=job.builds[index].timestamp_ms or 1_700_000_000_000,
+            queue_id=job.builds[index].queue_id,
+        )
+        job.builds[index] = finished
+        return finished
+
+    async def downstream_build(
+        self, name: str, *, upstream: str, upstream_number: int
+    ) -> int | None:
+        job = self.jobs.get(name)
+        if job is None:
+            return None
+        for number, cause in job.causes.items():
+            if cause == (upstream, upstream_number):
+                return number
+        return None
+
+    async def pipeline_stages(self, name: str, number: int) -> tuple[StageInfo, ...]:
+        job = self.jobs.get(name)
+        if job is None:
+            raise JobNotFoundError(f"not found: {name}", status_code=404)
+        return job.stages.get(number, ())
+
+    async def queued_items(self) -> tuple[QueueItem, ...]:
+        return tuple(
+            item for item in self.queue.values() if not item.cancelled and item.build_number is None
+        )
 
     async def queue_item(self, item_id: int) -> QueueItem:
         if item_id not in self.queue:
