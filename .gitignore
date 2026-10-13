@@ -11,6 +11,9 @@
 .tmp/
 *.log
 !legacy/m2-poc/experiment/*.log
+# Captured Jenkins logs the T5.9 tests read. Ignoring them left the tests passing locally and
+# failing on a clean checkout.
+!backend/tests/data/failure_logs/*.log
 
 # --- Java / Maven ---
 target/
