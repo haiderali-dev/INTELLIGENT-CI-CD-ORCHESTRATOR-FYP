@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import re
 import subprocess
@@ -2436,7 +2437,294 @@ def check_explain_failure() -> Result:
     return _all_passed(result, output, "the Explain failure tests")
 
 
-IMPLEMENTED_PHASES = {0, 1, 2, 3, 4, 5}
+# ---------------------------------------------------------------------------
+# Phase 6: frontend
+# ---------------------------------------------------------------------------
+
+DESIGN_DOC = REPO_ROOT / "frontend" / "DESIGN.md"
+
+# Part 4.7.2's list, plus the review it asks for, as `##` headings.
+DESIGN_SECTIONS = (
+    "Subject and audience",
+    "Palette",
+    "Type",
+    "Layout",
+    "Principles",
+    "Review against the generic traits",
+)
+DESIGN_SCREENS = ("Assistant workspace", "Queue", "Overview")
+DESIGN_NEUTRALS = ("Ground", "Panel", "Ink", "Graphite")
+SCORE_FACTORS = ("Urgency", "Dependency", "Execution time", "Aging")
+BUILD_STATE_ROWS = ("Succeeded", "Failed", "Unstable")
+# One word from each of the four traits 4.7.2 lists. The review must address all four.
+GENERIC_TRAITS = ("cream", "card", "gradient", "monospace")
+
+# WCAG 2.2 AA (4.7.5), and the dataviz floors the score bar was chosen by.
+TEXT_CONTRAST = 4.5
+GRAPHIC_CONTRAST = 3.0
+NORMAL_DELTA_E = 15.0
+CVD_DELTA_E = 8.0
+
+_HEX = re.compile(r"`(#[0-9a-fA-F]{6})`")
+
+# Machado, Oliveira and Fernandes (2009) at severity 1.0, applied to linear RGB. The CVD floor
+# above is calibrated to this model, so it is part of the check, not a detail of it.
+_CVD_MATRICES = {
+    "protan": (
+        (0.152286, 1.052583, -0.204868),
+        (0.114503, 0.786281, 0.099216),
+        (-0.003882, -0.048116, 1.051998),
+    ),
+    "deutan": (
+        (0.367322, 0.860646, -0.227968),
+        (0.280085, 0.672501, 0.047413),
+        (-0.011820, 0.042940, 0.968881),
+    ),
+}
+
+
+def _md_section(text: str, title: str, level: int) -> str:
+    """The body under the heading `title` (optionally numbered, as in "## 2. Palette") up to the
+    next heading of the same or a higher level. Lines inside code fences are never headings: the
+    wireframes are full of `#` and `|`. Empty when the heading is missing."""
+    lines = text.splitlines()
+    heading = re.compile(rf"^{'#' * level} (?:\d+\. )?{re.escape(title)}\s*$")
+    in_fence = False
+    start: int | None = None
+    body: list[str] = []
+    for line in lines:
+        if line.startswith("```"):
+            in_fence = not in_fence
+        is_heading = not in_fence and re.match(r"^(#{1,6}) ", line)
+        if start is None:
+            if not in_fence and heading.match(line):
+                start = len(body)
+            continue
+        if is_heading and len(is_heading.group(1)) <= level:
+            break
+        body.append(line)
+    return "\n".join(body) if start is not None else ""
+
+
+def _md_table(section: str) -> list[list[str]]:
+    """Cells of the first table in `section`, without its header and divider rows."""
+    rows: list[list[str]] = []
+    for line in section.splitlines():
+        if line.startswith("|"):
+            rows.append([cell.strip() for cell in line.strip().strip("|").split("|")])
+        elif rows:
+            break
+    return rows[2:]
+
+
+def _linear_rgb(colour: str) -> tuple[float, float, float]:
+    r, g, b = (int(colour[i : i + 2], 16) / 255 for i in (1, 3, 5))
+    return tuple(  # type: ignore[return-value]
+        c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in (r, g, b)
+    )
+
+
+def _contrast(a: str, b: str) -> float:
+    """WCAG 2.x contrast ratio."""
+
+    def luminance(colour: str) -> float:
+        r, g, b_ = _linear_rgb(colour)
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b_
+
+    high, low = sorted((luminance(a), luminance(b)), reverse=True)
+    return (high + 0.05) / (low + 0.05)
+
+
+def _oklab(rgb: tuple[float, float, float]) -> tuple[float, float, float]:
+    r, g, b = rgb
+    l_ = (0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b) ** (1 / 3)
+    m_ = (0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b) ** (1 / 3)
+    s_ = (0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b) ** (1 / 3)
+    return (
+        0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_,
+        1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_,
+        0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_,
+    )
+
+
+def _delta_e(a: str, b: str, deficiency: str | None = None) -> float:
+    """OKLab distance x100, after simulating `deficiency` when one is given."""
+
+    def lab(colour: str) -> tuple[float, float, float]:
+        rgb = _linear_rgb(colour)
+        if deficiency:
+            matrix = _CVD_MATRICES[deficiency]
+            rgb = tuple(  # type: ignore[assignment]
+                min(1.0, max(0.0, sum(row[j] * rgb[j] for j in range(3)))) for row in matrix
+            )
+        return _oklab(rgb)
+
+    return 100 * math.dist(lab(a), lab(b))
+
+
+def _cvd_delta_e(a: str, b: str) -> float:
+    return min(_delta_e(a, b, "protan"), _delta_e(a, b, "deutan"))
+
+
+def design_doc_problems(text: str) -> tuple[list[str], str]:
+    """Everything wrong with a DESIGN.md, and a one-line summary when nothing is.
+
+    Pure, so it can be tested on edited copies of the document. The colours are read from the
+    document's own tables and every floor is recomputed from them."""
+    problems: list[str] = []
+    for title in DESIGN_SECTIONS:
+        if not _md_section(text, title, 2).strip():
+            problems.append(f"no '## {title}' section")
+
+    subject = _md_section(text, "Subject and audience", 2).lower()
+    if subject and not ("four-person" in subject and "live demo" in subject):
+        problems.append("the subject is not 4.7.2's: a four-person team, a live demo")
+
+    palette = _md_section(text, "Palette", 2)
+    named: dict[str, tuple[str, str]] = {}
+    roles: dict[str, str] = {}
+    for row in _md_table(_md_section(palette, "Named values", 3)):
+        hexes = _HEX.findall(" ".join(row[1:3]))
+        if len(row) >= 4 and len(hexes) == 2:
+            named[row[0]] = (hexes[0], hexes[1])
+            roles[row[0]] = row[3]
+    if not 4 <= len(named) <= 6:
+        problems.append(f"{len(named)} named colours with light and dark values; 4.7.2 asks for 4 to 6")
+    absent = [name for name in DESIGN_NEUTRALS if name not in named]
+    if absent:
+        problems.append(f"no named {', '.join(absent)}, so contrast cannot be measured")
+        return problems, ""
+
+    factors: list[tuple[str, tuple[str, str]]] = []
+    for row in _md_table(_md_section(palette, "Score bar colours", 3)):
+        hexes = _HEX.findall(" ".join(row[2:4]))
+        if len(hexes) == 2:
+            factors.append((row[0], (hexes[0], hexes[1])))
+    if tuple(name for name, _ in factors) != SCORE_FACTORS:
+        problems.append(
+            f"score bar colours are {[name for name, _ in factors]}, "
+            f"expected {list(SCORE_FACTORS)} in that order"
+        )
+
+    states: dict[str, tuple[str, str]] = {}
+    for row in _md_table(_md_section(palette, "Build-state colours", 3)):
+        hexes = _HEX.findall(" ".join(row[2:4]))
+        if len(hexes) == 2:
+            states[row[0]] = (hexes[0], hexes[1])
+    absent = [state for state in BUILD_STATE_ROWS if state not in states]
+    if absent:
+        problems.append(f"no build-state colour for {', '.join(absent)}")
+
+    accents = [name for name, role in roles.items() if "Assistant" in role]
+    if len(accents) != 2:
+        problems.append(f"{len(accents)} assistant accents; 4.7.4 needs one for each of the two")
+
+    worst_text = (math.inf, "")
+    worst_normal = worst_cvd = math.inf
+    for index, mode in enumerate(("light", "dark")):
+        colour = {name: pair[index] for name, pair in named.items()}
+        surfaces = {"Panel": colour["Panel"], "Ground": colour["Ground"]}
+
+        text_pairs = [(fg, surface) for fg in ("Ink", "Graphite") for surface in surfaces]
+        for fg, surface in text_pairs:
+            ratio = _contrast(colour[fg], surfaces[surface])
+            worst_text = min(worst_text, (ratio, f"{fg} on {surface}, {mode}"))
+            if ratio < TEXT_CONTRAST:
+                problems.append(f"{fg} on {surface} ({mode}) is {ratio:.2f}:1, text needs 4.5:1")
+        ratio = _contrast(colour["Panel"], colour["Ink"])
+        if ratio < TEXT_CONTRAST:
+            problems.append(f"the primary button label ({mode}) is {ratio:.2f}:1")
+
+        graphics = {name: colour[name] for name in accents}
+        graphics.update({state: pair[index] for state, pair in states.items()})
+        graphics.update({name: pair[index] for name, pair in factors})
+        for name, value in graphics.items():
+            for surface, background in surfaces.items():
+                ratio = _contrast(value, background)
+                if ratio < GRAPHIC_CONTRAST:
+                    problems.append(
+                        f"{name} on {surface} ({mode}) is {ratio:.2f}:1, a graphic needs 3:1"
+                    )
+
+        for (left, a), (right, b) in zip(factors, factors[1:]):
+            normal, cvd = _delta_e(a[index], b[index]), _cvd_delta_e(a[index], b[index])
+            worst_normal, worst_cvd = min(worst_normal, normal), min(worst_cvd, cvd)
+            if normal < NORMAL_DELTA_E or cvd < CVD_DELTA_E:
+                problems.append(
+                    f"score bar neighbours {left} and {right} ({mode}) are {normal:.1f} apart, "
+                    f"{cvd:.1f} under CVD; the floors are 15 and 8"
+                )
+
+        # Status colours are reserved for build states (4.7.5): no factor may pass for one.
+        for name, pair in factors:
+            for state, state_pair in states.items():
+                normal = _delta_e(pair[index], state_pair[index])
+                if normal < NORMAL_DELTA_E:
+                    problems.append(
+                        f"{name} and {state} ({mode}) are only {normal:.1f} apart in normal vision"
+                    )
+
+        if len(accents) == 2:
+            a, b = colour[accents[0]], colour[accents[1]]
+            normal, cvd = _delta_e(a, b), _cvd_delta_e(a, b)
+            if normal < NORMAL_DELTA_E or cvd < CVD_DELTA_E:
+                problems.append(
+                    f"the assistant accents ({mode}) are {normal:.1f} apart, {cvd:.1f} under CVD"
+                )
+
+    type_section = _md_section(text, "Type", 2)
+    measures = [int(width) for width in re.findall(r"\b(\d+)ch\b", type_section)]
+    if not measures or max(measures) >= 80:
+        problems.append("Type states no line length under 80 characters")
+    if len(_md_table(type_section)) < 3:
+        problems.append("Type has no scale table")
+
+    layout = _md_section(text, "Layout", 2)
+    for screen in DESIGN_SCREENS:
+        body = _md_section(layout, screen, 3).strip()
+        if "```text" not in body:
+            problems.append(f"Layout has no wireframe for {screen}")
+        elif body.startswith("```"):
+            problems.append(f"Layout's {screen} has no one-sentence description")
+
+    principles = _md_section(text, "Principles", 2)
+    count = len(re.findall(r"^\d+\. ", principles, flags=re.MULTILINE))
+    if not 3 <= count <= 5:
+        problems.append(f"{count} principles; 4.7.2 asks for three to five")
+    if "score bar" not in principles.lower():
+        problems.append("no principle names the score bar, the memorable element")
+
+    review = _md_section(text, "Review against the generic traits", 2).lower()
+    if review:
+        unaddressed = [trait for trait in GENERIC_TRAITS if trait not in review]
+        if unaddressed:
+            problems.append(f"the review does not address: {', '.join(unaddressed)}")
+        if "changed" not in review:
+            problems.append("the review does not say what changed")
+
+    summary = (
+        f"{len(named)} named colours, {len(factors)} score bar and {len(states)} build-state "
+        f"colours; worst text contrast {worst_text[0]:.2f}:1 ({worst_text[1]}); score bar "
+        f"neighbours at least {worst_normal:.1f} apart, {worst_cvd:.1f} under CVD; "
+        f"{count} principles; wireframes for {', '.join(DESIGN_SCREENS)}"
+    )
+    return problems, summary
+
+
+@check(6, "DESIGN.md has every part 4.7.2 asks for, and its colours pass the floors it states")
+def check_design_doc() -> Result:
+    """T6.1. The structure is Part 4.7.2's list. The colour floors are WCAG 2.2 AA (4.7.5) and the
+    dataviz rules the score bar was chosen by. All of it is recomputed from the document's own
+    tables, so an edited colour that was not re-measured fails here."""
+    if not DESIGN_DOC.is_file():
+        return fail("frontend/DESIGN.md is missing (T6.1)")
+    problems, summary = design_doc_problems(DESIGN_DOC.read_text(encoding="utf-8"))
+    if problems:
+        return fail("; ".join(problems))
+    return ok(summary)
+
+
+IMPLEMENTED_PHASES = {0, 1, 2, 3, 4, 5, 6}
 
 
 # ---------------------------------------------------------------------------

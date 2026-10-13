@@ -11,6 +11,33 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 6
 
+### D-052 Six named colours for the interface; the score bar's four colours are a data scale
+**Date:** 2026-10-13 · **Status:** proposed in `frontend/DESIGN.md`; final when a person approves
+that file (Needs human)
+
+**Conflict.** Part 4.7.2 asks for "4 to 6 named hex values with their roles, plus separate
+build-state colors". The same part makes the score bar the memorable element: one stacked bar of
+four contributions, which needs four colours that can be told apart. Part 4.7.4 adds a separate
+accent for each assistant. Four bar colours, two accents and the neutrals that every interface
+needs do not fit in six.
+
+**Decision.** Six named values run the interface: Ground, Panel, Ink and Graphite, plus Spruce
+and Plum for the Freestyle and Pipeline assistants. The divider colour, Rule, is a mix of Graphite
+into Panel rather than a seventh value. The score bar's four colours are treated like the
+build-state colours: a separate scale that only score bar segments and their legend keys may use.
+Section 10 of `DESIGN.md` puts this first in the list of choices to question.
+
+**How it is held.** `verify.py --phase 6` reads the colours from `DESIGN.md`'s tables and checks
+that there are 4 to 6 named values, then recomputes:
+- text at 4.5:1 or more, and every meaningful graphic at 3:1, on Panel and on Ground, in both
+  themes;
+- adjacent score bar segments at least 15 ΔE apart, and at least 8 under simulated colour vision
+  deficiency;
+- every score bar colour at least 15 ΔE from every build-state colour, because 4.7.5 reserves the
+  status colours.
+
+---
+
 ### D-051 T6.8's test plan is Part 4.7.6, not 4.7.8
 **Date:** 2026-10-13 · **Status:** decided; the specification is left unchanged
 

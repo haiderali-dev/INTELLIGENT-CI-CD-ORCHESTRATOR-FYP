@@ -1,6 +1,6 @@
 # Progress
 
-Updated: 2026-10-13 · Current phase: 6 (T6.1 next; Phase 5 merged as `8da58b9`) ·
+Updated: 2026-10-14 · Current phase: 6 (T6.1 done and awaiting approval; T6.2 next) ·
 Branch: phase-6-frontend
 
 ## Needs human
@@ -47,7 +47,10 @@ Branch: phase-6-frontend
 - [ ] **Re-run the Phase 5 security review independently.** The reviewer agent stopped on an
       account usage limit, so `docs/security-review-phase-5.md` was written by the agent that
       wrote the code.
-- [ ] **Approve `frontend/DESIGN.md`** when T6.1 produces it. No screen is built before that.
+- [ ] **Approve `frontend/DESIGN.md`.** T6.1 wrote it on 2026-10-13. Its section 10 lists the
+      choices most worth questioning, and D-052 records how its palette reads 4.7.2's "4 to 6
+      named hex values". No screen (T6.3 onward) is built before approval. T6.2's plumbing does
+      not wait for it.
 - [ ] **Label and review the evaluation gold answers** (Phase 8). At most 30 drafted items, each
       marked `needs_review: true` and excluded from scoring until a human clears the flag.
 - [ ] **Schedule the long runs:** the full experiment matrix, about 50 runs (Phase 7), and the final
@@ -921,11 +924,42 @@ Preparation, 2026-10-11, after PR #9 merged. Still **no task checked off**.
 
 ## Phase 6: Frontend
 
-In progress on `phase-6-frontend`, branched from `main` at `8da58b9`. T6.1 next.
+In progress on `phase-6-frontend`, branched from `main` at `8da58b9`. T6.1 is done and waiting
+for approval (Needs human); T6.2 next.
 
-- [ ] T6.1 Write `frontend/DESIGN.md` using the process in Part 4.7.2, then stop and add "Approve
+- [x] T6.1 Write `frontend/DESIGN.md` using the process in Part 4.7.2, then stop and add "Approve
       DESIGN.md" under Needs human. Build no screens before approval. Work on T6.2
-      infrastructure meanwhile.
+      infrastructure meanwhile. Evidence, all run on 2026-10-13 and 2026-10-14:
+      - **The document:** subject and audience, a palette of six named values plus the score
+        bar's four colours and three build-state colours (D-052), type, three wireframed
+        layouts, five principles with the score bar as the memorable element, the score bar's
+        own specification, and the review against 4.7.2's generic traits with what changed.
+        "Approve frontend/DESIGN.md" is under Needs human.
+      - **Its check:** a new Phase 6 check in `verify.py` reads the document's own tables and
+        recomputes everything it claims. In the gate run below it passed: "6 named colours, 4
+        score bar and 3 build-state colours; worst text contrast 6.86:1 (Graphite on Ground,
+        light); score bar neighbours at least 20.0 apart, 11.9 under CVD; 5 principles;
+        wireframes for Assistant workspace, Queue, Overview".
+      - **The check is negative-tested.** Eight edited copies each failed for their own reason:
+        - a paler Graphite;
+        - a dependency colour equal to the failure red;
+        - the first success green;
+        - no review section;
+        - seven named colours;
+        - a 92ch measure;
+        - two principles;
+        - no queue wireframe.
+      - **It caught one real defect.** The first success green, `#0ca30c`, was 2.96:1 on Ground,
+        the colour of a hovered row; the document now uses `#069c07`. Its section 9 records this
+        and the two other changes that came from measuring.
+      - **Colours:** the score bar passed the dataviz skill's `validate_palette.js` in both
+        themes, against this product's panels. Light: worst adjacent CVD ΔE 15.3. Dark: 11.9.
+        Every contrast pair was measured with WCAG's formula, with zero failures.
+      - **The gate, `verify.py --phase 6`, did not pass as a whole:** 71 of 72 checks passed.
+        The one failure was Phase 5's end-to-end test of Explain failure, whose explanation fell
+        back to rules after a replay miss. The cause was a checkout that Jenkins had retried
+        (D-053), fixed in the next commit. A full re-run after that fix was stopped by Claude
+        Code because the machine ran low on memory, and has not been repeated.
 - [ ] T6.2 Vite, React and TypeScript project; tokens; app shell; routing; API client generated
       from the backend OpenAPI schema; WebSocket hook.
 - [ ] T6.3 Sign in and session handling.
@@ -1054,3 +1088,7 @@ Details in `docs/decisions.md`.
 
   Next: T6.1's `frontend/DESIGN.md`, then stop for approval, with T6.2's infrastructure
   meanwhile.
+- 2026-10-14 T6.1 done: `frontend/DESIGN.md` is written, measured and checked by a new Phase 6
+  `verify.py` check. It now waits for a person's approval; no screen is built before it. The
+  Phase 6 gate passed 71 of 72. Its one failure, in Phase 5's Explain failure, is D-053. A
+  re-run after the fix was stopped by Claude Code for low memory. Next: T6.2.
