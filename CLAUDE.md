@@ -81,3 +81,8 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
   (D-039).
 - An empty Git branch spec means "any branch" to the Git plugin, and the build reports SUCCESS
   on whatever it picked. A revision must never reach Jenkins empty. Use `select_revision` (D-041).
+- Git Bash rewrites any command argument that starts with `/` into a Windows path, a regex
+  included. It broke a `docker exec` path (2026-10-13) and a `node -e` regex (2026-10-14). Put
+  such arguments in a script file, or inside `sh -c '...'`.
+- The backend's pytest `addopts` already has `-q`. A second one prints no summary line at all,
+  which reads like no tests ran. It happened twice; never add `-q` to backend pytest commands.
