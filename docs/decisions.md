@@ -11,6 +11,511 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 5
 
+### D-050 jenkins-dev retries a failed SCM checkout twice (`scmCheckoutRetryCount: 2`)
+**Date:** 2026-10-13 · **Status:** decided and applied (requested after the Phase 5 gate's DNS
+failures)
+
+**Why.** Docker Desktop's DNS intermittently failed to resolve `github.com` from the agents. A
+build then failed at its clone, and five runs of the Phase 5 gate failed that way before one
+passed (PROGRESS, Known gaps).
+
+**Decision.** `scmCheckoutRetryCount: 2` under `jenkins:` in `jenkins/casc/dev.yaml`, and nowhere
+else. Jenkins core then retries a failed SCM checkout twice more, 10 seconds apart: three attempts
+in all.
+
+**It retries every checkout failure, not only DNS.** A branch or commit that does not exist, a
+repository that cannot be reached, refused credentials and a dropped lookup are all retried alike.
+A checkout that can never succeed now fails about 20 seconds later, with "Retrying after 10
+seconds" in its log. What is not a checkout is never retried: a failing test, a failing step, or
+the Jenkinsfile's own refusal of a bad `BRANCH` or `COMMIT`.
+
+**Checked before it was applied:**
+- The YAML parses with a loader that refuses duplicate keys. The change is ten added lines, and no
+  other setting moved.
+- Jenkins core 2.568.3 has `Jenkins.setScmCheckoutRetryCount`.
+- JCasC 2130.v3ef02f16a_34b_ checked the file through its dry-run endpoint
+  (`POST /configuration-as-code/check`), using the admin account from inside the container:
+  - the current file and the new one both came back clean;
+  - a control with the attribute misspelled was refused (HTTP 400), and the list of valid
+    attributes in that refusal includes `scmCheckoutRetryCount`.
+- The first attempt at that check sent the YAML form-encoded. Every input then came back clean,
+  the control included, so that result was discarded.
+
+**Applied** by restarting `jenkins-dev` (`docker compose restart jenkins-dev`). The file is
+bind-mounted read-only, and JCasC applies it at boot.
+- Jenkins was fully up 8 seconds later, with no JCasC error, and its own `config.xml` holds
+  `<scmCheckoutRetryCount>2</scmCheckoutRetryCount>`.
+- It covers both job types, as observed: on a commit that does not exist, the freestyle checkout
+  and the Pipeline's `checkout` step each logged "Retrying after 10 seconds" twice, and each failed
+  after about 30 seconds instead of about 5.
+
+**Verified afterwards, on the same day:**
+- `verify.py --phase 1`: ALL CHECKS PASSED.
+- Every integration test: 31 passed, and 1 skipped, which needs its own PostgreSQL setup, as
+  before.
+- The full `verify.py --phase 5`: ALL CHECKS PASSED, 71 of 71.
+
+That gate run proves the setting does no harm. It does **not** yet prove it cures the flakiness:
+none of the run's 23 builds met a DNS error, so no checkout needed a retry.
+
+**Consequences:**
+- Logs can now hold a checkout error that a retry recovered from. T5.9 reads the failing step
+  before the rest of the log (D-049), so such an error does not take the blame for a later failure.
+- **Still exposed:**
+  - a DNS outage longer than the roughly 20-second retry window;
+  - the Git lookups the backend makes itself (`git ls-remote` from the host while parsing and
+    validating), which this setting does not touch.
+- Not applied to `experiment-baseline.yaml` or `experiment-plugin.yaml`. That was not requested,
+  and those controllers' build timings are the experiment's measurements.
+- BUILD_PROMPT 4.2.2 lists what `dev.yaml` must configure. This is an addition to that list,
+  recorded here rather than by editing the specification.
+
+### D-049 Explain failure: code decides the facts, the model words them, every quote is checked
+**Date:** 2026-10-13 · **Status:** decided and implemented (T5.9)
+
+Part 3 gives T5.9 one line: "Explain failure" for failed runs. The rest comes from the rules it
+sits under:
+- 4.4.4 lists the run endpoints.
+- 4.5.1 asks for a strict schema, every call in `llm_calls`, and quota limits.
+- 4.5.3 says "code decides, never the model".
+- 4.5.6 says text inside data is data, never instructions.
+- 4.5.5 confines deploys to staging.
+
+**Surface.**
+- `POST /api/runs/{id}/explain` sits with the other run endpoints. It is open to any signed-in
+  user, like the log it reads, and shares the assistants' 20-a-minute limit.
+- The run card gains `failed_run_id`, so Phase 6 can offer the action on a failed card.
+- No new intent action: 4.5.2's action list is the report's.
+- No UI: that is Phase 6.
+
+**Redaction first** (`app/failures/redact.py`). The excerpt goes to Groq, a third party, and quoted
+lines come back to the browser, so redaction runs before anything else reads the log. It masks:
+- the configured secrets, by value: the Jenkins token, Groq key, JWT secret and metrics token;
+- token formats: GitHub, Groq, OpenAI-style, AWS, Slack, JWT and Jenkins API tokens;
+- credentials in URLs, `Authorization` and `Bearer` values, secret-named assignments, private-key
+  blocks, and email addresses.
+
+It keeps line numbers (one line in, one line out) and runs in linear time. A pathological line
+written by a commit cannot stall the request: lines are capped, every pattern is literal-led or
+bounded, and costly patterns are prefiltered by keyword. The real logs pass through unchanged,
+and a test checks that.
+
+**Code decides the facts** (`app/failures/analysis.py`). The rules were written against logs
+captured on jenkins-dev, which are kept as test data. Code works out:
+- the category: checkout, infrastructure, timeout, tests, lint, security, script, build, deploy,
+  or unknown, and never a guess;
+- the failed stage. For freestyle it comes from the stored artifact; for a Pipeline, from the stage
+  view;
+- the failing tests and their counts, the exit code, and the evidence lines numbered as Jenkins
+  numbers them;
+- the stages a Pipeline skipped, read from its own "skipped due to earlier failure(s)" lines;
+- what a freestyle failure stopped, read from the chain's runs in the database. "The deploy job
+  never started" is the Phase 5 acceptance itself, stated by the explanation.
+
+**The excerpt is the same for every run of the same failure.** It holds the failing step or stage
+plus notable lines from elsewhere, and code removes or replaces everything that varies:
+- Timestamper prefixes and hidden console notes are stripped.
+- Durations, temporary script names, build numbers, clock times and SHAs become placeholders.
+- The `<log>` fence is defused inside the excerpt.
+
+That makes a recorded answer replay (T5.8) and keeps the prompt small. The integration test shows
+two real runs on jenkins-dev giving identical prompts.
+
+**The model words it, and is checked** (`app/failures/explainer.py`, prompt `failure_v1`). The
+schema is strict and has four fields: `cause_found`, `summary`, `evidence` and `suggestions`. The
+answer is dropped for the code's own explanation if:
+- any quoted line is not in the excerpt it was shown;
+- it says no cause is visible when the code found one;
+- the summary mentions production at all;
+- it is malformed or too long.
+
+Suggestions that look like commands, or that mention production, are dropped one by one. The
+three prompt examples are rendered by the code from captured logs, and a test keeps them identical
+to what the code sends.
+
+**Failures.**
+- When the log is gone (Jenkins 404), the explanation says so and the model is not asked.
+- When Jenkins is unreachable, the endpoint returns 409 `JENKINS_UNAVAILABLE`, asking for a retry.
+- When the model is unavailable, the code's explanation is used and the fallback is shown
+  (4.7.4).
+- A log Jenkins is still writing is read again for up to 5 seconds (D-039), then marked
+  incomplete.
+- Only the last megabyte of a log is read, streamed, so a build that prints without limit cannot
+  exhaust the backend. Line numbers keep Jenkins's own numbering. This was the Phase 5 security
+  review's finding 1; see `docs/security-review-phase-5.md`.
+- A network or DNS fault on the agent counts as infrastructure, not a checkout error. It is
+  checked first, because "check the branch was pushed" is the wrong advice for it. This was found
+  on a real failure.
+- The failing step is read first, against every rule. Only when it shows no cause do the
+  whole-log rules (infrastructure, checkout, timeout) look at the rest of the log. A clone error
+  that a retry recovered from cannot then take the blame for tests that failed afterwards. When no
+  shell step ran at all, the checkout is the failing step and the whole log is its section.
+
+Every call, including a failed attempt, is an `llm_calls` row, with the prompt version and the
+command its chain came from.
+
+**Rejected.**
+- Streaming the explanation, as T5.6's does: streamed text cannot be checked before it is shown.
+- Letting the model choose the category: 4.5.3.
+- A response cache: an answer that fails the checks would be served again, the planner's reason.
+- Storing explanations: that needs a table 4.4.3 does not have, and a log does not change once a
+  run has finished, so asking again costs only quota, which the rate limit bounds.
+
+**Found on the way, by running against real output.** The first end-to-end run explained a real
+failed Pipeline as `unknown`. Jenkins prefixes every Pipeline step line with a Timestamper time
+(`[2026-10-13T06:28:51.225Z] FAILED ...`), so every rule anchored at the start of a line missed.
+The hand-made Pipeline fixture had no timestamps. The prefix is now stripped, and the real log is
+a test fixture.
+
+### D-048 Status, rerun and cancel act only on a service the user named
+**Date:** 2026-10-13 · **Status:** decided and implemented (found by T5.8)
+
+The first end-to-end recording showed gpt-oss-120b answering "What's the status of my last
+deploy?" with `service: payment-service`, a service the message never names. The status card then
+showed the wrong chain. A generating request is confirmed on its intent card before anything
+runs; status, rerun and cancel are not. A guessed service there would show, re-run or cancel the
+wrong chain.
+
+**Decision.** For those three actions, `IntentParser` keeps the model's service only when the
+user named it: either the rule parser finds it in the message (exact name, unique stem or close
+typo), or it was a clarification answer. Otherwise it is dropped to null, with a note, and the
+user's latest chain is used. This is narrow, like D-037's UNSUPPORTED rescue, and the prompt was
+not tuned. The model's answer stays in `model_intent`, so the evaluation still scores it.
+
+**Also found by the same run:** a harness bug, not a product one. Sharing one Groq client across
+tests, each on its own event loop, made the next request fail with "Event loop is closed". The
+e2e harness now gives each test its own provider.
+
+### D-047 Chains: the lock, tracking, the run card and run commands
+**Date:** 2026-10-13 · **Status:** decided and implemented (T5.7)
+
+- **A `chains` table, which 4.4.3 does not list.** 4.6.4 needs a per-service lock with a 30-minute
+  expiry, and the run card needs to know which builds belong to one chain. Jobs are reused by
+  every chain for their service, so neither fits an existing table. One additive migration
+  (`c4e1d07a5b92`) adds `chains` and a nullable `job_runs.chain_id`. Verified on the stack's
+  PostgreSQL in a scratch database: upgrade, downgrade, upgrade again, and `alembic check`
+  finding no difference between models and schema.
+- **The lock is the row.** A RUNNING chain holds its service's lock, and a partial unique index
+  allows one per service. Two approvals racing for the same service cannot both win, even if both
+  checked first. Approval claims the lock in the same commit as the approval, before Jenkins is
+  touched, and releases it (ABORTED) if Jenkins fails. After 30 minutes a running chain no longer
+  blocks: the next claim marks it EXPIRED.
+- **Tracking reads the database, not memory.** Each tick decides from the stored runs: wait while
+  the current build runs; on SUCCESS find the next job's build through the `UpstreamCause` its
+  downstream trigger recorded (confirmed live on jenkins-dev); on anything else stop the chain
+  there. A restarted backend finds a chain's first build again through the queue item stored on
+  the chain.
+- **Pipeline stages** come from the stage view (`wfapi/describe`, confirmed live), without
+  Declarative's own post-actions stage. The tracker publishes `chain.stages` only when they change.
+- **Endpoints beyond 4.4.4's table.** `GET /api/chains`, `GET /api/chains/{id}` (the run card:
+  job states, stages, and queue rank, score and waiting reason from the plugin) and
+  `POST /api/chains/{id}/cancel` (4.6.4: cancels queued members and stops the running one).
+  Chains are visible to any signed-in user, like runs. Cancelling is for the starter, DevOps and
+  Admin.
+- **Run commands act.** A confirmed STATUS shows the user's latest run card (4.6.5, "no
+  generation"). RERUN re-triggers the last failed test job as a new chain from that job onward,
+  with the original chain's parameters: if the tests now pass, the job's own trigger carries on
+  downstream, and the chain the user sees matches what Jenkins does. CANCEL cancels the running
+  chain. Each is refused by the lock and the permissions like anything else, and a refusal
+  comes back as a reply rather than an error.
+
+### D-046 Generating, approving and explaining
+**Date:** 2026-10-13 · **Status:** decided and implemented (T5.6)
+
+- **Every generation is a row, valid or not.** 4.7.4's progress line ("Understood, Planned,
+  Rendered, Validated, each showing a check or the exact error") needs a failed step to be
+  something to read, not an error page. A regenerate cancels the earlier rows of the same command,
+  so an outdated plan cannot be approved by mistake.
+- **A render failure still runs the spec checks.** 4.6.3 orders them before the artifact check.
+  An edited spec that deploys to production fails "environment allowed" in the checklist, not
+  only "no command for that stage".
+- **Editing the YAML cannot change what policy decided.** The service, the assistant and the
+  priority were checked against the role, the HIGH quota and the justification when the request
+  was confirmed (4.5.5). An edited spec that changes them is invalid, and points the user to
+  editing the request instead. Everything else in the spec may be edited and is re-validated.
+- **Approval is idempotent, and a double click cannot start two chains (4.6.4).** The row is
+  locked (`FOR UPDATE` on PostgreSQL), marked approved with the key and committed *before*
+  Jenkins is touched:
+  - the same key replays the first result and starts nothing;
+  - another key gets `ALREADY_APPROVED`;
+  - a key already used for another plan is refused;
+  - if Jenkins fails before the chain starts, the approval is undone so the user can retry.
+- **Jobs are saved last first** (D-044), created or updated in place. The bot has no
+  `Job/Delete` (D-033), and jobs are reused across approvals for the same service and stage.
+- **What approving will do is stated before it is done.** The summary follows 4.7.4's wording.
+  It is worked out at generation time from which jobs already exist: "Creates 4 jobs and starts
+  fs-payment-service-build on main at HIGH priority", or "updates N" when some are reused.
+- **The explanation** streams from the first model that answers, using `explain_v1`. A model that
+  fails partway leaves what it said, marked as cut short. With no model, and always in fake mode,
+  the code writes the explanation from the same input. That input carries the rendered jobs and
+  their catalog commands, and not the justification. Each explain call is recorded in `llm_calls`
+  with its prompt version, through its own session, because the stream outlives the request's.
+- **Approval hands over to the chain lock and tracker through two hooks,** `before_start` and
+  `on_started`, which T5.7 fills.
+
+### D-045 How a conversation turns messages into commands
+**Date:** 2026-10-13 · **Status:** decided and implemented (T5.5)
+
+- **Two reads beyond 4.4.4's list.** `GET /api/conversations/{id}` (a chat with its messages)
+  and `GET /api/commands/{id}` (an intent card). The workspace in 4.7.4 opens chats from a
+  history list and re-reads cards, and cannot do either with the listed endpoints alone (rule
+  1.4: implement the correct endpoint and record the deviation).
+- **When a reply is an answer.** 4.5.3 says to merge an answer with the original message and
+  re-parse, but not how to tell an answer from a new request. A reply counts as the answer to the
+  pending question if it is one of the offered buttons, is four words or fewer, or answers a
+  request for a justification, which is a sentence by nature. Anything longer starts a new
+  request: "deploy auth-service to staging" typed in reply to "Which service?" means the user
+  started over.
+- **Slash commands** (4.7.4). `/help` answers with the help card and parses nothing. `/status`
+  and `/rerun` become the sentences they stand for and go through the same validation, policy
+  and audit as typed words.
+- **Editing an intent** (`PATCH /api/commands/{id}/intent`) reruns 4.5.3 steps 3 to 5 through
+  `IntentParser.reconsider`, with no model call. It runs the same validation, policy and
+  clarification as a parse, now shared with `interpret` so the two cannot drift. The action
+  cannot be edited (a different action is a new request), unknown fields are refused rather than
+  ignored, and a request already approved cannot be edited. The model's own parse is kept as
+  `model_intent`, so the evaluation still scores the model rather than the user's correction.
+- **The running-chain rule needs the service, which is known only after parsing.** A request
+  that comes out READY is re-decided with the running chain for its service, reusing the parse
+  rather than calling the model again.
+- **Someone else's conversation or command is reported as not found**, not forbidden, so its
+  existence is not disclosed.
+- **Assistant traffic has its own rate limit:** 20 a minute per client. Every message can call the
+  model, and Groq's 30 requests a minute per model are shared by the whole team (4.5.1).
+- **Providers.** The live and replay providers are shared across the process, so there is one
+  Groq client and connection pool. A fake provider is built per request because it answers from
+  the catalog. The factories take `has_models` with a supplied provider, so live mode without a
+  key still goes straight to the rule parser and the default plan.
+
+### D-044 What the validators check beyond the letter of 4.6.3
+**Date:** 2026-10-13 · **Status:** decided and implemented (T5.4)
+
+`FreestyleValidator` and `PipelineValidator` run 4.6.3's eight checks in order and report every
+one, passed or not, because the preview shows them as a checklist. Choices the list leaves open:
+
+- **An edited spec must keep the catalog's repository and agent label.** The YAML is editable
+  (4.6.2 step 4). A spec pointing at another repository would run someone else's code on the
+  agents, and the rule that values come from the catalog would be meaningless.
+- **An unreachable remote warns, and a commit that is not a branch tip warns** (D-037, D-024).
+  Jenkins fails the checkout honestly if either is wrong.
+- **A linter that cannot be reached fails the check.** Validation that did not run has not
+  validated anything. The user regenerates once Jenkins answers.
+- **"No production anywhere" covers everything that reaches Jenkins** and every structured value
+  in the spec. It leaves out the justification, which is never written into a job (D-043).
+- **Each failure names its cause** (`plan`, `input` or `template`), because 4.6.2 sends only plan
+  errors back to the model. To make that true end to end, the planner's own checks now include
+  the one plan error the validator could otherwise catch first: a stage name mentioning
+  production. Every validator failure caused by the plan is therefore found during planning,
+  within the repair budget. What reaches validation is the input or the template, and template
+  bugs are the golden-file tests' job.
+- **Jobs are created last first.** The linter integration test showed what the exporter already
+  worked around: Jenkins drops a downstream trigger that names a job that does not exist yet.
+  Approval (T5.6) creates a chain from its last job to its first.
+
+### D-043 How a spec becomes Jenkins jobs
+**Date:** 2026-10-13 · **Status:** decided and implemented (T5.3)
+
+**Templates are the exports, and a test proves it.** `app/generation/templates/` holds three
+Jinja2 templates: a freestyle chain job, a Pipeline job and the Jenkinsfile. Each is the matching
+`jenkins/reference-configs/` export with its variable parts replaced. `test_generation_render.py`
+checks the derivation, not only the output:
+- The reference job's own values render the exported Jenkinsfile byte for byte.
+- They render the exported Pipeline job element for element, apart from the description.
+- Every chain job matches the exported freestyle job, apart from the parts that vary by design:
+  the description, `dependsOn`, parameter defaults, shell steps and the downstream trigger.
+
+**Deviations, each forced by something measured:**
+1. **Test jobs are named by suite**, `fs-<service>-test-<suite>`, not Appendix F's
+   `fs-<service>-test`. "Every suite" (D-042) can put two test stages in one chain, and the
+   appendix's name would give both the same job.
+2. **A freestyle test, lint or scan job runs the build command first.** Every chain job has its
+   own workspace, wiped before each build (the reference's `PreBuildCleanup`). `test.sh`, `lint.sh`
+   and `security_scan.sh` only activate the `.venv` that `build.sh` creates. The build *stage*
+   still runs first in the chain, so a broken build stops everything after it. This is what the
+   acceptance chain's test job always did. 4.6.3's "one shell build step per stage" holds for the
+   stage's own command; the second step is preparing the workspace.
+3. **The Pipeline reference now carries `JobPriorityProperty` in config.xml.** 4.6 asks for
+   "property in config.xml plus `options { dynamicQueuePriority(...) }`", but the export had only
+   the options block. That block applies only once the script runs, so a new job's first trip
+   through the queue would have been ranked at the default level. The property was added to the
+   exporter and re-exported, so it is in the template because Jenkins stored it.
+
+**Also decided:**
+- **Job names.** Freestyle: `fs-<service>-<stage>`, with `build`, `lint`, `security-scan`,
+  `test-<suite>`, `deploy-<env>`. Pipeline: `pl-<service>-<action>[-<env>]`, with `build`,
+  `test`, `deploy` or `build-test-deploy` as the action.
+- **No user text is written into Jenkins.** Job descriptions are built from the stage names and the
+  service, never the justification. The justification lives in the audit log and the pipeline
+  row. A HIGH request justified by a "production incident" must not trip the "no production
+  anywhere" validation (4.6.3), and free text has no place in a config file.
+- **Escaping.** Every value in an XML template is XML-escaped. Jenkinsfile values go through a
+  Groovy single-quote filter that escapes `\` and `'` and refuses line breaks. The script is
+  XML-escaped again when it goes into `<script>`.
+- **Golden files** for four specs (two chains, two Pipelines) live in `tests/golden/`. Every byte
+  is compared. `UPDATE_GOLDEN=1` rewrites them for an intended change, to be reviewed as a diff.
+
+### D-042 What the planner plans, what code checks, and when the default plan takes over
+**Date:** 2026-10-13 · **Status:** decided and implemented (T5.2)
+
+**What the specification leaves open.** 4.6.2 gives the planner two sentences: "the model turns the
+intent plus catalog into the spec through a strict schema. A fixed default plan per action takes
+over when the model is unavailable", and "errors caused by the model's plan go back to it for at
+most 2 repairs". It does not say what each action's plan contains, which suite runs when none is
+named, where extra stages go, or what happens when the repairs run out. The project owner decided
+all four at the start of T5.2:
+
+| Question | Decision |
+| --- | --- |
+| Stages per action | **Build first when needed.** BUILD: build. TEST: build, tests. DEPLOY: deploy. BUILD_TEST_DEPLOY: build, tests, deploy. Any test, lint or security_scan stage brings a build in front of it. |
+| Test stage, no suite named | **Every suite**, one test stage each, in catalog order |
+| Extra stages | **Checks before tests.** build, lint, security_scan, tests, deploy, then a smoke test |
+| Plan still invalid after 2 repairs | **The default plan**, marked `ai_fallback` with the reason |
+
+**Why a build comes first.** Measured from the repository, not assumed. `test.sh`, `lint.sh` and
+`security_scan.sh` only *activate* the `.venv` that `build.sh` creates. The agent image has
+Python, pip and venv but no pytest or ruff, so none of those stages can run without a build in
+the same workspace. `deploy.sh` runs `docker build` itself, so a deploy needs nothing before it.
+
+**What the model decides, and what code decides.** 4.6.1 gives the model "only stages and
+templates", and 4.5.3 says "code decides, never the model". `required_stages` derives the stage
+list the confirmed intent requires. The model's plan is checked against it, and the model names
+the stages. A missing stage, an unrequested one, a wrong suite or environment, a wrong order or a
+repeated name is a plan error, and the issues go back to the model word for word. The default plan
+is the required list with standard names, so it can always take over. The prompt restates the
+rules, but the code is what decides: a test fails if any few-shot example is not the code's own
+default plan.
+
+**Also decided while implementing:**
+- **No free text reaches the model.** The planner's request holds the action, service, suite,
+  environment and extra stages, each already checked against the catalog, plus what the service
+  offers. The branch, commit and justification go straight into the spec. A justification written
+  to steer a model has no model to steer.
+- **Planner calls are not cached.** A first answer that fails the checks would otherwise be served
+  again for ten minutes, and each repeat would start its repairs from a plan known to be wrong.
+- **An unplannable request is an error, not a guess.** A non-generating action, a deploy without an
+  allowed environment, or a suite or extra stage the service lacks raises `PlannerError` and is
+  never sent for repair. Validation, clarification and policy should already have stopped each one.
+- **Unresolved "latest".** When the validator could not reach the remote, it kept "latest" and
+  warned on the intent card that the newest commit at build time would be used. The spec then
+  carries no commit, so the job builds the branch head (D-041 rule 2), and the outcome repeats the
+  warning.
+- **Fake mode** answers through `FakeProvider` with the default plan, labelled `fake`. The intent
+  parser's fake responder answers every call with an intent, so the planner has its own.
+- **The evaluation hooks.** Every attempt is kept. `valid_before_repair` and `valid_after_repair`
+  are `None` when no model answered, never `False`. `max_repairs=0` is 4.9's "no repair loop"
+  ablation, and `include_examples=False` its "no few-shot examples".
+
+**Noted for T5.3.**
+- Each freestyle job has its own workspace, so a test, lint or scan job must run the build command
+  in that job too. The acceptance chain's test job already does (`build.sh`, then `test.sh`).
+- "Every suite" can give a freestyle chain more than one test job, so job names need the suite in
+  them.
+
+**Evidence, 2026-10-13.**
+- `tests/test_generation_planner.py`: 64 passed. That includes every plannable combination in the
+  catalog checked against the order rule.
+- `tests/test_generation_planner_live.py`: 3 passed against Groq. `gpt-oss-120b` produced a valid
+  plan on the first attempt for all three requests (no repairs), using about 1,700 to 1,800 tokens
+  each. Each request is a combination no prompt example shows.
+
+### D-041 One revision rule for both job types, applied by the backend
+**Date:** 2026-10-12 · **Status:** decided and implemented (T5.1). Refines D-038, implements D-034
+
+**The rule** (decided by the project owner at the start of T5.1):
+1. A given `COMMIT` is checked out exactly, and wins over `BRANCH`.
+2. Otherwise the head of the given `BRANCH`.
+3. Otherwise the head of `main`.
+4. Both job types use the same validation and error handling. A commit or branch that was given
+   but is invalid or missing is an error. It never silently falls back to another revision.
+
+**What the old references actually did.** Measured on jenkins-dev before any change, with two
+probe jobs derived from the reference exports that print `git rev-parse HEAD`:
+
+| BRANCH / COMMIT | Freestyle (`${COMMIT}`) | Pipeline (`COMMIT ?: BRANCH`) |
+| --- | --- | --- |
+| main / demo tip | demo tip | demo tip |
+| main / missing SHA | FAILURE at checkout | FAILURE at checkout |
+| demo / blank | demo tip, by accident (BRANCH ignored) | demo tip |
+| missing branch / blank | **SUCCESS on another branch** | FAILURE at checkout |
+| blank / blank | some branch | **SUCCESS on `demo/failing-tests`** |
+
+An empty branch spec is not an error to the Git plugin; it means "any branch". Both job types
+could therefore build an unrequested revision and report success.
+
+**Conflict with D-038.** D-038 found that a freestyle Git SCM can follow only one variable. The Git
+plugin expands `${VAR}` and nothing else, and no installed plugin can compute a value before
+checkout. So "COMMIT, else BRANCH, else main" cannot be written inside a freestyle job. Spec 4.6
+already points to the answer: a freestyle chain's branch and commit are "parameter defaults written
+on every chain job before triggering the first". The rule is therefore applied *before* Jenkins,
+where those values are chosen. The owner chose this option over a fixed verify step in every
+freestyle job, or replacing the Git SCM with a shell checkout, which 4.6.3 rules out.
+
+**Decision.**
+- **One function.** `app/generation/revision.py` `select_revision(commit, branch)` applies the
+  rule. A blank value counts as not given, as Jenkins trims parameters. The commit must be 7 to 40
+  hexadecimal characters (lower-cased). The branch must pass the `GitClient` ref pattern, with no
+  `..` and no trailing `/`. An invalid given value raises `RevisionError` naming the field. Both
+  are checked even when the commit wins, because the branch is still written into the job.
+- **Identical values for both job types.** `Revision.parameters()` gives `BRANCH` (the branch the
+  revision belongs to) and `COMMIT` (the commit SHA, or `refs/heads/<branch>`). `COMMIT` is never
+  empty, so an empty branch spec never reaches Jenkins. The fully qualified ref means a branch
+  name is never read as a SHA or a tag, and a missing branch fails the checkout instead of
+  matching another one.
+- **Freestyle.** The Git SCM keeps `${COMMIT}`. The backend writes both values as defaults on
+  every chain job. The reference default is `refs/heads/main`, the rule's third clause.
+- **Pipeline.** The Jenkinsfile applies the rule itself, with the same patterns as the backend
+  (a unit test compares them). It stops with `error()` *before* checkout on an invalid `COMMIT` or
+  `BRANCH`. A blank pair builds `main`, not "any branch". `COMMIT` defaults to empty so a run
+  started by hand with only `BRANCH` changed builds that branch. The parameters are now also in
+  config.xml, which implements D-034: the job is parameterized from creation and keeps its
+  parameters when the config is pushed again.
+- **The spec.** `GenerationSpec` (T5.1) runs the rule at validation, so a hand-edited YAML naming
+  an invalid commit or branch is rejected rather than built from something else.
+
+**Known gap.** A freestyle job started by hand from the Jenkins UI with only `BRANCH` changed still
+checks out its `COMMIT`. Nothing in the system starts a job that way. The rule holds for every
+path the backend uses, and for both job types when run by hand except that one.
+
+**Tests changed, and why.** The old reference made the Pipeline job unparameterized until a first
+run. `test_integration_jenkins.py` was written around that:
+- `test_a_pipeline_job_is_created_triggered_and_read` triggered *without* parameters. A
+  parameterized job answers that with 400, so it now triggers with the backend's parameters, and
+  gains an assertion that the job is parameterized from creation. Its other assertions are
+  unchanged.
+- `test_a_pipeline_job_accepts_parameters_only_after_its_first_run` described a restriction that
+  no longer exists. It is renamed `test_a_pipeline_job_still_accepts_parameters_after_a_run`, its
+  docstring is corrected, and its assertions are unchanged.
+
+**Evidence, 2026-10-12.**
+- Re-exported both references from jenkins-dev. Jenkins kept the Pipeline's
+  `ParametersDefinitionProperty`.
+- `tests/test_integration_revision.py`: 17 passed on jenkins-dev. Both job types land on the same
+  commit for commit-wins, branch-head, neither and both-blank. Both fail at checkout, with nothing
+  checked out, for a missing commit or branch. The Pipeline applies the rule to raw parameters and
+  refuses invalid ones before checkout. A chain job triggered without parameters follows its
+  written defaults. A config pushed twice keeps its parameters and accepts them straight away.
+
+**A guard check changed, and why.** `verify.py`'s "catalog loads through one schema-validated
+loader" treated any `yaml.safe_load` outside `catalog.py` as a second catalog parser. The spec is
+YAML the user edits (4.6.2 step 4), so `spec.py` must parse it. The check now names
+`app/generation/spec.py` as the one other YAML document allowed, with its reason, and fails if
+that file ever reads the catalog file. Any other new parser still fails: proven by adding a
+throwaway parser, which the check rejected.
+
+### D-040 T5.8's command list is Part 4.6.5, not 4.6.7
+**Date:** 2026-10-11 · **Status:** decided, corrects the specification
+
+**Conflict.** T5.8 asks for end-to-end tests of "every command in Part 4.6.7", but Part 4.6 ends
+at 4.6.5. The only command list in Part 4.6 is 4.6.5, "Commands version 1 must handle": nine
+messages with their expected behaviour. Nothing else in the specification, report or legacy code
+refers to a 4.6.7.
+
+**Decision.** 4.6.5 is the intended reference. `BUILD_PROMPT.md` line 256 is corrected to say so.
+This is the only edit to the specification since it was committed with `m2-final`, and it changes
+a section number only, not the requirement. T5.8 therefore covers all nine 4.6.5 messages,
+including the three that must *not* generate a job (production refusal, the status question, and
+the injection attempt).
+
 ### D-038 Four defects found by the first real checkout of the service repos
 **Date:** 2026-10-11 · **Status:** all fixed
 

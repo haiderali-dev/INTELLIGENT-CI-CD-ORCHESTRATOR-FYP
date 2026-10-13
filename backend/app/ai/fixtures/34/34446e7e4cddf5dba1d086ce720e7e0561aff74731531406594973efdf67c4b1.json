@@ -1,0 +1,19 @@
+{
+  "completion_tokens": 93,
+  "data": {
+    "action": "DEPLOY",
+    "branch": null,
+    "commit": null,
+    "confidence": 0.96,
+    "environment": "staging",
+    "extra_stages": [],
+    "justification": "hotfix for login bug",
+    "service": "auth-service",
+    "test_suite": null,
+    "urgency": "HIGH"
+  },
+  "model": "openai/gpt-oss-120b",
+  "prompt_hash": "34446e7e4cddf5dba1d086ce720e7e0561aff74731531406594973efdf67c4b1",
+  "prompt_tokens": 1711,
+  "recorded_at": "2026-10-13T00:49:33.830174+00:00"
+}

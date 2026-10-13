@@ -42,7 +42,7 @@ from app.ai.cache import cache_key
 from app.ai.chain import CallRecord, ModelChain
 from app.ai.clarify import Clarification, ClarificationService, HelpCard
 from app.ai.guard import guard_message
-from app.ai.intent import Action, Intent
+from app.ai.intent import RUN_ACTIONS, Action, Intent
 from app.ai.policy import (
     HIGH_URGENCY_AUDIT_ACTION,
     AuditEvent,
@@ -287,6 +287,7 @@ class IntentParser:
 
         intent = self._rescue(model_intent, rules_parse, message, parser, draft)
         intent = self._apply_answers(intent, answers, draft)
+        intent = self._ground_run_service(intent, rules_parse, answers, draft)
 
         base: _Common = {
             "text": message,
@@ -315,6 +316,81 @@ class IntentParser:
                 **base,
             )
 
+        return await self._decide(
+            intent,
+            base=base,
+            draft=draft,
+            context=context,
+            clarification_round=clarification_round,
+            has_recent_run=has_recent_run,
+        )
+
+    async def reconsider(
+        self,
+        intent: Intent,
+        *,
+        text: str,
+        model_intent: Intent,
+        parser: Literal["LLM", "RULES"],
+        model: str | None,
+        ai_fallback: bool,
+        prompt_version: str,
+        context: PolicyContext,
+        clarification_round: int = 0,
+        has_recent_run: bool = False,
+    ) -> ParseOutcome:
+        """Steps 3 to 5 for an intent the user edited on the intent card. No model is called.
+
+        "Editing offers only catalog values" (4.7.4), but an edit is still checked in code and
+        run through policy again: an edited intent is a new request as far as the rules go.
+        The parse it replaces is kept as ``model_intent``, so the evaluation still scores the
+        model's own answer rather than the user's correction.
+        """
+        draft = _Draft(notes=["intent edited by the user"])
+        base: _Common = {
+            "text": text,
+            "model_intent": model_intent,
+            "parser": parser,
+            "provider": "edit",
+            "model": model,
+            "ai_fallback": ai_fallback,
+            "fallback_reasons": (),
+            "cached": False,
+            "prompt_version": prompt_version,
+            "clarification_round": clarification_round,
+            "injection_suspected": False,
+            "calls": (),
+        }
+        if intent.action is Action.UNSUPPORTED:
+            return ParseOutcome(
+                disposition=Disposition.UNSUPPORTED,
+                intent=intent,
+                help=self._clarifier.help_card(
+                    "That is not something I can do. Here is what I can"
+                ),
+                notes=tuple(draft.notes),
+                **base,
+            )
+        return await self._decide(
+            intent,
+            base=base,
+            draft=draft,
+            context=context,
+            clarification_round=clarification_round,
+            has_recent_run=has_recent_run,
+        )
+
+    async def _decide(
+        self,
+        intent: Intent,
+        *,
+        base: _Common,
+        draft: _Draft,
+        context: PolicyContext,
+        clarification_round: int,
+        has_recent_run: bool,
+    ) -> ParseOutcome:
+        """Steps 3 to 5: check in code, then policy, then clarification."""
         # 3. Check in code.
         validation = await self._validator.validate(intent)
         intent = validation.intent
@@ -392,6 +468,32 @@ class IntentParser:
             "asking for the missing details instead"
         )
         return ruled.with_changes(confidence=min(ruled.confidence, 0.5))
+
+    @staticmethod
+    def _ground_run_service(
+        intent: Intent, rules_parse: RuleParse, answers: dict[str, str] | None, draft: _Draft
+    ) -> Intent:
+        """Status, rerun and cancel act at once, so they act only on a service the user named.
+
+        Found by the end-to-end suite (D-048): ``gpt-oss-120b`` answered "What's the status of my
+        last deploy?" with ``service: payment-service``, a service the message never mentions,
+        and the status card showed the wrong chain. A generating request is confirmed on its
+        intent card before anything runs; these three are not -- a rerun or cancel on a guessed
+        service would act on someone else's chain. "Named" is what the rule parser finds in the
+        message (exact name, unique stem or close typo) or a clarification answer. Narrow, like
+        the UNSUPPORTED rescue: the model's own answer stays in ``model_intent``.
+        """
+        if intent.action not in RUN_ACTIONS or intent.service is None:
+            return intent
+        if answers and "service" in answers:
+            return intent
+        if rules_parse.intent.service == intent.service:
+            return intent
+        draft.notes.append(
+            f"the model named {intent.service}, which the message does not; status, rerun and "
+            "cancel act only on a service the user named"
+        )
+        return intent.with_changes(service=None)
 
     @staticmethod
     def _apply_answers(intent: Intent, answers: dict[str, str] | None, draft: _Draft) -> Intent:

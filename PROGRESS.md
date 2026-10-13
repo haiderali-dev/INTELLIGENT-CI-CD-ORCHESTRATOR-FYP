@@ -1,11 +1,15 @@
 # Progress
 
-Updated: 2026-09-29 · Current phase: 3 · Branch: phase-3-backend
+Updated: 2026-10-13 · Current phase: 5 done (T5.1 to T5.9; PR #10 awaiting review and merge) ·
+Branch: phase-5-assistants
 
 ## Needs human
-- [ ] **Create the two sample-service GitHub repositories**, push them, create the
+- [x] **Create the two sample-service GitHub repositories**, push them, create the
       `demo/failing-tests` branch, and put the URLs in `catalog/services.yaml`. Blocks T1.8's
       `git ls-remote` check and the Phase 5 failing-branch acceptance test.
+      Done, checked 2026-10-11 with `git ls-remote`. `haiderali-dev/payment-service` has `main`
+      998844b and `demo/failing-tests` da997c8. `haiderali-dev/auth-service` has `main` 6413c6f
+      and `demo/failing-tests` d4c4560. `catalog/services.yaml` points at both.
 - [ ] **Resolve or work around the JCasC floating-point defect (D-017).** Importing a YAML file
       silently ignores `weightUrgency`, `weightDependency`, `weightExecutionTime`,
       `agingBonusPerInterval`, `agingCap`, `similarityThreshold` and `recencyLambdaPerDay`, while
@@ -15,8 +19,31 @@ Updated: 2026-09-29 · Current phase: 3 · Branch: phase-3-backend
       from JCasC and needs another route (the global configuration form, or a decision to drop that
       arm). `ConfigAsCodeIT.floatingPointAttributesAreNotAppliedKnownDefect` pins the current
       behaviour and will fail loudly when it is fixed.
-- [ ] **Install `gh`, or open pull requests by hand.** Not blocking; each phase still ends on its
-      own branch.
+- [x] **Install `gh`, or open pull requests by hand.** Not blocking; each phase still ends on its
+      own branch. Done, checked 2026-10-11: `gh` 2.102.0 is logged in as `haiderali-dev`. PRs
+      #5 to #9 were opened with it. Open each phase PR against `main`, never against the previous
+      phase branch: stacking them is what kept Phases 2 to 4 out of `main` (PRs #2 to #4).
+- [ ] **Review and merge the Phase 5 PR (#10) into `main`.** Claude opens and updates it but
+      never merges.
+- [x] **Decide on a checkout retry for transient DNS failures** (Known gaps, "Agent DNS").
+      Decided on 2026-10-13: `scmCheckoutRetryCount: 2` under `jenkins:` in
+      `jenkins/casc/dev.yaml` (D-050).
+      - **What it retries:** every SCM checkout failure, not only DNS. Two more attempts,
+        10 seconds apart.
+      - **Accepted:** JCasC's dry-run check accepted it, and refused a misspelled control.
+      - **Applied:** by restarting jenkins-dev, which was fully up in 8 s with no JCasC error.
+        `config.xml` holds the value.
+      - **Seen working on both job types:** freestyle and a Pipeline's `checkout` step each retried
+        twice. So the separate Pipeline `retry` step proposed earlier is not needed.
+      - **Checks after applying it:**
+        - `verify.py --phase 1`: ALL CHECKS PASSED;
+        - every integration test: 31 passed, 1 skipped, as before;
+        - the full `verify.py --phase 5`: ALL CHECKS PASSED, 71 of 71.
+      - **Not yet proven:** that it cures the flakiness. No build in that gate run met a DNS error,
+        so none needed a retry.
+- [ ] **Re-run the Phase 5 security review independently.** The reviewer agent stopped on an
+      account usage limit, so `docs/security-review-phase-5.md` was written by the agent that
+      wrote the code.
 - [ ] **Approve `frontend/DESIGN.md`** when T6.1 produces it. No screen is built before that.
 - [ ] **Label and review the evaluation gold answers** (Phase 8). At most 30 drafted items, each
       marked `needs_review: true` and excluded from scoring until a human clears the flag.
@@ -553,8 +580,308 @@ has been reviewed by a human yet.
 
 ## Phase 5: Freestyle Assistant and Pipeline Assistant
 
-Not started. Groundwork recorded on 2026-10-11, **no task checked off** — the generator does not
-exist yet, so this does not satisfy T5.8:
+In progress on `phase-5-assistants`. T5.1 to T5.7 done; T5.8 next.
+
+- [x] T5.1 Spec model (Pydantic) with YAML round-trip and the planner schema, plus one revision
+      rule for both job types (D-041). Evidence, all run on 2026-10-12:
+      - **Code:**
+        - `app/generation/spec.py`: `GenerationSpec`, the 4.6.1 spec field for field, and
+          `Stage`. A suite is only valid on a test stage and an environment only on a deploy.
+          Stages cannot carry their own commands. YAML is dumped in 4.6.1's own layout.
+          `build_planner_schema` is strict, per service, and offers only stages and templates,
+          with catalog enums. `PlannerOutput` re-checks the plan in code.
+        - `app/generation/revision.py`: `select_revision`. COMMIT wins, else the head of BRANCH,
+          else main. An invalid given value is an error, never a fallback. Both job types get the
+          same `BRANCH` and `COMMIT` (a SHA or `refs/heads/<branch>`, never empty).
+      - **Reference configs:** re-exported from jenkins-dev. Freestyle `COMMIT` defaults to
+        `refs/heads/main`. The Pipeline Jenkinsfile applies the same rule and validation, stopping
+        before checkout on bad input. Its parameters are now in config.xml, which implements D-034.
+      - **Offline tests:** `test_generation_spec.py` and `test_generation_revision.py`, 82 passed.
+        They cover 4.6.1 parsing, round-trip and layout, commit priority, branch fallback, default
+        main, blank values, invalid commits and branches, parity, and the reference configs
+        carrying the rule.
+      - **Live tests:** `pytest -m integration tests/test_integration_revision.py`, 17 passed on
+        jenkins-dev:
+        - Both job types check out the same commit for commit-wins, branch-head, neither and
+          both-blank.
+        - Both fail at checkout with nothing checked out for a missing commit or branch.
+        - The Pipeline applies the rule to raw parameters, and refuses invalid ones before checkout.
+        - A chain job triggered without parameters follows its written defaults.
+        - A config pushed twice keeps its parameters.
+      - **Existing integration suite:** 8 passed. Two Pipeline tests were updated for the
+        parameterized-from-creation job; why is recorded in D-041.
+      - **Regression checks:**
+        - Offline suite: 1241 passed.
+        - `accept_failing_tests.py`: 4/4.
+        - `verify.py --phase 4`: 66/66.
+        - The catalog-loader check now names the spec as the one other YAML document allowed. It
+          still fails a stray parser: proven with a throwaway file.
+      - **Known gap (D-041):** a freestyle job started by hand in the Jenkins UI with only BRANCH
+        changed follows its COMMIT.
+- [x] T5.2 Planner with default plans per action and a repair loop (D-042). Evidence, all run on
+      2026-10-13:
+      - **Code:**
+        - `app/generation/planner.py`: `required_stages` derives the stages a confirmed intent
+          needs, using the owner's four decisions (build first when needed; every suite when none
+          is named; checks before tests; the default plan after 2 failed repairs). `check_plan`
+          lists what is wrong with a model's plan. `Planner` plans through the existing
+          `ModelChain`, sends issues back for at most 2 repairs, and builds the `GenerationSpec`
+          with the stages from the plan and everything else from the intent and catalog.
+        - `app/generation/factory.py`: `build_planner`, with fake mode answering with the
+          default plan.
+        - `app/ai/prompts/planner_v1.md`: 7 examples, each the code's own default plan.
+        - `app/ai/prompting.py`: the example parser also accepts `Plan:`. The intent prompt is
+          unchanged, with the same 12 examples and the same version.
+      - **Offline tests:** `test_generation_planner.py`, 64 passed. They cover:
+        - default plans per action, every suite, extra-stage order and the smoke test;
+        - errors for unplannable requests, and every plannable catalog combination against the
+          order rule;
+        - plan checks;
+        - the repair loop: valid first, repaired, exhausted, ablation, model unavailable, second
+          model, model lost mid-repair;
+        - no free text reaching the model, no caching, the spec built from intent and catalog;
+        - the prompt agreeing with the code;
+        - fake, live-without-key and replay-miss modes, and a parsed command planned end to end.
+      - **Live test:** `pytest -m live tests/test_generation_planner_live.py`, 3 passed.
+        `gpt-oss-120b` gave a valid plan on the first attempt for all three requests (0 repairs),
+        about 1,700 to 1,800 tokens each.
+      - **Regression checks:**
+        - ruff, ruff format and mypy: clean.
+        - Offline suite: 1305 passed.
+        - `verify.py --phase 4`: 66/66, after starting Docker Desktop and the stack, which were
+          down after a restart.
+- [x] T5.3 Jinja2 templates derived from the reference configs, with golden-file tests (D-043).
+      Evidence, all run on 2026-10-13:
+      - **Code:**
+        - `app/generation/templates/`: `freestyle-job.xml.j2`, `pipeline-job.xml.j2` and
+          `Jenkinsfile.j2`, each the reference export with its variable parts replaced.
+        - `app/generation/render.py`: freestyle chains (`fs-<service>-<stage>`, suite-specific
+          test jobs, `dependsOn` the previous job, a SUCCESS-only trigger of the next, defaults on
+          every job, build prep in test, lint and scan jobs) and Pipeline jobs
+          (`pl-<service>-<action>[-<env>]`). Commands come only from the catalog.
+        - The Pipeline reference gained `JobPriorityProperty` in config.xml, re-exported from
+          jenkins-dev.
+      - **Tests:** `test_generation_render.py`, 33 passed. Derivation: the reference values
+        reproduce the exported Jenkinsfile byte for byte, the Pipeline job element for element,
+        and every chain job's static parts. Also golden files for 4 specs (9 config.xml files
+        and 2 Jenkinsfiles), chain wiring, escaping and refusals.
+      - **Regression checks:**
+        - Offline suite: 1338 passed.
+        - `pytest -m integration` (the Jenkins suite and the revision suite) against the
+          re-exported references: 25 passed.
+- [x] T5.4 `FreestyleValidator` and `PipelineValidator`, including the declarative linter call
+      (D-044). Evidence, all run on 2026-10-13:
+      - **Code:** `app/generation/validate.py` runs 4.6.3's eight checks in order: spec schema;
+        catalog and Git (including the catalog's own repository and label); environment
+        allowed; stage order and build-first; shell metacharacters; XML well-formedness or,
+        for a Pipeline, the declarative linter through `JenkinsClient`; job names; and no
+        production in anything sent to Jenkins. Each failure is classed plan, input or
+        template. `parse_spec` handles an edited YAML. The planner now also sends a stage name
+        mentioning production back for repair.
+      - **Offline tests:** `test_generation_validate.py`, 32 passed.
+      - **Linter integration test:** `pytest -m integration tests/test_integration_generation.py`,
+        4 passed against jenkins-dev:
+        - every rendered Jenkinsfile (each service, each generating action, with and without
+          extra stages) passes the real declarative linter;
+        - a broken Jenkinsfile is rejected;
+        - a chain created last-first keeps its triggers, `dependsOn`, priority and defaults, and
+          the Pipeline job keeps its parameters, sandbox and priority.
+      - **Regression checks:** offline suite 1371 passed; ruff, format and mypy clean.
+- [x] T5.5 Conversation and message endpoints for both assistants; intent editing (D-045).
+      Evidence, all run on 2026-10-13:
+      - **Code:**
+        - `app/api/assistants.py`: `POST /api/assistants/{freestyle|pipeline}/conversations`,
+          `GET /api/conversations`, `GET /api/conversations/{id}`,
+          `POST /api/conversations/{id}/messages`, `GET /api/commands/{id}` and
+          `PATCH /api/commands/{id}/intent`.
+        - `app/services/conversations.py`: the message flow (clarification answers merged and
+          re-parsed, slash commands, the policy context, `IntentParser.record`) and intent
+          editing through the new `IntentParser.reconsider`.
+      - **Tests:** `test_assistants_api.py`, 21 passed in fake mode. They cover:
+        - conversation lifecycle and ownership;
+        - a clear request recorded with its `llm_calls`;
+        - "run the tests" asking for the service, then the suite (4.6.5);
+        - a new request in reply to a question starting over;
+        - production refused, and the injection attempt refused and audited;
+        - the HIGH justification flow, `/help`, `/status` and the 1,000-character guard;
+        - editing: re-decided, outside the catalog, to production, action locked, approved
+          locked, ownership.
+      - **Regression checks:** offline suite 1392 passed; ruff, format and mypy clean.
+      - **Running-chain lookup:** returned "no chain" until the per-service lock existed. Wired in
+        T5.7, and tested there.
+- [x] T5.6 Generate, regenerate, streamed explain, and approve with an idempotency key (D-046).
+      Evidence, all run on 2026-10-13:
+      - **Code:**
+        - `app/services/generation.py` and `app/api/generation.py`:
+          `POST /api/commands/{id}/generate`, `GET /api/pipelines/{id}`, and
+          `POST /api/pipelines/{id}/regenerate`, `/explain` (streamed) and `/approve`
+          (`Idempotency-Key`).
+        - The flow: plan, render, validate, then a `generated_pipelines` row with the progress
+          steps, checklist, plan record and approval summary, plus `llm_calls` for the planner
+          and the explanation.
+        - Approval: the row is locked and claimed before Jenkins, jobs are saved last-first, the
+          `jobs` rows are upserted, the first job is triggered and handed to the tracker, and
+          the audit log and a "Run started" message are written.
+        - `app/ai/prompts/explain_v1.md`.
+      - **Tests:**
+        - `test_generation_api.py`, 22 passed: both assistants, readiness, a linter rejection
+          shown as a failed step, privacy, regenerate superseding, edited YAML (valid; policy
+          fields locked; schema; production), explain, and approve (key required, last-first,
+          replay, second key refused, invalid refused, Jenkins failure undone and retried,
+          locked after approval).
+        - `test_generation_explain.py`, 6 passed.
+      - **Regression checks:** offline suite 1420 passed; ruff, format and mypy clean.
+      - **Chain lock at approval and tracking past the first job:** wired in T5.7.
+- [x] T5.7 Per-service chain lock; chain triggering and tracking; stage tracking for Pipeline
+      (D-047). Evidence, all run on 2026-10-13:
+      - **Code:**
+        - `app/services/chains.py`: claim and expiry, `advance` (downstream builds found through
+          `UpstreamCause`, the chain stopped at the first non-SUCCESS), the run card, cancel, and
+          rerun of the last failed test job.
+        - `chains` table and `job_runs.chain_id` (migration `c4e1d07a5b92`).
+        - `RunTracker`: chains advanced each tick, `chain.updated`, `chain.finished` and
+          `chain.stages` events.
+        - `JenkinsClient`: `downstream_build`, `pipeline_stages` (`wfapi`) and `queued_items`,
+          their shapes confirmed live first.
+        - Approval claims the lock in its own commit.
+        - `/api/chains` endpoints; STATUS, RERUN and CANCEL messages act.
+      - **Migration:** on a scratch PostgreSQL database, upgrade, downgrade, upgrade and
+        `alembic check` all succeed, with no model or schema difference.
+      - **Tests:** `test_chains.py`, 18 passed:
+        - the lock, its expiry, the Admin cancel offer, and the policy and approval refusing
+          while a chain runs;
+        - a failed test stopping the chain with the deploy job never started (fake);
+        - a full chain succeeding and releasing the lock;
+        - restart safety;
+        - Pipeline stages published only on change;
+        - the run card with queue rank and waiting reason;
+        - cancel stopping the running job and dequeuing the rest, and cancel permissions;
+        - status and rerun messages.
+      - **Regression checks:** offline suite 1438 passed; ruff, format and mypy clean.
+- [x] T5.8 End-to-end backend tests (`e2e`) for every command in Part 4.6.5. Evidence, all run
+      on 2026-10-13:
+      - **The gate:** `python scripts/verify.py --phase 5` printed **ALL CHECKS PASSED, 71 of 71**
+        (Phases 0 to 4: 66; Phase 5: 5), on `b662871` with a clean tree. The Phase 5 checks were:
+        - golden templates: 33 passed;
+        - linter integration: 4 passed;
+        - `pytest -m e2e`: 12 passed;
+        - the failing-branch chain: the test job failed and the deploy job never started;
+        - T5.9: 163 passed.
+      - **Five earlier gate runs failed,** each on a DNS lookup that never resolved, not on the
+        code:
+        - runs 1 to 3: one check failed each;
+        - run 4: three end-to-end tests;
+        - run 5: four tests across two checks.
+
+        The builds' own logs say `Could not resolve host: github.com` (Known gaps, "Agent DNS").
+        Run 3's one failure came before Jenkins was reached and left no reason, so `verify.py` now
+        keeps a failed check's whole output under `.tmp/verify/`.
+      - **Tests:** `tests/test_e2e_assistants.py` and `tests/e2e_support.py` cover all nine 4.6.5
+        commands, the failing-branch acceptance through the generator, and one Pipeline with its
+        stages tracked. They run against the real app, the stack's PostgreSQL (a migrated
+        `orchestrator_e2e` database), jenkins-dev and its agents, and real deploys.
+      - **Results:**
+        - Record mode against live Groq: 11 passed.
+        - Replay mode, no model access: **11 passed, 0 replay misses**.
+        - The failing branch: the test job failed, and the deploy job's last build number was
+          unchanged.
+      - **Fixtures:** recorded into `app/ai/fixtures/`.
+      - **Branch created:** `feature/refund` in payment-service, at `main` (998844b), because the
+        4.6.5 command names it.
+      - **Parser guard (D-048), found by e2e:** gpt-oss-120b invented a service for "status of my
+        last deploy". STATUS, RERUN and CANCEL now act only on a service the user named. 4 new
+        parser tests; parser suite 32 passed.
+      - **`verify.py`:** Phase 5 checks added (golden templates, linter integration, e2e,
+        failing branch), and `IMPLEMENTED_PHASES` now includes 5.
+      - **Modes, kept apart:**
+        - Live Groq (record mode) passed every e2e test that calls the model, at least once each.
+        - Replay, which is what the gate uses, passed with 0 replay misses.
+        - The offline suite uses the fake provider and the fake Jenkins.
+- [x] T5.9 Stretch: "Explain failure" for failed runs (D-049). Evidence, all run on 2026-10-13:
+      - **The gate:** its T5.9 check passed with 163 tests in the 71-of-71 run above. Those are
+        the 162 offline tests plus the live jenkins-dev integration test.
+      - **Surface:** `POST /api/runs/{id}/explain` (any signed-in user, the assistants' rate limit)
+        and `failed_run_id` on the run card. Live in the rebuilt backend container.
+      - **How it works:**
+        - Redaction runs first.
+        - Code decides the category, stage, failing tests, counts, exit code, evidence lines,
+          the Pipeline's skipped stages, and the chain jobs the failure stopped.
+        - The model words it through a strict schema (`failure_v1`). Its answer is dropped for
+          the code's own if a quote is not in the log, it contradicts the code, it mentions
+          production, or it is malformed.
+      - **Tests, offline:** 162 across `test_failures_redact.py` (46), `test_failures_analysis.py`
+        (46), `test_failures_explainer.py` (56) and `test_failures_api.py` (14), plus the
+        streaming tail read's tests in `test_jenkins_console.py`. They run on seven logs captured
+        from jenkins-dev, plus one constructed log (see `tests/data/failure_logs/README.md`).
+        Offline suite **1630 passed**, 49 deselected; ruff, format and mypy clean.
+      - **Integration, live jenkins-dev:** `test_integration_failures.py` passed (63 s). The
+        generated payment-service test job ran twice on `demo/failing-tests`, and both real logs
+        gave the model **byte-identical prompts**.
+      - **End to end:** a failed freestyle test job and a failed Pipeline stage, each explained
+        through the API.
+        - Record mode, live Groq: both passed. The model's answers survived every check, and every
+          quoted line matched the real log.
+        - Replay mode: the whole suite, **13 passed, 0 replay misses**.
+        - The freestyle explanation lists the integration-test and deploy jobs as never started.
+        - The Pipeline explanation names "Unit tests" and the two skipped stages, with exit code 1.
+      - **Found by the first live run:** Jenkins prefixes every Pipeline step line with a
+        Timestamper time, so the real failure read as `unknown`. Fixed, and the real log is now a
+        fixture. Also: the Edit tool decoded a `\u` escape into the literal character
+        (CLAUDE.md lesson).
+      - **Refined by the DNS failures:** the failing step is read before the rest of the log. A
+        clone error that a retry recovered from cannot then take the blame for tests that failed
+        afterwards (D-049, `b662871`).
+
+Phase 5 close-out, 2026-10-13. Every item ran in this session:
+- **Security review:** `docs/security-review-phase-5.md`. Six findings were fixed, each with a
+  regression test:
+  - T5.9 read whole logs into memory; it now streams the last 1 MB;
+  - rerun's test-job check could match a deploy job;
+  - redaction missed command-line credentials;
+  - two policy denials were not audited;
+  - network faults were classed as checkout errors;
+  - the `.log` fixtures were hidden from git, so CI failed until they were committed.
+
+  Nine residual risks are recorded. **The review is not independent:** the reviewer agent stopped
+  on a usage limit (Needs human).
+- **Database:** `alembic upgrade head` ran in the backend container on the Compose database, from
+  `8c2f4d1e7a90` to `c4e1d07a5b92`.
+  - `alembic current` reports `c4e1d07a5b92 (head)`, and `alembic check` reports no new upgrade
+    operations.
+  - Checked with psql: `chains` has its partial unique index `uq_chains_one_running_per_service`,
+    and `job_runs.chain_id` is nullable with `ON DELETE SET NULL`.
+- **Backend container:** rebuilt from `b662871` and healthy. `/api/health` reports the database up
+  and Jenkins up (2.568.3), with the LLM disabled, as Compose's default `LLM_MODE=fake` sets it.
+  Every Phase 5 route is in its OpenAPI, and each refuses an unauthenticated request with 401.
+- **CI:** green on `b662871`, both the push and PR #10. It had been red on `f787450` until the
+  fixtures were committed.
+- **PR:** #10 (`phase-5-assistants` → `main`) was retitled and described; it is open, mergeable
+  and **not merged**. Merging is under Needs human.
+
+Audit of T5.1 to T5.8, 2026-10-13. I re-read Part 3, 4.4.3 to 4.4.5, 4.5.5, 4.6 and 4.7.4
+against the code. Five gaps were found and fixed, each with a regression test that fails without
+its fix:
+- **Audit, chain lock:** an approval refused by the chain lock was never audited, but 4.4.3 says
+  "audit every ... policy denial", and `get_db` rolled the refusal back. `chains.claim` now writes
+  `policy.chain_running`, in the policy layer's shape plus `at: approval`, and approval commits it
+  before re-raising (the D-022 pattern).
+- **Audit, cancel:** a refused cancel (not the starter, below DevOps) is now audited as
+  `chain.cancel_refused`.
+- **Command status:** generating left the command `PARSED`. Choosing Generate is the user
+  confirming the intent card, so it now becomes `CONFIRMED` (4.4.3's status column).
+- **Run card link:** the card lacked 4.7.4's "Jenkins link". Each run now carries the URL that
+  Jenkins reports for its build. The fake reports URLs the same way.
+- **e2e mode default:** the suite defaulted to replay even with a key. T5.8 says replay "when no
+  Groq key is set", so it is now live with a key and replay without one. `verify.py` still pins
+  replay, so the gate spends no quota.
+- **Checks:** offline suite 1450 passed, 46 deselected; ruff, format and mypy clean.
+
+The rest matched the spec, and three items were checked with no change needed:
+- The run card has all five 4.6.2 items.
+- Cancel dequeues members and stops the running build.
+- An unreachable plugin degrades to `queue: null` instead of failing the card.
+
+Groundwork recorded on 2026-10-11, before T5.1:
 
 - `demo/failing-tests` exists in both service repositories: one intentional failing unit test each
   (`auth-service` ab50e0e, `payment-service` 2b4e686), every other test still passing.
@@ -569,6 +896,22 @@ exist yet, so this does not satisfy T5.8:
   re-exported from Jenkins), no service script was executable, agents could not reach Docker
   Desktop's socket, and the deploy health probe looked at the agent's own localhost.
 - `verify.py --phase 4` re-run after the agent and compose changes → ALL CHECKS PASSED, 66 checks.
+
+Preparation, 2026-10-11, after PR #9 merged. Still **no task checked off**.
+- **Branch:** `phase-5-assistants` was fast-forwarded to `main` (357f1aa: Phases 0 to 4, the
+  D-039 log fix and the Phase 5 groundwork).
+- **Agent images:** rebuilt and the agents force-recreated. The `jenkins` user reaches Docker in
+  both, and both are online.
+- **Spec reference:** T5.8's "Part 4.6.7" corrected to 4.6.5, the nine-command list (D-040).
+- **Acceptance script:** `accept_failing_tests.py` exited 1 after all four verdicts passed whenever
+  `--out` was outside the repo or relative. A `relative_to` call raised on the final print. Fixed
+  with `display_path`. Rerun on the rebuilt agents with `--out` outside the repo: 4/4 verdicts
+  pass, exit 0.
+- **Left for the start of T5.1:** one revision rule for the shared spec. The freestyle reference
+  checks out `${COMMIT}` (default `main`, D-038). The Pipeline reference uses
+  `params.COMMIT ?: params.BRANCH`. Settled in T5.1 by D-041.
+- **Not a Phase 5 prerequisite:** labelling the evaluation set is Phase 8. All 30 drafts are still
+  `needs_review: true`, and no Phase 5 acceptance clause uses them.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
@@ -616,6 +959,16 @@ Details in `docs/decisions.md`.
   integer-valued floats, the `doCheck*` validators, boxing as `Double`, and the JVM locale.
 - `docs/versions.md` still has `pending` rows for every plugin, backend and frontend dependency. Each
   is filled by the task that pins it, against the official source, per rule 1.4.
+- **Agent DNS on this machine (2026-10-13).** Docker Desktop's resolver intermittently fails to
+  resolve `github.com` from the agents, and the host showed a 2 s lookup in the same period.
+  - **Effect:** a build then fails at its Git clone (`Could not resolve host: github.com`). Five
+    gate runs on 2026-10-13 met at least one; each time the code under test was correct.
+  - **What T5.9 does:** it reports these failures as infrastructure.
+  - **What the tests do:** the T5.9 integration test re-runs such a build. The end-to-end tests do
+    not, because a chain that fails is what they check, so a run that meets one must be repeated.
+  - **Mitigated, not removed (D-050):** jenkins-dev now retries a failed checkout twice,
+    10 seconds apart. Still exposed: an outage longer than that window, and the backend's own
+    `git ls-remote` calls from the host.
 
 - 2026-09-28 The job property field is `level`, with an XStream/`readResolve` fallback onto M2's
   `priority`, so old job configurations still load. Decided in D-005, implemented in T2.1.
@@ -655,3 +1008,14 @@ Details in `docs/decisions.md`.
   forever however correct the sorter became (D-015). Both fixed before any production code was
   written, which is the entire point of doing the spike first. Next: T2.2 to T2.8, the pure-logic
   classes, then T2.9 turns these tests green.
+- 2026-10-13 Phase 5 finished on `phase-5-assistants`. T5.1 to T5.9 are checked off, and
+  `verify.py --phase 5` printed ALL CHECKS PASSED (71 of 71) on `b662871`. Also done:
+  - the T5.1 to T5.8 audit (five fixes);
+  - T5.9, Explain failure;
+  - the security review (six fixes);
+  - the backend container rebuilt, and the Compose database migrated;
+  - PR #10 updated, not merged.
+
+  Five gate runs failed first, each on an intermittent DNS failure on this machine; the
+  mitigations are under Needs human. Next: review and merge PR #10, then Phase 6, starting
+  with T6.1's `DESIGN.md`.

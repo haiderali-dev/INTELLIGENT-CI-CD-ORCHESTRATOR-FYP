@@ -1,0 +1,35 @@
+{
+  "completion_tokens": 172,
+  "data": {
+    "stages": [
+      {
+        "environment": null,
+        "name": "Build",
+        "suite": null,
+        "template": "build"
+      },
+      {
+        "environment": null,
+        "name": "Unit tests",
+        "suite": "unit",
+        "template": "test"
+      },
+      {
+        "environment": null,
+        "name": "Integration tests",
+        "suite": "integration",
+        "template": "test"
+      },
+      {
+        "environment": "staging",
+        "name": "Deploy to staging",
+        "suite": null,
+        "template": "deploy"
+      }
+    ]
+  },
+  "model": "openai/gpt-oss-120b",
+  "prompt_hash": "6b1e74f23736e50509ccc1221eb38835faf89e8d35cdce84ec36b12057ce5083",
+  "prompt_tokens": 1601,
+  "recorded_at": "2026-10-13T06:32:27.119137+00:00"
+}

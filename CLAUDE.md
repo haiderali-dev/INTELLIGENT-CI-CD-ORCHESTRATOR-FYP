@@ -39,7 +39,8 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
 ## Environment facts (this machine, checked 2026-10-09)
 - Present: Java 21.0.11, Maven 3.9.16, Node 24.12.0, Python 3.14.2, Git, Docker 29.8.1,
   uv 0.12.20 at `.venv-tools/` (project-local; the backend venv is `backend/.venv`, Python 3.12.14).
-- Missing: gh. Four stacked PRs must be opened by hand until it is installed.
+- gh 2.102.0 is installed and logged in (checked 2026-10-11). Open each phase PR against `main`:
+  stacked PRs merged into intermediate branches and kept Phases 2 to 4 out of `main`.
 - Docker Desktop does not start with Windows here. Launch
   `%LOCALAPPDATA%/Programs/DockerDesktop/Docker Desktop.exe` and wait for `docker info` to succeed
   (about 30 s) before any Phase 1 or Phase 3+ acceptance check.
@@ -71,6 +72,12 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
   arrive as real newlines. Use the Write or Edit tool, then `ast.parse` the file.
   This repeated on 2026-10-11 with a `python - <<'EOF'` rewrite script. Its `open(p, "w")` also
   wrote CRLF, because text mode does that on Windows. Never patch source files from a heredoc.
+  The Write and Edit tools are not escape-proof either: on 2026-10-13 a backslash-u escape for
+  U+2139, typed into a regex, arrived as the literal character, while `\b`, `\d` and `\n`
+  survived. It happened again while recording this lesson. For non-ASCII in source, use a
+  `"\N{NAME}"` constant, then grep the file for the raw character.
 - A Pipeline reports `building: false` and its result before `Finished: SUCCESS` is in the log.
   Wait on progressiveText's `X-More-Data`, never on `building`, before treating a log as whole
   (D-039).
+- An empty Git branch spec means "any branch" to the Git plugin, and the build reports SUCCESS
+  on whatever it picked. A revision must never reach Jenkins empty. Use `select_revision` (D-041).

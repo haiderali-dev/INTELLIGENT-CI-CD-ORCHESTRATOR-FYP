@@ -1,0 +1,18 @@
+{
+  "completion_tokens": 165,
+  "data": {
+    "cause_found": true,
+    "evidence": [
+      "FAILED tests/test_unit.py::test_demo_failing_tests_fails_on_purpose - AssertionError: intentional failure: the deploy job must never start after this",
+      "assert 1 + 1 == 3, \"intentional failure: the deploy job must never start after this\""
+    ],
+    "suggestions": [
+      "Fix the failing test or the code it checks, then rerun the pipeline."
+    ],
+    "summary": "One unit test failed: tests/test_unit.py::test_demo_failing_tests_fails_on_purpose asserted 1+1==3 and raised an AssertionError. Because the test suite exited with code 1, the Integration tests and Deploy to staging stages were skipped."
+  },
+  "model": "openai/gpt-oss-120b",
+  "prompt_hash": "2162e6d87b8b01d6246f812ae2604d3150ff6d252c551b144396c77b1f5e2516",
+  "prompt_tokens": 2045,
+  "recorded_at": "2026-10-13T06:32:59.709110+00:00"
+}

@@ -29,6 +29,7 @@ from xml.etree import ElementTree
 import pytest
 
 from app.core.settings import Environment, Settings
+from app.generation.revision import select_revision
 from app.services.jenkins import (
     HttpJenkinsClient,
     JenkinsError,
@@ -311,11 +312,14 @@ async def test_a_pipeline_job_is_created_triggered_and_read(
     root = ElementTree.fromstring(stored)
     assert root.tag == "flow-definition"
     assert "dynamicQueuePriority" in stored, "the options block lost its priority directive"
+    # D-034, implemented in the reference by D-041: the parameters are in config.xml, so the job is
+    # parameterized from the moment it is created, not only after a first run.
+    assert "hudson.model.ParametersDefinitionProperty" in stored
 
-    # No parameters on the first trigger. A declarative `parameters { ... }` block does not make
-    # the job parameterized until a build has executed it -- the reference config's <properties/>
-    # is empty -- so passing BRANCH here gets 400 "is not parameterized". See the test below.
-    queue_item_id = await jenkins.trigger(PIPELINE_JOB)
+    # Triggered with the parameters the backend sends. Until 2026-10-12 this first trigger had to
+    # carry none: the old reference had an empty <properties/>, so parameters got 400 "is not
+    # parameterized". Now the job is parameterized, a trigger without them gets 400 instead.
+    queue_item_id = await jenkins.trigger(PIPELINE_JOB, select_revision(None, None).parameters())
     number = await wait_for_build(jenkins, PIPELINE_JOB, queue_item_id)
     result = await wait_for_finish(jenkins, PIPELINE_JOB, number)
 
@@ -326,25 +330,25 @@ async def test_a_pipeline_job_is_created_triggered_and_read(
     assert "Finished: SUCCESS" in log
 
 
-async def test_a_pipeline_job_accepts_parameters_only_after_its_first_run(
+async def test_a_pipeline_job_still_accepts_parameters_after_a_run(
     jenkins: HttpJenkinsClient,
 ) -> None:
-    """A constraint Phase 5's Pipeline generator has to handle, found the direct way.
+    """A constraint Phase 5's Pipeline generator had to handle, found the direct way (D-034).
 
     4.6 says a Pipeline job takes its branch and commit as "parameters passed at trigger time".
-    That cannot work on the *first* trigger: a declarative ``parameters { ... }`` block is part of
-    the script, so Jenkins only registers the parameters once a build has executed it, and the
-    reference config's ``<properties/>`` is empty. Triggering a freshly created Pipeline job with
-    parameters returns 400 "is not parameterized".
+    With the old reference that could not work on the *first* trigger: a declarative
+    ``parameters { ... }`` block is part of the script, so Jenkins only registered the parameters
+    once a build had executed it, and the reference config's ``<properties/>`` was empty.
 
-    Worse, it is not a one-time cost: pushing the config.xml again **wipes** the parameters the
-    first run registered, because the exported ``<properties/>`` is empty and overwrites them. So
-    every regenerate would de-parameterize the job until its next build. That makes writing a
-    ``ParametersDefinitionProperty`` into the generated config.xml the only workable option, rather
-    than one of two. See docs/decisions.md D-034.
+    Worse, it was not a one-time cost: pushing the config.xml again **wiped** the parameters the
+    first run had registered. So every regenerate would have de-parameterized the job until its
+    next build. Writing a ``ParametersDefinitionProperty`` into config.xml was the only workable
+    option, and the reference now does (D-041). The previous test asserts the job is parameterized
+    on creation; ``test_integration_revision.py`` asserts a regenerate keeps the parameters.
 
-    This test therefore does **not** call ``recreate``: it relies on the run the previous test
-    performed, which is exactly the state a second trigger sees in practice.
+    This test deliberately does **not** call ``recreate``: it relies on the run the previous test
+    performed, which is the state a second trigger sees in practice. A run must not take the
+    parameters away either.
     """
     assert await jenkins.job_exists(PIPELINE_JOB), "the previous test should have created this"
     queue_item_id = await jenkins.trigger(PIPELINE_JOB, {"BRANCH": "main", "COMMIT": ""})
@@ -354,9 +358,7 @@ async def test_a_pipeline_job_accepts_parameters_only_after_its_first_run(
     assert result == "SUCCESS", f"the parameterised build finished {result}"
 
     stored = await jenkins.get_config_xml(PIPELINE_JOB)
-    # Jenkins writes the discovered parameters into the job's properties after the first run. If
-    # this ever shows up on a brand-new job, the generator is writing them itself and the
-    # first-trigger restriction no longer applies.
+    # Written by config.xml since D-041, and the run must not have removed them.
     assert "ParametersDefinitionProperty" in stored
 
 

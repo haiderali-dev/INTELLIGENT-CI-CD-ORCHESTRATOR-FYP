@@ -19,6 +19,20 @@ jenkins:
   mode: EXCLUSIVE
   labelString: "controller"
 
+  # Retry a failed SCM checkout twice more, 10 seconds apart, before failing the build: three
+  # attempts in all (Jenkins core's scmCheckoutRetryCount; D-050). Added because Docker Desktop's
+  # DNS on the development machine intermittently fails to resolve github.com, and the clone fails
+  # with it.
+  #
+  # It retries EVERY checkout failure, not only DNS: a branch or commit that does not exist, a
+  # repository that cannot be reached, refused credentials. A checkout that can never succeed now
+  # fails about 20 seconds later than before, with "Retrying after 10 seconds" in its log.
+  #
+  # Seen on jenkins-dev on 2026-10-13, it covers both job types: a freestyle job's checkout and a
+  # Pipeline's `checkout` step each retried twice. Nothing that is not a checkout is retried -- a
+  # failing test, or the Jenkinsfile's own refusal of a bad BRANCH or COMMIT, fails at once.
+  scmCheckoutRetryCount: 2
+
   # No anonymous access, and the CLI over remoting is off: it is a second, less auditable way into
   # the controller that nothing in this project uses.
   remotingSecurity:

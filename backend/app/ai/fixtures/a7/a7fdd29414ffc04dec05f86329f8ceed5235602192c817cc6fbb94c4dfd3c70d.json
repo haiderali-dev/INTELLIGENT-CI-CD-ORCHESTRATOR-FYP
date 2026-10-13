@@ -1,0 +1,18 @@
+{
+  "completion_tokens": 164,
+  "data": {
+    "cause_found": true,
+    "evidence": [
+      "E       AssertionError: intentional failure: the deploy job must never start after this",
+      "FAILED tests/test_unit.py::test_demo_failing_tests_fails_on_purpose - AssertionError: intentional failure: the deploy job must never start after this"
+    ],
+    "suggestions": [
+      "Fix the failing test or the code it checks, then rerun the unit tests."
+    ],
+    "summary": "One unit test failed: tests/test_unit.py::test_demo_failing_tests_fails_on_purpose raised an AssertionError because 1\u202f+\u202f1 was not equal to 3. This caused the test job to fail and prevented the integration and deploy jobs from running."
+  },
+  "model": "openai/gpt-oss-120b",
+  "prompt_hash": "a7fdd29414ffc04dec05f86329f8ceed5235602192c817cc6fbb94c4dfd3c70d",
+  "prompt_tokens": 2023,
+  "recorded_at": "2026-10-13T06:27:59.460724+00:00"
+}

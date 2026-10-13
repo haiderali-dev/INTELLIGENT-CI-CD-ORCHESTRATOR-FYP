@@ -21,14 +21,14 @@
       <parameterDefinitions>
         <hudson.model.StringParameterDefinition>
           <name>BRANCH</name>
-          <description>Branch the revision belongs to; checkout follows COMMIT</description>
+          <description>Branch the revision belongs to</description>
           <defaultValue>main</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
         <hudson.model.StringParameterDefinition>
           <name>COMMIT</name>
-          <description>Revision to check out: a commit SHA, or a branch name for its head</description>
-          <defaultValue>main</defaultValue>
+          <description>Revision to check out: a commit SHA, or refs/heads/BRANCH</description>
+          <defaultValue>refs/heads/main</defaultValue>
           <trim>true</trim>
         </hudson.model.StringParameterDefinition>
       </parameterDefinitions>

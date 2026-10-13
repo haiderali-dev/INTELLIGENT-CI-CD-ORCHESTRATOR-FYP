@@ -78,6 +78,46 @@ class ConsoleChunk:
 
 
 @dataclass(frozen=True)
+class ConsoleTail:
+    """The end of a console log, read without holding the rest of it.
+
+    ``lines_before`` is how many whole lines were dropped before ``text`` starts, so line numbers
+    counted from it can be put back on Jenkins's own numbering.
+    """
+
+    text: str
+    more_data: bool
+    lines_before: int
+
+
+def keep_tail(buffer: bytearray, max_bytes: int) -> int:
+    """Trim ``buffer`` in place to at most ``max_bytes`` from its end, starting on a line.
+
+    Returns how many lines were dropped. A cut that falls inside a line drops the rest of that
+    line too, so the kept text never starts with half a line.
+    """
+    if len(buffer) <= max_bytes:
+        return 0
+    cut = len(buffer) - max_bytes
+    if buffer[cut - 1] != ord("\n"):
+        # The cut falls inside a line; the rest of that line goes too.
+        newline = buffer.find(b"\n", cut)
+        cut = len(buffer) if newline < 0 else newline + 1
+    dropped = buffer.count(b"\n", 0, cut)
+    del buffer[:cut]
+    return dropped
+
+
+@dataclass(frozen=True)
+class StageInfo:
+    """One stage of a Pipeline run, as the stage view reports it (``wfapi/describe``)."""
+
+    name: str
+    status: str
+    duration_ms: int
+
+
+@dataclass(frozen=True)
 class LintResult:
     ok: bool
     message: str
@@ -156,6 +196,35 @@ class JenkinsClient(ABC):
         more data. The HTTP client overrides it to read ``X-More-Data``.
         """
         return ConsoleChunk(text=await self.console_text(name, number, start), more_data=False)
+
+    async def console_tail(self, name: str, number: int, max_bytes: int) -> ConsoleTail:
+        """The last ``max_bytes`` of the log, starting on a line, with ``X-More-Data``.
+
+        The default reads the whole window and trims it, which suits the fake's small logs. The
+        HTTP client overrides it to stream, so a log of any size costs at most twice ``max_bytes``.
+        """
+        chunk = await self.console_window(name, number, 0)
+        buffer = bytearray(chunk.text.encode("utf-8"))
+        dropped = keep_tail(buffer, max_bytes)
+        return ConsoleTail(
+            text=buffer.decode("utf-8", "replace"),
+            more_data=chunk.more_data,
+            lines_before=dropped,
+        )
+
+    @abstractmethod
+    async def downstream_build(
+        self, name: str, *, upstream: str, upstream_number: int
+    ) -> int | None:
+        """The build of ``name`` that ``upstream`` #``upstream_number`` started, if it has one."""
+
+    @abstractmethod
+    async def pipeline_stages(self, name: str, number: int) -> tuple[StageInfo, ...]:
+        """A Pipeline run's stages in order, without Declarative's own post-action stage."""
+
+    @abstractmethod
+    async def queued_items(self) -> tuple[QueueItem, ...]:
+        """Everything waiting in the queue, each with its job name."""
 
     @abstractmethod
     async def cancel_queue_item(self, item_id: int) -> None: ...
@@ -439,6 +508,122 @@ class HttpJenkinsClient(JenkinsClient):
         more = response.headers.get("X-More-Data", "").strip().lower() == "true"
         return ConsoleChunk(text=response.text, more_data=more)
 
+    async def console_tail(self, name: str, number: int, max_bytes: int) -> ConsoleTail:
+        """Stream the log and keep its end: memory stays under twice ``max_bytes``, however long.
+
+        A build prints whatever its commit tells it to, so reading a whole log into memory would
+        let one commit exhaust the backend. Retries and errors follow ``_request``, except that an
+        error body is never read: it could be as large as the log.
+        """
+        validate_job_name(name)
+        path = f"/job/{name}/{number}/logText/progressiveText"
+        last_error: Exception | None = None
+        for attempt in range(1, MAX_ATTEMPTS + 1):
+            try:
+                async with self._client.stream("GET", path, params={"start": 0}) as response:
+                    if response.status_code == 404:
+                        raise JobNotFoundError(f"not found: {path}", status_code=404)
+                    if response.status_code >= 500:
+                        last_error = JenkinsError(
+                            f"Jenkins returned {response.status_code} for {path}",
+                            status_code=response.status_code,
+                        )
+                    elif response.status_code != 200:
+                        raise JenkinsError(
+                            f"GET {path} returned {response.status_code}",
+                            status_code=response.status_code,
+                        )
+                    else:
+                        buffer = bytearray()
+                        dropped = 0
+                        async for piece in response.aiter_bytes():
+                            buffer += piece
+                            if len(buffer) > 2 * max_bytes:
+                                dropped += keep_tail(buffer, max_bytes)
+                        dropped += keep_tail(buffer, max_bytes)
+                        more = response.headers.get("X-More-Data", "").strip().lower() == "true"
+                        return ConsoleTail(
+                            text=buffer.decode("utf-8", "replace"),
+                            more_data=more,
+                            lines_before=dropped,
+                        )
+            except (
+                httpx.ConnectError,
+                httpx.ReadError,
+                httpx.WriteError,
+                httpx.PoolTimeout,
+                httpx.TimeoutException,
+            ) as exc:
+                last_error = exc
+            await self._backoff(attempt, path, type(last_error).__name__)
+
+        raise unavailable(
+            ErrorCode.JENKINS_UNAVAILABLE,
+            f"Jenkins at {self._base} did not respond after {MAX_ATTEMPTS} attempts.",
+            path=path,
+            last_error=str(last_error),
+        )
+
+    async def downstream_build(
+        self, name: str, *, upstream: str, upstream_number: int
+    ) -> int | None:
+        """Found through the build's ``UpstreamCause``, which a downstream trigger records.
+
+        Only the newest builds are read: a chain's next job is started seconds after the job before
+        it finishes, so its build is always among the most recent.
+        """
+        validate_job_name(name)
+        try:
+            response = await self._request(
+                "GET",
+                f"/job/{name}/api/json",
+                params={
+                    "tree": "builds[number,actions[causes[upstreamProject,upstreamBuild]]]{0,20}"
+                },
+            )
+        except JobNotFoundError:
+            return None
+        for build in response.json().get("builds") or []:
+            for action in build.get("actions") or []:
+                for cause in (action or {}).get("causes") or []:
+                    if (
+                        cause.get("upstreamProject") == upstream
+                        and cause.get("upstreamBuild") == upstream_number
+                    ):
+                        return int(build["number"])
+        return None
+
+    async def pipeline_stages(self, name: str, number: int) -> tuple[StageInfo, ...]:
+        validate_job_name(name)
+        response = await self._request("GET", f"/job/{name}/{number}/wfapi/describe")
+        return tuple(
+            StageInfo(
+                name=str(stage.get("name", "")),
+                status=str(stage.get("status", "")),
+                duration_ms=int(stage.get("durationMillis") or 0),
+            )
+            for stage in response.json().get("stages") or []
+            if not str(stage.get("name", "")).startswith("Declarative:")
+        )
+
+    async def queued_items(self) -> tuple[QueueItem, ...]:
+        response = await self._request(
+            "GET",
+            "/queue/api/json",
+            params={"tree": "items[id,blocked,buildable,stuck,why,task[name]]"},
+        )
+        return tuple(
+            QueueItem(
+                id=int(item["id"]),
+                blocked=bool(item.get("blocked", False)),
+                buildable=bool(item.get("buildable", False)),
+                stuck=bool(item.get("stuck", False)),
+                why=item.get("why"),
+                job_name=(item.get("task") or {}).get("name"),
+            )
+            for item in response.json().get("items") or []
+        )
+
     async def cancel_queue_item(self, item_id: int) -> None:
         await self._request(
             "POST", "/queue/cancelItem", params={"id": item_id}, expected=(200, 204, 302, 404)
@@ -507,6 +692,9 @@ class _FakeJob:
     config_xml: str
     builds: list[BuildInfo] = field(default_factory=list)
     logs: dict[int, str] = field(default_factory=dict)
+    # Build number -> (upstream job, upstream build), as a downstream trigger records it.
+    causes: dict[int, tuple[str, int]] = field(default_factory=dict)
+    stages: dict[int, tuple[StageInfo, ...]] = field(default_factory=dict)
 
 
 class FakeJenkinsClient(JenkinsClient):
@@ -594,6 +782,7 @@ class FakeJenkinsClient(JenkinsClient):
             duration_ms=1234,
             timestamp_ms=0,
             queue_id=item_id,
+            url=self.build_url(name, number),
         )
         job.builds.append(info)
         job.logs[number] = f"Started {name} #{number}\nFinished: {result}\n"
@@ -607,6 +796,70 @@ class FakeJenkinsClient(JenkinsClient):
             job_name=name,
         )
         return info
+
+    def start_downstream(
+        self, name: str, *, upstream: str, upstream_number: int, result: str | None = None
+    ) -> BuildInfo:
+        """Test helper: what a downstream trigger does -- start ``name`` with an upstream cause.
+
+        ``result=None`` leaves the build running; ``finish_build`` ends it later.
+        """
+        job = self.jobs[name]
+        number = len(job.builds) + 1
+        info = BuildInfo(
+            number=number,
+            building=result is None,
+            result=result,
+            duration_ms=0 if result is None else 1234,
+            timestamp_ms=1_700_000_000_000,
+            url=self.build_url(name, number),
+        )
+        job.builds.append(info)
+        job.causes[number] = (upstream, upstream_number)
+        return info
+
+    @staticmethod
+    def build_url(name: str, number: int) -> str:
+        """The URL a real controller reports for a build, under its configured root URL."""
+        return f"http://jenkins.test/job/{name}/{number}/"
+
+    def finish_build(self, name: str, number: int, result: str) -> BuildInfo:
+        """Test helper: end a running build with a result."""
+        job = self.jobs[name]
+        index = next(i for i, build in enumerate(job.builds) if build.number == number)
+        finished = BuildInfo(
+            number=number,
+            building=False,
+            result=result,
+            duration_ms=4321,
+            timestamp_ms=job.builds[index].timestamp_ms or 1_700_000_000_000,
+            queue_id=job.builds[index].queue_id,
+            url=self.build_url(name, number),
+        )
+        job.builds[index] = finished
+        return finished
+
+    async def downstream_build(
+        self, name: str, *, upstream: str, upstream_number: int
+    ) -> int | None:
+        job = self.jobs.get(name)
+        if job is None:
+            return None
+        for number, cause in job.causes.items():
+            if cause == (upstream, upstream_number):
+                return number
+        return None
+
+    async def pipeline_stages(self, name: str, number: int) -> tuple[StageInfo, ...]:
+        job = self.jobs.get(name)
+        if job is None:
+            raise JobNotFoundError(f"not found: {name}", status_code=404)
+        return job.stages.get(number, ())
+
+    async def queued_items(self) -> tuple[QueueItem, ...]:
+        return tuple(
+            item for item in self.queue.values() if not item.cancelled and item.build_number is None
+        )
 
     async def queue_item(self, item_id: int) -> QueueItem:
         if item_id not in self.queue:

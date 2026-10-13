@@ -79,8 +79,17 @@ def fail(message: str) -> Result:
     return Result(ok=False, message=message)
 
 
-def run(args: list[str], cwd: Path | None = None, timeout: int = 120) -> subprocess.CompletedProcess[str]:
-    """Run a command and capture its output. Never raises on a non-zero exit."""
+def run(
+    args: list[str],
+    cwd: Path | None = None,
+    timeout: int = 120,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    """Run a command and capture its output. Never raises on a non-zero exit.
+
+    ``env`` is laid over the inherited environment, never in place of it: a subprocess given a
+    minimal environment loses ``SystemRoot`` on Windows and with it DNS (CLAUDE.md).
+    """
     return subprocess.run(
         args,
         cwd=str(cwd or REPO_ROOT),
@@ -88,6 +97,7 @@ def run(args: list[str], cwd: Path | None = None, timeout: int = 120) -> subproc
         text=True,
         timeout=timeout,
         check=False,
+        env={**os.environ, **env} if env else None,
     )
 
 
@@ -1525,11 +1535,23 @@ def check_catalog_loader() -> Result:
         return fail("the catalog must be read with yaml.safe_load, never yaml.load")
 
     backend_app = REPO_ROOT / "backend" / "app"
-    strays = [
-        path.relative_to(REPO_ROOT).as_posix()
-        for path in backend_app.rglob("*.py")
-        if path != module and "yaml.safe_load" in path.read_text(encoding="utf-8")
-    ]
+    # YAML documents that are not the catalog, each with the reason it is parsed. Listed by path,
+    # so a new parser anywhere else still fails, and a listed file that starts reading the catalog
+    # fails too (below).
+    other_documents = {
+        "backend/app/generation/spec.py": "the generation spec the user edits in the preview (4.6.1)",
+    }
+    strays = []
+    for path in backend_app.rglob("*.py"):
+        source = path.read_text(encoding="utf-8")
+        if path == module or "yaml.safe_load" not in source:
+            continue
+        relative = path.relative_to(REPO_ROOT).as_posix()
+        if relative not in other_documents:
+            strays.append(relative)
+        elif "services.yaml" in source or "catalog_path" in source:
+            return fail(f"{relative} may parse YAML only for {other_documents[relative]}, but it "
+                        "reads the catalog file")
     if strays:
         return fail("a second catalog parser exists in: " + ", ".join(strays))
 
@@ -2278,7 +2300,143 @@ def check_eval_quality() -> Result:
     return ok("ruff, ruff format and strict mypy clean")
 
 
-IMPLEMENTED_PHASES = {0, 1, 2, 3, 4}
+# ---------------------------------------------------------------------------
+# Phase 5: the assistants
+# ---------------------------------------------------------------------------
+
+
+def _pytest(arguments: list[str], *, timeout: int, env: dict[str, str] | None = None) -> tuple[
+    subprocess.CompletedProcess[str] | None, str
+]:
+    """Run pytest in backend/ through uv. Returns the process and its output, or None and why."""
+    runner = _uv_runner()
+    if runner is None:
+        return None, "uv is not installed; see docs/decisions.md D-010"
+    result = run(
+        # No -q: pyproject's addopts already has it, and a second one suppresses the summary.
+        [*runner, "run", "--no-sync", "python", "-m", "pytest", *arguments],
+        cwd=REPO_ROOT / "backend",
+        timeout=timeout,
+        env=env,
+    )
+    return result, (result.stdout + result.stderr).strip()
+
+
+def _keep_output(what: str, output: str) -> str:
+    """Save a failed check's whole pytest output, and return where it went.
+
+    A failing summary line names the test but not the assertion, and an end-to-end failure on a
+    live stack cannot be re-run to the same state: on 2026-10-13 one failed before Jenkins was
+    reached, and nothing kept the reason. ``.tmp/`` is gitignored.
+    """
+    folder = REPO_ROOT / ".tmp" / "verify"
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / (re.sub(r"[^a-z0-9]+", "-", what.lower()).strip("-") + ".log")
+    path.write_text(output, encoding="utf-8")
+    return str(path.relative_to(REPO_ROOT))
+
+
+def _all_passed(result: subprocess.CompletedProcess[str] | None, output: str, what: str) -> Result:
+    """Passed only if pytest exited 0, something passed, and nothing was skipped.
+
+    A skip is a failure here: an acceptance clause that passes because it could not run is worse
+    than no check (the same rule as Phase 3's integration check).
+    """
+    if result is None:
+        return fail(output)
+    if result.returncode != 0:
+        tail = [line for line in output.splitlines() if line.strip()][-3:]
+        saved = _keep_output(what, output)
+        return fail(f"{what} failed: " + " / ".join(tail)[:300] + f" (full output: {saved})")
+    passed = re.search(r"(\d+) passed", output)
+    skipped = re.search(r"(\d+) skipped", output)
+    if skipped and int(skipped.group(1)):
+        return fail(f"{what}: {skipped.group(1)} skipped; is the stack up and is .env complete?")
+    if not passed:
+        return fail(f"{what}: pytest reported nothing passing")
+    return ok(f"{passed.group(1)} passed")
+
+
+@check(5, "golden template tests pass, and the templates derive from the reference configs")
+def check_golden_templates() -> Result:
+    """Appendix D, Phase 5: "Golden template tests". The same file proves the derivation: the
+    reference job's own values render what Jenkins exported (rule 1.4)."""
+    golden = REPO_ROOT / "backend" / "tests" / "golden"
+    if not golden.is_dir() or not any(golden.rglob("*.config.xml")):
+        return fail("backend/tests/golden/ holds no golden config.xml files")
+    # UPDATE_GOLDEN would rewrite the files instead of comparing them; never let it leak in.
+    result, output = _pytest(
+        ["tests/test_generation_render.py"], timeout=600, env={"UPDATE_GOLDEN": "0"}
+    )
+    return _all_passed(result, output, "the golden template tests")
+
+
+@check(5, "the linter integration test passes against jenkins-dev")
+def check_linter_integration() -> Result:
+    """Appendix D, Phase 5: "linter integration test". Every Jenkinsfile the generator can produce
+    is put through jenkins-dev's declarative linter, and a broken one must be refused."""
+    result, output = _pytest(
+        ["tests/test_integration_generation.py", "-m", "integration"], timeout=900
+    )
+    return _all_passed(result, output, "the linter integration test")
+
+
+# The failing-branch test is its own check below; leaving it out here keeps the two independent
+# without running the longest chain twice.
+E2E_SELECTION = "not failing_branch"
+
+
+@check(5, "pytest -m e2e passes on the Compose stack")
+def check_e2e() -> Result:
+    """Appendix D, Phase 5: "pytest -m e2e". Every 4.6.5 command, through the real app, real
+    Jenkins and real agents. Replay fixtures, so the gate never spends model quota (T5.8)."""
+    result, output = _pytest(
+        ["tests/test_e2e_assistants.py", "-m", "e2e", "-k", E2E_SELECTION],
+        timeout=3600,
+        env={"E2E_LLM": "replay"},
+    )
+    return _all_passed(result, output, "the end-to-end tests")
+
+
+@check(5, "the failing-branch chain stops before deploy")
+def check_failing_branch() -> Result:
+    """Appendix D, Phase 5, and Phase 5's acceptance: "against demo/failing-tests the freestyle
+    deploy job never starts". Generated, approved and run through the assistant -- not the
+    hand-built chain of scripts/accept_failing_tests.py."""
+    result, output = _pytest(
+        ["tests/test_e2e_assistants.py", "-m", "e2e", "-k", "failing_branch"],
+        timeout=1800,
+        env={"E2E_LLM": "replay"},
+    )
+    verdict = _all_passed(result, output, "the failing-branch chain")
+    if verdict.ok:
+        return ok("test failed on demo/failing-tests and the deploy job never started")
+    return verdict
+
+
+FAILURE_TESTS = (
+    "tests/test_failures_redact.py",
+    "tests/test_failures_analysis.py",
+    "tests/test_failures_explainer.py",
+    "tests/test_failures_api.py",
+    "tests/test_integration_failures.py",
+)
+
+
+@check(5, "Explain failure (T5.9): redaction, analysis, checks, endpoint and a live failing job")
+def check_explain_failure() -> Result:
+    """T5.9 is a stretch task with no Appendix D line of its own, so this is its gate. The
+    analysis is tested on logs captured from jenkins-dev, and once more on a job it runs there
+    twice: the two real logs must give the model the same prompt, or a recording never replays.
+    Explaining real failures through the API is in the end-to-end check above."""
+    result, output = _pytest(
+        [*FAILURE_TESTS, "-m", "not live and not e2e"],
+        timeout=900,
+    )
+    return _all_passed(result, output, "the Explain failure tests")
+
+
+IMPLEMENTED_PHASES = {0, 1, 2, 3, 4, 5}
 
 
 # ---------------------------------------------------------------------------

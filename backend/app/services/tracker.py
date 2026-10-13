@@ -33,7 +33,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.logging import get_logger
-from app.db.models import Job, JobRun, RunResult
+from app.db.models import Chain, ChainStatus, Job, JobRun, RunResult
+from app.services import chains
 from app.services.jenkins import BuildInfo, JenkinsClient, JenkinsError
 from app.services.metrics import PendingQueueTimings, attach_pending_timings
 from app.ws.hub import Event, EventType, Hub
@@ -60,6 +61,8 @@ class PendingTrigger:
     job_id: str
     job_name: str
     triggered_at: datetime
+    # The chain the build starts, when an assistant started it (T5.7).
+    chain_id: str | None = None
 
 
 def _result_of(build: BuildInfo) -> str:
@@ -108,6 +111,8 @@ class RunTracker:
         self._pending_timings = pending_timings
         self._poll_seconds = poll_seconds
         self._triggers: dict[int, PendingTrigger] = {}
+        # The last stages published per Pipeline run, so only changes are published.
+        self._stages: dict[str, tuple[tuple[str, str], ...]] = {}
         self._task: asyncio.Task[None] | None = None
         self._stopping = asyncio.Event()
         self.ticks = 0
@@ -152,7 +157,9 @@ class RunTracker:
 
     # --- Registration -----------------------------------------------------
 
-    def track(self, *, queue_item_id: int, job_id: str, job_name: str) -> None:
+    def track(
+        self, *, queue_item_id: int, job_id: str, job_name: str, chain_id: str | None = None
+    ) -> None:
         """Follow a build that has just been triggered.
 
         Called by whatever triggered it, with the queue item id Jenkins returned. That id is the
@@ -164,6 +171,7 @@ class RunTracker:
             job_id=job_id,
             job_name=job_name,
             triggered_at=datetime.now(UTC),
+            chain_id=chain_id,
         )
         self._publish(
             EventType.RUN_QUEUED,
@@ -184,10 +192,26 @@ class RunTracker:
             advanced = await self._advance_runs(session)
             if self._pending_timings is not None or resolved:
                 await self._attach_timings(session)
+            chain_events = await chains.advance_all(session, self._jenkins)
+            await self._poll_stages(session)
             await session.commit()
 
-        if resolved or advanced:
-            logger.info("tracker_tick", resolved=resolved, advanced=advanced)
+        for event in chain_events:
+            finished = event.status != ChainStatus.RUNNING.value
+            self._publish(
+                EventType.CHAIN_FINISHED if finished else EventType.CHAIN_UPDATED,
+                {
+                    "chainId": event.chain_id,
+                    "status": event.status,
+                    "position": event.position,
+                    "jobName": event.job,
+                    "buildNumber": event.build_number,
+                },
+            )
+        if resolved or advanced or chain_events:
+            logger.info(
+                "tracker_tick", resolved=resolved, advanced=advanced, chains=len(chain_events)
+            )
             self._publish(EventType.QUEUE_CHANGED, {"resolved": resolved, "advanced": advanced})
 
     async def _resolve_queue_items(self, session: AsyncSession) -> int:
@@ -231,6 +255,8 @@ class RunTracker:
                 build_number=item.build_number,
                 queue_item_id=trigger.queue_item_id,
             )
+            if trigger.chain_id is not None and run.chain_id is None:
+                run.chain_id = trigger.chain_id
             self._triggers.pop(trigger.queue_item_id, None)
             resolved += 1
             self._publish(
@@ -361,6 +387,44 @@ class RunTracker:
                 changed = True
 
         return changed
+
+    async def _poll_stages(self, session: AsyncSession) -> None:
+        """Publish a running Pipeline's stages when they change (4.7.4's stage progress)."""
+        rows = (
+            await session.execute(
+                select(JobRun, Job.jenkins_name)
+                .join(Job, JobRun.job_id == Job.id)
+                .join(Chain, JobRun.chain_id == Chain.id)
+                .where(
+                    Chain.job_type == "PIPELINE",
+                    JobRun.result == RunResult.RUNNING.value,
+                    JobRun.build_number > 0,
+                )
+                .limit(MAX_RUNS_PER_TICK)
+            )
+        ).all()
+        for run, name in rows:
+            try:
+                stages = await self._jenkins.pipeline_stages(name, run.build_number)
+            except JenkinsError:
+                continue
+            snapshot = tuple((stage.name, stage.status) for stage in stages)
+            if self._stages.get(run.id) == snapshot:
+                continue
+            self._stages[run.id] = snapshot
+            self._publish(
+                EventType.CHAIN_STAGES,
+                {
+                    "chainId": run.chain_id,
+                    "runId": run.id,
+                    "jobName": name,
+                    "buildNumber": run.build_number,
+                    "stages": [
+                        {"name": s.name, "status": s.status, "durationMs": s.duration_ms}
+                        for s in stages
+                    ],
+                },
+            )
 
     async def _attach_timings(self, session: AsyncSession) -> None:
         """Give parked plugin timings the runs they were waiting for."""

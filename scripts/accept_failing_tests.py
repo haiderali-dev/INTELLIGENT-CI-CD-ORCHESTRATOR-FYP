@@ -53,6 +53,19 @@ SERVICES = {
 TIMEOUT = 600
 
 
+def display_path(path: Path) -> str:
+    """``path`` relative to the repository when it is inside it, otherwise absolute.
+
+    ``--out`` may point anywhere: a scratch directory for a rerun that must not overwrite committed
+    evidence, or a relative path. ``Path.relative_to(REPO_ROOT)`` raised ValueError for both, which
+    crashed the script after every verdict had already passed.
+    """
+    resolved = path.resolve()
+    if resolved.is_relative_to(REPO_ROOT):
+        return str(resolved.relative_to(REPO_ROOT))
+    return str(resolved)
+
+
 def catalog_commands(service: str) -> dict[str, str]:
     """build, unit test and staging deploy commands for a service, read from the catalog."""
     text = (REPO_ROOT / "catalog" / "services.yaml").read_text(encoding="utf-8")
@@ -288,7 +301,7 @@ def main() -> int:
     (args.out / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     for v in verdicts:
         print(f"[{'PASS' if v['pass'] else 'FAIL'}] {v['service']} {v['run']}: {v['why']}")
-    print(f"evidence: {args.out.relative_to(REPO_ROOT)}")
+    print(f"evidence: {display_path(args.out)}")
     return 0 if summary["pass"] else 1
 
 

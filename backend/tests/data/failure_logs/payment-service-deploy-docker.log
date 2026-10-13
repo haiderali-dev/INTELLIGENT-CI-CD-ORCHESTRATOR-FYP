@@ -1,0 +1,38 @@
+Started by upstream project "fs-payment-service-test-unit" build number 1
+originally caused by:
+ Started by upstream project "fs-payment-service-build" build number 5
+ originally caused by:
+  Started by user Orchestrator Backend
+Running as SYSTEM
+Building remotely on agent-1 (linux) in workspace /home/jenkins/agent/workspace/fs-payment-service-deploy-staging
+[WS-CLEANUP] Deleting project workspace...
+[WS-CLEANUP] Deferred wipeout is used...
+The recommended git tool is: NONE
+No credentials specified
+Cloning the remote Git repository
+Cloning repository https://github.com/haiderali-dev/payment-service.git
+ > git init /home/jenkins/agent/workspace/fs-payment-service-deploy-staging # timeout=10
+Fetching upstream changes from https://github.com/haiderali-dev/payment-service.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.47.3'
+ > git fetch --tags --force --progress -- https://github.com/haiderali-dev/payment-service.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git config remote.origin.url https://github.com/haiderali-dev/payment-service.git # timeout=10
+ > git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* # timeout=10
+Avoid second fetch
+ > git rev-parse origin/main^{commit} # timeout=10
+Checking out Revision 0acbe29b3c4042cd45b79cad4ec8532db86e00fc (origin/main)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f 0acbe29b3c4042cd45b79cad4ec8532db86e00fc # timeout=10
+Commit message: "fix: make the shell scripts executable"
+First time build. Skipping changelog.
+[fs-payment-service-deploy-staging] $ /bin/sh -xe /tmp/jenkins12973294955578628740.sh
++ ./deploy.sh staging
+[deploy] building payment-service:staging at commit 0acbe29
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+permission denied while trying to connect to the docker API at unix:///var/run/docker.sock
+Build step 'Execute shell' marked build as failure
+Archiving artifacts
+Finished: FAILURE

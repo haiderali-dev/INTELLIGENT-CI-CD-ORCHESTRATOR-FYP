@@ -75,16 +75,19 @@ def build_intent_parser(
     quota: QuotaTracker | None = None,
     cache: ResponseCache | None = None,
     max_wait: float | None = None,
+    has_models: bool | None = None,
 ) -> IntentParser:
     """An ``IntentParser`` for this configuration.
 
     ``provider``, ``quota`` and ``cache`` can be supplied so the evaluation harness and the tests
-    control them; the backend uses the process-wide ones.
+    control them; the backend uses the process-wide ones. ``has_models`` goes with a supplied
+    provider when it came from ``build_provider``: live mode without a key yields a provider with
+    no models behind it, and the chain must then go straight to the rule parser.
     """
     rules = RuleBasedParser(catalog)
     if provider is None:
         provider, has_models = build_provider(settings, rules)
-    else:
+    elif has_models is None:
         has_models = True
     models = model_chain_names(settings) if has_models else ()
 

@@ -1,0 +1,19 @@
+{
+  "completion_tokens": 93,
+  "data": {
+    "action": "RERUN",
+    "branch": null,
+    "commit": null,
+    "confidence": 0.9,
+    "environment": null,
+    "extra_stages": [],
+    "justification": null,
+    "service": "payment-service",
+    "test_suite": null,
+    "urgency": null
+  },
+  "model": "openai/gpt-oss-120b",
+  "prompt_hash": "b6fc335d8a6b75d90b44b2710d42312c7424312e042d296a44d3c09930515da6",
+  "prompt_tokens": 1704,
+  "recorded_at": "2026-10-13T00:55:05.734290+00:00"
+}

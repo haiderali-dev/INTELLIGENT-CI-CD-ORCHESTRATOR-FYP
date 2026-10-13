@@ -7,7 +7,14 @@ that tests never need the network; this module is how that is enforced structura
 
 from __future__ import annotations
 
-from app.core.settings import Settings, get_settings
+from typing import Literal
+
+from app.ai.factory import build_provider
+from app.ai.providers import FakeProvider, LLMProvider
+from app.ai.rules import RuleBasedParser
+from app.core.settings import LlmMode, Settings, get_settings
+from app.failures.explainer import fake_failure_responder
+from app.generation.planner import default_plan_responder
 from app.services.catalog import Catalog, catalog_path
 from app.services.git import CliGitClient, GitClient
 from app.services.jenkins import HttpJenkinsClient, JenkinsClient
@@ -17,6 +24,29 @@ _jenkins_client: JenkinsClient | None = None
 _git_client: GitClient | None = None
 _catalog: Catalog | None = None
 _plugin_client: PluginClient | None = None
+# Live and replay providers, by mode: one Groq client and its connection pool for the process.
+_llm_providers: dict[LlmMode, tuple[LLMProvider, bool]] = {}
+
+
+def get_llm_provider(
+    settings: Settings, catalog: Catalog, purpose: Literal["intent", "plan", "failure"]
+) -> tuple[LLMProvider, bool]:
+    """The model provider, and whether it has models behind it.
+
+    Live and replay providers are shared: they answer any prompt, so the intent parser, the planner
+    and the failure explainer use the same one. A fake provider is built per call instead, because
+    it answers for its purpose -- an intent, the default plan, the code's failure explanation --
+    and a test may hand in a different catalog.
+    """
+    if settings.llm_mode is LlmMode.FAKE:
+        if purpose == "plan":
+            return FakeProvider(responder=default_plan_responder(catalog)), True
+        if purpose == "failure":
+            return FakeProvider(responder=fake_failure_responder), True
+        return build_provider(settings, RuleBasedParser(catalog))
+    if settings.llm_mode not in _llm_providers:
+        _llm_providers[settings.llm_mode] = build_provider(settings, RuleBasedParser(catalog))
+    return _llm_providers[settings.llm_mode]
 
 
 def get_settings_dep() -> Settings:
@@ -107,3 +137,6 @@ async def close_clients() -> None:
     if _plugin_client is not None:
         await _plugin_client.aclose()
     _plugin_client = None
+    for provider, _ in _llm_providers.values():
+        await provider.aclose()
+    _llm_providers.clear()

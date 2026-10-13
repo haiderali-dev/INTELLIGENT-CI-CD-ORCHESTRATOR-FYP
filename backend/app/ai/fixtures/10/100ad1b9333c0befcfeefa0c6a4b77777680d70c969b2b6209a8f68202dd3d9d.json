@@ -1,0 +1,19 @@
+{
+  "completion_tokens": 91,
+  "data": {
+    "action": "TEST",
+    "branch": "feature/refund",
+    "commit": null,
+    "confidence": 0.96,
+    "environment": null,
+    "extra_stages": [],
+    "justification": null,
+    "service": "payment-service",
+    "test_suite": "integration",
+    "urgency": null
+  },
+  "model": "openai/gpt-oss-120b",
+  "prompt_hash": "100ad1b9333c0befcfeefa0c6a4b77777680d70c969b2b6209a8f68202dd3d9d",
+  "prompt_tokens": 1708,
+  "recorded_at": "2026-10-13T00:48:30.931229+00:00"
+}

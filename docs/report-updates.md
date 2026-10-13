@@ -69,7 +69,14 @@ differ.
       `conversations`, `messages`, `nl_commands` as specified, `generated_pipelines` as specified,
       `llm_calls`, `jobs` as specified and `audit_logs` as specified. Use the table in
       `BUILD_PROMPT.md` Part 4.4.3. Dependency grouping is computed per queue cycle by the plugin and
-      is not persisted; see `docs/decisions.md` D-011.
+      is not persisted; see `docs/decisions.md` D-011. Add the `chains` table and
+      `job_runs.chain_id` too: they hold the per-service chain lock and chain tracking (D-047).
+- [ ] **Add the "Explain failure" use case (T5.9, D-049).** The report has no use case for it. A
+      user asks why a run failed. Code reads the redacted log and decides the cause category, the
+      failing tests, the evidence lines, and what the failure stopped. The model only words the
+      explanation, and an answer quoting a line that is not in the log is replaced by the code's
+      own. Worth a sentence in the limitations section as well: the explanation is an aid, and the
+      evidence lines, not the summary, are what can be trusted.
 
 ## Chapter 6: algorithms
 

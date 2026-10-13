@@ -253,7 +253,7 @@ Copy these tasks into `PROGRESS.md` with their ids. Part 4 holds the detailed sp
 - **T5.5** Conversation and message endpoints for both assistants; intent editing.
 - **T5.6** Generate, regenerate, streamed explain, and approve with an idempotency key.
 - **T5.7** Per-service chain lock; chain triggering and tracking for freestyle; stage tracking for Pipeline.
-- **T5.8** End-to-end backend tests (marked `e2e`) for every command in Part 4.6.7, against `jenkins-dev`, using replay fixtures when no Groq key is set.
+- **T5.8** End-to-end backend tests (marked `e2e`) for every command in Part 4.6.5, against `jenkins-dev`, using replay fixtures when no Groq key is set.
 - **T5.9** Stretch: "Explain failure" for failed runs.
 
 **Acceptance:** golden tests and the linter integration test pass; `pytest -m e2e` passes on the Compose stack; against `demo/failing-tests` the freestyle deploy job never starts.
