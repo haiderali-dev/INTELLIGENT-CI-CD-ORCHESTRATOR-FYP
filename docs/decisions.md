@@ -81,6 +81,12 @@ to what the code sends.
   (4.7.4).
 - A log Jenkins is still writing is read again for up to 5 seconds (D-039), then marked
   incomplete.
+- Only the last megabyte of a log is read, streamed, so a build that prints without limit cannot
+  exhaust the backend. Line numbers keep Jenkins's own numbering. This was the Phase 5 security
+  review's finding 1; see `docs/security-review-phase-5.md`.
+- A network or DNS fault on the agent counts as infrastructure, not a checkout error. It is
+  checked first, because "check the branch was pushed" is the wrong advice for it. This was found
+  on a real failure.
 
 Every call, including a failed attempt, is an `llm_calls` row, with the prompt version and the
 command its chain came from.

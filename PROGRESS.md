@@ -22,6 +22,20 @@ Updated: 2026-10-13 · Current phase: 5 (T5.7 done, T5.8 next) · Branch: phase-
       own branch. Done, checked 2026-10-11: `gh` 2.102.0 is logged in as `haiderali-dev`. PRs
       #5 to #9 were opened with it. Open each phase PR against `main`, never against the previous
       phase branch: stacking them is what kept Phases 2 to 4 out of `main` (PRs #2 to #4).
+- [ ] **Review and merge the Phase 5 PR (#10) into `main`.** Claude opens and updates it but
+      never merges.
+- [ ] **Decide on a checkout retry for transient DNS failures** (Known gaps, "Agent DNS").
+      - **Where the failures were:** every one seen on 2026-10-13 was in the Git clone.
+      - **Freestyle fix:** `scmCheckoutRetryCount: 2` under `jenkins:` in `jenkins/casc/dev.yaml`.
+        Applying it needs a jenkins-dev restart.
+      - **Pipeline fix:** a `retry(2) { checkout ... }` in the reference Jenkinsfile, re-exported
+        under the derivation rule.
+      - **Alternative:** a public resolver for the agents (`dns:` in `docker-compose.yml`).
+      - **Why it is yours:** each option changes Phase 1 infrastructure, so it was not done
+        unasked.
+- [ ] **Re-run the Phase 5 security review independently.** The reviewer agent stopped on an
+      account usage limit, so `docs/security-review-phase-5.md` was written by the agent that
+      wrote the code.
 - [ ] **Approve `frontend/DESIGN.md`** when T6.1 produces it. No screen is built before that.
 - [ ] **Label and review the evaluation gold answers** (Phase 8). At most 30 drafted items, each
       marked `needs_review: true` and excluded from scoring until a human clears the flag.
@@ -892,6 +906,14 @@ Details in `docs/decisions.md`.
   integer-valued floats, the `doCheck*` validators, boxing as `Double`, and the JVM locale.
 - `docs/versions.md` still has `pending` rows for every plugin, backend and frontend dependency. Each
   is filled by the task that pins it, against the official source, per rule 1.4.
+- **Agent DNS on this machine (2026-10-13).** Docker Desktop's resolver intermittently fails to
+  resolve `github.com` from the agents, and the host showed a 2 s lookup in the same period.
+  - **Effect:** a build then fails at its Git clone (`Could not resolve host: github.com`). Three
+    gate runs on 2026-10-13 met at least one; each time the code under test was correct.
+  - **What T5.9 does:** it reports these failures as infrastructure.
+  - **What the tests do:** the T5.9 integration test re-runs such a build. The end-to-end tests do
+    not, because a chain that fails is what they check, so a run that meets one must be repeated.
+    A mitigation is under Needs human.
 
 - 2026-09-28 The job property field is `level`, with an XStream/`readResolve` fallback onto M2's
   `priority`, so old job configurations still load. Decided in D-005, implemented in T2.1.

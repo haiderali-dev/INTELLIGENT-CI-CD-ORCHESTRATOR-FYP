@@ -2322,6 +2322,20 @@ def _pytest(arguments: list[str], *, timeout: int, env: dict[str, str] | None = 
     return result, (result.stdout + result.stderr).strip()
 
 
+def _keep_output(what: str, output: str) -> str:
+    """Save a failed check's whole pytest output, and return where it went.
+
+    A failing summary line names the test but not the assertion, and an end-to-end failure on a
+    live stack cannot be re-run to the same state: on 2026-10-13 one failed before Jenkins was
+    reached, and nothing kept the reason. ``.tmp/`` is gitignored.
+    """
+    folder = REPO_ROOT / ".tmp" / "verify"
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / (re.sub(r"[^a-z0-9]+", "-", what.lower()).strip("-") + ".log")
+    path.write_text(output, encoding="utf-8")
+    return str(path.relative_to(REPO_ROOT))
+
+
 def _all_passed(result: subprocess.CompletedProcess[str] | None, output: str, what: str) -> Result:
     """Passed only if pytest exited 0, something passed, and nothing was skipped.
 
@@ -2332,7 +2346,8 @@ def _all_passed(result: subprocess.CompletedProcess[str] | None, output: str, wh
         return fail(output)
     if result.returncode != 0:
         tail = [line for line in output.splitlines() if line.strip()][-3:]
-        return fail(f"{what} failed: " + " / ".join(tail)[:300])
+        saved = _keep_output(what, output)
+        return fail(f"{what} failed: " + " / ".join(tail)[:300] + f" (full output: {saved})")
     passed = re.search(r"(\d+) passed", output)
     skipped = re.search(r"(\d+) skipped", output)
     if skipped and int(skipped.group(1)):

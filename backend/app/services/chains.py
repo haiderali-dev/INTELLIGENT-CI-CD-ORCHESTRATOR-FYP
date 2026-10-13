@@ -323,6 +323,13 @@ async def _find_first_build(
         return None
     item = await jenkins.queue_item(chain.queue_item_id)
     if item.cancelled:
+        # Nothing in the backend cancels a first job except a user's cancel, so say why Jenkins did.
+        logger.warning(
+            "chain_first_build_cancelled",
+            chain_id=chain.id,
+            queue_item=chain.queue_item_id,
+            why=item.why,
+        )
         finish(chain, ChainStatus.ABORTED)
         return ChainEvent(chain.id, chain.status, chain.position)
     if item.build_number is None:
