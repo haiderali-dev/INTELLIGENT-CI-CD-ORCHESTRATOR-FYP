@@ -401,3 +401,18 @@ async def test_an_approved_plan_cannot_be_regenerated(
 
     assert response.status_code == 409
     assert response.json()["error"]["code"] == "ALREADY_APPROVED"
+
+
+async def test_generating_confirms_the_command(client: AsyncClient, db: AsyncSession) -> None:
+    """4.4.3's nl_commands status: PARSED until the user chooses Generate, then CONFIRMED."""
+    token = await token_for(client, db)
+    command = await ready(client, token)
+    assert (await client.get(f"/api/commands/{command}", headers=auth(token))).json()[
+        "status"
+    ] == "PARSED"
+
+    await client.post(f"/api/commands/{command}/generate", headers=auth(token))
+
+    assert (await client.get(f"/api/commands/{command}", headers=auth(token))).json()[
+        "status"
+    ] == "CONFIRMED"

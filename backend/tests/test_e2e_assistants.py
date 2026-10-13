@@ -2,7 +2,8 @@
 
 Marked ``e2e``; runs on the Compose stack (``tests/e2e_support.py`` says exactly what is real):
 
-    uv run python -m pytest -m e2e                     # replay fixtures, no key needed
+    uv run python -m pytest -m e2e                     # live with a Groq key, else replay fixtures
+    E2E_LLM=replay uv run python -m pytest -m e2e      # replay fixtures, no key or quota used
     E2E_LLM=record uv run python -m pytest -m e2e      # re-record the fixtures against Groq
 
 | 4.6.5 message                                                        | Expected behaviour |

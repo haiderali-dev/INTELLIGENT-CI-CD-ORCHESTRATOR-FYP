@@ -44,6 +44,7 @@ from app.core.logging import get_logger
 from app.db.models import (
     AuditLog,
     ChainStatus,
+    CommandStatus,
     Conversation,
     GeneratedPipeline,
     Job,
@@ -172,6 +173,8 @@ async def generate(
 ) -> GeneratedPipeline:
     """Plan, render, validate and store (4.6.2 steps 1 to 3)."""
     intent, branch, commit = ready_intent(command)
+    # Choosing Generate is the user confirming the intent card: 4.4.3's CONFIRMED status.
+    command.status = CommandStatus.CONFIRMED.value
     assistant = _ASSISTANTS[conversation.assistant]
     try:
         plan = await planner.plan(
@@ -575,15 +578,22 @@ async def approve(
         raise conflict(ErrorCode.VALIDATION_REJECTED, "This plan has nothing to run.")
 
     # The chain lock: refuses while this service's chain is running (4.6.4).
-    chain = await chains.claim(
-        session,
-        service=spec.service,
-        job_type=artifact.job_type.value,
-        jobs=[job.name for job in artifact.jobs],
-        parameters=artifact.parameters,
-        user=user,
-        pipeline_id=pipeline.id,
-    )
+    try:
+        chain = await chains.claim(
+            session,
+            service=spec.service,
+            job_type=artifact.job_type.value,
+            jobs=[job.name for job in artifact.jobs],
+            parameters=artifact.parameters,
+            user=user,
+            pipeline_id=pipeline.id,
+        )
+    except ApiError:
+        # The refusal is a policy denial, which 4.4.3 says to audit, and get_db rolls the session
+        # back on any exception. Nothing else has been written yet, so committing keeps only the
+        # audit entry claim() added (the D-022 pattern).
+        await session.commit()
+        raise
 
     # Claim the approval and commit it with the chain before Jenkins is touched, so a concurrent
     # second request sees both. The unique key, and the one-running-chain-per-service index, make

@@ -64,6 +64,9 @@ MAX_CHAINS_PER_TICK: Final = 50
 
 CHAIN_CANCELLED_AUDIT_ACTION: Final = "chain.cancelled"
 CHAIN_RERUN_AUDIT_ACTION: Final = "chain.rerun"
+# The policy layer's own action for this refusal (app/ai/policy.py), so both are counted together.
+CHAIN_RUNNING_AUDIT_ACTION: Final = "policy.chain_running"
+CANCEL_REFUSED_AUDIT_ACTION: Final = "chain.cancel_refused"
 
 
 def _now() -> datetime:
@@ -125,6 +128,16 @@ async def claim(
     if existing is not None:
         if _lock_held(existing):
             can_cancel = Role(user.role) is Role.ADMIN
+            # A policy denial (4.5.5), audited in the shape app/ai/policy.py uses for the same
+            # refusal at parse time, so the two are counted together; "at" tells them apart.
+            session.add(
+                AuditLog(
+                    actor_id=user.id,
+                    action=CHAIN_RUNNING_AUDIT_ACTION,
+                    target=service,
+                    details={"role": user.role, "chain_id": existing.id, "at": "approval"},
+                )
+            )
             raise conflict(
                 ErrorCode.CHAIN_ALREADY_RUNNING,
                 f"A chain is already running for {service}. "
@@ -319,7 +332,7 @@ async def get_chain(session: AsyncSession, chain_id: str) -> Chain:
     return chain
 
 
-def _run_view(run: JobRun | None) -> dict[str, Any] | None:
+def _run_view(run: JobRun | None, url: str | None = None) -> dict[str, Any] | None:
     if run is None:
         return None
     return {
@@ -330,7 +343,19 @@ def _run_view(run: JobRun | None) -> dict[str, Any] | None:
         "finished_at": _iso(run.finished_at),
         "duration_ms": run.duration_ms,
         "queue_wait_ms": run.queue_wait_ms,
+        # 4.7.4: the run card ends with "result with duration and a Jenkins link". The URL is the
+        # one Jenkins itself reports, so it follows the controller's configured root URL.
+        "url": url,
     }
+
+
+async def _build_url(jenkins: JenkinsClient | None, name: str, run: JobRun) -> str | None:
+    if jenkins is None or run.build_number <= 0:
+        return None
+    try:
+        return (await jenkins.build(name, run.build_number)).url or None
+    except JenkinsError:
+        return None
 
 
 async def run_card(
@@ -360,7 +385,10 @@ async def run_card(
             state = "waiting"
         else:
             state = "not_started"
-        jobs.append({"name": name, "position": position, "state": state, "run": _run_view(run)})
+        url = await _build_url(jenkins, name, run) if run is not None else None
+        jobs.append(
+            {"name": name, "position": position, "state": state, "run": _run_view(run, url)}
+        )
 
     stages: list[dict[str, Any]] = []
     if chain.job_type == "PIPELINE" and jenkins is not None:
@@ -443,6 +471,17 @@ async def cancel(
     "may cancel the running chain first").
     """
     if chain.started_by != actor.id and not role_allows(Role(actor.role), Role.DEVOPS):
+        # A denial, audited and committed before the refusal rolls the session back (D-022):
+        # nothing else has been written by this request.
+        session.add(
+            AuditLog(
+                actor_id=actor.id,
+                action=CANCEL_REFUSED_AUDIT_ACTION,
+                target=f"chain:{chain.id}",
+                details={"role": actor.role, "service": chain.service},
+            )
+        )
+        await session.commit()
         raise forbidden(
             ErrorCode.FORBIDDEN,
             "Only the person who started this chain, or DevOps and Admin, can cancel it.",

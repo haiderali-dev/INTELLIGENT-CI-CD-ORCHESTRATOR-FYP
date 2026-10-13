@@ -680,6 +680,7 @@ class FakeJenkinsClient(JenkinsClient):
             duration_ms=1234,
             timestamp_ms=0,
             queue_id=item_id,
+            url=self.build_url(name, number),
         )
         job.builds.append(info)
         job.logs[number] = f"Started {name} #{number}\nFinished: {result}\n"
@@ -709,10 +710,16 @@ class FakeJenkinsClient(JenkinsClient):
             result=result,
             duration_ms=0 if result is None else 1234,
             timestamp_ms=1_700_000_000_000,
+            url=self.build_url(name, number),
         )
         job.builds.append(info)
         job.causes[number] = (upstream, upstream_number)
         return info
+
+    @staticmethod
+    def build_url(name: str, number: int) -> str:
+        """The URL a real controller reports for a build, under its configured root URL."""
+        return f"http://jenkins.test/job/{name}/{number}/"
 
     def finish_build(self, name: str, number: int, result: str) -> BuildInfo:
         """Test helper: end a running build with a result."""
@@ -725,6 +732,7 @@ class FakeJenkinsClient(JenkinsClient):
             duration_ms=4321,
             timestamp_ms=job.builds[index].timestamp_ms or 1_700_000_000_000,
             queue_id=job.builds[index].queue_id,
+            url=self.build_url(name, number),
         )
         job.builds[index] = finished
         return finished

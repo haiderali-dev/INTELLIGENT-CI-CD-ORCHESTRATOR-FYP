@@ -498,3 +498,66 @@ def test_every_chain_status_is_known() -> None:
 async def test_app_starts_with_the_chain_routes(app: FastAPI) -> None:
     paths = set(app.openapi()["paths"])
     assert {"/api/chains", "/api/chains/{chain_id}", "/api/chains/{chain_id}/cancel"} <= paths
+
+
+# ---------------------------------------------------------------------------
+# Denials are audited, even though the refused request is rolled back (4.4.3)
+# ---------------------------------------------------------------------------
+
+
+async def audit_actions(db: AsyncSession) -> list[str]:
+    db.expire_all()
+    return [row.action for row in (await db.scalars(select(AuditLog))).all()]
+
+
+async def test_an_approval_refused_by_the_lock_is_audited(
+    client: AsyncClient, db: AsyncSession
+) -> None:
+    token = await token_for(client, db, role=Role.DEVOPS)
+    waiting = await generated(client, token, text="build auth-service from main")
+    await approved(client, token, text=BTD)
+
+    response = await client.post(
+        f"/api/pipelines/{waiting['id']}/approve",
+        headers={**auth(token), "Idempotency-Key": "late"},
+    )
+
+    assert response.status_code == 409
+    assert "policy.chain_running" in await audit_actions(db)
+    # From the approval itself, not the parse: no chain was running when either was parsed.
+    row = await db.scalar(select(AuditLog).where(AuditLog.action == "policy.chain_running"))
+    assert row is not None
+    assert row.target == "auth-service"
+    assert row.details["at"] == "approval"
+    assert row.details["chain_id"]
+
+
+async def test_a_refused_cancel_is_audited(client: AsyncClient, db: AsyncSession) -> None:
+    owner = await token_for(client, db)
+    stranger = await token_for(client, db, email="someone-else@example.com")
+    result = await approved(client, owner, text=BTD)
+
+    response = await client.post(f"/api/chains/{result['chain_id']}/cancel", headers=auth(stranger))
+
+    assert response.status_code == 403
+    assert "chain.cancel_refused" in await audit_actions(db)
+    chain = await chain_row(db, result["chain_id"])
+    assert chain.status == ChainStatus.RUNNING.value, "the refusal changed nothing else"
+
+
+async def test_the_run_card_links_each_build_in_jenkins(
+    client: AsyncClient, db: AsyncSession, fake_jenkins: FakeJenkinsClient, tracker: RunTracker
+) -> None:
+    """4.7.4: the run card ends with "result with duration and a Jenkins link"."""
+    token = await token_for(client, db)
+    result = await approved(client, token, text=BTD)
+    fake_jenkins.complete_queue_item(result["queue_item_id"], result="SUCCESS")
+    await tracker.tick()
+    await tracker.tick()
+
+    card = (await client.get(f"/api/chains/{result['chain_id']}", headers=auth(token))).json()
+
+    first = card["jobs"][0]["run"]
+    assert first["url"] == FakeJenkinsClient.build_url(result["first_job"], first["build_number"])
+    assert first["duration_ms"] == 1234
+    assert card["jobs"][1]["run"] is None

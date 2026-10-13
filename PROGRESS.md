@@ -762,6 +762,29 @@ In progress on `phase-5-assistants`. T5.1 to T5.7 done; T5.8 next.
         4. Open the Phase 5 PR. Do not merge.
 - [ ] T5.9 Stretch: "Explain failure" for failed runs.
 
+Audit of T5.1 to T5.8, 2026-10-13. I re-read Part 3, 4.4.3 to 4.4.5, 4.5.5, 4.6 and 4.7.4
+against the code. Five gaps were found and fixed, each with a regression test that fails without
+its fix:
+- **Audit, chain lock:** an approval refused by the chain lock was never audited, but 4.4.3 says
+  "audit every ... policy denial", and `get_db` rolled the refusal back. `chains.claim` now writes
+  `policy.chain_running`, in the policy layer's shape plus `at: approval`, and approval commits it
+  before re-raising (the D-022 pattern).
+- **Audit, cancel:** a refused cancel (not the starter, below DevOps) is now audited as
+  `chain.cancel_refused`.
+- **Command status:** generating left the command `PARSED`. Choosing Generate is the user
+  confirming the intent card, so it now becomes `CONFIRMED` (4.4.3's status column).
+- **Run card link:** the card lacked 4.7.4's "Jenkins link". Each run now carries the URL that
+  Jenkins reports for its build. The fake reports URLs the same way.
+- **e2e mode default:** the suite defaulted to replay even with a key. T5.8 says replay "when no
+  Groq key is set", so it is now live with a key and replay without one. `verify.py` still pins
+  replay, so the gate spends no quota.
+- **Checks:** offline suite 1450 passed, 46 deselected; ruff, format and mypy clean.
+
+The rest matched the spec, and three items were checked with no change needed:
+- The run card has all five 4.6.2 items.
+- Cancel dequeues members and stops the running build.
+- An unreachable plugin degrades to `queue: null` instead of failing the card.
+
 Groundwork recorded on 2026-10-11, before T5.1:
 
 - `demo/failing-tests` exists in both service repositories: one intentional failing unit test each

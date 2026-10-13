@@ -7,12 +7,12 @@ which is the same app object without a port -- and, by default, the model.
 
 **The model.** ``E2E_LLM`` chooses:
 
-* ``replay`` (default): recorded answers from ``app/ai/fixtures``, so the suite needs no key and no
-  quota -- T5.8's "using replay fixtures when no Groq key is set". A missing fixture falls back to
-  the rules, which the tests catch: in replay mode every parse must come from a fixture.
+* ``replay`` (the default when no Groq key is set, as T5.8 says): recorded answers from
+  ``app/ai/fixtures``, so the suite needs no key and no quota. A missing fixture falls back to the
+  rules, which the tests catch: in replay mode every parse must come from a fixture.
+* ``live`` (the default when a key is set): Groq directly, for a run against the model as it is.
 * ``record``: Groq through ``RecordingProvider``, saving each answer as a fixture. Run once after
   any prompt or catalog change, then commit ``app/ai/fixtures``.
-* ``live``: Groq directly, for a run against the model as it is today.
 
 **The database** is ``orchestrator_e2e`` on the stack's PostgreSQL, dropped, recreated and migrated
 with Alembic once per session -- the migrations, not ``create_all``, so the suite also proves the
@@ -73,7 +73,13 @@ POLL_SECONDS: Final = 3.0
 
 
 def llm_mode() -> str:
-    mode = os.environ.get("E2E_LLM", "replay").strip().lower()
+    """``E2E_LLM`` if set; otherwise live with a Groq key and replay without one.
+
+    T5.8: "using replay fixtures when no Groq key is set". ``verify.py`` pins ``replay`` so the
+    Phase 5 gate is deterministic and never spends quota.
+    """
+    configured = os.environ.get("E2E_LLM", "").strip().lower()
+    mode = configured or ("live" if groq_key() else "replay")
     if mode not in {"replay", "record", "live"}:
         raise ValueError(f"E2E_LLM must be replay, record or live, not {mode!r}")
     return mode
