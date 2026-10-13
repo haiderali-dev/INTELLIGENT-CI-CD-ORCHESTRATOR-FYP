@@ -11,6 +11,31 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 5
 
+### D-044 What the validators check beyond the letter of 4.6.3
+**Date:** 2026-10-13 · **Status:** decided and implemented (T5.4)
+
+`FreestyleValidator` and `PipelineValidator` run 4.6.3's eight checks in order and report every
+one, passed or not, because the preview shows them as a checklist. Choices the list leaves open:
+
+- **An edited spec must keep the catalog's repository and agent label.** The YAML is editable
+  (4.6.2 step 4). A spec pointing at another repository would run someone else's code on the
+  agents, and the rule that values come from the catalog would be meaningless.
+- **An unreachable remote warns, and a commit that is not a branch tip warns** (D-037, D-024).
+  Jenkins fails the checkout honestly if either is wrong.
+- **A linter that cannot be reached fails the check.** Validation that did not run has not
+  validated anything. The user regenerates once Jenkins answers.
+- **"No production anywhere" covers everything that reaches Jenkins** and every structured value
+  in the spec. It leaves out the justification, which is never written into a job (D-043).
+- **Each failure names its cause** (`plan`, `input` or `template`), because 4.6.2 sends only plan
+  errors back to the model. To make that true end to end, the planner's own checks now include
+  the one plan error the validator could otherwise catch first: a stage name mentioning
+  production. Every validator failure caused by the plan is therefore found during planning,
+  within the repair budget. What reaches validation is the input or the template, and template
+  bugs are the golden-file tests' job.
+- **Jobs are created last first.** The linter integration test showed what the exporter already
+  worked around: Jenkins drops a downstream trigger that names a job that does not exist yet.
+  Approval (T5.6) creates a chain from its last job to its first.
+
 ### D-043 How a spec becomes Jenkins jobs
 **Date:** 2026-10-13 · **Status:** decided and implemented (T5.3)
 

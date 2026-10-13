@@ -1,6 +1,6 @@
 # Progress
 
-Updated: 2026-10-13 · Current phase: 5 (T5.3 done, T5.4 next) · Branch: phase-5-assistants
+Updated: 2026-10-13 · Current phase: 5 (T5.4 done, T5.5 next) · Branch: phase-5-assistants
 
 ## Needs human
 - [x] **Create the two sample-service GitHub repositories**, push them, create the
@@ -558,7 +558,7 @@ has been reviewed by a human yet.
 
 ## Phase 5: Freestyle Assistant and Pipeline Assistant
 
-In progress on `phase-5-assistants`. T5.1 to T5.3 done; T5.4 next.
+In progress on `phase-5-assistants`. T5.1 to T5.4 done; T5.5 next.
 
 - [x] T5.1 Spec model (Pydantic) with YAML round-trip and the planner schema, plus one revision
       rule for both job types (D-041). Evidence, all run on 2026-10-12:
@@ -647,7 +647,24 @@ In progress on `phase-5-assistants`. T5.1 to T5.3 done; T5.4 next.
         - Offline suite: 1338 passed.
         - `pytest -m integration` (the Jenkins suite and the revision suite) against the
           re-exported references: 25 passed.
-- [ ] T5.4 `FreestyleValidator` and `PipelineValidator`, including the declarative linter call.
+- [x] T5.4 `FreestyleValidator` and `PipelineValidator`, including the declarative linter call
+      (D-044). Evidence, all run on 2026-10-13:
+      - **Code:** `app/generation/validate.py` runs 4.6.3's eight checks in order: spec schema;
+        catalog and Git (including the catalog's own repository and label); environment
+        allowed; stage order and build-first; shell metacharacters; XML well-formedness or,
+        for a Pipeline, the declarative linter through `JenkinsClient`; job names; and no
+        production in anything sent to Jenkins. Each failure is classed plan, input or
+        template. `parse_spec` handles an edited YAML. The planner now also sends a stage name
+        mentioning production back for repair.
+      - **Offline tests:** `test_generation_validate.py`, 32 passed.
+      - **Linter integration test:** `pytest -m integration tests/test_integration_generation.py`,
+        4 passed against jenkins-dev:
+        - every rendered Jenkinsfile (each service, each generating action, with and without
+          extra stages) passes the real declarative linter;
+        - a broken Jenkinsfile is rejected;
+        - a chain created last-first keeps its triggers, `dependsOn`, priority and defaults, and
+          the Pipeline job keeps its parameters, sandbox and priority.
+      - **Regression checks:** offline suite 1371 passed; ruff, format and mypy clean.
 - [ ] T5.5 Conversation and message endpoints for both assistants; intent editing.
 - [ ] T5.6 Generate, regenerate, streamed explain, and approve with an idempotency key.
 - [ ] T5.7 Per-service chain lock; chain triggering and tracking; stage tracking for Pipeline.

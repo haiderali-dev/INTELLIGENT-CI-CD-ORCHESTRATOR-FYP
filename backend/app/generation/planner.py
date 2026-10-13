@@ -229,6 +229,11 @@ def check_plan(
             issues.append(f"{where}: {service.name} has no {stage.suite!r} test suite")
         if stage.environment is not None and not service.allows(stage.environment):
             issues.append(f"{where}: {service.name} cannot be deployed to {stage.environment!r}")
+        # The model names the stages, and a name reaches Jenkins, where 4.6.3 allows no
+        # "production" anywhere. Caught here so it goes back to the model as a plan error,
+        # rather than failing validation after the repairs are spent (T5.4).
+        if "production" in stage.name.casefold():
+            issues.append(f"{where}: a stage name must not mention production")
 
     names = Counter(stage.name.strip().casefold() for stage in plan.stages)
     for stage in plan.stages:

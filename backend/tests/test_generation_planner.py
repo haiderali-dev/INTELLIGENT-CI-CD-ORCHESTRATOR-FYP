@@ -451,6 +451,25 @@ def test_a_plan_that_differs_from_the_request_is_listed_for_repair(
     assert list(issues) == expected
 
 
+def test_a_stage_name_mentioning_production_goes_back_for_repair(
+    payment: CatalogService, btd_required: tuple[RequiredStage, ...]
+) -> None:
+    """The name reaches Jenkins, where 4.6.3 allows no "production" anywhere. A plan error the
+    model can fix, so it is caught here rather than after the repairs are spent."""
+    answer = plan(
+        stage("Build", "build"),
+        stage("Unit", "test", "unit"),
+        stage("Deploy like production", "deploy", env="staging"),
+    )
+
+    accepted, issues = check_plan(answer, btd_required, payment)
+
+    assert accepted is not None
+    assert issues == (
+        "stage 3 ('Deploy like production'): a stage name must not mention production",
+    )
+
+
 def test_values_a_strict_schema_would_block_are_caught_in_code(
     payment: CatalogService, btd_required: tuple[RequiredStage, ...]
 ) -> None:
