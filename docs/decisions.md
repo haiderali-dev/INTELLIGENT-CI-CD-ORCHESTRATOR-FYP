@@ -11,6 +11,65 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 5
 
+### D-050 jenkins-dev retries a failed SCM checkout twice (`scmCheckoutRetryCount: 2`)
+**Date:** 2026-10-13 · **Status:** decided and applied (requested after the Phase 5 gate's DNS
+failures)
+
+**Why.** Docker Desktop's DNS intermittently failed to resolve `github.com` from the agents. A
+build then failed at its clone, and five runs of the Phase 5 gate failed that way before one
+passed (PROGRESS, Known gaps).
+
+**Decision.** `scmCheckoutRetryCount: 2` under `jenkins:` in `jenkins/casc/dev.yaml`, and nowhere
+else. Jenkins core then retries a failed SCM checkout twice more, 10 seconds apart: three attempts
+in all.
+
+**It retries every checkout failure, not only DNS.** A branch or commit that does not exist, a
+repository that cannot be reached, refused credentials and a dropped lookup are all retried alike.
+A checkout that can never succeed now fails about 20 seconds later, with "Retrying after 10
+seconds" in its log. What is not a checkout is never retried: a failing test, a failing step, or
+the Jenkinsfile's own refusal of a bad `BRANCH` or `COMMIT`.
+
+**Checked before it was applied:**
+- The YAML parses with a loader that refuses duplicate keys. The change is ten added lines, and no
+  other setting moved.
+- Jenkins core 2.568.3 has `Jenkins.setScmCheckoutRetryCount`.
+- JCasC 2130.v3ef02f16a_34b_ checked the file through its dry-run endpoint
+  (`POST /configuration-as-code/check`), using the admin account from inside the container:
+  - the current file and the new one both came back clean;
+  - a control with the attribute misspelled was refused (HTTP 400), and the list of valid
+    attributes in that refusal includes `scmCheckoutRetryCount`.
+- The first attempt at that check sent the YAML form-encoded. Every input then came back clean,
+  the control included, so that result was discarded.
+
+**Applied** by restarting `jenkins-dev` (`docker compose restart jenkins-dev`). The file is
+bind-mounted read-only, and JCasC applies it at boot.
+- Jenkins was fully up 8 seconds later, with no JCasC error, and its own `config.xml` holds
+  `<scmCheckoutRetryCount>2</scmCheckoutRetryCount>`.
+- It covers both job types, as observed: on a commit that does not exist, the freestyle checkout
+  and the Pipeline's `checkout` step each logged "Retrying after 10 seconds" twice, and each failed
+  after about 30 seconds instead of about 5.
+
+**Verified afterwards, on the same day:**
+- `verify.py --phase 1`: ALL CHECKS PASSED.
+- Every integration test: 31 passed, and 1 skipped, which needs its own PostgreSQL setup, as
+  before.
+- The full `verify.py --phase 5`: ALL CHECKS PASSED, 71 of 71.
+
+That gate run proves the setting does no harm. It does **not** yet prove it cures the flakiness:
+none of the run's 23 builds met a DNS error, so no checkout needed a retry.
+
+**Consequences:**
+- Logs can now hold a checkout error that a retry recovered from. T5.9 reads the failing step
+  before the rest of the log (D-049), so such an error does not take the blame for a later failure.
+- **Still exposed:**
+  - a DNS outage longer than the roughly 20-second retry window;
+  - the Git lookups the backend makes itself (`git ls-remote` from the host while parsing and
+    validating), which this setting does not touch.
+- Not applied to `experiment-baseline.yaml` or `experiment-plugin.yaml`. That was not requested,
+  and those controllers' build timings are the experiment's measurements.
+- BUILD_PROMPT 4.2.2 lists what `dev.yaml` must configure. This is an addition to that list,
+  recorded here rather than by editing the specification.
+
 ### D-049 Explain failure: code decides the facts, the model words them, every quote is checked
 **Date:** 2026-10-13 · **Status:** decided and implemented (T5.9)
 

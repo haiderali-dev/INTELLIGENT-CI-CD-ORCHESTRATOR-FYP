@@ -25,15 +25,22 @@ Branch: phase-5-assistants
       phase branch: stacking them is what kept Phases 2 to 4 out of `main` (PRs #2 to #4).
 - [ ] **Review and merge the Phase 5 PR (#10) into `main`.** Claude opens and updates it but
       never merges.
-- [ ] **Decide on a checkout retry for transient DNS failures** (Known gaps, "Agent DNS").
-      - **Where the failures were:** every one seen on 2026-10-13 was in the Git clone.
-      - **Freestyle fix:** `scmCheckoutRetryCount: 2` under `jenkins:` in `jenkins/casc/dev.yaml`.
-        Applying it needs a jenkins-dev restart.
-      - **Pipeline fix:** a `retry(2) { checkout ... }` in the reference Jenkinsfile, re-exported
-        under the derivation rule.
-      - **Alternative:** a public resolver for the agents (`dns:` in `docker-compose.yml`).
-      - **Why it is yours:** each option changes Phase 1 infrastructure, so it was not done
-        unasked.
+- [x] **Decide on a checkout retry for transient DNS failures** (Known gaps, "Agent DNS").
+      Decided on 2026-10-13: `scmCheckoutRetryCount: 2` under `jenkins:` in
+      `jenkins/casc/dev.yaml` (D-050).
+      - **What it retries:** every SCM checkout failure, not only DNS. Two more attempts,
+        10 seconds apart.
+      - **Accepted:** JCasC's dry-run check accepted it, and refused a misspelled control.
+      - **Applied:** by restarting jenkins-dev, which was fully up in 8 s with no JCasC error.
+        `config.xml` holds the value.
+      - **Seen working on both job types:** freestyle and a Pipeline's `checkout` step each retried
+        twice. So the separate Pipeline `retry` step proposed earlier is not needed.
+      - **Checks after applying it:**
+        - `verify.py --phase 1`: ALL CHECKS PASSED;
+        - every integration test: 31 passed, 1 skipped, as before;
+        - the full `verify.py --phase 5`: ALL CHECKS PASSED, 71 of 71.
+      - **Not yet proven:** that it cures the flakiness. No build in that gate run met a DNS error,
+        so none needed a retry.
 - [ ] **Re-run the Phase 5 security review independently.** The reviewer agent stopped on an
       account usage limit, so `docs/security-review-phase-5.md` was written by the agent that
       wrote the code.
@@ -954,12 +961,14 @@ Details in `docs/decisions.md`.
   is filled by the task that pins it, against the official source, per rule 1.4.
 - **Agent DNS on this machine (2026-10-13).** Docker Desktop's resolver intermittently fails to
   resolve `github.com` from the agents, and the host showed a 2 s lookup in the same period.
-  - **Effect:** a build then fails at its Git clone (`Could not resolve host: github.com`). Three
+  - **Effect:** a build then fails at its Git clone (`Could not resolve host: github.com`). Five
     gate runs on 2026-10-13 met at least one; each time the code under test was correct.
   - **What T5.9 does:** it reports these failures as infrastructure.
   - **What the tests do:** the T5.9 integration test re-runs such a build. The end-to-end tests do
     not, because a chain that fails is what they check, so a run that meets one must be repeated.
-    A mitigation is under Needs human.
+  - **Mitigated, not removed (D-050):** jenkins-dev now retries a failed checkout twice,
+    10 seconds apart. Still exposed: an outage longer than that window, and the backend's own
+    `git ls-remote` calls from the host.
 
 - 2026-09-28 The job property field is `level`, with an XStream/`readResolve` fallback onto M2's
   `priority`, so old job configurations still load. Decided in D-005, implemented in T2.1.

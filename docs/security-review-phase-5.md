@@ -146,4 +146,6 @@ The checklist covered:
 9. **Agent DNS** (environment, not code). Docker Desktop's DNS drops lookups from the agents now
    and then (4 of 5 resolved in one probe), so a build can fail at checkout. T5.9 reports these
    as infrastructure, and the T5.9 integration test re-runs such a build. The end-to-end tests do
-   not retry, so a run that meets one fails and must be repeated.
+   not retry, so a run that meets one fails and must be repeated. **Mitigated on 2026-10-13
+   (D-050):** jenkins-dev retries any failed checkout twice, 10 seconds apart. An outage longer
+   than that, or a lookup the backend makes itself, still fails.
