@@ -1,6 +1,6 @@
 # Progress
 
-Updated: 2026-10-13 · Current phase: 5 (T5.5 done, T5.6 next) · Branch: phase-5-assistants
+Updated: 2026-10-13 · Current phase: 5 (T5.6 done, T5.7 next) · Branch: phase-5-assistants
 
 ## Needs human
 - [x] **Create the two sample-service GitHub repositories**, push them, create the
@@ -558,7 +558,7 @@ has been reviewed by a human yet.
 
 ## Phase 5: Freestyle Assistant and Pipeline Assistant
 
-In progress on `phase-5-assistants`. T5.1 to T5.5 done; T5.6 next.
+In progress on `phase-5-assistants`. T5.1 to T5.6 done; T5.7 next.
 
 - [x] T5.1 Spec model (Pydantic) with YAML round-trip and the planner schema, plus one revision
       rule for both job types (D-041). Evidence, all run on 2026-10-12:
@@ -687,7 +687,29 @@ In progress on `phase-5-assistants`. T5.1 to T5.5 done; T5.6 next.
       - **Regression checks:** offline suite 1392 passed; ruff, format and mypy clean.
       - **Not yet live:** the running-chain lookup returns "no chain" until the per-service lock
         exists. It is wired in T5.7.
-- [ ] T5.6 Generate, regenerate, streamed explain, and approve with an idempotency key.
+- [x] T5.6 Generate, regenerate, streamed explain, and approve with an idempotency key (D-046).
+      Evidence, all run on 2026-10-13:
+      - **Code:**
+        - `app/services/generation.py` and `app/api/generation.py`:
+          `POST /api/commands/{id}/generate`, `GET /api/pipelines/{id}`, and
+          `POST /api/pipelines/{id}/regenerate`, `/explain` (streamed) and `/approve`
+          (`Idempotency-Key`).
+        - The flow: plan, render, validate, then a `generated_pipelines` row with the progress
+          steps, checklist, plan record and approval summary, plus `llm_calls` for the planner
+          and the explanation.
+        - Approval: the row is locked and claimed before Jenkins, jobs are saved last-first, the
+          `jobs` rows are upserted, the first job is triggered and handed to the tracker, and
+          the audit log and a "Run started" message are written.
+        - `app/ai/prompts/explain_v1.md`.
+      - **Tests:**
+        - `test_generation_api.py`, 22 passed: both assistants, readiness, a linter rejection
+          shown as a failed step, privacy, regenerate superseding, edited YAML (valid; policy
+          fields locked; schema; production), explain, and approve (key required, last-first,
+          replay, second key refused, invalid refused, Jenkins failure undone and retried,
+          locked after approval).
+        - `test_generation_explain.py`, 6 passed.
+      - **Regression checks:** offline suite 1420 passed; ruff, format and mypy clean.
+      - **Wired in T5.7:** the chain lock at approval, and tracking past the first job.
 - [ ] T5.7 Per-service chain lock; chain triggering and tracking; stage tracking for Pipeline.
 - [ ] T5.8 End-to-end backend tests (`e2e`) for every command in Part 4.6.5.
 - [ ] T5.9 Stretch: "Explain failure" for failed runs.

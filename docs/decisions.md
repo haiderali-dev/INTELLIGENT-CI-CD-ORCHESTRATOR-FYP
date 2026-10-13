@@ -11,6 +11,40 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 5
 
+### D-046 Generating, approving and explaining
+**Date:** 2026-10-13 · **Status:** decided and implemented (T5.6)
+
+- **Every generation is a row, valid or not.** 4.7.4's progress line ("Understood, Planned,
+  Rendered, Validated, each showing a check or the exact error") needs a failed step to be
+  something to read, not an error page. A regenerate cancels the earlier rows of the same command,
+  so an outdated plan cannot be approved by mistake.
+- **A render failure still runs the spec checks.** 4.6.3 orders them before the artifact check.
+  An edited spec that deploys to production fails "environment allowed" in the checklist, not
+  only "no command for that stage".
+- **Editing the YAML cannot change what policy decided.** The service, the assistant and the
+  priority were checked against the role, the HIGH quota and the justification when the request
+  was confirmed (4.5.5). An edited spec that changes them is invalid, and points the user to
+  editing the request instead. Everything else in the spec may be edited and is re-validated.
+- **Approval is idempotent, and a double click cannot start two chains (4.6.4).** The row is
+  locked (`FOR UPDATE` on PostgreSQL), marked approved with the key and committed *before*
+  Jenkins is touched:
+  - the same key replays the first result and starts nothing;
+  - another key gets `ALREADY_APPROVED`;
+  - a key already used for another plan is refused;
+  - if Jenkins fails before the chain starts, the approval is undone so the user can retry.
+- **Jobs are saved last first** (D-044), created or updated in place. The bot has no
+  `Job/Delete` (D-033), and jobs are reused across approvals for the same service and stage.
+- **What approving will do is stated before it is done.** The summary follows 4.7.4's wording.
+  It is worked out at generation time from which jobs already exist: "Creates 4 jobs and starts
+  fs-payment-service-build on main at HIGH priority", or "updates N" when some are reused.
+- **The explanation** streams from the first model that answers, using `explain_v1`. A model that
+  fails partway leaves what it said, marked as cut short. With no model, and always in fake mode,
+  the code writes the explanation from the same input. That input carries the rendered jobs and
+  their catalog commands, and not the justification. Each explain call is recorded in `llm_calls`
+  with its prompt version, through its own session, because the stream outlives the request's.
+- **Approval hands over to the chain lock and tracker through two hooks,** `before_start` and
+  `on_started`, which T5.7 fills.
+
 ### D-045 How a conversation turns messages into commands
 **Date:** 2026-10-13 · **Status:** decided and implemented (T5.5)
 
