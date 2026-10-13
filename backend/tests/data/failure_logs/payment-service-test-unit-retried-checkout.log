@@ -1,0 +1,104 @@
+Started by upstream project "[8mha:////4M/cxq1X1FG2lbDffbSWVRLcHsI3/I60dWf5PVoTYDsIAAAAqh+LCAAAAAAAAP9b85aBtbiIQTGjNKU4P08vOT+vOD8nVc83PyU1x6OyILUoJzMv2y+/JJUBAhiZGBgqihhk0NSjKDWzXb3RdlLBUSYGJk8GtpzUvPSSDB8G5tKinBIGIZ+sxLJE/ZzEvHT94JKizLx0a6BxUmjGOUNodHsLgAyJEgY5/az8JP20Yt2CxMrc1LwS3eLUorLM5FTdpNLMnBR9AF69JvvTAAAA[0mfs-payment-service-build" build number [8mha:////4H/zZaTKisUIK8GzUVAwb5SS6c8sFEt22FMJcNJ4jEeEAAAArB+LCAAAAAAAAP9b85aBtbiIQTGjNKU4P08vOT+vOD8nVc83PyU1x6OyILUoJzMv2y+/JJUBAhiZGBgqihhk0NSjKDWzXb3RdlLBUSYGJk8GtpzUvPSSDB8G5tKinBIGIZ+sxLJE/ZzEvHT94JKizLx0a6BxUmjGOUNodHsLgAymEgYF/az8JP20Yt2CxMrc1LwS3eLUorLM5FTdpNLMnBR9c1MAWK8SHdUAAAA=[0m75
+originally caused by:
+ Started by user [8mha:////4GiDgYr70JsXZMu5KXXq5+gvC/g8ajLqu7A4M9BRLYiaAAAAoh+LCAAAAAAAAP9b85aBtbiIQTGjNKU4P08vOT+vOD8nVc83PyU1x6OyILUoJzMv2y+/JJUBAhiZGBgqihhk0NSjKDWzXb3RdlLBUSYGJk8GtpzUvPSSDB8G5tKinBIGIZ+sxLJE/ZzEvHT94JKizLx0a6BxUmjGOUNodHsLgAyREgYx/dLi1CL9/KLkjNTikqLEkvwi3aT8EgC2Ox/lywAAAA==[0mOrchestrator Backend
+Running as SYSTEM
+Building remotely on [8mha:////4Nqt9pLUuk5V8UjZ59/l6fTWr3ebjrA8p+EH13UZeDBBAAAAnR+LCAAAAAAAAP9b85aBtbiIQTGjNKU4P08vOT+vOD8nVc83PyU1x6OyILUoJzMv2y+/JJUBAhiZGBgqihhk0NSjKDWzXb3RdlLBUSYGJk8GtpzUvPSSDB8G5tKinBIGIZ+sxLJE/ZzEvHT94JKizLx0a6BxUmjGOUNodHsLgAx2oBn6yfm5BaUlqUX6iempeSW6RvoAQ5akLccAAAA=[0magent-2 (linux) in workspace /home/jenkins/agent/workspace/fs-payment-service-test-unit
+[WS-CLEANUP] Deleting project workspace...
+[WS-CLEANUP] Deferred wipeout is used...
+[WS-CLEANUP] Done
+The recommended git tool is: NONE
+No credentials specified
+Cloning the remote Git repository
+Cloning repository https://github.com/haiderali-dev/payment-service.git
+ > git init /home/jenkins/agent/workspace/fs-payment-service-test-unit # timeout=10
+Fetching upstream changes from https://github.com/haiderali-dev/payment-service.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.47.3'
+ > git fetch --tags --force --progress -- https://github.com/haiderali-dev/payment-service.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+ERROR: Error cloning remote repo 'origin'
+hudson.plugins.git.GitException: Command "git fetch --tags --force --progress -- https://github.com/haiderali-dev/payment-service.git +refs/heads/*:refs/remotes/origin/*" returned status code 128:
+stdout: 
+stderr: fatal: unable to access 'https://github.com/haiderali-dev/payment-service.git/': Could not resolve host: github.com
+
+	at PluginClassLoader for git-client//org.jenkinsci.plugins.gitclient.CliGitAPIImpl.launchCommandIn(CliGitAPIImpl.java:2852)
+	at PluginClassLoader for git-client//org.jenkinsci.plugins.gitclient.CliGitAPIImpl.launchCommandWithCredentials(CliGitAPIImpl.java:2193)
+	at PluginClassLoader for git-client//org.jenkinsci.plugins.gitclient.CliGitAPIImpl$1.execute(CliGitAPIImpl.java:638)
+	at PluginClassLoader for git-client//org.jenkinsci.plugins.gitclient.CliGitAPIImpl$2.execute(CliGitAPIImpl.java:880)
+	at PluginClassLoader for git-client//org.jenkinsci.plugins.gitclient.RemoteGitImpl$CommandInvocationHandler$GitCommandMasterToSlaveCallable.call(RemoteGitImpl.java:173)
+	at PluginClassLoader for git-client//org.jenkinsci.plugins.gitclient.RemoteGitImpl$CommandInvocationHandler$GitCommandMasterToSlaveCallable.call(RemoteGitImpl.java:164)
+	at hudson.remoting.UserRequest.perform(UserRequest.java:225)
+	at hudson.remoting.UserRequest.perform(UserRequest.java:50)
+	at hudson.remoting.Request$2.run(Request.java:391)
+	at hudson.remoting.InterceptingExecutorService.lambda$wrap$0(InterceptingExecutorService.java:81)
+	at java.base/java.util.concurrent.FutureTask.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+	Suppressed: hudson.remoting.Channel$CallSiteStackTrace: Remote call to agent-2
+		at hudson.remoting.Channel.attachCallSiteStackTrace(Channel.java:1916)
+		at hudson.remoting.UserRequest$ExceptionResponse.retrieve(UserRequest.java:384)
+		at hudson.remoting.Channel.call(Channel.java:1108)
+		at PluginClassLoader for git-client//org.jenkinsci.plugins.gitclient.RemoteGitImpl$CommandInvocationHandler.execute(RemoteGitImpl.java:155)
+		at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(Unknown Source)
+		at java.base/java.lang.reflect.Method.invoke(Unknown Source)
+		at PluginClassLoader for git-client//org.jenkinsci.plugins.gitclient.RemoteGitImpl$CommandInvocationHandler.invoke(RemoteGitImpl.java:140)
+		at PluginClassLoader for git-client/jdk.proxy29/jdk.proxy29.$Proxy89.execute(Unknown Source)
+		at PluginClassLoader for git//hudson.plugins.git.GitSCM.retrieveChanges(GitSCM.java:1220)
+		at PluginClassLoader for git//hudson.plugins.git.GitSCM._checkout(GitSCM.java:1310)
+		at PluginClassLoader for git//hudson.plugins.git.GitSCM.checkout(GitSCM.java:1277)
+		at hudson.scm.SCM.checkout(SCM.java:540)
+		at hudson.model.AbstractProject.checkout(AbstractProject.java:1254)
+		at hudson.model.AbstractBuild$AbstractBuildExecution.defaultCheckout(AbstractBuild.java:648)
+		at jenkins.scm.SCMCheckoutStrategy.checkout(SCMCheckoutStrategy.java:84)
+		at hudson.model.AbstractBuild$AbstractBuildExecution.run(AbstractBuild.java:521)
+		at hudson.model.Run.execute(Run.java:1849)
+		at hudson.model.FreeStyleBuild.run(FreeStyleBuild.java:44)
+		at hudson.model.ResourceController.execute(ResourceController.java:97)
+		at hudson.model.Executor.run(Executor.java:456)
+ERROR: Error cloning remote repo 'origin'
+Retrying after 10 seconds
+The recommended git tool is: NONE
+No credentials specified
+ > git rev-parse --resolve-git-dir /home/jenkins/agent/workspace/fs-payment-service-test-unit/.git # timeout=10
+Fetching changes from the remote Git repository
+ > git config remote.origin.url https://github.com/haiderali-dev/payment-service.git # timeout=10
+Fetching upstream changes from https://github.com/haiderali-dev/payment-service.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.47.3'
+ > git fetch --tags --force --progress -- https://github.com/haiderali-dev/payment-service.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git rev-parse refs/remotes/origin/demo/failing-tests^{commit} # timeout=10
+Checking out Revision da997c8be894b8058c9c88068295964b81f2d846 (refs/remotes/origin/demo/failing-tests)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f da997c8be894b8058c9c88068295964b81f2d846 # timeout=10
+Commit message: "fix(deploy): probe /health on a configurable host"
+ > git rev-list --no-walk da997c8be894b8058c9c88068295964b81f2d846 # timeout=10
+[fs-payment-service-test-unit] $ /bin/sh -xe /tmp/jenkins11813877692437169760.sh
++ ./scripts/build.sh
+[build] payment-service
+[build] ok
+[fs-payment-service-test-unit] $ /bin/sh -xe /tmp/jenkins16775560125162416332.sh
++ ./scripts/test.sh unit
+[test] unit suite (about 8s)
+.......F                                                                 [100%]
+=================================== FAILURES ===================================
+___________________ test_demo_failing_tests_fails_on_purpose ___________________
+
+    def test_demo_failing_tests_fails_on_purpose() -> None:
+>       assert 1 + 1 == 3, "intentional failure: the deploy job must never start after this"
+E       AssertionError: intentional failure: the deploy job must never start after this
+E       assert (1 + 1) == 3
+
+tests/test_unit.py:75: AssertionError
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/fastapi/testclient.py:1
+  /home/jenkins/agent/workspace/fs-payment-service-test-unit/.venv/lib/python3.13/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_unit.py::test_demo_failing_tests_fails_on_purpose - AssertionError: intentional failure: the deploy job must never start after this
+assert (1 + 1) == 3
+1 failed, 7 passed, 1 warning in 7.80s
+Build step 'Execute shell' marked build as failure
+Archiving artifacts
+Finished: FAILURE

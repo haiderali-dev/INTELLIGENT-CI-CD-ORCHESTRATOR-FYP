@@ -20,6 +20,7 @@ from app.failures.analysis import (
     normalise,
     unavailable,
 )
+from app.failures.explainer import FailureContext, render_input
 
 LOGS = Path(__file__).parent / "data" / "failure_logs"
 INFO = "\N{INFORMATION SOURCE}"
@@ -219,6 +220,102 @@ def test_a_network_error_recovered_before_the_failing_step_is_not_blamed() -> No
 
     assert analysis.category is FailureCategory.TESTS
     assert analysis.failed_tests == (PAYMENT_TEST,)
+
+
+RETRIED = "payment-service-test-unit-retried-checkout.log"
+RETRY = "Retrying after 10 seconds"
+TEST_UNIT_CONTEXT = FailureContext(
+    job_name="fs-payment-service-test-unit",
+    job_type="FREESTYLE",
+    result="FAILURE",
+    service="payment-service",
+    not_started=("fs-payment-service-test-integration", "fs-payment-service-deploy-staging"),
+)
+
+
+def test_a_retried_checkout_does_not_change_what_the_model_is_asked() -> None:
+    """Captured from jenkins-dev on 2026-10-13: agent-2's first clone could not resolve github.com,
+    Jenkins retried it after 10 seconds (D-050), and the unit test then failed as designed. The
+    recovered error used to reach the excerpt, so the prompt missed its recorded answer, and the
+    Phase 6 gate's end-to-end test fell back to rules."""
+    text = log(RETRIED)
+    assert "Could not resolve host: github.com" in text and f"\n{RETRY}\n" in text
+    lines = text.split("\n")
+    first_error = next(i for i, line in enumerate(lines) if line.startswith("ERROR: Error cloning"))
+    without_the_failed_attempt = "\n".join(lines[:first_error] + lines[lines.index(RETRY) + 1 :])
+
+    retried = analyse(text, job_type="FREESTYLE")
+    clean = analyse(without_the_failed_attempt, job_type="FREESTYLE")
+
+    assert retried.category is FailureCategory.TESTS
+    assert retried.failed_tests == (PAYMENT_TEST,)
+    assert render_input(retried, TEST_UNIT_CONTEXT) == render_input(clean, TEST_UNIT_CONTEXT)
+    assert not any(
+        "Error cloning" in line.text or "resolve" in line.text for line in retried.excerpt
+    )
+
+
+def test_a_recovered_checkout_error_never_explains_a_later_failure() -> None:
+    """The same error without a retry after it would be the cause (the next test). With one, a
+    later attempt got past it, so it says nothing about the silent step that failed afterwards."""
+    clean = log("auth-service-build-silent.log")
+    text = clean.replace(
+        "Cloning the remote Git repository",
+        "Cloning the remote Git repository\n"
+        "fatal: unable to access 'https://github.com/haiderali-dev/auth-service.git/': "
+        f"Could not resolve host: github.com\n{RETRY}\nCloning the remote Git repository",
+        1,
+    )
+
+    analysis = analyse(text, job_type="FREESTYLE")
+
+    assert text != clean
+    assert analysis.category is FailureCategory.UNKNOWN
+    assert analysis.category is analyse(clean, job_type="FREESTYLE").category
+    assert not any("resolve" in line.text for line in analysis.evidence)
+
+
+def test_a_checkout_that_failed_every_attempt_is_read_through_its_last() -> None:
+    """Three attempts, all refused: the build failed at its checkout, and the evidence and excerpt
+    are the last attempt's, the one that failed it."""
+    lines = log("payment-service-test-unit-dns.log").split("\n")
+    start = lines.index("The recommended git tool is: NONE")
+    end = max(
+        i for i, line in enumerate(lines) if line == "ERROR: Error cloning remote repo 'origin'"
+    )
+    attempt = lines[start : end + 1]
+    text = "\n".join(lines[:start] + [*attempt, RETRY] * 2 + lines[start:])
+    last_retry = text.split("\n").index(RETRY) + len(attempt) + 1
+
+    analysis = analyse(text, job_type="FREESTYLE")
+
+    assert analysis.category is FailureCategory.INFRASTRUCTURE
+    assert any("Could not resolve host" in line.text for line in analysis.evidence)
+    assert all(line.number > last_retry for line in analysis.evidence)
+    assert all(line.number > last_retry for line in analysis.excerpt if line.number is not None)
+
+
+def test_a_pipeline_checkout_step_that_was_retried_leaves_the_excerpt_unchanged() -> None:
+    text = log(PIPELINE_REAL)
+    marker = next(line for line in text.split("\n") if line.endswith("[Pipeline] checkout"))
+    retried = text.replace(
+        marker,
+        f"{marker}\n"
+        "[2026-10-13T06:28:15.101Z] ERROR: Error fetching remote repo 'origin'\n"
+        "[2026-10-13T06:28:15.102Z] hudson.plugins.git.GitException: Failed to fetch from "
+        "https://github.com/haiderali-dev/payment-service.git\n"
+        "[2026-10-13T06:28:15.103Z] stderr: fatal: unable to access "
+        "'https://github.com/haiderali-dev/payment-service.git/': Could not resolve host: "
+        f"github.com\n[2026-10-13T06:28:15.104Z] {RETRY}",
+        1,
+    )
+
+    one = analyse(text, job_type="PIPELINE", stage="Unit tests", stage_template="test")
+    two = analyse(retried, job_type="PIPELINE", stage="Unit tests", stage_template="test")
+
+    assert retried != text
+    assert two.category is FailureCategory.TESTS
+    assert [line.text for line in two.excerpt] == [line.text for line in one.excerpt]
 
 
 def test_an_earlier_infrastructure_error_counts_when_the_failing_step_shows_none() -> None:

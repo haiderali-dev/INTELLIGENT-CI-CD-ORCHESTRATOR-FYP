@@ -11,6 +11,46 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 6
 
+### D-053 The failure analysis does not read a checkout attempt that Jenkins retried
+**Date:** 2026-10-14 · **Status:** decided and applied (found by the first Phase 6 gate run)
+
+**What happened.** The first `verify.py --phase 6` run failed one check of 72, the end-to-end test
+`test_the_failed_tests_are_explained_from_their_real_log`. Its explanation came from the rules,
+because both models missed their replay recordings (`replay_miss`).
+- **The build.** `fs-payment-service-test-unit` #60. Its first clone could not resolve
+  `github.com` on agent-2. D-050's retry got past that 10 seconds later, and the unit test then
+  failed as designed.
+- **What changed the prompt.** The recovered error's lines (`ERROR: Error cloning remote repo`,
+  the `GitException`) matched the excerpt's signals and were added to the excerpt.
+- **Measured.** Builds #55, #56, #58 and #61 render the identical prompt; #60 rendered a
+  different one, so its hash had no recording.
+
+**Why it matters beyond replay.** Since D-050, a dropped lookup during a clone no longer fails the
+build, so these lines will keep turning up in builds that fail later for other reasons. The
+whole-log rules read them too: a later step that failed without printing why would have been put
+down to the network.
+
+**Decision.** `analysis._superseded` finds every checkout attempt that Jenkins retried. An attempt
+runs from its start (the top of the log, a Pipeline's `[Pipeline] checkout`, or the previous
+retry) to Jenkins's `Retrying after 10 seconds`. Those lines are left out of the excerpt and out of
+both rule passes. An attempt that was not retried is still read, so a checkout that failed every
+time is diagnosed from its last attempt, the one that failed the build.
+
+**Checked.**
+- With the fix, build #60 renders the same prompt as #55, #56, #58 and #61.
+- Build #60's log is now a fixture, `payment-service-test-unit-retried-checkout.log`. Four new
+  tests fail without the fix and pass with it:
+  - the retried build's prompt equals that of the same build without its failed attempt;
+  - a recovered error never explains a later failure;
+  - a checkout that failed all three attempts is read through its last;
+  - a Pipeline's retried `checkout` step leaves the excerpt unchanged.
+- The offline suite: 1641 passed, 49 deselected.
+
+**Also learned.** Build #60 is the first observed case of D-050 working. It survived a DNS failure
+that would have failed it before.
+
+---
+
 ### D-052 Six named colours for the interface; the score bar's four colours are a data scale
 **Date:** 2026-10-13 · **Status:** proposed in `frontend/DESIGN.md`; final when a person approves
 that file (Needs human)

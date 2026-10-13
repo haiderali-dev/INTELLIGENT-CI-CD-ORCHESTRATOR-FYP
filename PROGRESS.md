@@ -44,6 +44,10 @@ Branch: phase-6-frontend
         - the full `verify.py --phase 5`: ALL CHECKS PASSED, 71 of 71.
       - **Not yet proven:** that it cures the flakiness. No build in that gate run met a DNS error,
         so none needed a retry.
+      - **Seen working once, 2026-10-14:** in the first Phase 6 gate run, agent-2's clone for
+        `fs-payment-service-test-unit` #60 could not resolve `github.com`. The retry got past it
+        10 seconds later, and the build went on to its intended test failure. The error the
+        retry left in the log then broke Explain failure's replay, which D-053 fixed.
 - [ ] **Re-run the Phase 5 security review independently.** The reviewer agent stopped on an
       account usage limit, so `docs/security-review-phase-5.md` was written by the agent that
       wrote the code.
@@ -1031,6 +1035,9 @@ Details in `docs/decisions.md`.
   - **Mitigated, not removed (D-050):** jenkins-dev now retries a failed checkout twice,
     10 seconds apart. Still exposed: an outage longer than that window, and the backend's own
     `git ls-remote` calls from the host.
+  - **What a recovered failure leaves behind:** its error stays in the build's log. Since D-053,
+    Explain failure does not read a checkout attempt that Jenkins retried, so the error neither
+    reaches the model nor takes the blame for a later failure.
 
 - 2026-09-28 The job property field is `level`, with an XStream/`readResolve` fallback onto M2's
   `priority`, so old job configurations still load. Decided in D-005, implemented in T2.1.

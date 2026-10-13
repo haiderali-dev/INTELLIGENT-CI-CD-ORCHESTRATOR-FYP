@@ -32,6 +32,17 @@ job of `test_integration_failures.py`:
 Docker Desktop's DNS intermittently drops a lookup from the agents. It showed up as a failed
 `verify.py` run.
 
+One more was copied from jenkins-dev's build directory on 2026-10-13, after the Phase 6 gate's
+end-to-end test failed on it: `fs-payment-service-test-unit` #60, on `demo/failing-tests`.
+
+| File | What failed |
+| --- | --- |
+| `payment-service-test-unit-retried-checkout.log` | The intentional unit test. Before it, agent-2's first clone could not resolve `github.com`, and Jenkins retried it after 10 seconds (D-050). |
+
+The recovered error reached the excerpt, so the prompt differed from every run without a retry
+and missed its recorded answer (D-053). The file is the build's `log` exactly as Jenkins wrote it,
+which was already LF.
+
 Both are stored as Jenkins served them, apart from line endings: Jenkins sent CRLF, and the files
 use LF like the others. They keep every Timestamper prefix and every hidden console note
 (`ESC[8mha:...ESC[0m`), because those are what the analysis must read through.

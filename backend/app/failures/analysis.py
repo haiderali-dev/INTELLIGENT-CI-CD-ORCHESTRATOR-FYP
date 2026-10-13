@@ -16,6 +16,11 @@ numbers, clock times and full SHAs replaced by placeholders -- for two reasons. 
 nothing about why a build failed, and they change on every run. With them in, the same failure
 would be a new prompt each time, so a recorded answer could never be replayed (T5.8's replay
 fixtures) and every repeat would be paid for again.
+
+For the same reason, a checkout attempt that Jenkins retried is not read at all (D-050,
+``_superseded``). It did not fail the build: a later attempt either got past it or failed with an
+error of its own. Read, a lookup that a retry recovered from would reach the excerpt, and the same
+test failure would be a new prompt whenever the network dropped a packet during the clone.
 """
 
 from __future__ import annotations
@@ -260,6 +265,12 @@ _SKIPPED_STAGE = re.compile(
     r'^Stage "(?P<name>[^"\n]{1,200})" skipped due to earlier failure\(s\)$'
 )
 
+# What Jenkins prints between two checkout attempts when `scmCheckoutRetryCount` allows another
+# (D-050): AbstractBuild for a freestyle job, the checkout step for a Pipeline. A Pipeline's first
+# attempt starts after its "[Pipeline] checkout" line; a freestyle job's at the top of the log.
+_CHECKOUT_RETRY = re.compile(r"^Retrying after \d+ seconds?$")
+_CHECKOUT_STEP = re.compile(r"^\[Pipeline\] checkout$")
+
 # A frame of a Node or Java stack trace: "    at Test.run (node:internal/...)".
 _STACK_FRAME = re.compile(r"^\s+at \S")
 STACK_FRAMES_KEPT: Final = 3
@@ -352,9 +363,10 @@ def analyse(
         lines.pop()
 
     section = _section(lines, job_type=job_type, stage=stage)
-    category, evidence_indexes = _classify(lines, section, stage_template)
-    signals = _signals(lines, section)
-    excerpt = _excerpt(lines, first_number, section, signals)
+    superseded = _superseded(lines)
+    category, evidence_indexes = _classify(lines, section, stage_template, superseded)
+    signals = _signals(lines, section, superseded)
+    excerpt = _excerpt(lines, first_number, section, signals, superseded)
 
     return FailureAnalysis(
         category=category,
@@ -427,30 +439,56 @@ def _section(lines: Sequence[str], *, job_type: str, stage: str | None) -> range
         for start in range(count - 1, -1, -1):
             if _SHELL_STEP.match(lines[start]):
                 return range(start, count)
-        # No shell step ran: the checkout before them is what failed, and it is the whole log.
-        # A tail would let a long stack trace push the clone's own error out of view.
+        # No shell step ran: the checkout before them is what failed, and it is the whole log, less
+        # any attempt a retry superseded (`_superseded`). A tail would let a long stack trace push
+        # the clone's own error out of view.
         return range(count)
     return range(max(0, count - FALLBACK_TAIL_LINES), count)
 
 
+def _superseded(lines: Sequence[str]) -> frozenset[int]:
+    """The lines of every checkout attempt that Jenkins retried (D-050).
+
+    An attempt runs from its start -- the top of the log, a Pipeline's "[Pipeline] checkout" line,
+    or the previous retry -- to the "Retrying after 10 seconds" that ended it. The attempt after a
+    retry is not superseded unless it was retried too, so a checkout that failed every time is
+    still read, through its last attempt.
+    """
+    superseded: set[int] = set()
+    start = 0
+    for i, line in enumerate(lines):
+        if _CHECKOUT_STEP.match(line):
+            start = i + 1
+        elif _CHECKOUT_RETRY.match(line):
+            superseded.update(range(start, i + 1))
+            start = i + 1
+    return frozenset(superseded)
+
+
 def _classify(
-    lines: Sequence[str], section: range, stage_template: str | None
+    lines: Sequence[str],
+    section: range,
+    stage_template: str | None,
+    superseded: frozenset[int] = frozenset(),
 ) -> tuple[FailureCategory, list[int]]:
     """The category and the lines that show it. No match is UNKNOWN, never a guess.
 
     The failing step or stage is read first, against every rule: a cause printed there is the
     cause. Only when it shows none do the whole-log rules look at the rest. Otherwise a network
     error that a retry recovered from early in the log would take the blame for a test that failed
-    afterwards.
+    afterwards. Neither pass reads a superseded checkout attempt: a later attempt got past it, so
+    it cannot be why a later step failed either.
     """
-    passes = ((section, _RULES), (range(len(lines)), [r for r in _RULES if r.whole_log]))
+    current = [i for i in section if i not in superseded]
+    everywhere = [i for i in range(len(lines)) if i not in superseded]
+    passes = ((current, _RULES), (everywhere, [r for r in _RULES if r.whole_log]))
     for scope, rules in passes:
         for rule in rules:
             matched = _distinct(lines, [i for i in scope if rule.pattern.search(lines[i])])
             if not matched:
                 continue
             if rule.category is FailureCategory.TESTS:
-                details = _distinct(lines, [i for i in section if _TEST_DETAIL.search(lines[i])])[
+                details = _distinct(lines, [i for i in current if _TEST_DETAIL.search(lines[i])])[
                     :2
                 ]
                 matched = _distinct(
@@ -461,7 +499,7 @@ def _classify(
     # Nothing recognisable. A failed deploy is still a deploy failure: the stages before it passed,
     # so whatever went wrong went wrong there. Anything else is unknown, with the step's last lines
     # as the evidence rather than a cause the log does not state.
-    last_lines = [i for i in section if lines[i].strip() and not _BOILERPLATE.match(lines[i])][-3:]
+    last_lines = [i for i in current if lines[i].strip() and not _BOILERPLATE.match(lines[i])][-3:]
     if stage_template == "deploy":
         return FailureCategory.DEPLOY, last_lines
     return FailureCategory.UNKNOWN, last_lines
@@ -478,8 +516,14 @@ def _distinct(lines: Sequence[str], indexes: Iterable[int]) -> list[int]:
     return kept
 
 
-def _signals(lines: Sequence[str], section: range) -> list[int]:
-    found = [i for i in range(len(lines)) if i not in section and _SIGNAL.search(lines[i])]
+def _signals(
+    lines: Sequence[str], section: range, superseded: frozenset[int] = frozenset()
+) -> list[int]:
+    found = [
+        i
+        for i in range(len(lines))
+        if i not in section and i not in superseded and _SIGNAL.search(lines[i])
+    ]
     return found[-MAX_SIGNAL_LINES:]
 
 
@@ -499,9 +543,15 @@ def _without_deep_frames(lines: Sequence[str], indexes: list[int]) -> list[int]:
 
 
 def _excerpt(
-    lines: Sequence[str], first_number: int, section: range, signals: list[int]
+    lines: Sequence[str],
+    first_number: int,
+    section: range,
+    signals: list[int],
+    superseded: frozenset[int] = frozenset(),
 ) -> tuple[ExcerptLine, ...]:
-    kept = _without_deep_frames(lines, [i for i in section if not _is_noise(lines[i])])
+    kept = _without_deep_frames(
+        lines, [i for i in section if i not in superseded and not _is_noise(lines[i])]
+    )
     if len(kept) > MAX_SECTION_LINES:
         kept = kept[:SECTION_HEAD_LINES] + kept[-(MAX_SECTION_LINES - SECTION_HEAD_LINES) :]
     chosen = sorted(set(kept) | set(signals))
