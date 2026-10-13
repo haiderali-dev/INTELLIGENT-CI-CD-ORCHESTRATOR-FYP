@@ -1,6 +1,7 @@
 # Progress
 
-Updated: 2026-10-13 · Current phase: 5 (T5.7 done, T5.8 next) · Branch: phase-5-assistants
+Updated: 2026-10-13 · Current phase: 5 done (T5.1 to T5.9; PR #10 awaiting review and merge) ·
+Branch: phase-5-assistants
 
 ## Needs human
 - [x] **Create the two sample-service GitHub repositories**, push them, create the
@@ -750,8 +751,24 @@ In progress on `phase-5-assistants`. T5.1 to T5.7 done; T5.8 next.
         - cancel stopping the running job and dequeuing the rest, and cancel permissions;
         - status and rerun messages.
       - **Regression checks:** offline suite 1438 passed; ruff, format and mypy clean.
-- [ ] T5.8 End-to-end backend tests (`e2e`) for every command in Part 4.6.5. **Not checked:**
-      `python scripts/verify.py --phase 5` has not been run yet. Done so far, all on 2026-10-13:
+- [x] T5.8 End-to-end backend tests (`e2e`) for every command in Part 4.6.5. Evidence, all run
+      on 2026-10-13:
+      - **The gate:** `python scripts/verify.py --phase 5` printed **ALL CHECKS PASSED, 71 of 71**
+        (Phases 0 to 4: 66; Phase 5: 5), on `b662871` with a clean tree. The Phase 5 checks were:
+        - golden templates: 33 passed;
+        - linter integration: 4 passed;
+        - `pytest -m e2e`: 12 passed;
+        - the failing-branch chain: the test job failed and the deploy job never started;
+        - T5.9: 163 passed.
+      - **Five earlier gate runs failed,** each on a DNS lookup that never resolved, not on the
+        code:
+        - runs 1 to 3: one check failed each;
+        - run 4: three end-to-end tests;
+        - run 5: four tests across two checks.
+
+        The builds' own logs say `Could not resolve host: github.com` (Known gaps, "Agent DNS").
+        Run 3's one failure came before Jenkins was reached and left no reason, so `verify.py` now
+        keeps a failed check's whole output under `.tmp/verify/`.
       - **Tests:** `tests/test_e2e_assistants.py` and `tests/e2e_support.py` cover all nine 4.6.5
         commands, the failing-branch acceptance through the generator, and one Pipeline with its
         stages tracked. They run against the real app, the stack's PostgreSQL (a migrated
@@ -769,13 +786,13 @@ In progress on `phase-5-assistants`. T5.1 to T5.7 done; T5.8 next.
         parser tests; parser suite 32 passed.
       - **`verify.py`:** Phase 5 checks added (golden templates, linter integration, e2e,
         failing branch), and `IMPLEMENTED_PHASES` now includes 5.
-      - **Still to do:**
-        1. Run `verify.py --phase 5` and the full offline suite, then check this task off.
-        2. Rebuild the backend image, then run `alembic upgrade head` in the container.
-        3. Phase 5 security review.
-        4. Open the Phase 5 PR. Do not merge.
-- [ ] T5.9 Stretch: "Explain failure" for failed runs (D-049). **Not checked:** waiting on
-      `verify.py --phase 5`, which now runs its gate. Evidence so far, all run on 2026-10-13:
+      - **Modes, kept apart:**
+        - Live Groq (record mode) passed every e2e test that calls the model, at least once each.
+        - Replay, which is what the gate uses, passed with 0 replay misses.
+        - The offline suite uses the fake provider and the fake Jenkins.
+- [x] T5.9 Stretch: "Explain failure" for failed runs (D-049). Evidence, all run on 2026-10-13:
+      - **The gate:** its T5.9 check passed with 163 tests in the 71-of-71 run above. Those are
+        the 162 offline tests plus the live jenkins-dev integration test.
       - **Surface:** `POST /api/runs/{id}/explain` (any signed-in user, the assistants' rate limit)
         and `failed_run_id` on the run card. Live in the rebuilt backend container.
       - **How it works:**
@@ -785,11 +802,11 @@ In progress on `phase-5-assistants`. T5.1 to T5.7 done; T5.8 next.
         - The model words it through a strict schema (`failure_v1`). Its answer is dropped for
           the code's own if a quote is not in the log, it contradicts the code, it mentions
           production, or it is malformed.
-      - **Tests, offline:** 147 across `test_failures_redact.py` (38), `test_failures_analysis.py`
-        (42), `test_failures_explainer.py` (54) and `test_failures_api.py` (13). They run on six
-        logs captured from jenkins-dev, plus one constructed log (see
-        `tests/data/failure_logs/README.md`). Offline suite **1597 passed**, 49 deselected; ruff,
-        format and mypy clean.
+      - **Tests, offline:** 162 across `test_failures_redact.py` (46), `test_failures_analysis.py`
+        (46), `test_failures_explainer.py` (56) and `test_failures_api.py` (14), plus the
+        streaming tail read's tests in `test_jenkins_console.py`. They run on seven logs captured
+        from jenkins-dev, plus one constructed log (see `tests/data/failure_logs/README.md`).
+        Offline suite **1630 passed**, 49 deselected; ruff, format and mypy clean.
       - **Integration, live jenkins-dev:** `test_integration_failures.py` passed (63 s). The
         generated payment-service test job ran twice on `demo/failing-tests`, and both real logs
         gave the model **byte-identical prompts**.
@@ -804,6 +821,35 @@ In progress on `phase-5-assistants`. T5.1 to T5.7 done; T5.8 next.
         Timestamper time, so the real failure read as `unknown`. Fixed, and the real log is now a
         fixture. Also: the Edit tool decoded a `\u` escape into the literal character
         (CLAUDE.md lesson).
+      - **Refined by the DNS failures:** the failing step is read before the rest of the log. A
+        clone error that a retry recovered from cannot then take the blame for tests that failed
+        afterwards (D-049, `b662871`).
+
+Phase 5 close-out, 2026-10-13. Every item ran in this session:
+- **Security review:** `docs/security-review-phase-5.md`. Six findings were fixed, each with a
+  regression test:
+  - T5.9 read whole logs into memory; it now streams the last 1 MB;
+  - rerun's test-job check could match a deploy job;
+  - redaction missed command-line credentials;
+  - two policy denials were not audited;
+  - network faults were classed as checkout errors;
+  - the `.log` fixtures were hidden from git, so CI failed until they were committed.
+
+  Nine residual risks are recorded. **The review is not independent:** the reviewer agent stopped
+  on a usage limit (Needs human).
+- **Database:** `alembic upgrade head` ran in the backend container on the Compose database, from
+  `8c2f4d1e7a90` to `c4e1d07a5b92`.
+  - `alembic current` reports `c4e1d07a5b92 (head)`, and `alembic check` reports no new upgrade
+    operations.
+  - Checked with psql: `chains` has its partial unique index `uq_chains_one_running_per_service`,
+    and `job_runs.chain_id` is nullable with `ON DELETE SET NULL`.
+- **Backend container:** rebuilt from `b662871` and healthy. `/api/health` reports the database up
+  and Jenkins up (2.568.3), with the LLM disabled, as Compose's default `LLM_MODE=fake` sets it.
+  Every Phase 5 route is in its OpenAPI, and each refuses an unauthenticated request with 401.
+- **CI:** green on `b662871`, both the push and PR #10. It had been red on `f787450` until the
+  fixtures were committed.
+- **PR:** #10 (`phase-5-assistants` → `main`) was retitled and described; it is open, mergeable
+  and **not merged**. Merging is under Needs human.
 
 Audit of T5.1 to T5.8, 2026-10-13. I re-read Part 3, 4.4.3 to 4.4.5, 4.5.5, 4.6 and 4.7.4
 against the code. Five gaps were found and fixed, each with a regression test that fails without
@@ -953,3 +999,14 @@ Details in `docs/decisions.md`.
   forever however correct the sorter became (D-015). Both fixed before any production code was
   written, which is the entire point of doing the spike first. Next: T2.2 to T2.8, the pure-logic
   classes, then T2.9 turns these tests green.
+- 2026-10-13 Phase 5 finished on `phase-5-assistants`. T5.1 to T5.9 are checked off, and
+  `verify.py --phase 5` printed ALL CHECKS PASSED (71 of 71) on `b662871`. Also done:
+  - the T5.1 to T5.8 audit (five fixes);
+  - T5.9, Explain failure;
+  - the security review (six fixes);
+  - the backend container rebuilt, and the Compose database migrated;
+  - PR #10 updated, not merged.
+
+  Five gate runs failed first, each on an intermittent DNS failure on this machine; the
+  mitigations are under Needs human. Next: review and merge PR #10, then Phase 6, starting
+  with T6.1's `DESIGN.md`.
