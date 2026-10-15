@@ -11,6 +11,68 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 6
 
+### D-055 The error shape is part of the OpenAPI schema
+**Date:** 2026-10-15 · **Status:** accepted (T6.3)
+
+**Problem.** Every error the API sends has one shape, `{"error": {"code", "message", "details"}}`
+(`app/core/errors.py`), and `ErrorCode` is an enum "so the frontend can switch on them
+exhaustively". But the schema the frontend's types are generated from never mentioned it. The
+sign-in page has to tell `INVALID_CREDENTIALS` from `ACCOUNT_DISABLED` and `RATE_LIMITED`, and
+4.7.1 forbids hand-written API types. The schema was also wrong: FastAPI documented every 422 as
+its own `HTTPValidationError`, a shape this API never sends, because `_validation_error` turns
+validation failures into the error shape.
+
+**Decision.** Two Pydantic models, `ErrorResponse` and `ErrorBody`, describe the shape. The app
+declares them as every route's `4XX` and `5XX` response. Declaring `4XX` also stops FastAPI from
+adding its own 422 entry (FastAPI 0.141.1, `fastapi/openapi/utils.py`). The frontend gets
+`ErrorCode` as a generated union of the 35 codes.
+
+**How it is held.** Backend tests check four things: every operation documents both ranges with
+`ErrorResponse`; the schema's `ErrorCode` enum equals the Python enum; `HTTPValidationError`
+appears nowhere in the schema; and `ApiError`'s payload validates against the model. The drift
+checks from T6.2 keep `openapi.json` and `schema.d.ts` current.
+
+---
+
+### D-054 The session: the access token in memory, the refresh token in sessionStorage
+**Date:** 2026-10-15 · **Status:** accepted (T6.3)
+
+**Question.** The backend (4.4.4, T3.3) returns both tokens in the response body. The access
+token lasts 15 minutes. The refresh token lasts 7 days and is rotated on every use. Where the
+frontend keeps them decides two things: whether a reload signs you out, and what a script
+injected into the page could take.
+
+**Decision.**
+- **The access token** stays in memory only, as in T6.2.
+- **The refresh token** goes in sessionStorage, under `orchestrator.session`. A reload, which
+  happens often in a live demo, keeps you signed in. Closing the tab signs you out.
+- **Renewal.** The access token is renewed a minute before it expires. A 401 from any endpoint
+  outside `/api/auth/` triggers one refresh and one repeat of the request. Refreshes are
+  single-flight: once the first has rotated the token, a second sent with the old one would be
+  refused.
+- **Signing out** revokes the refresh token on the server, then forgets both tokens whatever the
+  answer.
+
+**Alternatives.**
+- **An httpOnly cookie** would keep the refresh token away from page scripts entirely. It needs
+  the backend to set and read the cookie, and CSRF protection on refresh and logout. That changes
+  the 4.4.4 contract T3.3 built and tested, which is too much for a staging-only tool. It is the
+  upgrade path.
+- **localStorage** is shared by every tab. With rotation, two tabs refreshing from the same token
+  race: the first revokes the token the second is about to use. sessionStorage is per tab, so each
+  tab has its own chain.
+- **Memory only** signs you out on every reload.
+
+**Consequences, both accepted.**
+- **A stolen refresh token outlives the page.** A script injected into the page could read it and
+  keep using it after the tab closes, for up to its 7 days. Such a script could equally act with
+  the in-memory access token while the page is open, so this is the extra exposure. Rotation
+  limits it: whichever holder refreshes first revokes the token the other one has.
+- **A duplicated tab copies sessionStorage,** so it starts with the same token. Whichever tab
+  refreshes second is signed out with "Your session ended".
+
+---
+
 ### D-053 The failure analysis does not read a checkout attempt that Jenkins retried
 **Date:** 2026-10-14 · **Status:** decided and applied (found by the first Phase 6 gate run)
 

@@ -4,6 +4,8 @@ import { createBrowserRouter, RouterProvider } from "react-router";
 import { queryClient } from "@/api/queryClient";
 import { routes } from "@/app/routes";
 import { ThemeProvider } from "@/app/theme/ThemeProvider";
+import { session } from "@/auth/appSession";
+import { SessionProvider } from "@/auth/SessionProvider";
 import { liveEvents } from "@/ws/liveEvents";
 import { LiveEventsProvider } from "@/ws/LiveEventsProvider";
 
@@ -14,7 +16,9 @@ export function App() {
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <LiveEventsProvider client={liveEvents}>
-          <RouterProvider router={router} />
+          <SessionProvider session={session} liveEvents={liveEvents} queryClient={queryClient}>
+            <RouterProvider router={router} />
+          </SessionProvider>
         </LiveEventsProvider>
       </QueryClientProvider>
     </ThemeProvider>

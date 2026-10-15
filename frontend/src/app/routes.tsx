@@ -2,20 +2,21 @@ import type { RouteObject } from "react-router";
 
 import { AppShell } from "@/app/shell/AppShell";
 import { NAV_ITEMS } from "@/app/shell/nav";
+import { SIGN_IN_PATH } from "@/auth/next";
+import { RequireSession } from "@/auth/RequireSession";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { PlaceholderPage } from "@/pages/PlaceholderPage";
+import { SignInPage } from "@/pages/SignInPage";
 
-const SIGN_IN = {
-  label: "Sign in",
-  description: "Sign in with the email and password your administrator gave you.",
-  task: "T6.3",
-};
-
-/** Every route. Sign in sits outside the shell; everything else inside it. */
+/** Every route. Sign in sits outside the shell; everything else is inside it, behind a session. */
 export const routes: RouteObject[] = [
-  { path: "/sign-in", element: <PlaceholderPage item={SIGN_IN} /> },
+  { path: SIGN_IN_PATH, element: <SignInPage /> },
   {
-    element: <AppShell />,
+    element: (
+      <RequireSession>
+        <AppShell />
+      </RequireSession>
+    ),
     children: [
       ...NAV_ITEMS.map((item): RouteObject =>
         item.to === "/"

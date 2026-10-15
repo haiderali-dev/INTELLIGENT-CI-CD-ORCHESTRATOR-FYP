@@ -3,10 +3,11 @@ import { NavLink } from "react-router";
 import { cn } from "@/lib/cn";
 
 import { ACCENT_TEXT, NAV_ITEMS, PRODUCT_NAME } from "./nav";
+import { SignedInAs } from "./SignedInAs";
 import { ThemeSwitch } from "./ThemeSwitch";
 
 /** Every page by name, the assistants as separate entries in their own colours, and a footer that
- * says Staging (DESIGN.md section 4, Shell). */
+ * says Staging and who is signed in (DESIGN.md section 4, Shell). */
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col gap-6 bg-ground px-3 py-4">
@@ -45,6 +46,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           <span className="text-graphite">Environment </span>
           <span className="font-semibold">Staging</span>
         </p>
+        <SignedInAs />
         <ThemeSwitch />
       </div>
     </div>

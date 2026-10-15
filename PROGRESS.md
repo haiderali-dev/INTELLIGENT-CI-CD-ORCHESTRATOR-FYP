@@ -1,6 +1,6 @@
 # Progress
 
-Updated: 2026-10-15 · Current phase: 6 (T6.1 approved; T6.2 done; T6.3 next) ·
+Updated: 2026-10-15 · Current phase: 6 (T6.1 approved; T6.2 and T6.3 done; T6.4 next) ·
 Branch: phase-6-frontend
 
 ## Needs human
@@ -930,7 +930,7 @@ Preparation, 2026-10-11, after PR #9 merged. Still **no task checked off**.
 ## Phase 6: Frontend
 
 In progress on `phase-6-frontend`, branched from `main` at `8da58b9`. T6.1 is done and was
-approved on 2026-10-15; T6.2 is done; T6.3 next.
+approved on 2026-10-15; T6.2 and T6.3 are done; T6.4 next.
 
 - [x] T6.1 Write `frontend/DESIGN.md` using the process in Part 4.7.2, then stop and add "Approve
       DESIGN.md" under Needs human. Build no screens before approval. Work on T6.2
@@ -1006,7 +1006,65 @@ approved on 2026-10-15; T6.2 is done; T6.3 next.
       - **Not yet done:** the shell has not been looked at in a browser; T6.9's screenshots cover
         that. The full `verify.py --phase 6` ran with these checks on 2026-10-15 and passed
         (see T6.1).
-- [ ] T6.3 Sign in and session handling.
+- [x] T6.3 Sign in and session handling. Evidence, all run on 2026-10-15:
+      - **Session (D-054):**
+        - The access token is in memory only. The refresh token is in this tab's
+          sessionStorage, so a reload keeps you signed in and closing the tab signs you out.
+        - The access token is renewed a minute before its 15 minutes run out.
+        - A 401 from anything outside `/api/auth/` gets one single-flight refresh and one repeat
+          of the request.
+        - Sign-out revokes the refresh token on the server, then forgets both tokens whatever
+          the answer.
+        - The live-events connection reopens with the new token on sign-in and closes on
+          sign-out. Cached server data is dropped on sign-out. A connection the server refuses
+          (1008) gets one refresh and one retry, never a loop.
+      - **Routing:** every page except Sign in sits behind `RequireSession`.
+        - Without a session you are sent to `/sign-in?next=<page>`, and back there afterwards.
+        - `next` is followed only to a path on this site, so the page cannot be used to
+          redirect elsewhere.
+        - After an explicit sign-out, `next` is dropped, because whoever signs in next may be
+          someone else.
+        - A reload shows "Restoring your session" until the refresh answers.
+      - **Sign in page (4.7.3: specific errors, no dead ends):**
+        - Built with react-hook-form and zod, as 4.7.1 asks.
+        - Each failure says what happened and what to do: a missing or malformed email, a
+          missing or over-long password, a wrong email or password (the email is kept, the
+          password cleared and focused), a disabled account, "wait N seconds" after the rate
+          limit, and a server that did not answer.
+        - It also says why you arrived: you signed out, your session ended, your account was
+          disabled, or the session could not be restored.
+        - Errors are in Ink with an icon, not red, because DESIGN.md reserves the state colours.
+        - The sidebar's footer now says who is signed in, with their role and Sign out.
+      - **Error codes (D-055):** the API's one error shape is now in the OpenAPI schema on every
+        route, so `ErrorCode` is generated rather than hand-written. FastAPI's false 422
+        `HTTPValidationError` entries are gone. `openapi.json` and `schema.d.ts` were regenerated.
+        - Three new backend tests. The two schema tests were confirmed to fail without the
+          change.
+      - **Frontend checks:** `verify.py`'s four Phase 6 checks, run directly, all passed.
+        - "lint, typecheck and build clean; 92 tests passed". 43 of those are new: the session
+          14, sign-in page 16, API client 5, next address 3, the provider and live connection 2,
+          and the shell 3.
+        - The API types are the backend's schema (39 paths).
+        - The DESIGN.md and WebSocket checks pass unchanged.
+        - No test printed a warning.
+      - **Backend:** ruff, format and mypy are clean. The offline suite passed 1644, with 49
+        deselected. Its 5 warnings predate this task: they come from `_validation_error`'s use
+        of the deprecated `HTTP_422_UNPROCESSABLE_ENTITY` constant.
+      - **Live check:** through the Vite dev server, against the running Compose backend:
+        - `/sign-in` serves the app.
+        - A malformed sign-in through the `/api` proxy came back 422 with
+          `details.fields.email`, the shape the page maps to the email field.
+        - No real credentials were used.
+      - **Dependencies:** react-hook-form 7.89.0, zod 4.6.5 and @hookform/resolvers 5.9.1, under
+        the seven-day cooldown, recorded in `docs/versions.md`. `npm audit --omit=dev` found
+        no vulnerabilities.
+      - **Not done:**
+        - **The sign-in page has not been looked at in a browser.** T6.9's screenshots cover
+          that.
+        - **Mutation checks on the session's security tests were not run.** Weakening the
+          redirect check or the auth-endpoint exemption to watch the tests fail was refused by
+          Claude Code's auto mode, and the code was restored at once. The tests assert those
+          behaviours directly.
 - [ ] T6.4 Shared assistant workspace components (Part 4.7.4).
 - [ ] T6.5 Freestyle Assistant and Pipeline Assistant pages.
 - [ ] T6.6 Queue page with score bars.
@@ -1022,6 +1080,14 @@ both assistant pages; screenshots committed.
 Open in Phase 6, outside any one task: `frontend/Dockerfile`, and removing the `frontend` service's
 Compose profile, which D-018 left for "once Phase 6 builds the image". Best done once the
 screens exist, before T6.8's Playwright flows run against the stack.
+
+Found in T6.3, for T6.7's Admin page:
+- **There is no way to reset a password.** The sign-in page says "Forgotten your password? Ask an
+  administrator", but no endpoint lets an administrator set a new password: `PATCH
+  /api/admin/users/{id}` changes only the role and whether the account is active. An admin
+  password reset needs a backend endpoint.
+- **The Admin entry is shown to every role.** The backend refuses non-admins, so this is not a
+  hole. But a sidebar entry that ends in a refusal is a dead end.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
@@ -1149,3 +1215,7 @@ Details in `docs/decisions.md`.
   Phase 6 gate also needs a re-run once the machine has the memory for it.
 - 2026-10-15 The user approved `frontend/DESIGN.md` as written; D-052 is accepted (`c2b7e4f`).
   `verify.py --phase 6` then printed ALL CHECKS PASSED, 75 of 75, on `c2b7e4f`. Next: T6.3.
+- 2026-10-15 T6.3 done: sign in, session handling and sign-out (D-054), with the API's error
+  shape now in the OpenAPI schema (D-055). The four Phase 6 checks pass when run directly, with
+  92 frontend tests. The offline backend suite passed 1644. Found for T6.7: there is no password
+  reset, and the Admin entry is shown to every role. Next: T6.4.

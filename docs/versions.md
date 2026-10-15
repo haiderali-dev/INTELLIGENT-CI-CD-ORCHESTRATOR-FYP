@@ -94,6 +94,9 @@ conflict and no known vulnerability in the production dependencies.
 | `radix-ui` | 1.7.0 | 1.8.1 | The Radix primitives shadcn/ui is built on |
 | `class-variance-authority`, `clsx`, `tailwind-merge` | 0.7.1, 2.1.1, 3.7.0 | the same | shadcn/ui's helpers |
 | `lucide-react` | 1.52.0 | 1.56.0 | Icons |
+| `react-hook-form` | 7.89.0 | 7.90.0 on 2026-10-15 | Forms (4.7.1). Added in T6.3 |
+| `zod` | 4.6.5 | 4.6.7 on 2026-10-15 | Form schemas (4.7.1). Added in T6.3 |
+| `@hookform/resolvers` | 5.9.1 | 5.9.1 on 2026-10-15 | Connects the two. Added in T6.3 |
 | `@fontsource/ibm-plex-sans`, `@fontsource/ibm-plex-mono` | 5.3.0 | 5.3.0 | Self-hosted fonts, Latin subset only |
 | `vite`, `@vitejs/plugin-react` | 8.3.2, 6.1.2 | 8.3.4, 6.1.2 | |
 | `tailwindcss`, `@tailwindcss/vite` | 4.3.3 | 4.3.3 | |
@@ -113,6 +116,14 @@ Three pins are deliberately behind the newest release:
 - **jsdom 29.1.1, not 30.1.2.** jsdom 30 requires Node `^24.15.0` on the 24 line, and this machine
   runs 24.12.0. 29.1.1 accepts `>=24.0.0`.
 - **`@types/node` 24, not 26,** because the frontend is built and tested on Node 24.
+
+The three form packages were read from the npm registry on 2026-10-15 under the same seven-day
+cooldown. It skipped `react-hook-form` 7.90.0 (4 days old) and `zod` 4.6.6 and 4.6.7 (4 and 3
+days old). Their peer ranges fit: `@hookform/resolvers` 5.9.1 wants `react-hook-form` `^7.55.0`
+and accepts `zod` `^3.25.0 || ^4.0.0`, and its other peers are optional, so none was installed.
+`zod` was already in the tree at 4.6.7, through `eslint-plugin-react-hooks`, whose range 4.6.5
+also satisfies. npm now resolves one copy at 4.6.5 for both. `npm audit --omit=dev` found no
+vulnerabilities.
 
 shadcn/ui is not a package: its components are copied into `src/` and restyled to DESIGN.md's
 tokens (4.7.1). CodeMirror 6, Recharts and Playwright are pinned by the tasks that first use them:

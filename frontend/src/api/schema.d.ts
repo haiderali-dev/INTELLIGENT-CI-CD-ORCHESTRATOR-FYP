@@ -1019,6 +1019,38 @@ export interface components {
             /** @default DEVELOPER */
             role: components["schemas"]["Role"];
         };
+        /**
+         * ErrorBody
+         * @description The inside of every error response. ``code`` is the field to switch on.
+         */
+        ErrorBody: {
+            code: components["schemas"]["ErrorCode"];
+            /** Details */
+            details: {
+                [key: string]: unknown;
+            };
+            /** Message */
+            message: string;
+        };
+        /**
+         * ErrorCode
+         * @description Every error code the API can return.
+         *
+         *     An enum rather than free strings so the frontend can switch on them exhaustively and so a typo
+         *     in a code is a type error rather than an unhandled case in the UI.
+         * @enum {string}
+         */
+        ErrorCode: "VALIDATION_FAILED" | "BAD_REQUEST" | "MESSAGE_TOO_LONG" | "INVALID_CREDENTIALS" | "NOT_AUTHENTICATED" | "TOKEN_EXPIRED" | "TOKEN_INVALID" | "FORBIDDEN" | "ACCOUNT_DISABLED" | "SERVICE_NOT_FOUND" | "BRANCH_NOT_FOUND" | "COMMIT_NOT_FOUND" | "SUITE_NOT_FOUND" | "ENVIRONMENT_NOT_ALLOWED" | "CONVERSATION_NOT_FOUND" | "COMMAND_NOT_FOUND" | "PIPELINE_NOT_FOUND" | "JOB_NOT_FOUND" | "RUN_NOT_FOUND" | "USER_NOT_FOUND" | "PRODUCTION_REFUSED" | "QUOTA_EXCEEDED" | "JUSTIFICATION_REQUIRED" | "CUSTOM_STEPS_REFUSED" | "CHAIN_ALREADY_RUNNING" | "RATE_LIMITED" | "SPEC_INVALID" | "RENDER_FAILED" | "VALIDATION_REJECTED" | "ALREADY_APPROVED" | "RUN_NOT_FAILED" | "JENKINS_UNAVAILABLE" | "GIT_UNAVAILABLE" | "LLM_UNAVAILABLE" | "INTERNAL_ERROR";
+        /**
+         * ErrorResponse
+         * @description The one error shape, as the OpenAPI schema documents it (D-055).
+         *
+         *     It describes what ``ApiError.to_payload`` writes; a test holds the two together. It exists so
+         *     the frontend's generated types carry the error codes, since 4.7.1 forbids hand-written ones.
+         */
+        ErrorResponse: {
+            error: components["schemas"]["ErrorBody"];
+        };
         /** EvidenceLineResponse */
         EvidenceLineResponse: {
             /**
@@ -1187,11 +1219,6 @@ export interface components {
             suggestions: string[];
             /** Summary */
             summary: string;
-        };
-        /** HTTPValidationError */
-        HTTPValidationError: {
-            /** Detail */
-            detail?: components["schemas"]["ValidationError"][];
         };
         /** HealthResponse */
         HealthResponse: {
@@ -1766,19 +1793,6 @@ export interface components {
             id: string;
             role: components["schemas"]["Role"];
         };
-        /** ValidationError */
-        ValidationError: {
-            /** Context */
-            ctx?: Record<string, never>;
-            /** Input */
-            input?: unknown;
-            /** Location */
-            loc: (string | number)[];
-            /** Message */
-            msg: string;
-            /** Error Type */
-            type: string;
-        };
     };
     responses: never;
     parameters: never;
@@ -1811,13 +1825,22 @@ export interface operations {
                     "application/json": components["schemas"]["AuditPage"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -1840,6 +1863,24 @@ export interface operations {
                     "application/json": components["schemas"]["PolicyResponse"];
                 };
             };
+            /** @description Refused. The error code says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     get_roles_api_admin_roles_get: {
@@ -1858,6 +1899,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": string[];
+                };
+            };
+            /** @description Refused. The error code says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -1883,13 +1942,22 @@ export interface operations {
                     "application/json": components["schemas"]["UserPage"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -1916,13 +1984,22 @@ export interface operations {
                     "application/json": components["schemas"]["AdminUserResponse"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -1951,13 +2028,22 @@ export interface operations {
                     "application/json": components["schemas"]["AdminUserResponse"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -1985,13 +2071,22 @@ export interface operations {
                     "application/json": components["schemas"]["ExperimentPage"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2016,13 +2111,22 @@ export interface operations {
                     "application/json": components["schemas"]["ExperimentDetailResponse"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2043,6 +2147,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RunStatsResponse"];
+                };
+            };
+            /** @description Refused. The error code says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2071,13 +2193,22 @@ export interface operations {
                     "application/json": components["schemas"]["ConversationResponse"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2104,13 +2235,22 @@ export interface operations {
                     "application/json": components["schemas"]["TokenResponse"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2135,13 +2275,22 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2168,13 +2317,22 @@ export interface operations {
                     "application/json": components["schemas"]["TokenResponse"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2202,13 +2360,22 @@ export interface operations {
                     "application/json": components["schemas"]["ChainPage"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2235,13 +2402,22 @@ export interface operations {
                     };
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2268,13 +2444,22 @@ export interface operations {
                     };
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2299,13 +2484,22 @@ export interface operations {
                     "application/json": components["schemas"]["CommandResponse"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2330,13 +2524,22 @@ export interface operations {
                     "application/json": components["schemas"]["PipelineResponse"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2365,13 +2568,22 @@ export interface operations {
                     "application/json": components["schemas"]["CommandResponse"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2398,13 +2610,22 @@ export interface operations {
                     "application/json": components["schemas"]["ConversationPage"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2429,13 +2650,22 @@ export interface operations {
                     "application/json": components["schemas"]["ConversationDetail"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2464,13 +2694,22 @@ export interface operations {
                     "application/json": components["schemas"]["MessageExchange"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2493,6 +2732,24 @@ export interface operations {
                     "application/json": components["schemas"]["HealthResponse"];
                 };
             };
+            /** @description Refused. The error code says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     liveness_api_health_live_get: {
@@ -2513,6 +2770,24 @@ export interface operations {
                     "application/json": {
                         [key: string]: string;
                     };
+                };
+            };
+            /** @description Refused. The error code says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2540,13 +2815,22 @@ export interface operations {
                     "application/json": components["schemas"]["JobPage"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2567,6 +2851,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Refused. The error code says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2593,13 +2895,22 @@ export interface operations {
                     "application/json": components["schemas"]["IngestResponse"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2624,13 +2935,22 @@ export interface operations {
                     "application/json": components["schemas"]["PipelineResponse"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2657,13 +2977,22 @@ export interface operations {
                     "application/json": components["schemas"]["ApprovalResponse"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2688,13 +3017,22 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2723,13 +3061,22 @@ export interface operations {
                     "application/json": components["schemas"]["PipelineResponse"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2750,6 +3097,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QueueResponse"];
+                };
+            };
+            /** @description Refused. The error code says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2779,13 +3144,22 @@ export interface operations {
                     "application/json": components["schemas"]["RunPage"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2810,13 +3184,22 @@ export interface operations {
                     "application/json": components["schemas"]["RunResponse"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2841,13 +3224,22 @@ export interface operations {
                     "application/json": components["schemas"]["CancelResponse"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2872,13 +3264,22 @@ export interface operations {
                     "application/json": components["schemas"]["RunFailureResponse"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2906,13 +3307,22 @@ export interface operations {
                     "application/json": components["schemas"]["LogResponse"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2935,6 +3345,24 @@ export interface operations {
                     "application/json": components["schemas"]["ServiceListResponse"];
                 };
             };
+            /** @description Refused. The error code says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     resync_catalog_api_services_resync_post: {
@@ -2953,6 +3381,24 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ResyncResponse"];
+                };
+            };
+            /** @description Refused. The error code says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -2977,13 +3423,22 @@ export interface operations {
                     "application/json": components["schemas"]["BranchListResponse"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Refused. The error code says why. */
+            "4XX": {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

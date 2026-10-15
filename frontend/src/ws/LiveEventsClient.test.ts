@@ -1,43 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { FakeSocket } from "@/test/fakeSocket";
+
 import { CLOSE_POLICY, parseLiveEvent, type LiveEvent } from "./events";
-import { LiveEventsClient, liveEventsUrl, type SocketLike } from "./LiveEventsClient";
-
-class FakeSocket implements SocketLike {
-  static opened: FakeSocket[] = [];
-  onopen: SocketLike["onopen"] = null;
-  onmessage: SocketLike["onmessage"] = null;
-  onclose: SocketLike["onclose"] = null;
-  onerror: SocketLike["onerror"] = null;
-  sent: string[] = [];
-  closedWith: number | undefined;
-
-  constructor(readonly url: string) {
-    FakeSocket.opened.push(this);
-  }
-
-  send(data: string): void {
-    this.sent.push(data);
-  }
-
-  close(code?: number): void {
-    this.closedWith = code;
-  }
-
-  // What the server does.
-  accept(): void {
-    this.onopen?.(new Event("open"));
-  }
-
-  deliver(payload: unknown): void {
-    const data = typeof payload === "string" ? payload : JSON.stringify(payload);
-    this.onmessage?.(new MessageEvent("message", { data }));
-  }
-
-  drop(code: number): void {
-    this.onclose?.(new CloseEvent("close", { code }));
-  }
-}
+import { LiveEventsClient, liveEventsUrl } from "./LiveEventsClient";
 
 const WS_URL = "ws://backend.test/ws";
 const hello = (heartbeatSeconds = 25) => ({
