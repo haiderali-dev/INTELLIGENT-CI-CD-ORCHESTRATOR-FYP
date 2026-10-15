@@ -12,6 +12,7 @@ const TEST_JOB: ScoreComponents = {
   execution_time: 0.5,
   aging_bonus: 0.05,
   base_score: 0.7,
+  own_score: 0.75,
 };
 const INHERITED_NAME =
   "Score 0.820, inherited from its group. Own score 0.750: urgency 0.500, dependency 0.100, execution time 0.100, aging 0.050.";
@@ -85,7 +86,14 @@ describe("ScoreBar", () => {
     const { container } = render(
       <ScoreBar
         score={0.35}
-        parts={{ ...TEST_JOB, dependency: 0, aging_bonus: 0, base_score: 0.35, urgency: 0.3 }}
+        parts={{
+          ...TEST_JOB,
+          urgency: 0.3,
+          dependency: 0,
+          aging_bonus: 0,
+          base_score: 0.35,
+          own_score: 0.35,
+        }}
         weights={WEIGHTS}
       />,
     );

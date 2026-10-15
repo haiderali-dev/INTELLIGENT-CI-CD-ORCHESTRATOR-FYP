@@ -19,17 +19,23 @@ from pydantic import BaseModel, Field
 
 from app.api.deps import CurrentUser
 from app.services.dependencies import get_plugin_client
-from app.services.plugin import PluginClient, RankedItem
+from app.services.plugin import PluginClient, RankedItem, UnscoredItem
 
 
 class ScoreComponentsResponse(BaseModel):
-    """Algorithm 1 broken out, so the UI can explain a rank instead of only showing it."""
+    """Algorithm 1 broken out, so the UI can explain a rank instead of only showing it.
 
-    urgency: float
-    dependency: float
-    execution_time: float
-    aging_bonus: float
-    base_score: float
+    What the score bar draws (DESIGN.md section 6): each factor times its weight from
+    ``QueueResponse.weights``, then aging. ``own_score`` against the item's ``score`` shows
+    whether the score was inherited from its group.
+    """
+
+    urgency: float = Field(description="U, the level's normalised value, before weighting")
+    dependency: float = Field(description="D, from the item's group size, before weighting")
+    execution_time: float = Field(description="T, shorter estimates higher, before weighting")
+    aging_bonus: float = Field(description="Added as it is: 0.05 per 5 minutes waited, up to 0.15")
+    base_score: float = Field(description="The weighted sum, before aging and inheritance")
+    own_score: float = Field(description="Base plus aging: its own merit, before inheritance")
 
 
 class QueueItemResponse(BaseModel):
@@ -38,9 +44,11 @@ class QueueItemResponse(BaseModel):
     job_name: str
     job_type: str
     level: str
-    score: float
+    score: float = Field(description="The effective score, after group inheritance; the rank order")
     components: ScoreComponentsResponse
-    estimate_seconds: float | None
+    estimate_seconds: float | None = Field(
+        description="The plugin's duration estimate; null when it has no usable history"
+    )
     wait_seconds: float
     group_id: str | None
     topological_rank: int | None
@@ -62,6 +70,7 @@ class QueueItemResponse(BaseModel):
                 execution_time=item.components.execution_time,
                 aging_bonus=item.components.aging_bonus,
                 base_score=item.components.base_score,
+                own_score=item.components.own_score,
             ),
             estimate_seconds=item.estimate_seconds,
             wait_seconds=item.wait_seconds,
@@ -72,14 +81,29 @@ class QueueItemResponse(BaseModel):
         )
 
 
+class UnscoredItemResponse(BaseModel):
+    """Queued work the optimizer has not scored yet, listed so it is never silently missing."""
+
+    item_id: int
+    job_name: str
+    reason: str
+
+    @classmethod
+    def of(cls, item: UnscoredItem) -> UnscoredItemResponse:
+        return cls(item_id=item.item_id, job_name=item.job_name, reason=item.reason)
+
+
 class QueueResponse(BaseModel):
     available: bool = Field(
         description="False when the plugin could not be read; items is then empty"
     )
     optimizer_enabled: bool
-    queue_length: int
-    weights: dict[str, float]
+    queue_length: int = Field(description="Every buildable item, scored or not")
+    weights: dict[str, float] = Field(
+        description="The plugin's weights: urgency, dependency and executionTime"
+    )
     items: list[QueueItemResponse]
+    unscored_items: list[UnscoredItemResponse]
     unavailable_reason: str | None = None
 
 
@@ -103,5 +127,6 @@ async def get_queue(
         queue_length=ranking.queue_length,
         weights=ranking.weights,
         items=[QueueItemResponse.of(item) for item in ranking.items],
+        unscored_items=[UnscoredItemResponse.of(item) for item in ranking.unscored],
         unavailable_reason=ranking.unavailable_reason,
     )

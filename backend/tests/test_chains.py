@@ -368,10 +368,18 @@ async def test_the_run_card_shows_jobs_queue_position_and_score(
                 job_name=result["first_job"],
                 level="MEDIUM",
                 score=0.61,
-                components=ScoreComponents(urgency=0.3, dependency=0.2, execution_time=0.11),
+                components=ScoreComponents(
+                    urgency=0.6,
+                    dependency=0.5,
+                    execution_time=0.4,
+                    aging_bonus=0.05,
+                    base_score=0.53,
+                    own_score=0.58,
+                ),
                 blocked_reason="Waiting for an executor",
             ),
         ),
+        weights={"urgency": 0.5, "dependency": 0.3, "executionTime": 0.2},
     )
 
     card = (await client.get(f"/api/chains/{result['chain_id']}", headers=auth(token))).json()
@@ -382,6 +390,16 @@ async def test_the_run_card_shows_jobs_queue_position_and_score(
     assert card["jobs"][1]["state"] == "waiting"
     assert card["queue"]["rank"] == 2
     assert card["queue"]["waiting_reason"] == "Waiting for an executor"
+    # The score bar's data, with the inherited score (0.61 above its own 0.58) recognisable.
+    assert card["queue"]["components"] == {
+        "urgency": 0.6,
+        "dependency": 0.5,
+        "execution_time": 0.4,
+        "aging_bonus": 0.05,
+        "base_score": 0.53,
+        "own_score": 0.58,
+    }
+    assert card["queue"]["weights"] == {"urgency": 0.5, "dependency": 0.3, "executionTime": 0.2}
 
 
 async def test_cancelling_stops_the_running_job_and_dequeues_the_rest(

@@ -38,13 +38,20 @@ MAX_RECENT: Final = 500
 
 @dataclass(frozen=True)
 class ScoreComponents:
-    """Algorithm 1 broken out, as 4.3.10 requires the endpoint to report it."""
+    """Algorithm 1 broken out, as 4.3.10 requires the endpoint to report it.
+
+    The three factors are the plugin's normalised ``U``, ``D`` and ``T``, before weighting; the
+    score bar multiplies them by the configured weights. ``aging_bonus`` is added as it is.
+    ``base_score`` is the weighted sum and ``own_score`` adds aging to it: the item's own merit
+    before group inheritance (``ScoredJob``'s ``baseScore`` and ``ownScore``).
+    """
 
     urgency: float = 0.0
     dependency: float = 0.0
     execution_time: float = 0.0
     aging_bonus: float = 0.0
     base_score: float = 0.0
+    own_score: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -67,6 +74,16 @@ class RankedItem:
 
 
 @dataclass(frozen=True)
+class UnscoredItem:
+    """A buildable item the optimizer has not scored. The plugin lists these rather than leave
+    queued work out of its answer, and so does the backend."""
+
+    item_id: int
+    job_name: str
+    reason: str
+
+
+@dataclass(frozen=True)
 class Ranking:
     """The plugin's view of the queue, or a note saying it could not be read.
 
@@ -79,10 +96,15 @@ class Ranking:
     weights: dict[str, float] = field(default_factory=dict)
     optimizer_enabled: bool = False
     unavailable_reason: str | None = None
+    unscored: tuple[UnscoredItem, ...] = ()
+    reported_length: int | None = None
 
     @property
     def queue_length(self) -> int:
-        return len(self.items)
+        """Every buildable item, scored or not: the plugin's own count when it gave one."""
+        if self.reported_length is not None:
+            return self.reported_length
+        return len(self.items) + len(self.unscored)
 
 
 @dataclass(frozen=True)
@@ -237,13 +259,26 @@ def parse_ranking(body: dict[str, Any]) -> Ranking:
 
     Separate from the client so the parser can be tested against recorded payloads, and so a
     payload captured from the live plugin can be replayed in a unit test.
+
+    The names are the plugin's own, from ``DynamicQueueApi.renderItem`` and responses recorded
+    from the live jenkins-dev (tests/data/plugin/). Each item nests its factors as
+    ``components: {urgency, dependency, executionTime, aging}`` and gives its estimate as
+    ``estimateMillis``. An earlier version read flat ``urgencyFactor``, ``agingBonus`` and
+    ``estimateSeconds``, guessed from the plugin's metric events, which do use flat names. Against
+    the live plugin that read every factor as 0 and every estimate as unknown, so every score bar
+    was empty beside a correct score.
     """
     raw_items = body.get("items")
     items: list[RankedItem] = []
     for index, entry in enumerate(raw_items if isinstance(raw_items, list) else []):
         if not isinstance(entry, dict):
             continue
-        dependencies = entry.get("unresolvedDependencies") or entry.get("unresolved") or []
+        raw_components = entry.get("components")
+        components = raw_components if isinstance(raw_components, dict) else {}
+        base = _number(entry.get("baseScore"))
+        aging = _number(components.get("aging"))
+        estimate_millis = _optional_number(entry.get("estimateMillis"))
+        dependencies = entry.get("unresolvedDependencies") or []
         items.append(
             RankedItem(
                 rank=_optional_int(entry.get("rank")) or index + 1,
@@ -253,13 +288,16 @@ def parse_ranking(body: dict[str, Any]) -> Ranking:
                 level=str(entry.get("level", "MEDIUM")),
                 score=_number(entry.get("score")),
                 components=ScoreComponents(
-                    urgency=_number(entry.get("urgencyFactor")),
-                    dependency=_number(entry.get("dependencyFactor")),
-                    execution_time=_number(entry.get("executionTimeFactor")),
-                    aging_bonus=_number(entry.get("agingBonus")),
-                    base_score=_number(entry.get("baseScore")),
+                    urgency=_number(components.get("urgency")),
+                    dependency=_number(components.get("dependency")),
+                    execution_time=_number(components.get("executionTime")),
+                    aging_bonus=aging,
+                    base_score=base,
+                    # The plugin's own figure; base plus aging is its definition.
+                    own_score=_number(entry.get("ownScore"), default=base + aging),
                 ),
-                estimate_seconds=_optional_number(entry.get("estimateSeconds")),
+                # Null when the plugin found no usable duration history (``estimateKnown``).
+                estimate_seconds=None if estimate_millis is None else estimate_millis / 1000,
                 wait_seconds=_number(entry.get("waitSeconds")),
                 group_id=entry.get("groupId") or None,
                 topological_rank=_optional_int(entry.get("topologicalRank")),
@@ -267,6 +305,17 @@ def parse_ranking(body: dict[str, Any]) -> Ranking:
                 unresolved_dependencies=tuple(str(name) for name in dependencies),
             )
         )
+
+    raw_unscored = body.get("unscoredItems")
+    unscored = tuple(
+        UnscoredItem(
+            item_id=_optional_int(entry.get("itemId")) or 0,
+            job_name=str(entry.get("jobName", "")),
+            reason=str(entry.get("reason") or "not scored by the optimizer"),
+        )
+        for entry in (raw_unscored if isinstance(raw_unscored, list) else [])
+        if isinstance(entry, dict)
+    )
 
     configuration = body.get("configuration")
     configuration = configuration if isinstance(configuration, dict) else body
@@ -281,6 +330,8 @@ def parse_ranking(body: dict[str, Any]) -> Ranking:
         items=tuple(items),
         weights=weights,
         optimizer_enabled=bool(configuration.get("optimizerEnabled", False)),
+        unscored=unscored,
+        reported_length=_optional_int(body.get("queueLength")),
     )
 
 

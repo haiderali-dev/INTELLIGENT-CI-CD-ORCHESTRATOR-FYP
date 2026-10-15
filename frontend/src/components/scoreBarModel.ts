@@ -54,9 +54,9 @@ export function contributions(
   };
 }
 
-/** The job's own score, before group inheritance: the plugin's `ownScore`, base plus aging. */
+/** The job's own score, before group inheritance: base plus aging, as the plugin reports it. */
 export function ownScore(parts: ScoreComponents): number {
-  return parts.base_score + parts.aging_bonus;
+  return parts.own_score;
 }
 
 /** True when the effective score came from a stronger member of the job's group. */

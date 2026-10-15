@@ -1147,24 +1147,39 @@ Found in T6.3, for T6.7's Admin page:
   hole. But a sidebar entry that ends in a refusal is a dead end.
 
 Found in T6.4, to settle before T6.5 and T6.6 show real scores:
-- **The backend reads the plugin's score factors under names the plugin never sends.** Found by
-  reading the code, not yet seen live.
-  - **What the plugin sends** (`DynamicQueueApi.renderItem`): the four factors nested as
-    `components: {urgency, dependency, executionTime, aging}`, and the estimate as
-    `estimateMillis`.
-  - **What the backend reads** (`app/services/plugin.py`, `parse_ranking`): top-level
-    `urgencyFactor`, `dependencyFactor`, `executionTimeFactor`, `agingBonus` and
-    `estimateSeconds`.
-  - **The effect:** against the live plugin every factor reads 0 and every estimate unknown, in
-    `/api/queue` and in the chain detail behind the run card. Every score bar would be empty
-    beside a correct score.
-  - **Why the tests missed it:** `test_plugin_client.py`'s ranking fixture says it is "in the
-    shape 4.3.10 specifies": it was written from the spec, not recorded. The same mistake was
-    fixed for the health endpoint, with `_first()`, after a recorded response; the ranking
-    parser was never given the same fix. The gate's live check ran on an empty queue, so it
-    never parsed an item.
-  - **The fix:** read the plugin's names, keep the old ones as a fallback, and test against a
-    recorded response. Not part of T6.4.
+- [x] **The backend read the plugin's score factors under the wrong names.** Fixed on 2026-10-15
+      (D-057).
+      - **The defect:** the backend read flat `urgencyFactor`, `agingBonus` and
+        `estimateSeconds`. Those are the names of the plugin's metric events. The ranking
+        endpoint nests the factors under `components` and gives `estimateMillis`. Against the
+        live plugin every factor parsed as 0 and every estimate as unknown.
+      - **Inspected:** `DynamicQueueApi.renderItem` and the plugin's own `ApiJsonIT`, which
+        asserts the nested keys, against `parse_ranking`. 4.3.10 names the fields but gives no
+        keys, so the backend's names had been guessed.
+      - **Recorded:** three live responses from jenkins-dev, verbatim, in
+        `backend/tests/data/plugin/`, recorded through the backend container's own client
+        without handling the token:
+        - three waiting items with real estimates (3.6 s, 2.9 s, 22.6 s);
+        - an item that waited 300.8 s and earned 0.05 aging;
+        - a dependency group of two, where the MEDIUM upstream inherits 0.979994 over its own
+          0.800, with three unscored Pipeline items counted in `queueLength` 8.
+      - **Fixed:**
+        - the parser reads the plugin's names, plus `ownScore` and `unscoredItems`;
+        - `/api/queue` gains `components.own_score` and `unscored_items`;
+        - the chain detail's queue block gains `base_score`, `own_score` and the weights;
+        - the frontend's score bar uses the plugin's own score for the inherited tick.
+      - **Checked:**
+        - 16 tests on the recordings, 15 for the parser and client and one through
+          `/api/queue`, including that weight times factor plus aging equals the plugin's own
+          score for every recorded item;
+        - 9 of them fail with the old names;
+        - a fresh live response parsed by the fixed parser inside the container matched its raw
+          fields;
+        - backend: ruff, format and mypy clean, offline suite 1653 passed;
+        - frontend: lint, typecheck and build clean, 180 tests.
+      - **Not done:** the running backend container still has the old parser until its image
+        is rebuilt (`docker compose build backend`). Nothing reads `/api/queue` from the stack
+        until T6.5 and T6.6.
 - **T6.5 needs the assistant payloads typed in the API schema first (D-056).** Message
   `payload`, the command `record`, and pipeline `progress` and `validation` are untyped
   dictionaries.
@@ -1304,3 +1319,6 @@ Details in `docs/decisions.md`.
   directly. Found: the backend reads the plugin's score factors under names the plugin never
   sends, so live score bars would be empty (Phase 6 open items). Also, T6.5 needs the assistant
   payloads typed in the API schema first (D-056). Next: those two, then T6.5.
+- 2026-10-15 The ranking parser fix (D-057): the plugin's real names, three live responses
+  recorded as fixtures, and `own_score` and `unscored_items` in `/api/queue`. Next: type the
+  assistant payloads (D-056), then T6.5.

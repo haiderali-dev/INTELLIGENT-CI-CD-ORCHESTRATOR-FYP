@@ -6,7 +6,14 @@ import { RunCard, type RunQueue } from "./RunCard";
 const QUEUE: RunQueue = {
   rank: 1,
   score: 0.82,
-  parts: { urgency: 1, dependency: 1 / 3, execution_time: 0.5, aging_bonus: 0.05, base_score: 0.7 },
+  parts: {
+    urgency: 1,
+    dependency: 1 / 3,
+    execution_time: 0.5,
+    aging_bonus: 0.05,
+    base_score: 0.7,
+    own_score: 0.75,
+  },
   weights: { urgency: 0.5, dependency: 0.3, executionTime: 0.2 },
   waitingReason: null,
 };

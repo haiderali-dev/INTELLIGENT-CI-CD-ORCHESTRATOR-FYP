@@ -11,6 +11,42 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 6
 
+### D-057 The ranking parser reads the plugin's own names, tested against recorded responses
+**Date:** 2026-10-15 · **Status:** decided and applied (found in T6.4)
+
+**Defect.** `parse_ranking` read flat `urgencyFactor`, `dependencyFactor`, `executionTimeFactor`,
+`agingBonus` and `estimateSeconds`. Those are the names in the plugin's metric events
+(`QueueMetricsRecorder`). The ranking endpoint (`DynamicQueueApi.renderItem`) nests the factors as
+`components: {urgency, dependency, executionTime, aging}` and gives `estimateMillis`.
+- **The effect:** against the live plugin every factor parsed as 0 and every estimate as unknown,
+  in `/api/queue` and in the chain detail behind the run card. Every score bar would have been
+  empty beside a correct score.
+- **Why nothing caught it:** the parser's fixture was written from 4.3.10's prose, which names
+  the fields but gives no keys. The gate's live check ran on an empty queue, so it never parsed an
+  item.
+
+**Fix.**
+- **The parser reads the plugin's names** and keeps none of the invented ones, because nothing
+  ever sent them.
+- **It reads two things it used to drop.** `ownScore` (base plus aging, before group inheritance)
+  lets the score bar mark an inherited score. `unscoredItems` is buildable work the optimizer has
+  not scored. `queue_length` is now the plugin's `queueLength`, which counts those items.
+- **`/api/queue` gains `components.own_score` and `unscored_items`.**
+- **The chain detail's queue block gains `base_score`, `own_score` and the plugin's weights,** so
+  the run card can draw its bar from that response alone.
+
+**How it is held.**
+- **Three responses recorded verbatim from the live jenkins-dev** are in
+  `backend/tests/data/plugin/`: three waiting items with estimates, an item aged 300 s, and a
+  dependency group with an inherited score and unscored items.
+- **The tests check** every factor and estimate, and that weight times factor plus aging equals
+  the plugin's own score for every recorded item. One test pins the nested shape itself.
+- **Reverting the parser to the old names fails 9 of them.**
+- **A fresh live response,** parsed by the fixed parser inside the backend container, matched its
+  raw fields exactly.
+
+---
+
 ### D-056 The workspace components take what they show, not API payloads
 **Date:** 2026-10-15 · **Status:** accepted (T6.4)
 

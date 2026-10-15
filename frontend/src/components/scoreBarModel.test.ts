@@ -21,6 +21,19 @@ const TEST_JOB: ScoreComponents = {
   execution_time: 0.5,
   aging_bonus: 0.05,
   base_score: 0.7,
+  own_score: 0.75,
+};
+
+/** it-revision-upstream as the live plugin ranked it on 2026-10-15
+ * (backend/tests/data/plugin/ranking-group.json): MEDIUM, in a group of two, inheriting its HIGH
+ * downstream's score. */
+const RECORDED_UPSTREAM: ScoreComponents = {
+  urgency: 0.6,
+  dependency: 1.0,
+  execution_time: 1.0,
+  aging_bonus: 0.0,
+  base_score: 0.8,
+  own_score: 0.8,
 };
 
 const close = (values: number[]) => values.map((value) => Number(value.toFixed(3)));
@@ -44,9 +57,28 @@ describe("score bar arithmetic", () => {
     expect(isInherited(0.82, TEST_JOB)).toBe(true);
     expect(isInherited(0.75, TEST_JOB)).toBe(false);
     // Appendix C: own 0.633, effective 0.650.
-    const appendixC = { urgency: 0.6, dependency: 1, execution_time: 0.165, aging_bonus: 0, base_score: 0.633 };
+    const appendixC = {
+      urgency: 0.6,
+      dependency: 1,
+      execution_time: 0.165,
+      aging_bonus: 0,
+      base_score: 0.633,
+      own_score: 0.633,
+    };
     expect(isInherited(0.65, appendixC)).toBe(true);
     expect(isInherited(0.6334, appendixC)).toBe(false);
+  });
+
+  it("reads a live inherited score the way the plugin reported it", () => {
+    const shares = contributions(RECORDED_UPSTREAM, WEIGHTS);
+    if (!shares) {
+      throw new Error("weights were complete");
+    }
+
+    expect(isInherited(0.979994, RECORDED_UPSTREAM)).toBe(true);
+    expect(describeScore(0.979994, RECORDED_UPSTREAM, shares)).toBe(
+      "Score 0.980, inherited from its group. Own score 0.800: urgency 0.300, dependency 0.300, execution time 0.200, aging 0.000.",
+    );
   });
 
   it("names the score in DESIGN.md's words", () => {

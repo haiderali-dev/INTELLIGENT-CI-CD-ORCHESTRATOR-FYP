@@ -8,6 +8,9 @@ surface audits its own use and cannot be used to lock out the last administrator
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
@@ -27,7 +30,13 @@ from app.db.models import (
 )
 from app.services.auth import role_allows
 from app.services.jenkins import ConsoleChunk, FakeJenkinsClient, JenkinsError
-from app.services.plugin import FakePluginClient, RankedItem, Ranking, ScoreComponents
+from app.services.plugin import (
+    FakePluginClient,
+    RankedItem,
+    Ranking,
+    ScoreComponents,
+    parse_ranking,
+)
 
 PASSWORD = "correct-horse-battery-staple"
 
@@ -403,6 +412,48 @@ async def test_the_queue_reports_the_plugin_ranking(
     assert body["queue_length"] == 1
     assert body["items"][0]["components"]["urgency"] == 1.0
     assert body["weights"]["urgency"] == 0.5
+
+
+async def test_the_queue_serves_a_recorded_live_ranking_as_score_bar_data(
+    client: AsyncClient, db: AsyncSession, fake_plugin: FakePluginClient
+) -> None:
+    """A response recorded from the live plugin, through the real parser, to the JSON the score
+    bar reads (DESIGN.md section 6). Before the fix every factor here came out 0 and every
+    estimate null."""
+    token = await token_for(client, db)
+    body = json.loads(
+        (Path(__file__).parent / "data" / "plugin" / "ranking-three-waiting.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    fake_plugin.ranking_result = parse_ranking(body)
+
+    response = (await client.get("/api/queue", headers=auth(token))).json()
+
+    assert response["queue_length"] == 3
+    assert response["unscored_items"] == []
+    first = response["items"][0]
+    assert first["job_name"] == "it-revision-freestyle"
+    assert first["components"] == {
+        "urgency": 1.0,
+        "dependency": 0.0,
+        "execution_time": 0.855893,
+        "aging_bonus": 0.0,
+        "base_score": 0.671179,
+        "own_score": 0.671179,
+    }
+    assert first["estimate_seconds"] == pytest.approx(3.605)
+    assert first["blocked_reason"] == "Executor slot already in use"
+    weights = response["weights"]
+    for item in response["items"]:
+        parts = item["components"]
+        drawn = (
+            weights["urgency"] * parts["urgency"]
+            + weights["dependency"] * parts["dependency"]
+            + weights["executionTime"] * parts["execution_time"]
+            + parts["aging_bonus"]
+        )
+        assert drawn == pytest.approx(parts["own_score"], abs=1e-6)
 
 
 async def test_a_missing_plugin_is_a_200_not_a_500(

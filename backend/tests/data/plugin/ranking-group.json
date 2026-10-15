@@ -1,0 +1,165 @@
+{
+  "configuration": {
+    "optimizerEnabled": true,
+    "weightUrgency": 0.5,
+    "weightDependency": 0.3,
+    "weightExecutionTime": 0.2,
+    "agingBonusPerInterval": 0.05,
+    "agingIntervalMinutes": 5,
+    "agingCap": 0.15,
+    "estimatorK": 5,
+    "similarityThreshold": 0.35,
+    "recencyLambdaPerDay": 0.1,
+    "historyWindow": 50,
+    "rescoreIntervalSeconds": 60,
+    "metricsEnabled": true,
+    "metricsBackendUrl": "http://backend:8000/api/metrics",
+    "metricsTokenConfigured": true,
+    "weightsSumToOne": true
+  },
+  "queueLength": 8,
+  "items": [
+    {
+      "rank": 1,
+      "itemId": 1395,
+      "jobName": "it-revision-upstream",
+      "jobType": "FreeStyleProject",
+      "level": "MEDIUM",
+      "score": 0.979994,
+      "ownScore": 0.8,
+      "baseScore": 0.8,
+      "inheritedGroupScore": true,
+      "components": {
+        "urgency": 0.6,
+        "dependency": 1.0,
+        "executionTime": 1.0,
+        "aging": 0.0
+      },
+      "estimateMillis": 226,
+      "estimateKnown": true,
+      "waitSeconds": 6.642,
+      "groupId": "it-revision-upstream",
+      "groupSize": 2,
+      "topologicalRank": 0,
+      "blockedReason": "Waiting for next available executor on \u2018linux\u2019",
+      "unresolvedDependencies": []
+    },
+    {
+      "rank": 2,
+      "itemId": 1396,
+      "jobName": "it-revision-freestyle",
+      "jobType": "FreeStyleProject",
+      "level": "HIGH",
+      "score": 0.979994,
+      "ownScore": 0.979994,
+      "baseScore": 0.979994,
+      "inheritedGroupScore": false,
+      "components": {
+        "urgency": 1.0,
+        "dependency": 1.0,
+        "executionTime": 0.89997,
+        "aging": 0.0
+      },
+      "estimateMillis": 3535,
+      "estimateKnown": true,
+      "waitSeconds": 6.624,
+      "groupId": "it-revision-upstream",
+      "groupSize": 2,
+      "topologicalRank": 1,
+      "blockedReason": "Waiting for next available executor on \u2018linux\u2019",
+      "unresolvedDependencies": []
+    },
+    {
+      "rank": 3,
+      "itemId": 1394,
+      "jobName": "it-freestyle-create-trigger-read",
+      "jobType": "FreeStyleProject",
+      "level": "HIGH",
+      "score": 0.697279,
+      "ownScore": 0.697279,
+      "baseScore": 0.697279,
+      "inheritedGroupScore": false,
+      "components": {
+        "urgency": 1.0,
+        "dependency": 0.0,
+        "executionTime": 0.986397,
+        "aging": 0.0
+      },
+      "estimateMillis": 676,
+      "estimateKnown": true,
+      "waitSeconds": 7.189,
+      "groupId": "it-freestyle-create-trigger-read",
+      "groupSize": 1,
+      "topologicalRank": 0,
+      "blockedReason": "Waiting for next available executor on \u2018linux\u2019",
+      "unresolvedDependencies": []
+    },
+    {
+      "rank": 4,
+      "itemId": 1393,
+      "jobName": "it-revision-probe-freestyle",
+      "jobType": "FreeStyleProject",
+      "level": "MEDIUM",
+      "score": 0.484655,
+      "ownScore": 0.484655,
+      "baseScore": 0.484655,
+      "inheritedGroupScore": false,
+      "components": {
+        "urgency": 0.6,
+        "dependency": 0.0,
+        "executionTime": 0.923277,
+        "aging": 0.0
+      },
+      "estimateMillis": 2764,
+      "estimateKnown": true,
+      "waitSeconds": 7.207,
+      "groupId": "it-revision-probe-freestyle",
+      "groupSize": 1,
+      "topologicalRank": 0,
+      "blockedReason": "Waiting for next available executor on \u2018linux\u2019",
+      "unresolvedDependencies": []
+    },
+    {
+      "rank": 5,
+      "itemId": 1389,
+      "jobName": "it-failure-payment-service-test-unit",
+      "jobType": "FreeStyleProject",
+      "level": "MEDIUM",
+      "score": 0.3,
+      "ownScore": 0.3,
+      "baseScore": 0.3,
+      "inheritedGroupScore": false,
+      "components": {
+        "urgency": 0.6,
+        "dependency": 0.0,
+        "executionTime": 0.0,
+        "aging": 0.0
+      },
+      "estimateMillis": 33306,
+      "estimateKnown": true,
+      "waitSeconds": 7.289,
+      "groupId": "it-failure-payment-service-test-unit",
+      "groupSize": 1,
+      "topologicalRank": 0,
+      "blockedReason": "Waiting for next available executor on \u2018linux\u2019",
+      "unresolvedDependencies": []
+    }
+  ],
+  "unscoredItems": [
+    {
+      "itemId": 1390,
+      "jobName": "it-pipeline-create-trigger-read",
+      "reason": "not scored by the optimizer"
+    },
+    {
+      "itemId": 1391,
+      "jobName": "it-revision-pipeline",
+      "reason": "not scored by the optimizer"
+    },
+    {
+      "itemId": 1392,
+      "jobName": "it-revision-probe-pipeline",
+      "reason": "not scored by the optimizer"
+    }
+  ]
+}

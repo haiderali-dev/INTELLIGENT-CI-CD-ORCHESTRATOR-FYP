@@ -1975,6 +1975,7 @@
                 "type": "null"
               }
             ],
+            "description": "The plugin's duration estimate; null when it has no usable history",
             "title": "Estimate Seconds"
           },
           "group_id": {
@@ -2009,6 +2010,7 @@
             "type": "integer"
           },
           "score": {
+            "description": "The effective score, after group inheritance; the rank order",
             "title": "Score",
             "type": "number"
           },
@@ -2072,6 +2074,7 @@
             "type": "boolean"
           },
           "queue_length": {
+            "description": "Every buildable item, scored or not",
             "title": "Queue Length",
             "type": "integer"
           },
@@ -2086,10 +2089,18 @@
             ],
             "title": "Unavailable Reason"
           },
+          "unscored_items": {
+            "items": {
+              "$ref": "#/components/schemas/UnscoredItemResponse"
+            },
+            "title": "Unscored Items",
+            "type": "array"
+          },
           "weights": {
             "additionalProperties": {
               "type": "number"
             },
+            "description": "The plugin's weights: urgency, dependency and executionTime",
             "title": "Weights",
             "type": "object"
           }
@@ -2099,7 +2110,8 @@
           "optimizer_enabled",
           "queue_length",
           "weights",
-          "items"
+          "items",
+          "unscored_items"
         ],
         "title": "QueueResponse",
         "type": "object"
@@ -2470,25 +2482,35 @@
         "type": "object"
       },
       "ScoreComponentsResponse": {
-        "description": "Algorithm 1 broken out, so the UI can explain a rank instead of only showing it.",
+        "description": "Algorithm 1 broken out, so the UI can explain a rank instead of only showing it.\n\nWhat the score bar draws (DESIGN.md section 6): each factor times its weight from\n``QueueResponse.weights``, then aging. ``own_score`` against the item's ``score`` shows\nwhether the score was inherited from its group.",
         "properties": {
           "aging_bonus": {
+            "description": "Added as it is: 0.05 per 5 minutes waited, up to 0.15",
             "title": "Aging Bonus",
             "type": "number"
           },
           "base_score": {
+            "description": "The weighted sum, before aging and inheritance",
             "title": "Base Score",
             "type": "number"
           },
           "dependency": {
+            "description": "D, from the item's group size, before weighting",
             "title": "Dependency",
             "type": "number"
           },
           "execution_time": {
+            "description": "T, shorter estimates higher, before weighting",
             "title": "Execution Time",
             "type": "number"
           },
+          "own_score": {
+            "description": "Base plus aging: its own merit, before inheritance",
+            "title": "Own Score",
+            "type": "number"
+          },
           "urgency": {
+            "description": "U, the level's normalised value, before weighting",
             "title": "Urgency",
             "type": "number"
           }
@@ -2498,7 +2520,8 @@
           "dependency",
           "execution_time",
           "aging_bonus",
-          "base_score"
+          "base_score",
+          "own_score"
         ],
         "title": "ScoreComponentsResponse",
         "type": "object"
@@ -2644,6 +2667,30 @@
           "user"
         ],
         "title": "TokenResponse",
+        "type": "object"
+      },
+      "UnscoredItemResponse": {
+        "description": "Queued work the optimizer has not scored yet, listed so it is never silently missing.",
+        "properties": {
+          "item_id": {
+            "title": "Item Id",
+            "type": "integer"
+          },
+          "job_name": {
+            "title": "Job Name",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "item_id",
+          "job_name",
+          "reason"
+        ],
+        "title": "UnscoredItemResponse",
         "type": "object"
       },
       "UpdateUserRequest": {

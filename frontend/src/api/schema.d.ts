@@ -1537,7 +1537,10 @@ export interface components {
             /** Blocked Reason */
             blocked_reason: string | null;
             components: components["schemas"]["ScoreComponentsResponse"];
-            /** Estimate Seconds */
+            /**
+             * Estimate Seconds
+             * @description The plugin's duration estimate; null when it has no usable history
+             */
             estimate_seconds: number | null;
             /** Group Id */
             group_id: string | null;
@@ -1551,7 +1554,10 @@ export interface components {
             level: string;
             /** Rank */
             rank: number;
-            /** Score */
+            /**
+             * Score
+             * @description The effective score, after group inheritance; the rank order
+             */
             score: number;
             /** Topological Rank */
             topological_rank: number | null;
@@ -1571,11 +1577,19 @@ export interface components {
             items: components["schemas"]["QueueItemResponse"][];
             /** Optimizer Enabled */
             optimizer_enabled: boolean;
-            /** Queue Length */
+            /**
+             * Queue Length
+             * @description Every buildable item, scored or not
+             */
             queue_length: number;
             /** Unavailable Reason */
             unavailable_reason?: string | null;
-            /** Weights */
+            /** Unscored Items */
+            unscored_items: components["schemas"]["UnscoredItemResponse"][];
+            /**
+             * Weights
+             * @description The plugin's weights: urgency, dependency and executionTime
+             */
             weights: {
                 [key: string]: number;
             };
@@ -1696,17 +1710,41 @@ export interface components {
         /**
          * ScoreComponentsResponse
          * @description Algorithm 1 broken out, so the UI can explain a rank instead of only showing it.
+         *
+         *     What the score bar draws (DESIGN.md section 6): each factor times its weight from
+         *     ``QueueResponse.weights``, then aging. ``own_score`` against the item's ``score`` shows
+         *     whether the score was inherited from its group.
          */
         ScoreComponentsResponse: {
-            /** Aging Bonus */
+            /**
+             * Aging Bonus
+             * @description Added as it is: 0.05 per 5 minutes waited, up to 0.15
+             */
             aging_bonus: number;
-            /** Base Score */
+            /**
+             * Base Score
+             * @description The weighted sum, before aging and inheritance
+             */
             base_score: number;
-            /** Dependency */
+            /**
+             * Dependency
+             * @description D, from the item's group size, before weighting
+             */
             dependency: number;
-            /** Execution Time */
+            /**
+             * Execution Time
+             * @description T, shorter estimates higher, before weighting
+             */
             execution_time: number;
-            /** Urgency */
+            /**
+             * Own Score
+             * @description Base plus aging: its own merit, before inheritance
+             */
+            own_score: number;
+            /**
+             * Urgency
+             * @description U, the level's normalised value, before weighting
+             */
             urgency: number;
         };
         /** ServiceListResponse */
@@ -1765,6 +1803,18 @@ export interface components {
              */
             token_type: string;
             user: components["schemas"]["UserResponse"];
+        };
+        /**
+         * UnscoredItemResponse
+         * @description Queued work the optimizer has not scored yet, listed so it is never silently missing.
+         */
+        UnscoredItemResponse: {
+            /** Item Id */
+            item_id: number;
+            /** Job Name */
+            job_name: string;
+            /** Reason */
+            reason: string;
         };
         /** UpdateUserRequest */
         UpdateUserRequest: {
