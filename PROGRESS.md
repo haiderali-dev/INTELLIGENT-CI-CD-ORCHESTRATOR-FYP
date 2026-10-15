@@ -1175,6 +1175,16 @@ approved on 2026-10-15; T6.2 to T6.5 are done; T6.6 next.
           flows and T6.9's screenshots are where this gets seen.
         - **The running backend container is still the old image,** without D-057 and D-058.
           It was not rebuilt.
+      - **The full gate, re-run on 2026-10-16 on `f43f0db`: ALL CHECKS PASSED, 75 of 75,
+        exit 0.** By phase: 11, 17, 6, 22, 10, 5 and 4 passed, none failed. A first run on
+        2026-10-15 was stopped by Claude Code for low memory after 39 checks, all passing.
+        - **CI run 38792947715 on `f43f0db`:** all five jobs passed. Backend 1662 passed;
+          frontend 206; plugin 108 unit tests and 65 integration tests with no failure.
+        - **Memory during the re-run:** it started with 3.4 GB of 16 GB free and 3.0 GB of
+          commit headroom. Headroom fell to 368 MB during Phase 6's frontend checks, so the
+          machine runs this gate with little to spare.
+        - **What took the memory:** Docker's VM grows as the end-to-end builds run, and Chrome
+          and VS Code held about 3 GB between them. The pagefile is 1.86 GB.
 - [ ] T6.6 Queue page with score bars.
 - [ ] T6.7 Jobs and runs, Analytics, Service catalog, Admin and Overview pages.
 - [ ] T6.8 Vitest unit tests and Playwright flows (Part 4.7.6), run against the backend in fake
@@ -1410,3 +1420,5 @@ Details in `docs/decisions.md`.
 - 2026-10-16 T6.5 done: both assistant pages on the shared workspace, tested against 19 captured
   real responses, with 206 frontend tests and the four Phase 6 checks passing when run directly
   (D-059). Found: the backend can order a reply before its message. Next: T6.6.
+- 2026-10-16 `verify.py --phase 6` printed ALL CHECKS PASSED, 75 of 75, on `f43f0db`. The first
+  attempt had been stopped for low memory. CI run 38792947715 passed all five jobs. Next: T6.6.
