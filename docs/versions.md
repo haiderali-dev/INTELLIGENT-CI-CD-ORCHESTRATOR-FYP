@@ -97,6 +97,10 @@ conflict and no known vulnerability in the production dependencies.
 | `react-hook-form` | 7.89.0 | 7.90.0 on 2026-10-15 | Forms (4.7.1). Added in T6.3 |
 | `zod` | 4.6.5 | 4.6.7 on 2026-10-15 | Form schemas (4.7.1). Added in T6.3 |
 | `@hookform/resolvers` | 5.9.1 | 5.9.1 on 2026-10-15 | Connects the two. Added in T6.3 |
+| `@codemirror/state`, `/view`, `/language`, `/commands` | 6.7.6, 6.43.14, 6.13.1, 6.11.1 | the same on 2026-10-15 | Code views (4.7.1). Added in T6.4 |
+| `@codemirror/lang-yaml`, `/lang-xml`, `/legacy-modes` | 6.1.3, 6.1.0, 6.5.5 | the same on 2026-10-15 | The spec, `config.xml`, and the Jenkinsfile as Groovy |
+| `@codemirror/lint`, `@codemirror/merge` | 6.9.7, 6.12.2 | the same on 2026-10-15 | Inline spec errors, and the diff after a regenerate |
+| `@lezer/highlight` | 1.2.5 | the same on 2026-10-15 | The tags the code views' monochrome highlight style is written against |
 | `@fontsource/ibm-plex-sans`, `@fontsource/ibm-plex-mono` | 5.3.0 | 5.3.0 | Self-hosted fonts, Latin subset only |
 | `vite`, `@vitejs/plugin-react` | 8.3.2, 6.1.2 | 8.3.4, 6.1.2 | |
 | `tailwindcss`, `@tailwindcss/vite` | 4.3.3 | 4.3.3 | |
@@ -125,9 +129,15 @@ and accepts `zod` `^3.25.0 || ^4.0.0`, and its other peers are optional, so none
 also satisfies. npm now resolves one copy at 4.6.5 for both. `npm audit --omit=dev` found no
 vulnerabilities.
 
+The ten CodeMirror packages were read from the npm registry on 2026-10-15. Each one's newest
+release was already past the seven-day cutoff of 2026-10-08, the most recent being `/view`,
+`/language` and `/legacy-modes` from 2026-10-07. npm resolves a single copy of `/state`, `/view`,
+`/language` and `@lezer/highlight` across all of them. `/lang-xml` brings `@codemirror/autocomplete`
+6.20.3 in as its own dependency. `npm audit --omit=dev` found no vulnerabilities.
+
 shadcn/ui is not a package: its components are copied into `src/` and restyled to DESIGN.md's
-tokens (4.7.1). CodeMirror 6, Recharts and Playwright are pinned by the tasks that first use them:
-T6.4 for the code views, T6.7 for charts and T6.8 for the browser tests.
+tokens (4.7.1). Recharts and Playwright are pinned by the tasks that first use them: T6.7 for
+charts and T6.8 for the browser tests.
 
 ## LLM provider
 

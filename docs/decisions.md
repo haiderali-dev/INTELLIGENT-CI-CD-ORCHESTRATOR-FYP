@@ -11,6 +11,31 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 6
 
+### D-056 The workspace components take what they show, not API payloads
+**Date:** 2026-10-15 · **Status:** accepted (T6.4)
+
+**Problem.** 4.7.1 says API types are generated from the OpenAPI schema and never hand-written.
+The workspace shows several things the schema does not describe. `MessageResponse.payload`,
+`CommandResponse.record` (the intent card), `PipelineResponse.progress` and `.validation`, and the
+chain detail behind the run card are all `{[key: string]: unknown}`. A component that read those
+dictionaries would have to declare their shape itself, which is a hand-written API type.
+
+**Decision.** The T6.4 components take props, not payloads.
+- **Typed fields are used as they are.** Where the schema types a field, the component uses the
+  generated type: `ScoreComponentsResponse` and `QueueResponse.weights` for the score bar,
+  `ServiceResponse` for the intent card's catalog values, `ConversationResponse` for the chat
+  list, and `IntentEdit` for what an edit sends.
+- **Untyped fields become small view types.** Where the schema has only a dictionary, the
+  component declares what it renders: `IntentFields`, `ProgressStep` and `ValidationCheck`.
+- **No component imports the API client or parses a payload.** That mapping is T6.5's.
+
+**What T6.5 must do first.** Type those dictionaries in the backend's response models, as D-055
+did for errors, so the pages map generated types onto these props instead of guessing at
+dictionaries. The backend already builds each one from a fixed structure: `ParseOutcome.to_record`,
+`generation._progress`, and `ValidationReport.to_record`.
+
+---
+
 ### D-055 The error shape is part of the OpenAPI schema
 **Date:** 2026-10-15 · **Status:** accepted (T6.3)
 

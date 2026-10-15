@@ -3,12 +3,12 @@ import {
   ChartColumn,
   History,
   LayoutDashboard,
-  Link2,
   ListOrdered,
   ShieldCheck,
-  Workflow,
   type LucideIcon,
 } from "lucide-react";
+
+import { ASSISTANTS } from "@/workspace/assistants";
 
 export const PRODUCT_NAME = "CI/CD Orchestrator";
 
@@ -35,22 +35,11 @@ export const NAV_ITEMS: readonly NavItem[] = [
     description: "What is running, waiting and finished, and whether the AI provider is answering.",
     task: "T6.7",
   },
-  {
-    to: "/assistants/freestyle",
-    label: "Freestyle Assistant",
-    icon: Link2,
-    accent: "spruce",
-    description: "Creates chained freestyle jobs on staging, from plain English.",
-    task: "T6.5",
-  },
-  {
-    to: "/assistants/pipeline",
-    label: "Pipeline Assistant",
-    icon: Workflow,
-    accent: "plum",
-    description: "Creates Pipeline jobs on staging, from plain English.",
-    task: "T6.5",
-  },
+  ...(["freestyle", "pipeline"] as const).map((kind) => {
+    // One source for each assistant's name, glyph, colour and sentence (src/workspace).
+    const { name, icon, accent, description } = ASSISTANTS[kind];
+    return { to: `/assistants/${kind}`, label: name, icon, accent, description, task: "T6.5" };
+  }),
   {
     to: "/queue",
     label: "Queue",

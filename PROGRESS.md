@@ -1,6 +1,6 @@
 # Progress
 
-Updated: 2026-10-15 · Current phase: 6 (T6.1 approved; T6.2 and T6.3 done; T6.4 next) ·
+Updated: 2026-10-15 · Current phase: 6 (T6.1 approved; T6.2 to T6.4 done; T6.5 next) ·
 Branch: phase-6-frontend
 
 ## Needs human
@@ -930,7 +930,7 @@ Preparation, 2026-10-11, after PR #9 merged. Still **no task checked off**.
 ## Phase 6: Frontend
 
 In progress on `phase-6-frontend`, branched from `main` at `8da58b9`. T6.1 is done and was
-approved on 2026-10-15; T6.2 and T6.3 are done; T6.4 next.
+approved on 2026-10-15; T6.2 to T6.4 are done; T6.5 next.
 
 - [x] T6.1 Write `frontend/DESIGN.md` using the process in Part 4.7.2, then stop and add "Approve
       DESIGN.md" under Needs human. Build no screens before approval. Work on T6.2
@@ -1065,7 +1065,64 @@ approved on 2026-10-15; T6.2 and T6.3 are done; T6.4 next.
           redirect check or the auth-endpoint exemption to watch the tests fail was refused by
           Claude Code's auto mode, and the code was restored at once. The tests assert those
           behaviours directly.
-- [ ] T6.4 Shared assistant workspace components (Part 4.7.4).
+- [x] T6.4 Shared assistant workspace components (Part 4.7.4). Evidence, all run on 2026-10-15:
+      - **Built, in `src/workspace/` and `src/components/`:**
+        - the workspace layout: chats, thread and preview side by side from 1280 px; a drawer
+          below that; a bottom sheet with a one-line summary below 768 px;
+        - the chat list, the thread (`aria-live="polite"`), and the empty state with one
+          sentence, four example commands from 4.6.5, and the services it knows;
+        - the intent card, whose editor offers only catalog values through react-hook-form and
+          zod, and sends only the fields that changed;
+        - clarification with at most four answers, and the progress line (Understood, Planned,
+          Rendered, Validated, each with a check or the exact error);
+        - Approve and run: the dialog states the backend's own sentence, the button says
+          Approve and run, and the toast says Run started;
+        - the run card, the composer and the fallback notice;
+        - the preview: Spec, Config or Jenkinsfile, Checks, Explanation.
+      - **Shared pieces:**
+        - the score bar, to DESIGN.md section 6;
+        - build states as an icon and a word;
+        - toasts, sheets and button styles;
+        - code views on CodeMirror 6: read-only `config.xml` and Jenkinsfile, editable spec
+          YAML with inline errors and a written list of them, and a diff after a regenerate.
+        - Each assistant's identity (name, glyph, accent, sentence, examples, placeholder) has
+          one source, which the sidebar now reads too.
+      - **DESIGN.md in code:**
+        - **Score bar:** a fixed 0 to 1.15 scale. Segments are weight times factor, with the
+          weights taken from the queue API, never written in the UI. There is a 2px gap, only
+          the data end is rounded, a factor of zero draws nothing, and there is a Graphite tick
+          at 1.0. An inherited score gets an Ink tick, and the bar's name uses section 6's words.
+        - **No state colours outside build states:** code views are Ink and Graphite only, and
+          their errors and diffs are never red or green. The progress line and checklist use
+          Ink icons and words.
+        - **Floating layers:** 8px corners with the one shadow, or a Rule border in dark mode.
+        - **Touch targets:** at least 44px under 768 px.
+        - **Type:** `text-xs` only for the keyboard hint.
+        - **Motion:** a 120 ms message fade and a 160 ms toast, both off under reduced motion.
+      - **Tests:** `npm run test` passed 179, 87 of them new: score bar 14, code views 10,
+        composer 12, preview 9, intent card 7, run card 6, layout 5, progress line 5, build
+        states 5, workspace parts 5, approval 3, clarification 3, formats 3. 4.7.6 asks for
+        Vitest tests of the intent card, clarification, score bar and composer; all four have
+        them.
+        - The approval test goes from the button to Run started with the keyboard alone.
+        - No test printed a warning. Two full runs passed back to back after one fix: a test
+          that waited one second for the lazily loaded editor timed out under load, and now
+          loads it first.
+      - **Checks:** `npm run lint`, `npm run typecheck` and `npm run build` are clean.
+        `verify.py`'s four Phase 6 checks, run directly, passed with "179 tests passed", and
+        `verify.py --phase 0` passed.
+      - **Dependencies:** ten CodeMirror packages, recorded in `docs/versions.md`. `npm audit
+        --omit=dev` found no vulnerabilities.
+      - **D-056:** the components take props rather than API payloads, because four payloads
+        are untyped dictionaries in the schema.
+      - **Not done:**
+        - **Not seen in a browser.** No page uses these components until T6.5, and T6.9
+          screenshots them.
+        - **The editor's split into its own chunk is unconfirmed.** It is lazily loaded, but
+          the build has nothing to split until T6.5 imports the preview. The build's existing
+          500 kB chunk warning (556 kB, 555 in T6.3) predates this task.
+        - **Left to later tasks:** the score bar's 20 px Analytics size with an axis (T6.7) and
+          its one-time growth on the queue page (T6.6).
 - [ ] T6.5 Freestyle Assistant and Pipeline Assistant pages.
 - [ ] T6.6 Queue page with score bars.
 - [ ] T6.7 Jobs and runs, Analytics, Service catalog, Admin and Overview pages.
@@ -1088,6 +1145,29 @@ Found in T6.3, for T6.7's Admin page:
   password reset needs a backend endpoint.
 - **The Admin entry is shown to every role.** The backend refuses non-admins, so this is not a
   hole. But a sidebar entry that ends in a refusal is a dead end.
+
+Found in T6.4, to settle before T6.5 and T6.6 show real scores:
+- **The backend reads the plugin's score factors under names the plugin never sends.** Found by
+  reading the code, not yet seen live.
+  - **What the plugin sends** (`DynamicQueueApi.renderItem`): the four factors nested as
+    `components: {urgency, dependency, executionTime, aging}`, and the estimate as
+    `estimateMillis`.
+  - **What the backend reads** (`app/services/plugin.py`, `parse_ranking`): top-level
+    `urgencyFactor`, `dependencyFactor`, `executionTimeFactor`, `agingBonus` and
+    `estimateSeconds`.
+  - **The effect:** against the live plugin every factor reads 0 and every estimate unknown, in
+    `/api/queue` and in the chain detail behind the run card. Every score bar would be empty
+    beside a correct score.
+  - **Why the tests missed it:** `test_plugin_client.py`'s ranking fixture says it is "in the
+    shape 4.3.10 specifies": it was written from the spec, not recorded. The same mistake was
+    fixed for the health endpoint, with `_first()`, after a recorded response; the ranking
+    parser was never given the same fix. The gate's live check ran on an empty queue, so it
+    never parsed an item.
+  - **The fix:** read the plugin's names, keep the old ones as a fallback, and test against a
+    recorded response. Not part of T6.4.
+- **T6.5 needs the assistant payloads typed in the API schema first (D-056).** Message
+  `payload`, the command `record`, and pipeline `progress` and `validation` are untyped
+  dictionaries.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
@@ -1219,3 +1299,8 @@ Details in `docs/decisions.md`.
   shape now in the OpenAPI schema (D-055). The four Phase 6 checks pass when run directly, with
   92 frontend tests. The offline backend suite passed 1644. Found for T6.7: there is no password
   reset, and the Admin entry is shown to every role. Next: T6.4.
+- 2026-10-15 T6.4 done: the shared assistant workspace components, the score bar, and CodeMirror
+  code views, with 87 new tests (179 in all) and the four Phase 6 checks passing when run
+  directly. Found: the backend reads the plugin's score factors under names the plugin never
+  sends, so live score bars would be empty (Phase 6 open items). Also, T6.5 needs the assistant
+  payloads typed in the API schema first (D-056). Next: those two, then T6.5.
