@@ -960,11 +960,15 @@ approved on 2026-10-15; T6.2 is done; T6.3 next.
       - **Colours:** the score bar passed the dataviz skill's `validate_palette.js` in both
         themes, against this product's panels. Light: worst adjacent CVD ΔE 15.3. Dark: 11.9.
         Every contrast pair was measured with WCAG's formula, with zero failures.
-      - **The gate, `verify.py --phase 6`, did not pass as a whole:** 71 of 72 checks passed.
-        The one failure was Phase 5's end-to-end test of Explain failure, whose explanation fell
-        back to rules after a replay miss. The cause was a checkout that Jenkins had retried
-        (D-053), fixed in the next commit. A full re-run after that fix was stopped by Claude
-        Code because the machine ran low on memory, and has not been repeated.
+      - **The gate, `verify.py --phase 6`, did not pass as a whole at first:** 71 of 72 checks
+        passed. The one failure was Phase 5's end-to-end test of Explain failure, whose
+        explanation fell back to rules after a replay miss. The cause was a checkout that Jenkins
+        had retried (D-053), fixed in the next commit. A full re-run after that fix was stopped
+        by Claude Code because the machine ran low on memory.
+      - **Re-run on 2026-10-15, on `c2b7e4f`: ALL CHECKS PASSED, 75 of 75.** That includes Phase
+        5's Explain failure (170 passed) and all four Phase 6 checks. Before it ran, the host had
+        2.5 GB free of 16 GB, and Docker's VM had 7.6 GB with the containers using about 1 GB. Free
+        memory stayed between 1.9 and 2.8 GB throughout.
 - [x] T6.2 Vite, React and TypeScript project; tokens; app shell; routing; API client generated
       from the backend OpenAPI schema; WebSocket hook. Evidence, all run on 2026-10-14:
       - **Project:** Vite 8, React 19 and TypeScript 5.9 in strict mode, with
@@ -1000,8 +1004,8 @@ approved on 2026-10-15; T6.2 is done; T6.3 next.
       - **Backend:** ruff, format and mypy are clean, and the offline suite passed 1641, with 4 new
         export tests.
       - **Not yet done:** the shell has not been looked at in a browser; T6.9's screenshots cover
-        that. The full `verify.py --phase 6` was not re-run after these checks were added (see
-        T6.1).
+        that. The full `verify.py --phase 6` ran with these checks on 2026-10-15 and passed
+        (see T6.1).
 - [ ] T6.3 Sign in and session handling.
 - [ ] T6.4 Shared assistant workspace components (Part 4.7.4).
 - [ ] T6.5 Freestyle Assistant and Pipeline Assistant pages.
@@ -1143,3 +1147,5 @@ Details in `docs/decisions.md`.
   WebSocket client, with three new `verify.py` checks run directly and passing, and CI guarding
   the API types. Next: T6.3 onward builds screens, so it waits for DESIGN.md's approval. The full
   Phase 6 gate also needs a re-run once the machine has the memory for it.
+- 2026-10-15 The user approved `frontend/DESIGN.md` as written; D-052 is accepted (`c2b7e4f`).
+  `verify.py --phase 6` then printed ALL CHECKS PASSED, 75 of 75, on `c2b7e4f`. Next: T6.3.
