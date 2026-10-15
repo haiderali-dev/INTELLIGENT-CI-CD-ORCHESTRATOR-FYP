@@ -22,12 +22,15 @@ export const RUN_STARTED = "Run started";
 export function ApproveAndRun({
   summary,
   ready,
+  approvedAt = null,
   onApprove,
 }: {
   /** What approving will do. Null until the plan is validated. */
   summary: string | null;
   /** True once every check has passed. */
   ready: boolean;
+  /** When this plan was approved. A plan runs once: approving it again is refused. */
+  approvedAt?: string | null;
   onApprove: () => Promise<ApproveResult>;
 }) {
   const [open, setOpen] = useState(false);
@@ -52,6 +55,15 @@ export function ApproveAndRun({
       setFailure(result.failure);
     }
   };
+
+  if (approvedAt !== null && !open) {
+    return (
+      <p className="text-sm">
+        <span className="font-semibold">Approved and started. </span>
+        <span className="text-graphite">The run card in the conversation follows the run.</span>
+      </p>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-2">

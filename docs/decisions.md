@@ -11,6 +11,40 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 6
 
+### D-059 The assistant pages read only typed fields, from what the client returns
+**Date:** 2026-10-16 · **Status:** accepted (T6.5)
+
+**The untyped fields.** Four response fields are still `dict[str, Any]` in the schema, and T6.5
+needs none of them, so none was typed and nothing reads them:
+- **`PipelineResponse.plan`:** the progress line already says how the plan was made.
+- **`PipelineResponse.approval`:** the page knows a plan was approved from `status` and
+  `approved_at`, and follows the run from the approved-run reply, whose `chain_id` is typed.
+- **`JobPreview.stage`:** the Config tab needs each job's `name` and `config_xml`.
+- **`ApprovalResponse.result`:** after Approve and run the page refetches the conversation, which
+  carries the same facts in the typed reply.
+
+**The page types come from what the client returns, not `components["schemas"]`.**
+openapi-fetch passes response data through `Readable<T>`, from `openapi-typescript-helpers`. That
+rebuilds every object type and drops any property typed exactly `null`, because the key filter
+asks whether `NonNullable<null>` (`never`) extends `$Write<any>`, which is true. The "nothing to
+re-run" and "nothing to cancel" replies have `chain: null`, so they lose the key. The payload union
+then has the same name as the schema's but a different shape, and TypeScript refuses to mix the
+two. `src/api/assistantApi.ts` therefore takes each type from the request's return type. Nothing
+reads those two keys.
+
+**Two more.**
+- **The thread orders a message before its reply when both have the same time.** The backend
+  orders by `created_at`, then by a random id. One request writes a message and its reply, and
+  Windows' clock can stamp both alike. The captured `/help` pair was returned reply first. The UI
+  sorts by time with the user's message first on a tie. The backend defect is recorded under
+  Phase 6's open items.
+- **The page tests run on captured responses.** The backend was driven in fake mode against the fake
+  Jenkins, and its responses were written to `src/test/fixtures/captured.ts` by a script. The
+  module is typed by the client's return types, so all 19 responses are checked by the compiler,
+  extra keys included.
+
+---
+
 ### D-058 The assistant payloads are typed in the OpenAPI schema
 **Date:** 2026-10-15 · **Status:** accepted (before T6.5, settling D-056)
 

@@ -2,7 +2,6 @@ import { Tabs } from "radix-ui";
 import { lazy, Suspense, useId, useState, type ReactNode } from "react";
 
 import { button } from "@/components/button";
-import type { LineDiagnostic } from "@/components/code/diagnostics";
 import { cn } from "@/lib/cn";
 
 import { ApproveAndRun, type ApproveResult } from "./ApproveAndRun";
@@ -10,8 +9,10 @@ import { ASSISTANTS, type AssistantKind } from "./assistants";
 import type { ProgressStep, ValidationCheck } from "./progress";
 import { ProgressSteps, ValidationChecklist } from "./ProgressSteps";
 
-// CodeMirror is the heaviest thing on these pages, and only the preview needs it.
+// CodeMirror is the heaviest thing on these pages, and only the preview needs it. The spec editor
+// comes with it, because placing the backend's problems on lines needs CodeMirror's YAML parser.
 const CodeView = lazy(() => import("@/components/code/CodeView"));
+const SpecEditor = lazy(() => import("./SpecEditor"));
 
 /** One generated artifact: a freestyle job's config.xml, or the Pipeline's Jenkinsfile. */
 export interface PreviewArtifact {
@@ -25,7 +26,6 @@ export interface PreviewPlan {
   spec: {
     yaml: string;
     previous?: string | null;
-    problems?: readonly LineDiagnostic[];
     onChange: (yaml: string) => void;
     /** True once the spec was edited, so it can be generated again from the edit. */
     edited: boolean;
@@ -35,8 +35,20 @@ export interface PreviewPlan {
   artifacts: readonly PreviewArtifact[];
   progress: readonly ProgressStep[];
   checks: readonly ValidationCheck[];
-  explanation: { text: string | null; loading: boolean; onExplain: () => void };
-  approval: { summary: string | null; ready: boolean; onApprove: () => Promise<ApproveResult> };
+  explanation: {
+    text: string | null;
+    loading: boolean;
+    /** Why the last explanation stopped, with what to do. */
+    error?: string | null;
+    onExplain: () => void;
+  };
+  approval: {
+    summary: string | null;
+    ready: boolean;
+    /** When the plan was approved; it then shows that instead of the button. */
+    approvedAt?: string | null;
+    onApprove: () => Promise<ApproveResult>;
+  };
 }
 
 /**
@@ -84,13 +96,11 @@ export function PreviewPanel({
 
         <Tabs.Content value="spec" className="flex flex-col gap-3 p-4">
           <Code>
-            <CodeView
-              label="Spec"
-              language="yaml"
-              value={plan.spec.yaml}
+            <SpecEditor
+              yaml={plan.spec.yaml}
               previous={plan.spec.previous ?? null}
+              checks={plan.checks}
               onChange={plan.spec.onChange}
-              diagnostics={plan.spec.problems ?? []}
             />
           </Code>
           {plan.spec.edited ? (
@@ -207,13 +217,15 @@ function Artifacts({
 function Explanation({
   text,
   loading,
+  error = null,
   onExplain,
 }: {
   text: string | null;
   loading: boolean;
+  error?: string | null;
   onExplain: () => void;
 }) {
-  if (text) {
+  if (text && !error) {
     // The explanation streams in; it says so until it is whole.
     return (
       <div className="flex flex-col gap-2">
@@ -227,6 +239,12 @@ function Explanation({
       <p className="max-w-[68ch] text-graphite">
         A plain-English account of what these jobs will do, written from the spec.
       </p>
+      {error ? (
+        <p role="alert" className="max-w-[68ch] text-sm">
+          <span className="font-semibold">The explanation stopped. </span>
+          {error}
+        </p>
+      ) : null}
       <button
         type="button"
         aria-disabled={loading}
@@ -237,7 +255,7 @@ function Explanation({
         }}
         className={cn(button(), "self-start")}
       >
-        {loading ? "Explaining" : "Explain this plan"}
+        {loading ? "Explaining" : error ? "Try again" : "Explain this plan"}
       </button>
       <p aria-live="polite" className="sr-only">
         {loading ? "Writing the explanation" : ""}

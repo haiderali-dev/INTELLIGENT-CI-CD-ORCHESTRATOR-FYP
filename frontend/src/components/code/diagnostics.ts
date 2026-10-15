@@ -1,8 +1,9 @@
 import { yamlLanguage } from "@codemirror/lang-yaml";
 
-/** A problem on one line, 1-based, as the spec editor shows it inline and in its list. */
+/** A problem on one line, 1-based, as the spec editor shows it inline and in its list. A problem
+ * with no line, such as one about the spec as a whole, is listed but not underlined. */
 export interface LineDiagnostic {
-  line: number;
+  line: number | null;
   message: string;
 }
 

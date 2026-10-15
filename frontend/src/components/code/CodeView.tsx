@@ -67,8 +67,9 @@ export default function CodeView({
     }
     const found = language === "yaml" ? yamlSyntaxErrors(value) : [];
     const lines = new Set(found.map(({ line }) => line));
-    return [...found, ...diagnostics.filter(({ line }) => !lines.has(line))].sort(
-      (a, b) => a.line - b.line,
+    // Problems about the whole text come first, then by line.
+    return [...found, ...diagnostics.filter(({ line }) => line === null || !lines.has(line))].sort(
+      (a, b) => (a.line ?? 0) - (b.line ?? 0),
     );
   }, [editable, language, value, diagnostics]);
 
@@ -158,7 +159,8 @@ export default function CodeView({
             <li key={`${line} ${message}`} className="flex items-start gap-1.5">
               <CircleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
               <span>
-                <span className="font-semibold">{`Line ${line}`}</span> {message}
+                <span className="font-semibold">{line === null ? "Spec" : `Line ${line}`}</span>{" "}
+                {message}
               </span>
             </li>
           ))}
@@ -168,12 +170,16 @@ export default function CodeView({
   );
 }
 
-/** Underlines each problem's line in the editor, with its words in a tooltip. */
+/** Underlines each problem's line in the editor, with its words in a tooltip. A problem with no
+ * line is only listed. */
 function showProblems(editor: EditorView, problems: readonly LineDiagnostic[]): void {
   const { doc } = editor.state;
-  const marks: Diagnostic[] = problems.map(({ line, message }) => {
+  const marks: Diagnostic[] = problems.flatMap(({ line, message }) => {
+    if (line === null) {
+      return [];
+    }
     const at = doc.line(Math.min(Math.max(line, 1), doc.lines));
-    return { from: at.from, to: at.to, severity: "error", message };
+    return [{ from: at.from, to: at.to, severity: "error" as const, message }];
   });
   editor.dispatch(setDiagnostics(editor.state, marks));
 }

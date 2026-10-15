@@ -1,6 +1,6 @@
 # Progress
 
-Updated: 2026-10-15 · Current phase: 6 (T6.1 approved; T6.2 to T6.4 done; T6.5 next) ·
+Updated: 2026-10-16 · Current phase: 6 (T6.1 approved; T6.2 to T6.5 done; T6.6 next) ·
 Branch: phase-6-frontend
 
 ## Needs human
@@ -930,7 +930,7 @@ Preparation, 2026-10-11, after PR #9 merged. Still **no task checked off**.
 ## Phase 6: Frontend
 
 In progress on `phase-6-frontend`, branched from `main` at `8da58b9`. T6.1 is done and was
-approved on 2026-10-15; T6.2 to T6.4 are done; T6.5 next.
+approved on 2026-10-15; T6.2 to T6.5 are done; T6.6 next.
 
 - [x] T6.1 Write `frontend/DESIGN.md` using the process in Part 4.7.2, then stop and add "Approve
       DESIGN.md" under Needs human. Build no screens before approval. Work on T6.2
@@ -1123,7 +1123,58 @@ approved on 2026-10-15; T6.2 to T6.4 are done; T6.5 next.
           500 kB chunk warning (556 kB, 555 in T6.3) predates this task.
         - **Left to later tasks:** the score bar's 20 px Analytics size with an axis (T6.7) and
           its one-time growth on the queue page (T6.6).
-- [ ] T6.5 Freestyle Assistant and Pipeline Assistant pages.
+- [x] T6.5 Freestyle Assistant and Pipeline Assistant pages. Evidence, all run on 2026-10-16:
+      - **The page** (`src/pages/AssistantPage.tsx`) is one component used by both assistants,
+        each with its own sidebar entry, header, empty state, composer placeholder and preview.
+        The chat is in the address, `/assistants/<assistant>/<chat id>`. A chat is created only
+        when its first message is sent.
+      - **The thread** shows each reply by its payload kind (D-058):
+        - the intent card, read from the command's current record, so an edit shows and a
+          justification question after an edit is asked;
+        - the clarification, with only the newest question answerable;
+        - a refusal's reasons, and an Admin's offer to cancel the running chain (4.5.5);
+        - help as a list;
+        - a status reply's run card, and the run card after Approve and run or a re-run;
+        - the fallback notice when the rule parser answered.
+        - Sending shows the message at once with "Working on it". Stop cancels the wait. A
+          message that was not sent keeps its text and says why.
+      - **The preview** shows the newest plan:
+        - the spec as editable YAML, with the backend's schema errors on their lines;
+        - each job's config.xml, or the Jenkinsfile;
+        - the checks and progress line;
+        - the explanation, streamed as it arrives;
+        - a diff against the plan it replaced.
+        - "Generate from this spec" re-validates an edit. Approve and run sends one
+          idempotency key per plan, says Run started, and shows "Approved and started" after.
+      - **Live updates:** run cards refetch their typed `RunCard` whenever a run, chain or queue
+        event arrives on the WebSocket.
+      - **D-059:**
+        - the untyped `plan`, `approval`, `stage` and approval `result` are not needed and are
+          not read;
+        - the page's API types come from the client's return types, because openapi-fetch's
+          `Readable` drops properties typed exactly `null`;
+        - the thread orders a message before its reply on a timestamp tie.
+      - **Tests** run against the real API responses: the backend was driven in fake mode, and
+        19 responses were captured into `src/test/fixtures/captured.ts` and type-checked.
+        - The page has 14 tests: first message to intent card, example commands, thread order,
+          editing, generate and preview, approve, live run card refresh, an inline spec error, a
+          clarification, a streamed explanation, a refused send, Stop, the Pipeline Assistant,
+          and a chat that cannot be opened.
+        - The helpers have 12: spec problems, thread order, the run card view and the preview
+          summary.
+      - **Checks:** `npm run lint`, `typecheck` and `build` are clean, and `npm run test` passed
+        206 with no warning. `verify.py`'s four Phase 6 checks, run directly, all passed,
+        including "206 tests passed" and "openapi.json is the backend's schema (39 paths), and
+        schema.d.ts is its output".
+      - **The build:** CodeMirror is now its own lazy chunk, 395 kB. The main chunk is 683 kB,
+        against 556 kB before T6.5, so the over-500 kB warning that predates T6.5 is still there.
+        Splitting routes would fix it.
+      - **Not done:**
+        - **Not seen in a browser.** No browser tool was available in this session. Signing in
+          to the stack needs the seeded admin password, which is in `.env`. T6.8's Playwright
+          flows and T6.9's screenshots are where this gets seen.
+        - **The running backend container is still the old image,** without D-057 and D-058.
+          It was not rebuilt.
 - [ ] T6.6 Queue page with score bars.
 - [ ] T6.7 Jobs and runs, Analytics, Service catalog, Admin and Overview pages.
 - [ ] T6.8 Vitest unit tests and Playwright flows (Part 4.7.6), run against the backend in fake
@@ -1145,6 +1196,13 @@ Found in T6.3, for T6.7's Admin page:
   password reset needs a backend endpoint.
 - **The Admin entry is shown to every role.** The backend refuses non-admins, so this is not a
   hole. But a sidebar entry that ends in a refusal is a dead end.
+
+Found in T6.5:
+- **The backend can return a reply before the message it answers.** `list_messages` orders by
+  `created_at`, then by message id. The id is a random UUID. A message and its reply are written in
+  one request, and on Windows both were stamped with the same time: the captured `/help` pair came
+  back reply first. The thread now sorts user-before-reply on a tie (D-059). The backend fix is
+  still to do: a sequence column, or a reply stamped after its message.
 
 Found in T6.4, to settle before T6.5 and T6.6 show real scores:
 - [x] **The backend read the plugin's score factors under the wrong names.** Fixed on 2026-10-15
@@ -1349,3 +1407,6 @@ Details in `docs/decisions.md`.
 - 2026-10-15 The assistant payloads are typed in the OpenAPI schema (D-058): message payloads,
   the intent record, the progress line, the validation report and the run card. Each was checked
   against what real flows store. Next: T6.5.
+- 2026-10-16 T6.5 done: both assistant pages on the shared workspace, tested against 19 captured
+  real responses, with 206 frontend tests and the four Phase 6 checks passing when run directly
+  (D-059). Found: the backend can order a reply before its message. Next: T6.6.

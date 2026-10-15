@@ -43,14 +43,28 @@ export function noAnswer(): never {
   throw new TypeError("Failed to fetch");
 }
 
+/** "GET /api/conversations/:id" as a pattern: a `:name` segment matches any one path segment. */
+function routePattern(route: string): RegExp {
+  const escaped = route
+    .split("/")
+    .map((segment) =>
+      segment.startsWith(":") ? "[^/]+" : segment.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+    )
+    .join("/");
+  return new RegExp(`^${escaped}$`);
+}
+
 export class FakeBackend {
   /** Every request, cloned so a test can still read its body. */
   readonly requests: Request[] = [];
-  private readonly routes = new Map<string, Handler>();
+  private readonly routes = new Map<string, { pattern: RegExp; handler: Handler }>();
   private issued = 0;
 
+  /** Answers `route`, such as "POST /api/auth/login" or "GET /api/pipelines/:id". A later
+   * handler for the same route replaces the earlier one. */
   on(route: string, handler: Handler): this {
-    this.routes.set(route, handler);
+    this.routes.delete(route);
+    this.routes.set(route, { pattern: routePattern(route), handler });
     return this;
   }
 
@@ -70,14 +84,19 @@ export class FakeBackend {
   readonly fetch = async (request: Request): Promise<Response> => {
     this.requests.push(request.clone());
     const route = `${request.method} ${new URL(request.url).pathname}`;
-    const handler = this.routes.get(route);
-    return handler ? handler(request) : apiError(404, "BAD_REQUEST", `No fake route for ${route}.`);
+    // The newest matching route wins, so a test can override a general one.
+    const match = [...this.routes.values()].reverse().find(({ pattern }) => pattern.test(route));
+    const response = await (match
+      ? match.handler(request)
+      : apiError(404, "BAD_REQUEST", `No fake route for ${route}.`));
+    return response;
   };
 
-  /** The requests one route received, in order. */
+  /** The requests a route received, in order. The route may be a pattern. */
   calls(route: string): Request[] {
-    return this.requests.filter(
-      (request) => `${request.method} ${new URL(request.url).pathname}` === route,
+    const pattern = routePattern(route);
+    return this.requests.filter((request) =>
+      pattern.test(`${request.method} ${new URL(request.url).pathname}`),
     );
   }
 }

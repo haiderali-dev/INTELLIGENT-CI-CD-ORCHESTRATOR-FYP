@@ -6,6 +6,7 @@ import { routes } from "@/app/routes";
 import { ThemeProvider } from "@/app/theme/ThemeProvider";
 import { session } from "@/auth/appSession";
 import { SessionProvider } from "@/auth/SessionProvider";
+import { ToastProvider } from "@/components/toast/ToastProvider";
 import { liveEvents } from "@/ws/liveEvents";
 import { LiveEventsProvider } from "@/ws/LiveEventsProvider";
 
@@ -17,7 +18,9 @@ export function App() {
       <QueryClientProvider client={queryClient}>
         <LiveEventsProvider client={liveEvents}>
           <SessionProvider session={session} liveEvents={liveEvents} queryClient={queryClient}>
-            <RouterProvider router={router} />
+            <ToastProvider>
+              <RouterProvider router={router} />
+            </ToastProvider>
           </SessionProvider>
         </LiveEventsProvider>
       </QueryClientProvider>

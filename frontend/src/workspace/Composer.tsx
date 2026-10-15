@@ -1,5 +1,5 @@
 import { Send, Square } from "lucide-react";
-import { useId, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 
 import { button } from "@/components/button";
 import { cn } from "@/lib/cn";
@@ -32,6 +32,7 @@ export function Composer({
   waiting,
   onStop,
   services,
+  focusKey = 0,
 }: {
   assistant: AssistantKind;
   value: string;
@@ -41,11 +42,21 @@ export function Composer({
   waiting: boolean;
   onStop: () => void;
   services: readonly string[];
+  /** Changing it puts the cursor in the composer, such as after an example command fills it. */
+  focusKey?: number;
 }) {
   const { placeholder } = ASSISTANTS[assistant];
   const ids = useId();
   const listId = `${ids}-suggestions`;
   const box = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (focusKey > 0) {
+      const element = box.current;
+      element?.focus();
+      element?.setSelectionRange(element.value.length, element.value.length);
+    }
+  }, [focusKey]);
   const [caret, setCaret] = useState(0);
   const [active, setActive] = useState(0);
   // Escape closes the list until the text changes again.
