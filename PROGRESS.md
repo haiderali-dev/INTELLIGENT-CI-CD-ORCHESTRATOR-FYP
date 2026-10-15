@@ -1,6 +1,6 @@
 # Progress
 
-Updated: 2026-10-14 · Current phase: 6 (T6.1 awaiting approval; T6.2 done; T6.3 waits for it) ·
+Updated: 2026-10-15 · Current phase: 6 (T6.1 approved; T6.2 done; T6.3 next) ·
 Branch: phase-6-frontend
 
 ## Needs human
@@ -51,10 +51,11 @@ Branch: phase-6-frontend
 - [ ] **Re-run the Phase 5 security review independently.** The reviewer agent stopped on an
       account usage limit, so `docs/security-review-phase-5.md` was written by the agent that
       wrote the code.
-- [ ] **Approve `frontend/DESIGN.md`.** T6.1 wrote it on 2026-10-13. Its section 10 lists the
+- [x] **Approve `frontend/DESIGN.md`.** T6.1 wrote it on 2026-10-13. Its section 10 lists the
       choices most worth questioning, and D-052 records how its palette reads 4.7.2's "4 to 6
       named hex values". No screen (T6.3 onward) is built before approval. T6.2's plumbing does
-      not wait for it.
+      not wait for it. Done 2026-10-15: the user approved the design as written ("Frontend
+      design is approved"), with no changes. D-052 is now accepted; T6.3 onward may build screens.
 - [ ] **Label and review the evaluation gold answers** (Phase 8). At most 30 drafted items, each
       marked `needs_review: true` and excluded from scoring until a human clears the flag.
 - [ ] **Schedule the long runs:** the full experiment matrix, about 50 runs (Phase 7), and the final
@@ -928,8 +929,8 @@ Preparation, 2026-10-11, after PR #9 merged. Still **no task checked off**.
 
 ## Phase 6: Frontend
 
-In progress on `phase-6-frontend`, branched from `main` at `8da58b9`. T6.1 is done and waiting
-for approval (Needs human); T6.2 next.
+In progress on `phase-6-frontend`, branched from `main` at `8da58b9`. T6.1 is done and was
+approved on 2026-10-15; T6.2 is done; T6.3 next.
 
 - [x] T6.1 Write `frontend/DESIGN.md` using the process in Part 4.7.2, then stop and add "Approve
       DESIGN.md" under Needs human. Build no screens before approval. Work on T6.2

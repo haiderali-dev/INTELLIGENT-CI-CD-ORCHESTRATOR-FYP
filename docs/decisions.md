@@ -52,8 +52,8 @@ that would have failed it before.
 ---
 
 ### D-052 Six named colours for the interface; the score bar's four colours are a data scale
-**Date:** 2026-10-13 · **Status:** proposed in `frontend/DESIGN.md`; final when a person approves
-that file (Needs human)
+**Date:** 2026-10-13 · **Status:** accepted 2026-10-15, when the user approved
+`frontend/DESIGN.md` as written
 
 **Conflict.** Part 4.7.2 asks for "4 to 6 named hex values with their roles, plus separate
 build-state colors". The same part makes the score bar the memorable element: one stacked bar of

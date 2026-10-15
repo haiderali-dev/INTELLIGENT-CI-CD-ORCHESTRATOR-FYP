@@ -1,8 +1,8 @@
 # Frontend design
 
-Status: **draft for approval** (T6.1, 2026-10-13). No screen is built until a person approves this
-file. Until then T6.2 builds only the plumbing: the project, tokens, app shell, routing, the
-generated API client and the WebSocket hook.
+Status: **approved** on 2026-10-15 by the user, as written (T6.1, drafted 2026-10-13). Screens
+from T6.3 onward are built to this file. A change to it after approval is a new decision in
+`docs/decisions.md`, not a silent edit.
 
 `python scripts/verify.py --phase 6` checks this file against Part 4.7.2. It recomputes the
 contrast and colour distances below from the tables in section 2, so a colour edited here without
