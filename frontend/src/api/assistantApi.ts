@@ -1,8 +1,7 @@
 /**
  * The requests the assistant pages make (BUILD_PROMPT 4.4.4's Catalog, Assistants and Generation
- * groups), each typed by the generated schema. A failure is thrown as `ApiRequestError`, carrying
- * the API's own error code when it sent one, so React Query sees a rejection and a page can still
- * say what happened.
+ * groups), each typed by the generated schema. A failure is thrown as `ApiRequestError`
+ * (`./request`).
  *
  * Every field the pages read is typed in the schema (D-058). The pipeline's `plan` and `approval`,
  * a job preview's `stage` and the approval response's `result` stay untyped, and nothing here
@@ -10,7 +9,7 @@
  */
 
 import { api, type ApiClient } from "./client";
-import { failureMessage, readFailure, type Failure } from "./errors";
+import { answer, ApiRequestError } from "./request";
 import type { components } from "./schema";
 
 export type AssistantName = "freestyle" | "pipeline";
@@ -33,45 +32,6 @@ export type Pipeline = Returned<"pipeline">;
 export type RunCardData = Returned<"chain">;
 export type Service = Returned<"services">["items"][number];
 export type BranchList = Returned<"branches">;
-
-export class ApiRequestError extends Error {
-  constructor(readonly failure: Failure) {
-    super(failureMessage(failure));
-    this.name = "ApiRequestError";
-  }
-}
-
-/** The failure inside anything thrown by these requests. */
-export function failureOf(error: unknown): Failure {
-  if (error instanceof ApiRequestError) {
-    return error.failure;
-  }
-  return { kind: "unreachable" };
-}
-
-interface Answer<T> {
-  data?: T;
-  error?: unknown;
-  response: Response;
-}
-
-/** The data, or the failure thrown. fetch throws when nothing answers; that becomes
- * "unreachable", unless the caller aborted, which is rethrown as it is. */
-async function answer<T>(request: Promise<Answer<T>>): Promise<T> {
-  let result: Answer<T>;
-  try {
-    result = await request;
-  } catch (error) {
-    if (error instanceof DOMException && error.name === "AbortError") {
-      throw error;
-    }
-    throw new ApiRequestError({ kind: "unreachable" });
-  }
-  if (result.data === undefined) {
-    throw new ApiRequestError(readFailure(result.response, result.error));
-  }
-  return result.data;
-}
 
 export function assistantApi(client: ApiClient = api) {
   return {

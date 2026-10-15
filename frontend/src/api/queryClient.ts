@@ -2,7 +2,8 @@ import { QueryClient } from "@tanstack/react-query";
 
 /**
  * Server state. Live views are kept current by WebSocket events (src/ws), which invalidate the
- * queries they affect, so nothing here polls and a refocused tab does not refetch everything.
+ * queries they affect, so nothing polls by default and a refocused tab does not refetch everything.
+ * The queue alone also asks every 10 seconds, because time changes it between events (D-060).
  */
 export function createQueryClient(): QueryClient {
   return new QueryClient({

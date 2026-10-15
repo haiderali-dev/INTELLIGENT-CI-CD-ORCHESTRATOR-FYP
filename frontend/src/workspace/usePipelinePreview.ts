@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 
-import { failureOf, type Message, type Pipeline } from "@/api/assistantApi";
+import type { Message, Pipeline } from "@/api/assistantApi";
+import { failureOf } from "@/api/request";
 import { failureMessage } from "@/api/errors";
 
 import type { ApproveResult } from "./ApproveAndRun";

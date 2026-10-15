@@ -92,8 +92,8 @@
 }
 
 /*
- * Section 7's motion, and nothing else: a new message fades in, a toast slides in. Both stop under
- * reduced motion (below).
+ * Section 7's motion, and nothing else: a new message fades in, a toast slides in, and the queue's
+ * score bars grow once on first load (section 6). All of them stop under reduced motion (below).
  */
 @keyframes message-in {
   from {
@@ -111,6 +111,15 @@
   }
   to {
     opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes score-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
     transform: none;
   }
 }

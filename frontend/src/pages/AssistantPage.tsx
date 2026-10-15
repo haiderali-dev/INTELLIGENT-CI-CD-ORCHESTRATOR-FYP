@@ -3,7 +3,8 @@ import { CircleAlert } from "lucide-react";
 import { useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 
-import { failureOf, type ConversationDetail } from "@/api/assistantApi";
+import type { ConversationDetail } from "@/api/assistantApi";
+import { failureOf } from "@/api/request";
 import { failureMessage } from "@/api/errors";
 import { ASSISTANTS, type AssistantKind } from "@/workspace/assistants";
 import { keys, useAssistantApi } from "@/workspace/assistantApiContext";

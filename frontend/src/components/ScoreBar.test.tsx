@@ -123,6 +123,24 @@ describe("ScoreBar", () => {
     }
   });
 
+  it("grows its data from 0 only when asked, and never its scale marks", () => {
+    const { container, rerender } = render(
+      <ScoreBar score={0.82} parts={TEST_JOB} weights={WEIGHTS} grow />,
+    );
+
+    const growing = container.querySelector<HTMLElement>("[data-grow]");
+    expect(growing).toHaveClass("animate-[score-grow_240ms_ease-out]", "origin-left");
+    expect(growing?.querySelectorAll("[data-factor]")).toHaveLength(4);
+    expect(growing?.querySelector('[data-mark="inherited"]')).not.toBeNull();
+    expect(growing?.querySelector('[data-mark="ceiling"]')).toBeNull();
+
+    // A live update jumps straight to the new value.
+    rerender(<ScoreBar score={0.82} parts={TEST_JOB} weights={WEIGHTS} />);
+
+    expect(container.querySelector("[data-grow]")).toBeNull();
+    expect(container.querySelector('[class*="score-grow"]')).toBeNull();
+  });
+
   it("shows the same words as a tooltip on keyboard focus", async () => {
     const user = userEvent.setup();
     render(<ScoreBar score={0.82} parts={TEST_JOB} weights={WEIGHTS} />);

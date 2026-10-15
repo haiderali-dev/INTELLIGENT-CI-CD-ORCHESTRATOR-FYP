@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatDuration, formatScore, ordinal } from "./format";
+import { formatDuration, formatScore, formatTimeOfDay, ordinal } from "./format";
 
 describe("format", () => {
   it("prints scores with three decimals, as Appendix C does", () => {
@@ -32,5 +32,10 @@ describe("format", () => {
     expect(formatDuration(120_000)).toBe("2m 00s");
     expect(formatDuration(3_900_000)).toBe("1h 05m");
     expect(formatDuration(-5)).toBe("0s");
+  });
+
+  it("prints a time of day on the 24-hour clock, padded", () => {
+    expect(formatTimeOfDay(new Date(2026, 9, 16, 9, 5, 7))).toBe("09:05:07");
+    expect(formatTimeOfDay(new Date(2026, 9, 16, 23, 59, 59))).toBe("23:59:59");
   });
 });

@@ -30,12 +30,16 @@ export function ScoreBar({
   parts,
   weights,
   size = "row",
+  grow = false,
   className,
 }: {
   score: number;
   parts: ScoreComponents;
   weights: ScoreWeights;
   size?: ScoreBarSize;
+  /** Grow from 0 as the bar appears, in 240 ms (DESIGN.md section 6). Only the queue's first load
+   * asks for it; a live update jumps straight to the new value. */
+  grow?: boolean;
   className?: string;
 }) {
   const shares = contributions(parts, weights);
@@ -70,7 +74,7 @@ export function ScoreBar({
                   size === "row" ? "h-3 w-40" : "h-4 w-full max-w-[480px]",
                 )}
               >
-                <Bar shares={shares} score={score} inherited={inherited} />
+                <Bar shares={shares} score={score} inherited={inherited} grow={grow} />
               </span>
             </Tooltip.Trigger>
             <Tooltip.Portal>
@@ -102,10 +106,12 @@ function Bar({
   shares,
   score,
   inherited,
+  grow,
 }: {
   shares: Contributions;
   score: number;
   inherited: boolean;
+  grow: boolean;
 }) {
   const drawn = segments(shares);
   return (
@@ -116,33 +122,38 @@ function Bar({
         className="absolute top-1/2 right-0 h-px -translate-y-1/2 bg-rule"
         style={{ left: `${endPercent(shares)}%` }}
       />
-      {drawn.map(({ key, fill, startPercent, widthPercent, last }) => (
-        <span
-          key={key}
-          aria-hidden="true"
-          data-factor={key}
-          className={cn("absolute inset-y-0", fill, last && "rounded-r-data")}
-          style={{
-            left: `${startPercent}%`,
-            // A 2px gap of the surface between segments, never a stroke; a sliver is drawn at 2px.
-            width: last ? `max(2px, ${widthPercent}%)` : `max(2px, calc(${widthPercent}% - 2px))`,
-          }}
-        />
-      ))}
+      {/* The data, which alone grows; the scale's marks stay where they are. */}
+      <span
+        aria-hidden="true"
+        data-grow={grow ? "" : undefined}
+        className={cn("absolute inset-0 origin-left", grow && "animate-[score-grow_240ms_ease-out]")}
+      >
+        {drawn.map(({ key, fill, startPercent, widthPercent, last }) => (
+          <span
+            key={key}
+            data-factor={key}
+            className={cn("absolute inset-y-0", fill, last && "rounded-r-data")}
+            style={{
+              left: `${startPercent}%`,
+              // A 2px gap of the surface between segments, never a stroke; a sliver is drawn at 2px.
+              width: last ? `max(2px, ${widthPercent}%)` : `max(2px, calc(${widthPercent}% - 2px))`,
+            }}
+          />
+        ))}
+        {inherited ? (
+          <span
+            data-mark="inherited"
+            className="absolute -inset-y-1 w-[2px] -translate-x-1/2 bg-ink"
+            style={{ left: `${percentOfScale(score)}%` }}
+          />
+        ) : null}
+      </span>
       <span
         aria-hidden="true"
         data-mark="ceiling"
         className="absolute -inset-y-0.5 w-px bg-graphite"
         style={{ left: `${percentOfScale(1)}%` }}
       />
-      {inherited ? (
-        <span
-          aria-hidden="true"
-          data-mark="inherited"
-          className="absolute -inset-y-1 w-[2px] -translate-x-1/2 bg-ink"
-          style={{ left: `${percentOfScale(score)}%` }}
-        />
-      ) : null}
     </>
   );
 }

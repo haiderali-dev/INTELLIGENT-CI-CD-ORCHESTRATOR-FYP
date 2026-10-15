@@ -7,6 +7,7 @@ import { RequireSession } from "@/auth/RequireSession";
 import { AssistantPage } from "@/pages/AssistantPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { PlaceholderPage } from "@/pages/PlaceholderPage";
+import { QueuePage } from "@/pages/QueuePage";
 import { SignInPage } from "@/pages/SignInPage";
 import type { AssistantKind } from "@/workspace/assistants";
 
@@ -20,6 +21,9 @@ function routeFor(item: (typeof NAV_ITEMS)[number]): RouteObject {
   if (assistant) {
     // The open chat is in the address, so a reload or a shared link keeps it (T6.5).
     return { path: `${item.to}/:chatId?`, element: <AssistantPage assistant={assistant} /> };
+  }
+  if (item.to === "/queue") {
+    return { path: item.to, element: <QueuePage item={item} /> };
   }
   return { path: item.to, element: <PlaceholderPage item={item} /> };
 }

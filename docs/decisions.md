@@ -11,6 +11,55 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 6
 
+### D-060 The Queue page shows the plugin's ranking as reported, and asks again every 10 seconds
+**Date:** 2026-10-16 · **Status:** accepted (T6.6)
+
+**It polls as well as listening.** The page asks for `GET /api/queue` again on `queue.changed`,
+`run.queued`, `run.started` and `run.finished`, and every 10 seconds while the tab is visible. The
+events come from the backend's tracker, so they cover only runs the backend started. A build queued
+any other way changes the queue without an event, and so does time: every wait grows, and so does
+its aging. `src/api/queryClient.ts` still polls nothing by default; this one query sets its own
+interval, which React Query pauses in a hidden tab.
+
+**What each row shows, from what the plugin really sends.**
+- **The blocked reason is Jenkins' own, shown verbatim.** Every ranked item is buildable, so its
+  reason is an executor wait ("Waiting for next available executor on 'linux'", "Executor slot
+  already in use"). It is in Graphite, because every waiting job has one.
+- **A job held by the dependency gate never reaches the ranking.** `DependencyGate` blocks in
+  `canRun`, so Jenkins keeps the item among its blocked items, and the ranking lists only buildable
+  ones (`DynamicQueueApi`). DESIGN.md's Queue sketch has a row reading "Waits for
+  fs-payment-service-build". The real page cannot show such a row. Recorded under Phase 6's open
+  items.
+- **`unresolved_dependencies` names upstream jobs that do not exist.** The gate reports them and
+  never waits on them (`DependencyGate.unresolvedUpstream`). The page shows them under the job's
+  name, "Upstream job not found: ...", as a mistake in configuration rather than a reason to wait.
+- **Unscored items are listed below the ranking**, under "Waiting without a score", with the
+  plugin's reason. The header's "N waiting" is the plugin's `queueLength`, which counts them.
+- **The type is the plugin's Jenkins class in words:** FreeStyleProject is Freestyle, WorkflowJob
+  is Pipeline and MavenModuleSet is Maven. Any other class is shown as sent.
+- **Estimates and waits.** An estimate under half a second reads "Under 1s" rather than "0s", and
+  a missing one reads "No history". A wait is in seconds for its first minute, then in whole
+  minutes, because aging moves in five-minute steps.
+
+**Show the numbers** adds four columns: "From urgency", "From dependency", "From execution time" and
+"From aging". "Urgency" already names the level's column. At 1440 px, the table with these columns
+is wider than its box, so it scrolls inside the box, never the page. Job names never break, and the
+default view keeps each row on one 40 px line.
+
+**The bars grow once.** `ScoreBar` takes `grow`, which the page passes for 300 ms after its first
+ranking arrives.
+- **What moves:** the segments and the inherited tick grow from 0 in 240 ms with ease-out. The 1.0
+  tick and the empty track stay still, a live update jumps straight to the new value, and the
+  global reduced-motion rule stops it.
+- **Checked in headless Chrome:** `score-grow` ran for 0.24 s with ease-out, no bar was still
+  growing a second later, and under reduced motion it ran for 0.01 ms.
+
+**Shared request handling.** `answer`, `ApiRequestError` and `failureOf` moved from `assistantApi.ts`
+to `src/api/request.ts`, so the queue's request and T6.7's share them. The queue's types come from
+the client's return types, as D-059 does for the assistants.
+
+---
+
 ### D-059 The assistant pages read only typed fields, from what the client returns
 **Date:** 2026-10-16 · **Status:** accepted (T6.5)
 

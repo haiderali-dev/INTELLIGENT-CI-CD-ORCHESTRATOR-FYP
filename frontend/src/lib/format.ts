@@ -25,6 +25,13 @@ export function ordinal(n: number): string {
   }
 }
 
+/** "14:02:31": a time of day on the 24-hour clock, in the browser's own time zone. */
+export function formatTimeOfDay(date: Date): string {
+  return [date.getHours(), date.getMinutes(), date.getSeconds()]
+    .map((part) => String(part).padStart(2, "0"))
+    .join(":");
+}
+
 /** "40s", "1m 20s", "2m 00s", "1h 05m": seconds are padded once there are minutes, so a column of
  * durations lines up. */
 export function formatDuration(milliseconds: number): string {

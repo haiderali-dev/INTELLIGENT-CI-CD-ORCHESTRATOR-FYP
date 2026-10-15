@@ -4,11 +4,13 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { assistantApi } from "@/api/assistantApi";
 import { createApiClient, getAccessToken } from "@/api/client";
+import { queueApi } from "@/api/queueApi";
 import { routes } from "@/app/routes";
 import { ThemeProvider } from "@/app/theme/ThemeProvider";
 import type { Session } from "@/auth/session";
 import { SessionProvider } from "@/auth/SessionProvider";
 import { ToastProvider } from "@/components/toast/ToastProvider";
+import { QueueApiContext } from "@/queue/queueApiContext";
 import { AssistantApiContext } from "@/workspace/assistantApiContext";
 import { LiveEventsClient } from "@/ws/LiveEventsClient";
 import { LiveEventsProvider } from "@/ws/LiveEventsProvider";
@@ -33,17 +35,19 @@ export function renderRoutes(path: string, session: Session, backend = new FakeB
     topics: ["runs", "queue"],
     createSocket: (url) => new FakeSocket(url),
   });
-  const api = assistantApi(createApiClient({ baseUrl: BASE_URL, fetch: backend.fetch }));
+  const client = createApiClient({ baseUrl: BASE_URL, fetch: backend.fetch });
 
   const view = render(
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <LiveEventsProvider client={liveEvents}>
           <SessionProvider session={session} liveEvents={liveEvents} queryClient={queryClient}>
-            <AssistantApiContext value={api}>
-              <ToastProvider>
-                <RouterProvider router={router} />
-              </ToastProvider>
+            <AssistantApiContext value={assistantApi(client)}>
+              <QueueApiContext value={queueApi(client)}>
+                <ToastProvider>
+                  <RouterProvider router={router} />
+                </ToastProvider>
+              </QueueApiContext>
             </AssistantApiContext>
           </SessionProvider>
         </LiveEventsProvider>

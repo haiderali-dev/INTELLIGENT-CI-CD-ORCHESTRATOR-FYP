@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleAlert } from "lucide-react";
 
 import { failureMessage } from "@/api/errors";
-import { failureOf, type Command, type Service } from "@/api/assistantApi";
+import type { Command, Service } from "@/api/assistantApi";
+import { failureOf } from "@/api/request";
 import type { components } from "@/api/schema";
 
 import { keys, useAssistantApi } from "./assistantApiContext";

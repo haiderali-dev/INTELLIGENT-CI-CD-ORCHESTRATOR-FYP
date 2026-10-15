@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { failureOf, type RunCardData } from "@/api/assistantApi";
+import type { RunCardData } from "@/api/assistantApi";
+import { failureOf } from "@/api/request";
 import { failureMessage } from "@/api/errors";
 
 import { keys, useAssistantApi } from "./assistantApiContext";

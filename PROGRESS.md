@@ -1,6 +1,6 @@
 # Progress
 
-Updated: 2026-10-16 · Current phase: 6 (T6.1 approved; T6.2 to T6.5 done; T6.6 next) ·
+Updated: 2026-10-16 · Current phase: 6 (T6.1 approved; T6.2 to T6.6 done; T6.7 next) ·
 Branch: phase-6-frontend
 
 ## Needs human
@@ -930,7 +930,7 @@ Preparation, 2026-10-11, after PR #9 merged. Still **no task checked off**.
 ## Phase 6: Frontend
 
 In progress on `phase-6-frontend`, branched from `main` at `8da58b9`. T6.1 is done and was
-approved on 2026-10-15; T6.2 to T6.5 are done; T6.6 next.
+approved on 2026-10-15; T6.2 to T6.6 are done; T6.7 next.
 
 - [x] T6.1 Write `frontend/DESIGN.md` using the process in Part 4.7.2, then stop and add "Approve
       DESIGN.md" under Needs human. Build no screens before approval. Work on T6.2
@@ -1185,7 +1185,62 @@ approved on 2026-10-15; T6.2 to T6.5 are done; T6.6 next.
           machine runs this gate with little to spare.
         - **What took the memory:** Docker's VM grows as the end-to-end builds run, and Chrome
           and VS Code held about 3 GB between them. The pagefile is 1.86 GB.
-- [ ] T6.6 Queue page with score bars.
+- [x] T6.6 Queue page with score bars. Evidence, all run on 2026-10-16:
+      - **The page** (`src/pages/QueuePage.tsx`) is the plugin's live ranking:
+        - one row per waiting job, giving rank, job, type, urgency, score bar, estimate, wait and
+          blocked reason, as 4.7.3 lists;
+        - the header says how many are waiting, whether the optimizer is on ("Optimizer off:
+          Jenkins' own order" when it is not), and whether live events are arriving;
+        - a key to the bar's colours, and a Show the numbers switch that adds each contribution
+          as a column;
+        - a table from 768 px, and below that one stacked block per job, with the bar on its own
+          line and labelled facts.
+      - **What the plugin sends, shown as sent (D-060):**
+        - the blocked reason verbatim;
+        - a missing upstream job under the job's name;
+        - unscored items listed as "Waiting without a score" and counted in the waiting total;
+        - "Ranking unavailable" with the backend's reason, never an empty bar.
+        - An empty queue invites a build through either assistant.
+        - A failed load says why and offers Try again. A failed refresh keeps the last ranking
+          and says from when.
+      - **Live:** it asks again on `queue.changed`, `run.queued`, `run.started` and
+        `run.finished`, and every 10 seconds, because the events cover only runs the backend
+        started, and waits and aging grow between them (D-060). The bars grow once on first load
+        and jump on a live update.
+      - **Tests** run on 6 real `GET /api/queue` responses (`src/test/fixtures/queue.ts`).
+        - **What they are:** the three rankings recorded from the live plugin
+          (`backend/tests/data/plugin/`), each passed through the backend's own parser and
+          endpoint in its test configuration. Three more: the same ranking with the optimizer off,
+          an empty queue, and the plugin unreadable, with the real HTTP client's reason for a 404.
+        - **The tests:** 14 for the page, 6 for the queue model, and one each for the score bar's
+          growth and the time format.
+        - **They catch breakage:** three mutations of the page each failed the test meant for
+          them, and the file was restored byte for byte. The three were: no 10-second refresh, no
+          live events, and bars that always grow.
+      - **Checks:** `npm run lint`, `typecheck` and `build` are clean, and `npm run test` passed
+        228 with no warning. `verify.py`'s four Phase 6 checks, run directly, all passed,
+        including "228 tests passed" and "openapi.json is the backend's schema (39 paths)".
+      - **Seen in a real browser:** headless Chrome, driven over its DevTools protocol. It loaded
+        the built app from a throwaway server in the session's scratch folder, which answered
+        sign-in and served the captured queue responses.
+        - **Twelve screenshots** at 1440, 1024, 390 and 360 px, light and dark, covering every
+          state. No page scrolled sideways, no console error was logged, and the live status
+          reached Live.
+        - **Faults found and fixed:**
+          - with the numbers shown, job names broke at every hyphen into rows 140 px tall;
+          - the table's first column sat 12 px off the page's 24 px gutter;
+          - fixing that wrapped the blocked reason at 1440 px, until inner padding went from 12
+            to 8 px.
+        - **The growth, measured in Chrome:** `score-grow` ran for 0.24 s with ease-out, no bar
+          was still growing a second later, and under reduced motion it ran for 0.01 ms.
+        - The screenshots were not committed; T6.9 makes the real ones.
+      - **The build:** the main chunk is 697 kB, against 683 kB before T6.6. The over-500 kB
+        warning that predates T6.6 is still there.
+      - **Not done:**
+        - **Not seen against the running stack.** Signing in there needs the seeded admin
+          password, which is in `.env`.
+        - **The running backend container is still the old image,** from before D-057. Against it,
+          this page would draw every bar empty beside the right score. It was not rebuilt.
 - [ ] T6.7 Jobs and runs, Analytics, Service catalog, Admin and Overview pages.
 - [ ] T6.8 Vitest unit tests and Playwright flows (Part 4.7.6), run against the backend in fake
       mode.
@@ -1206,6 +1261,21 @@ Found in T6.3, for T6.7's Admin page:
   password reset needs a backend endpoint.
 - **The Admin entry is shown to every role.** The backend refuses non-admins, so this is not a
   hole. But a sidebar entry that ends in a refusal is a dead end.
+
+Found in T6.6 (D-060):
+- **The Queue page cannot show a job held for its upstream.** `DependencyGate` blocks in
+  `canRun`, so Jenkins keeps the held item among its blocked items. The plugin's ranking lists only
+  buildable items, so the held job is neither ranked nor listed as unscored, and the page cannot say
+  why it waits. DESIGN.md's Queue sketch has such a row ("Waits for fs-payment-service-build"). To
+  show it, the plugin's API would have to list blocked items with their reason, a Phase 2 change.
+- **A lone waiting job can show as unscored, or with an old score.** The sorter scores nothing when
+  the optimizer is off or fewer than two items are buildable. `DynamicQueueSorter` returns early in
+  both cases, and nothing else writes the heap. The ranking's wait is computed when it is asked
+  for, but the score and the aging come from the last sort. With one job waiting, the page can show
+  it as "Not scored by the optimizer", or show an aging bonus older than its wait. The run card's
+  score comes from the same heap.
+- **The sidebar's System theme button runs 13 px past the 240 px sidebar,** seen in Chrome at
+  1440 px. This is T6.2's shell, for T6.9's review.
 
 Found in T6.5:
 - **The backend can return a reply before the message it answers.** `list_messages` orders by
@@ -1422,3 +1492,7 @@ Details in `docs/decisions.md`.
   (D-059). Found: the backend can order a reply before its message. Next: T6.6.
 - 2026-10-16 `verify.py --phase 6` printed ALL CHECKS PASSED, 75 of 75, on `f43f0db`. The first
   attempt had been stopped for low memory. CI run 38792947715 passed all five jobs. Next: T6.6.
+- 2026-10-16 T6.6 done: the Queue page, tested against 6 real queue responses, with 228 frontend
+  tests and the four Phase 6 checks passing when run directly, and seen in headless Chrome at four
+  widths in both themes (D-060). Found: a job held for its upstream never reaches the ranking, and a
+  lone waiting job can go unscored. Next: T6.7.
