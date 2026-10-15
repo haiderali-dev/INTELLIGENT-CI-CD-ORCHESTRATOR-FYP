@@ -1180,9 +1180,33 @@ Found in T6.4, to settle before T6.5 and T6.6 show real scores:
       - **Not done:** the running backend container still has the old parser until its image
         is rebuilt (`docker compose build backend`). Nothing reads `/api/queue` from the stack
         until T6.5 and T6.6.
-- **T6.5 needs the assistant payloads typed in the API schema first (D-056).** Message
-  `payload`, the command `record`, and pipeline `progress` and `validation` are untyped
-  dictionaries.
+- [x] **T6.5 needed the assistant payloads typed in the API schema first (D-056).** Done on
+      2026-10-15 (D-058).
+      - **Inspected:** every producer:
+        - `ParseOutcome.to_record`;
+        - `describe`, the `/help` shortcut and the status, rerun and cancel handlers in
+          `conversations.py`;
+        - the pipeline and approval messages, `_progress` and `ValidationReport.to_record` in
+          the generation code;
+        - `run_card` and `cancel` in `chains.py`.
+      - **Typed** in `backend/app/api/payloads.py`:
+        - the message payload as a union of 11 reply models (`help` and `run` each have two
+          producers);
+        - the intent record, using the parser's own `Intent`;
+        - the progress line and the validation report;
+        - the run card the status reply carries, and the cancel result.
+        - They are used by `MessageResponse`, `CommandResponse`, `PipelineResponse`,
+          `GET /api/chains/{id}` and its cancel. The shapes stay flat, as stored.
+      - **Checked:**
+        - `test_payloads.py` runs real flows through the API, reads back everything stored, and
+          requires each item to dump back unchanged and all 11 kinds to appear. Removing one
+          field from a model fails it.
+        - The 146 API tests that produce these shapes pass through the typed responses.
+        - Backend: ruff, format and mypy clean, offline suite 1658 passed.
+        - The frontend's `IntentFields`, `ProgressStep` and `ValidationCheck` are now the
+          generated types. Lint, typecheck and build are clean, and 180 tests pass.
+      - **Not proven:** the stack's database held no messages, commands or pipelines (0 rows),
+        so no older stored row could be checked.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
@@ -1322,3 +1346,6 @@ Details in `docs/decisions.md`.
 - 2026-10-15 The ranking parser fix (D-057): the plugin's real names, three live responses
   recorded as fixtures, and `own_score` and `unscored_items` in `/api/queue`. Next: type the
   assistant payloads (D-056), then T6.5.
+- 2026-10-15 The assistant payloads are typed in the OpenAPI schema (D-058): message payloads,
+  the intent record, the progress line, the validation report and the run card. Each was checked
+  against what real flows store. Next: T6.5.

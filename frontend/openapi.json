@@ -1,6 +1,20 @@
 {
   "components": {
     "schemas": {
+      "Action": {
+        "enum": [
+          "BUILD",
+          "TEST",
+          "DEPLOY",
+          "BUILD_TEST_DEPLOY",
+          "STATUS",
+          "RERUN",
+          "CANCEL",
+          "UNSUPPORTED"
+        ],
+        "title": "Action",
+        "type": "string"
+      },
       "AdminUserResponse": {
         "properties": {
           "active": {
@@ -62,6 +76,67 @@
           "result"
         ],
         "title": "ApprovalResponse",
+        "type": "object"
+      },
+      "ApprovedRunReply": {
+        "description": "Approve and run started a chain (``generation.approve``).",
+        "properties": {
+          "approved_at": {
+            "title": "Approved At",
+            "type": "string"
+          },
+          "chain_id": {
+            "title": "Chain Id",
+            "type": "string"
+          },
+          "first_job": {
+            "title": "First Job",
+            "type": "string"
+          },
+          "jobs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Jobs",
+            "type": "array"
+          },
+          "kind": {
+            "const": "run",
+            "title": "Kind",
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Parameters",
+            "type": "object"
+          },
+          "pipeline_id": {
+            "title": "Pipeline Id",
+            "type": "string"
+          },
+          "priority": {
+            "title": "Priority",
+            "type": "string"
+          },
+          "queue_item_id": {
+            "title": "Queue Item Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind",
+          "pipeline_id",
+          "chain_id",
+          "first_job",
+          "queue_item_id",
+          "jobs",
+          "parameters",
+          "priority",
+          "approved_at"
+        ],
+        "title": "ApprovedRunReply",
         "type": "object"
       },
       "AuditEntryResponse": {
@@ -196,6 +271,177 @@
         "title": "BranchListResponse",
         "type": "object"
       },
+      "CancelReply": {
+        "description": "A cancel request: what it stopped, or ``chain: null`` when nothing was running.",
+        "properties": {
+          "ai_fallback": {
+            "description": "True when the rule parser answered instead of the model",
+            "title": "Ai Fallback",
+            "type": "boolean"
+          },
+          "behavior": {
+            "enum": [
+              "GENERATE",
+              "CLARIFY",
+              "REFUSE"
+            ],
+            "title": "Behavior",
+            "type": "string"
+          },
+          "cached": {
+            "title": "Cached",
+            "type": "boolean"
+          },
+          "chain": {
+            "title": "Chain",
+            "type": "null"
+          },
+          "chain_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chain Id"
+          },
+          "command_id": {
+            "title": "Command Id",
+            "type": "string"
+          },
+          "dequeued": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dequeued"
+          },
+          "disposition": {
+            "$ref": "#/components/schemas/Disposition"
+          },
+          "fallback_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fallback Reasons",
+            "type": "array"
+          },
+          "help": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HelpCardRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "injection_suspected": {
+            "title": "Injection Suspected",
+            "type": "boolean"
+          },
+          "intent": {
+            "$ref": "#/components/schemas/Intent"
+          },
+          "kind": {
+            "const": "cancel",
+            "title": "Kind",
+            "type": "string"
+          },
+          "model_intent": {
+            "$ref": "#/components/schemas/Intent"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "policy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "prompt_version": {
+            "title": "Prompt Version",
+            "type": "string"
+          },
+          "question": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClarificationRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resolved": {
+            "$ref": "#/components/schemas/ResolvedRecord"
+          },
+          "stopped": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stopped"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "intent",
+          "model_intent",
+          "disposition",
+          "behavior",
+          "ai_fallback",
+          "fallback_reasons",
+          "cached",
+          "prompt_version",
+          "notes",
+          "warnings",
+          "question",
+          "help",
+          "policy",
+          "resolved",
+          "injection_suspected",
+          "command_id",
+          "kind",
+          "chain",
+          "chain_id",
+          "dequeued",
+          "stopped"
+        ],
+        "title": "CancelReply",
+        "type": "object"
+      },
       "CancelResponse": {
         "properties": {
           "action": {
@@ -218,6 +464,38 @@
           "action"
         ],
         "title": "CancelResponse",
+        "type": "object"
+      },
+      "CancelResult": {
+        "description": "``chains.cancel()``: what cancelling a chain stopped.",
+        "properties": {
+          "chain_id": {
+            "title": "Chain Id",
+            "type": "string"
+          },
+          "dequeued": {
+            "description": "Queued jobs taken off the queue",
+            "items": {
+              "type": "string"
+            },
+            "title": "Dequeued",
+            "type": "array"
+          },
+          "stopped": {
+            "description": "Running builds stopped, as name#number",
+            "items": {
+              "type": "string"
+            },
+            "title": "Stopped",
+            "type": "array"
+          }
+        },
+        "required": [
+          "chain_id",
+          "dequeued",
+          "stopped"
+        ],
+        "title": "CancelResult",
         "type": "object"
       },
       "ChainPage": {
@@ -335,6 +613,41 @@
         "title": "ChainSummary",
         "type": "object"
       },
+      "ClarificationRecord": {
+        "description": "The question the assistant needs answered (``Clarification``, app/ai/clarify.py).",
+        "properties": {
+          "field": {
+            "description": "The intent field the answer fills, such as service",
+            "title": "Field",
+            "type": "string"
+          },
+          "free_text": {
+            "description": "True when the answer is words, not a choice",
+            "title": "Free Text",
+            "type": "boolean"
+          },
+          "options": {
+            "description": "Answers to offer as buttons; typing still works",
+            "items": {
+              "type": "string"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "question",
+          "options",
+          "free_text"
+        ],
+        "title": "ClarificationRecord",
+        "type": "object"
+      },
       "CommandResponse": {
         "properties": {
           "clarification_rounds": {
@@ -360,13 +673,12 @@
           "disposition": {
             "anyOf": [
               {
-                "type": "string"
+                "$ref": "#/components/schemas/Disposition"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Disposition"
+            ]
           },
           "id": {
             "title": "Id",
@@ -392,14 +704,18 @@
             "type": "string"
           },
           "record": {
-            "additionalProperties": true,
-            "description": "The intent card: intent, question, policy, resolved",
-            "title": "Record",
-            "type": "object"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IntentRecord"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The intent card: intent, question, policy, resolved (D-058). Every command the parser stores has one; null only for a row stored without."
           },
           "status": {
-            "title": "Status",
-            "type": "string"
+            "$ref": "#/components/schemas/CommandStatus"
           }
         },
         "required": [
@@ -416,6 +732,17 @@
         ],
         "title": "CommandResponse",
         "type": "object"
+      },
+      "CommandStatus": {
+        "enum": [
+          "PARSED",
+          "NEEDS_CLARIFICATION",
+          "CONFIRMED",
+          "REFUSED",
+          "UNSUPPORTED"
+        ],
+        "title": "CommandStatus",
+        "type": "string"
       },
       "ComponentHealth": {
         "properties": {
@@ -596,6 +923,18 @@
         ],
         "title": "CreateUserRequest",
         "type": "object"
+      },
+      "Disposition": {
+        "enum": [
+          "READY",
+          "NEEDS_CLARIFICATION",
+          "NEEDS_JUSTIFICATION",
+          "REFUSED",
+          "UNSUPPORTED",
+          "HELP"
+        ],
+        "title": "Disposition",
+        "type": "string"
       },
       "ErrorBody": {
         "description": "The inside of every error response. ``code`` is the field to switch on.",
@@ -959,6 +1298,16 @@
         "title": "ExperimentResponse",
         "type": "object"
       },
+      "ExtraStage": {
+        "enum": [
+          "lint",
+          "security_scan",
+          "integration_tests",
+          "smoke_test"
+        ],
+        "title": "ExtraStage",
+        "type": "string"
+      },
       "FailureFacts": {
         "description": "What code found in the log. The explanation may word it; it never decides it.",
         "properties": {
@@ -1199,6 +1548,47 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "HelpCardRecord": {
+        "description": "What the assistant can do (``HelpCard``, app/ai/clarify.py).",
+        "properties": {
+          "lines": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Lines",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "lines"
+        ],
+        "title": "HelpCardRecord",
+        "type": "object"
+      },
+      "HelpReply": {
+        "description": "``/help``, answered with the help card and nothing parsed.",
+        "properties": {
+          "help": {
+            "$ref": "#/components/schemas/HelpCardRecord"
+          },
+          "kind": {
+            "const": "help",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "help"
+        ],
+        "title": "HelpReply",
+        "type": "object"
+      },
       "IngestResponse": {
         "description": "What happened, in the body rather than the status code.\n\n``applied`` and ``parked`` are reported so the plugin's own logs and the experiment harness can\ntell \"stored\" from \"accepted but matched nothing\", which a 200 alone cannot express.",
         "properties": {
@@ -1226,6 +1616,120 @@
           "accepted"
         ],
         "title": "IngestResponse",
+        "type": "object"
+      },
+      "Intent": {
+        "additionalProperties": false,
+        "description": "One parsed CI/CD request.\n\nFrozen: an intent is a record of what was understood. A change -- a policy downgrade, a user's\nedit on the intent card -- is a new intent, so the original stays available to explain itself.",
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/Action"
+          },
+          "branch": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Branch"
+          },
+          "commit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Commit"
+          },
+          "confidence": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "environment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TargetEnvironment"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "extra_stages": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ExtraStage"
+            },
+            "title": "Extra Stages",
+            "type": "array"
+          },
+          "justification": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Justification"
+          },
+          "service": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service"
+          },
+          "test_suite": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Test Suite"
+          },
+          "urgency": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Urgency"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "action",
+          "service",
+          "branch",
+          "commit",
+          "environment",
+          "test_suite",
+          "urgency",
+          "extra_stages",
+          "justification",
+          "confidence"
+        ],
+        "title": "Intent",
         "type": "object"
       },
       "IntentEdit": {
@@ -1325,6 +1829,243 @@
           }
         },
         "title": "IntentEdit",
+        "type": "object"
+      },
+      "IntentRecord": {
+        "description": "``ParseOutcome.to_record()``: the intent and how it was reached.\n\nStored as ``nl_commands.parsed_intent``, and spread into the reply's payload. ``intent`` is what\nto act on, after answers and the policy; ``model_intent`` is what the parser itself produced.",
+        "properties": {
+          "ai_fallback": {
+            "description": "True when the rule parser answered instead of the model",
+            "title": "Ai Fallback",
+            "type": "boolean"
+          },
+          "behavior": {
+            "enum": [
+              "GENERATE",
+              "CLARIFY",
+              "REFUSE"
+            ],
+            "title": "Behavior",
+            "type": "string"
+          },
+          "cached": {
+            "title": "Cached",
+            "type": "boolean"
+          },
+          "disposition": {
+            "$ref": "#/components/schemas/Disposition"
+          },
+          "fallback_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fallback Reasons",
+            "type": "array"
+          },
+          "help": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HelpCardRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "injection_suspected": {
+            "title": "Injection Suspected",
+            "type": "boolean"
+          },
+          "intent": {
+            "$ref": "#/components/schemas/Intent"
+          },
+          "model_intent": {
+            "$ref": "#/components/schemas/Intent"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "policy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "prompt_version": {
+            "title": "Prompt Version",
+            "type": "string"
+          },
+          "question": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClarificationRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resolved": {
+            "$ref": "#/components/schemas/ResolvedRecord"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "intent",
+          "model_intent",
+          "disposition",
+          "behavior",
+          "ai_fallback",
+          "fallback_reasons",
+          "cached",
+          "prompt_version",
+          "notes",
+          "warnings",
+          "question",
+          "help",
+          "policy",
+          "resolved",
+          "injection_suspected"
+        ],
+        "title": "IntentRecord",
+        "type": "object"
+      },
+      "IntentReply": {
+        "description": "Understood, and ready to generate or act on.",
+        "properties": {
+          "ai_fallback": {
+            "description": "True when the rule parser answered instead of the model",
+            "title": "Ai Fallback",
+            "type": "boolean"
+          },
+          "behavior": {
+            "enum": [
+              "GENERATE",
+              "CLARIFY",
+              "REFUSE"
+            ],
+            "title": "Behavior",
+            "type": "string"
+          },
+          "cached": {
+            "title": "Cached",
+            "type": "boolean"
+          },
+          "command_id": {
+            "title": "Command Id",
+            "type": "string"
+          },
+          "disposition": {
+            "$ref": "#/components/schemas/Disposition"
+          },
+          "fallback_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fallback Reasons",
+            "type": "array"
+          },
+          "help": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HelpCardRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "injection_suspected": {
+            "title": "Injection Suspected",
+            "type": "boolean"
+          },
+          "intent": {
+            "$ref": "#/components/schemas/Intent"
+          },
+          "kind": {
+            "const": "intent",
+            "title": "Kind",
+            "type": "string"
+          },
+          "model_intent": {
+            "$ref": "#/components/schemas/Intent"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "policy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "prompt_version": {
+            "title": "Prompt Version",
+            "type": "string"
+          },
+          "question": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClarificationRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resolved": {
+            "$ref": "#/components/schemas/ResolvedRecord"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "intent",
+          "model_intent",
+          "disposition",
+          "behavior",
+          "ai_fallback",
+          "fallback_reasons",
+          "cached",
+          "prompt_version",
+          "notes",
+          "warnings",
+          "question",
+          "help",
+          "policy",
+          "resolved",
+          "injection_suspected",
+          "command_id",
+          "kind"
+        ],
+        "title": "IntentReply",
         "type": "object"
       },
       "JobPage": {
@@ -1610,18 +2351,51 @@
           "payload": {
             "anyOf": [
               {
-                "additionalProperties": true,
-                "type": "object"
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/IntentReply"
+                  },
+                  {
+                    "$ref": "#/components/schemas/QuestionReply"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RefusalReply"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ParsedHelpReply"
+                  },
+                  {
+                    "$ref": "#/components/schemas/HelpReply"
+                  },
+                  {
+                    "$ref": "#/components/schemas/StatusReply"
+                  },
+                  {
+                    "$ref": "#/components/schemas/NothingToRerunReply"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RerunStartedReply"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ApprovedRunReply"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CancelReply"
+                  },
+                  {
+                    "$ref": "#/components/schemas/PipelineReply"
+                  }
+                ]
               },
               {
                 "type": "null"
               }
             ],
+            "description": "What the reply carries for the UI, by kind (D-058); null on your own messages",
             "title": "Payload"
           },
           "role": {
-            "title": "Role",
-            "type": "string"
+            "$ref": "#/components/schemas/MessageRole"
           }
         },
         "required": [
@@ -1633,6 +2407,14 @@
         ],
         "title": "MessageResponse",
         "type": "object"
+      },
+      "MessageRole": {
+        "enum": [
+          "USER",
+          "ASSISTANT"
+        ],
+        "title": "MessageRole",
+        "type": "string"
       },
       "MetricBatchRequest": {
         "properties": {
@@ -1716,6 +2498,288 @@
           "sample_size"
         ],
         "title": "MetricResponse",
+        "type": "object"
+      },
+      "NothingToRerunReply": {
+        "description": "A re-run was asked for, but no test job had failed.",
+        "properties": {
+          "ai_fallback": {
+            "description": "True when the rule parser answered instead of the model",
+            "title": "Ai Fallback",
+            "type": "boolean"
+          },
+          "behavior": {
+            "enum": [
+              "GENERATE",
+              "CLARIFY",
+              "REFUSE"
+            ],
+            "title": "Behavior",
+            "type": "string"
+          },
+          "cached": {
+            "title": "Cached",
+            "type": "boolean"
+          },
+          "chain": {
+            "title": "Chain",
+            "type": "null"
+          },
+          "command_id": {
+            "title": "Command Id",
+            "type": "string"
+          },
+          "disposition": {
+            "$ref": "#/components/schemas/Disposition"
+          },
+          "fallback_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fallback Reasons",
+            "type": "array"
+          },
+          "help": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HelpCardRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "injection_suspected": {
+            "title": "Injection Suspected",
+            "type": "boolean"
+          },
+          "intent": {
+            "$ref": "#/components/schemas/Intent"
+          },
+          "kind": {
+            "const": "rerun",
+            "title": "Kind",
+            "type": "string"
+          },
+          "model_intent": {
+            "$ref": "#/components/schemas/Intent"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "policy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "prompt_version": {
+            "title": "Prompt Version",
+            "type": "string"
+          },
+          "question": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClarificationRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resolved": {
+            "$ref": "#/components/schemas/ResolvedRecord"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "intent",
+          "model_intent",
+          "disposition",
+          "behavior",
+          "ai_fallback",
+          "fallback_reasons",
+          "cached",
+          "prompt_version",
+          "notes",
+          "warnings",
+          "question",
+          "help",
+          "policy",
+          "resolved",
+          "injection_suspected",
+          "command_id",
+          "kind",
+          "chain"
+        ],
+        "title": "NothingToRerunReply",
+        "type": "object"
+      },
+      "ParsedHelpReply": {
+        "description": "The parser decided the message asked for help.",
+        "properties": {
+          "ai_fallback": {
+            "description": "True when the rule parser answered instead of the model",
+            "title": "Ai Fallback",
+            "type": "boolean"
+          },
+          "behavior": {
+            "enum": [
+              "GENERATE",
+              "CLARIFY",
+              "REFUSE"
+            ],
+            "title": "Behavior",
+            "type": "string"
+          },
+          "cached": {
+            "title": "Cached",
+            "type": "boolean"
+          },
+          "command_id": {
+            "title": "Command Id",
+            "type": "string"
+          },
+          "disposition": {
+            "$ref": "#/components/schemas/Disposition"
+          },
+          "fallback_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fallback Reasons",
+            "type": "array"
+          },
+          "help": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HelpCardRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "injection_suspected": {
+            "title": "Injection Suspected",
+            "type": "boolean"
+          },
+          "intent": {
+            "$ref": "#/components/schemas/Intent"
+          },
+          "kind": {
+            "const": "help",
+            "title": "Kind",
+            "type": "string"
+          },
+          "model_intent": {
+            "$ref": "#/components/schemas/Intent"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "policy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "prompt_version": {
+            "title": "Prompt Version",
+            "type": "string"
+          },
+          "question": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClarificationRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resolved": {
+            "$ref": "#/components/schemas/ResolvedRecord"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "intent",
+          "model_intent",
+          "disposition",
+          "behavior",
+          "ai_fallback",
+          "fallback_reasons",
+          "cached",
+          "prompt_version",
+          "notes",
+          "warnings",
+          "question",
+          "help",
+          "policy",
+          "resolved",
+          "injection_suspected",
+          "command_id",
+          "kind"
+        ],
+        "title": "ParsedHelpReply",
+        "type": "object"
+      },
+      "PipelineReply": {
+        "description": "A plan was generated and validated, or not (``generation._store``).",
+        "properties": {
+          "kind": {
+            "const": "pipeline",
+            "title": "Kind",
+            "type": "string"
+          },
+          "pipeline_id": {
+            "title": "Pipeline Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "VALIDATED",
+              "INVALID"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "pipeline_id",
+          "status"
+        ],
+        "title": "PipelineReply",
         "type": "object"
       },
       "PipelineResponse": {
@@ -1823,9 +2887,9 @@
             "title": "Plan"
           },
           "progress": {
+            "description": "4.7.4's progress line: the steps reached, a failed one last (D-058)",
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/ProgressStep"
             },
             "title": "Progress",
             "type": "array"
@@ -1853,15 +2917,13 @@
           "validation": {
             "anyOf": [
               {
-                "additionalProperties": true,
-                "type": "object"
+                "$ref": "#/components/schemas/ValidationReportRecord"
               },
               {
                 "type": "null"
               }
             ],
-            "description": "The checklist (4.6.3), in order",
-            "title": "Validation"
+            "description": "The checklist (4.6.3), in order; null when nothing was rendered to check"
           }
         },
         "required": [
@@ -1886,6 +2948,70 @@
           "created_at"
         ],
         "title": "PipelineResponse",
+        "type": "object"
+      },
+      "PolicyOutcome": {
+        "enum": [
+          "ALLOW",
+          "ALLOW_WITH_CHANGES",
+          "NEEDS_JUSTIFICATION",
+          "REFUSE"
+        ],
+        "title": "PolicyOutcome",
+        "type": "string"
+      },
+      "PolicyReasonRecord": {
+        "description": "One rule's verdict: a code to switch on and a sentence to show (``PolicyReason``).",
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "PolicyReasonRecord",
+        "type": "object"
+      },
+      "PolicyRecord": {
+        "description": "The policy's decision on the intent (``PolicyDecision``, app/ai/policy.py).",
+        "properties": {
+          "can_cancel_running": {
+            "description": "An Admin may cancel the running chain and go ahead (4.5.5)",
+            "title": "Can Cancel Running",
+            "type": "boolean"
+          },
+          "flags": {
+            "description": "Shown in the preview without blocking anything",
+            "items": {
+              "type": "string"
+            },
+            "title": "Flags",
+            "type": "array"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/PolicyOutcome"
+          },
+          "reasons": {
+            "items": {
+              "$ref": "#/components/schemas/PolicyReasonRecord"
+            },
+            "title": "Reasons",
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "reasons",
+          "flags",
+          "can_cancel_running"
+        ],
+        "title": "PolicyRecord",
         "type": "object"
       },
       "PolicyResponse": {
@@ -1948,6 +3074,161 @@
           "admin"
         ],
         "title": "PolicyRule",
+        "type": "object"
+      },
+      "ProgressStep": {
+        "description": "One step of 4.7.4's progress line (``generation._progress``).",
+        "properties": {
+          "detail": {
+            "description": "How a step passed, or the exact error when it failed",
+            "title": "Detail",
+            "type": "string"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "step": {
+            "enum": [
+              "Understood",
+              "Planned",
+              "Rendered",
+              "Validated"
+            ],
+            "title": "Step",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step",
+          "ok",
+          "detail"
+        ],
+        "title": "ProgressStep",
+        "type": "object"
+      },
+      "QuestionReply": {
+        "description": "A question before the assistant can go on; the record's ``question`` holds it.",
+        "properties": {
+          "ai_fallback": {
+            "description": "True when the rule parser answered instead of the model",
+            "title": "Ai Fallback",
+            "type": "boolean"
+          },
+          "behavior": {
+            "enum": [
+              "GENERATE",
+              "CLARIFY",
+              "REFUSE"
+            ],
+            "title": "Behavior",
+            "type": "string"
+          },
+          "cached": {
+            "title": "Cached",
+            "type": "boolean"
+          },
+          "command_id": {
+            "title": "Command Id",
+            "type": "string"
+          },
+          "disposition": {
+            "$ref": "#/components/schemas/Disposition"
+          },
+          "fallback_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fallback Reasons",
+            "type": "array"
+          },
+          "help": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HelpCardRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "injection_suspected": {
+            "title": "Injection Suspected",
+            "type": "boolean"
+          },
+          "intent": {
+            "$ref": "#/components/schemas/Intent"
+          },
+          "kind": {
+            "const": "question",
+            "title": "Kind",
+            "type": "string"
+          },
+          "model_intent": {
+            "$ref": "#/components/schemas/Intent"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "policy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "prompt_version": {
+            "title": "Prompt Version",
+            "type": "string"
+          },
+          "question": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClarificationRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resolved": {
+            "$ref": "#/components/schemas/ResolvedRecord"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "intent",
+          "model_intent",
+          "disposition",
+          "behavior",
+          "ai_fallback",
+          "fallback_reasons",
+          "cached",
+          "prompt_version",
+          "notes",
+          "warnings",
+          "question",
+          "help",
+          "policy",
+          "resolved",
+          "injection_suspected",
+          "command_id",
+          "kind"
+        ],
+        "title": "QuestionReply",
         "type": "object"
       },
       "QueueItemResponse": {
@@ -2131,6 +3412,141 @@
         "title": "RefreshRequest",
         "type": "object"
       },
+      "RefusalReply": {
+        "description": "Refused. The record's ``policy`` says why; a run request refused while it was carried out\n(a lock, a permission, Jenkins down) also gives the ``error`` code.",
+        "properties": {
+          "ai_fallback": {
+            "description": "True when the rule parser answered instead of the model",
+            "title": "Ai Fallback",
+            "type": "boolean"
+          },
+          "behavior": {
+            "enum": [
+              "GENERATE",
+              "CLARIFY",
+              "REFUSE"
+            ],
+            "title": "Behavior",
+            "type": "string"
+          },
+          "cached": {
+            "title": "Cached",
+            "type": "boolean"
+          },
+          "command_id": {
+            "title": "Command Id",
+            "type": "string"
+          },
+          "disposition": {
+            "$ref": "#/components/schemas/Disposition"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorCode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fallback_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fallback Reasons",
+            "type": "array"
+          },
+          "help": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HelpCardRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "injection_suspected": {
+            "title": "Injection Suspected",
+            "type": "boolean"
+          },
+          "intent": {
+            "$ref": "#/components/schemas/Intent"
+          },
+          "kind": {
+            "const": "refusal",
+            "title": "Kind",
+            "type": "string"
+          },
+          "model_intent": {
+            "$ref": "#/components/schemas/Intent"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "policy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "prompt_version": {
+            "title": "Prompt Version",
+            "type": "string"
+          },
+          "question": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClarificationRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resolved": {
+            "$ref": "#/components/schemas/ResolvedRecord"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "intent",
+          "model_intent",
+          "disposition",
+          "behavior",
+          "ai_fallback",
+          "fallback_reasons",
+          "cached",
+          "prompt_version",
+          "notes",
+          "warnings",
+          "question",
+          "help",
+          "policy",
+          "resolved",
+          "injection_suspected",
+          "command_id",
+          "kind",
+          "error"
+        ],
+        "title": "RefusalReply",
+        "type": "object"
+      },
       "RegenerateRequest": {
         "properties": {
           "spec_yaml": {
@@ -2148,6 +3564,186 @@
           }
         },
         "title": "RegenerateRequest",
+        "type": "object"
+      },
+      "RerunStartedReply": {
+        "description": "A failed test job re-run as a new chain (``conversations._rerun``).",
+        "properties": {
+          "ai_fallback": {
+            "description": "True when the rule parser answered instead of the model",
+            "title": "Ai Fallback",
+            "type": "boolean"
+          },
+          "behavior": {
+            "enum": [
+              "GENERATE",
+              "CLARIFY",
+              "REFUSE"
+            ],
+            "title": "Behavior",
+            "type": "string"
+          },
+          "cached": {
+            "title": "Cached",
+            "type": "boolean"
+          },
+          "chain_id": {
+            "title": "Chain Id",
+            "type": "string"
+          },
+          "command_id": {
+            "title": "Command Id",
+            "type": "string"
+          },
+          "disposition": {
+            "$ref": "#/components/schemas/Disposition"
+          },
+          "fallback_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fallback Reasons",
+            "type": "array"
+          },
+          "first_job": {
+            "title": "First Job",
+            "type": "string"
+          },
+          "help": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HelpCardRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "injection_suspected": {
+            "title": "Injection Suspected",
+            "type": "boolean"
+          },
+          "intent": {
+            "$ref": "#/components/schemas/Intent"
+          },
+          "jobs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Jobs",
+            "type": "array"
+          },
+          "kind": {
+            "const": "run",
+            "title": "Kind",
+            "type": "string"
+          },
+          "model_intent": {
+            "$ref": "#/components/schemas/Intent"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "policy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "prompt_version": {
+            "title": "Prompt Version",
+            "type": "string"
+          },
+          "question": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClarificationRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "queue_item_id": {
+            "title": "Queue Item Id",
+            "type": "integer"
+          },
+          "resolved": {
+            "$ref": "#/components/schemas/ResolvedRecord"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "intent",
+          "model_intent",
+          "disposition",
+          "behavior",
+          "ai_fallback",
+          "fallback_reasons",
+          "cached",
+          "prompt_version",
+          "notes",
+          "warnings",
+          "question",
+          "help",
+          "policy",
+          "resolved",
+          "injection_suspected",
+          "command_id",
+          "kind",
+          "chain_id",
+          "first_job",
+          "queue_item_id",
+          "jobs"
+        ],
+        "title": "RerunStartedReply",
+        "type": "object"
+      },
+      "ResolvedRecord": {
+        "description": "The branch and commit the backend resolved in Git, when it did.",
+        "properties": {
+          "branch": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Branch"
+          },
+          "commit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Commit"
+          }
+        },
+        "required": [
+          "branch",
+          "commit"
+        ],
+        "title": "ResolvedRecord",
         "type": "object"
       },
       "ResyncResponse": {
@@ -2176,6 +3772,260 @@
         ],
         "title": "Role",
         "type": "string"
+      },
+      "RunCard": {
+        "description": "4.7.4's run card: each job's state and run, Pipeline stages, and the queue position.",
+        "properties": {
+          "duration_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Ms"
+          },
+          "failed_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The run Explain failure explains (T5.9)",
+            "title": "Failed Run Id"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "job_type": {
+            "title": "Job Type",
+            "type": "string"
+          },
+          "jobs": {
+            "items": {
+              "$ref": "#/components/schemas/RunCardJob"
+            },
+            "title": "Jobs",
+            "type": "array"
+          },
+          "lock_expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lock Expires At"
+          },
+          "parameters": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Parameters",
+            "type": "object"
+          },
+          "pipeline_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pipeline Id"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "queue": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunCardQueue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "service": {
+            "title": "Service",
+            "type": "string"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/StageView"
+            },
+            "title": "Stages",
+            "type": "array"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "enum": [
+              "RUNNING",
+              "SUCCESS",
+              "FAILURE",
+              "ABORTED",
+              "EXPIRED"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "pipeline_id",
+          "service",
+          "job_type",
+          "status",
+          "position",
+          "parameters",
+          "started_at",
+          "finished_at",
+          "lock_expires_at",
+          "duration_ms",
+          "jobs",
+          "stages",
+          "queue",
+          "failed_run_id"
+        ],
+        "title": "RunCard",
+        "type": "object"
+      },
+      "RunCardJob": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "state": {
+            "description": "The run's result in lower case, or queued, waiting or not_started",
+            "enum": [
+              "success",
+              "unstable",
+              "failure",
+              "aborted",
+              "not_built",
+              "running",
+              "queued",
+              "waiting",
+              "not_started"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "position",
+          "state",
+          "run"
+        ],
+        "title": "RunCardJob",
+        "type": "object"
+      },
+      "RunCardQueue": {
+        "description": "Where the chain's job waits: everything the run card's score bar draws.",
+        "properties": {
+          "components": {
+            "$ref": "#/components/schemas/ScoreComponentsResponse"
+          },
+          "job": {
+            "title": "Job",
+            "type": "string"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "rank": {
+            "title": "Rank",
+            "type": "integer"
+          },
+          "score": {
+            "title": "Score",
+            "type": "number"
+          },
+          "wait_seconds": {
+            "title": "Wait Seconds",
+            "type": "number"
+          },
+          "waiting_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Waiting Reason"
+          },
+          "weights": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "description": "The plugin's weights, as in /api/queue",
+            "title": "Weights",
+            "type": "object"
+          }
+        },
+        "required": [
+          "job",
+          "rank",
+          "score",
+          "level",
+          "components",
+          "weights",
+          "waiting_reason",
+          "wait_seconds"
+        ],
+        "title": "RunCardQueue",
+        "type": "object"
       },
       "RunFailureResponse": {
         "properties": {
@@ -2481,6 +4331,92 @@
         "title": "RunStatsResponse",
         "type": "object"
       },
+      "RunView": {
+        "description": "One job's run (``chains._run_view``).",
+        "properties": {
+          "build_number": {
+            "title": "Build Number",
+            "type": "integer"
+          },
+          "duration_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Ms"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "queue_wait_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue Wait Ms"
+          },
+          "result": {
+            "description": "SUCCESS, UNSTABLE, FAILURE, ABORTED, NOT_BUILT or RUNNING",
+            "title": "Result",
+            "type": "string"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The build's page, as Jenkins reports it",
+            "title": "Url"
+          }
+        },
+        "required": [
+          "id",
+          "build_number",
+          "result",
+          "started_at",
+          "finished_at",
+          "duration_ms",
+          "queue_wait_ms",
+          "url"
+        ],
+        "title": "RunView",
+        "type": "object"
+      },
       "ScoreComponentsResponse": {
         "description": "Algorithm 1 broken out, so the UI can explain a rank instead of only showing it.\n\nWhat the score bar draws (DESIGN.md section 6): each factor times its weight from\n``QueueResponse.weights``, then aging. ``own_score`` against the item's ``score`` shows\nwhether the score was inherited from its group.",
         "properties": {
@@ -2619,6 +4555,175 @@
         "title": "ServiceResponse",
         "type": "object"
       },
+      "StageView": {
+        "description": "One Pipeline stage, as Jenkins' stage view reports it (``chains._stage_view``).",
+        "properties": {
+          "duration_ms": {
+            "title": "Duration Ms",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "status",
+          "duration_ms"
+        ],
+        "title": "StageView",
+        "type": "object"
+      },
+      "StatusReply": {
+        "description": "\"What's the status of my last deploy?\": the newest chain's run card, as it was then.",
+        "properties": {
+          "ai_fallback": {
+            "description": "True when the rule parser answered instead of the model",
+            "title": "Ai Fallback",
+            "type": "boolean"
+          },
+          "behavior": {
+            "enum": [
+              "GENERATE",
+              "CLARIFY",
+              "REFUSE"
+            ],
+            "title": "Behavior",
+            "type": "string"
+          },
+          "cached": {
+            "title": "Cached",
+            "type": "boolean"
+          },
+          "chain": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunCard"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null when there is no run yet"
+          },
+          "command_id": {
+            "title": "Command Id",
+            "type": "string"
+          },
+          "disposition": {
+            "$ref": "#/components/schemas/Disposition"
+          },
+          "fallback_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fallback Reasons",
+            "type": "array"
+          },
+          "help": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HelpCardRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "injection_suspected": {
+            "title": "Injection Suspected",
+            "type": "boolean"
+          },
+          "intent": {
+            "$ref": "#/components/schemas/Intent"
+          },
+          "kind": {
+            "const": "status",
+            "title": "Kind",
+            "type": "string"
+          },
+          "model_intent": {
+            "$ref": "#/components/schemas/Intent"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "policy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "prompt_version": {
+            "title": "Prompt Version",
+            "type": "string"
+          },
+          "question": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClarificationRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resolved": {
+            "$ref": "#/components/schemas/ResolvedRecord"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "intent",
+          "model_intent",
+          "disposition",
+          "behavior",
+          "ai_fallback",
+          "fallback_reasons",
+          "cached",
+          "prompt_version",
+          "notes",
+          "warnings",
+          "question",
+          "help",
+          "policy",
+          "resolved",
+          "injection_suspected",
+          "command_id",
+          "kind",
+          "chain"
+        ],
+        "title": "StatusReply",
+        "type": "object"
+      },
+      "TargetEnvironment": {
+        "description": "Where a deploy goes.\n\n``production`` is a valid *parse* even though it is never a valid *deploy*. Appendix E says so\nexplicitly: \"If the user asks for production, still set environment to production and let the\npolicy layer refuse it. Never silently change it to staging.\" A parser that quietly rewrote it\nwould turn a refused request into an unrequested staging deploy.",
+        "enum": [
+          "staging",
+          "production"
+        ],
+        "title": "TargetEnvironment",
+        "type": "string"
+      },
       "TestSuiteResponse": {
         "properties": {
           "approx_seconds": {
@@ -2720,6 +4825,15 @@
         "title": "UpdateUserRequest",
         "type": "object"
       },
+      "Urgency": {
+        "enum": [
+          "HIGH",
+          "MEDIUM",
+          "LOW"
+        ],
+        "title": "Urgency",
+        "type": "string"
+      },
       "UserPage": {
         "properties": {
           "items": {
@@ -2776,6 +4890,80 @@
           "active"
         ],
         "title": "UserResponse",
+        "type": "object"
+      },
+      "ValidationCheck": {
+        "description": "One line of the 4.6.3 checklist (``Check.to_record``, app/generation/validate.py).",
+        "properties": {
+          "cause": {
+            "anyOf": [
+              {
+                "enum": [
+                  "plan",
+                  "input",
+                  "template"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What to fix: the plan, the user's input, or a template",
+            "title": "Cause"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "passed",
+              "warning",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "label",
+          "status",
+          "message",
+          "cause"
+        ],
+        "title": "ValidationCheck",
+        "type": "object"
+      },
+      "ValidationReportRecord": {
+        "description": "The checklist, in order (``ValidationReport.to_record``).",
+        "properties": {
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationCheck"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok",
+          "checks"
+        ],
+        "title": "ValidationReportRecord",
         "type": "object"
       }
     },
@@ -3797,9 +5985,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Get Chain Api Chains  Chain Id  Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/RunCard"
                 }
               }
             },
@@ -3856,9 +6042,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Cancel Chain Api Chains  Chain Id  Cancel Post",
-                  "type": "object"
+                  "$ref": "#/components/schemas/CancelResult"
                 }
               }
             },

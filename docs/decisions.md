@@ -11,6 +11,50 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 6
 
+### D-058 The assistant payloads are typed in the OpenAPI schema
+**Date:** 2026-10-15 · **Status:** accepted (before T6.5, settling D-056)
+
+**Problem.** D-056 found that the frontend could not read several things without hand-writing
+types, which 4.7.1 forbids. Message payloads, the intent record, and a pipeline's progress line and
+validation report were `dict[str, Any]` in the schema. So was the run card, which a status reply
+contains.
+
+**Decision.** Models in `backend/app/api/payloads.py` describe each one exactly as the backend
+writes it, and the responses use them:
+- **`MessageResponse.payload`** is a union of 11 reply models chosen by `kind`. Two kinds have two
+  producers each, so for them the shape also decides:
+  - `help` from `/help` carries only the help card, while the parser's help reply carries the
+    whole record;
+  - `run` from an approval carries `pipeline_id`, while a re-run carries the record.
+- **`CommandResponse.record`** is `IntentRecord` (`ParseOutcome.to_record()`). Its `intent` is the
+  parser's own `Intent` model, so the two cannot drift apart.
+- **`PipelineResponse.progress` and `.validation`** are `ProgressStep` and
+  `ValidationReportRecord`.
+- **`GET /api/chains/{id}` and its cancel** return `RunCard` and `CancelResult`.
+- **The shapes stay flat, as stored.** Stored rows and the existing tests read
+  `payload["question"]["field"]`.
+- **Every field a response always carries is marked required** in the schema
+  (`json_schema_serialization_defaults_required`), so the frontend's types do not call it
+  optional. Request schemas are unaffected.
+- **A run card stored in a status message before D-057** lacks `base_score`, `own_score` and
+  `weights`. It is read as not inherited and with no weights, so its bar says its parts cannot be
+  shown rather than drawing wrong ones.
+
+**How it is held.**
+- **`tests/test_payloads.py` runs real flows** through the API and the fake Jenkins: every reply
+  kind, a generated and approved pipeline, a failed test re-run, a status with a live run card,
+  and cancelling. It then reads back everything stored. Each item must validate into its model
+  and dump back unchanged, and every one of the 11 kinds must appear.
+- **Removing one field from a model fails it.**
+- **The 146 tests of the assistant, chain, generation, failure and router APIs** now pass
+  through the typed responses as well.
+
+**Not proven.** An audit of the stack's own database found no stored messages, commands or
+pipelines (0 rows), so no older row was checked. The intent record's fields have all existed since
+its first commit (T4.5), so older records have this shape.
+
+---
+
 ### D-057 The ranking parser reads the plugin's own names, tested against recorded responses
 **Date:** 2026-10-15 · **Status:** decided and applied (found in T6.4)
 
@@ -48,7 +92,8 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 ---
 
 ### D-056 The workspace components take what they show, not API payloads
-**Date:** 2026-10-15 · **Status:** accepted (T6.4)
+**Date:** 2026-10-15 · **Status:** accepted (T6.4). Its prerequisite for T6.5 was met by D-058,
+and the view types `IntentFields`, `ProgressStep` and `ValidationCheck` are now the generated ones.
 
 **Problem.** 4.7.1 says API types are generated from the OpenAPI schema and never hand-written.
 The workspace shows several things the schema does not describe. `MessageResponse.payload`,

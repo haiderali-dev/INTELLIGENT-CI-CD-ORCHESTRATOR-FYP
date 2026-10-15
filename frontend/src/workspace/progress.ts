@@ -1,21 +1,19 @@
-/** 4.7.4's progress line, in order. The backend sends the steps it reached (generation._progress). */
-export const PROGRESS_STEPS = ["Understood", "Planned", "Rendered", "Validated"] as const;
-export type ProgressStepName = (typeof PROGRESS_STEPS)[number];
+import type { components } from "@/api/schema";
 
-export interface ProgressStep {
-  step: ProgressStepName;
-  ok: boolean;
-  /** For a step that passed, how; for one that failed, the exact error. */
-  detail: string;
-}
+/** One step of 4.7.4's progress line, as the API sends it (D-058). */
+export type ProgressStep = components["schemas"]["ProgressStep"];
+export type ProgressStepName = ProgressStep["step"];
 
-/** One check from the validation checklist (4.6.3), in the backend's order. */
-export interface ValidationCheck {
-  name: string;
-  label: string;
-  status: "passed" | "warning" | "failed";
-  message: string | null;
-}
+/** One check from the validation checklist (4.6.3), as the API sends it (D-058). */
+export type ValidationCheck = components["schemas"]["ValidationCheck"];
+
+/** The line's order. The API sends only the steps it reached; the rest show as not reached. */
+export const PROGRESS_STEPS = [
+  "Understood",
+  "Planned",
+  "Rendered",
+  "Validated",
+] as const satisfies readonly ProgressStepName[];
 
 /** What a screen reader hears when the line changes: "Validated", or the step that failed and
  * why (DESIGN.md section 8). Empty until there is a result to give. */

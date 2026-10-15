@@ -64,13 +64,20 @@ describe("ValidationChecklist", () => {
     render(
       <ValidationChecklist
         checks={[
-          { name: "schema", label: "Spec schema", status: "passed", message: null },
-          { name: "catalog", label: "Catalog", status: "warning", message: "Branch is not the default." },
+          { name: "schema", label: "Spec schema", status: "passed", message: "", cause: null },
+          {
+            name: "catalog",
+            label: "Catalog",
+            status: "warning",
+            message: "Branch is not the default.",
+            cause: "input",
+          },
           {
             name: "production",
             label: "No production",
             status: "failed",
             message: "The spec names production. Staging is the only environment.",
+            cause: "input",
           },
         ]}
       />,

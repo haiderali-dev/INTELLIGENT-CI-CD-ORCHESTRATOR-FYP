@@ -785,6 +785,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * Action
+         * @enum {string}
+         */
+        Action: "BUILD" | "TEST" | "DEPLOY" | "BUILD_TEST_DEPLOY" | "STATUS" | "RERUN" | "CANCEL" | "UNSUPPORTED";
         /** AdminUserResponse */
         AdminUserResponse: {
             /** Active */
@@ -815,6 +820,35 @@ export interface components {
             };
             /** Status */
             status: string;
+        };
+        /**
+         * ApprovedRunReply
+         * @description Approve and run started a chain (``generation.approve``).
+         */
+        ApprovedRunReply: {
+            /** Approved At */
+            approved_at: string;
+            /** Chain Id */
+            chain_id: string;
+            /** First Job */
+            first_job: string;
+            /** Jobs */
+            jobs: string[];
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "run";
+            /** Parameters */
+            parameters: {
+                [key: string]: string;
+            };
+            /** Pipeline Id */
+            pipeline_id: string;
+            /** Priority */
+            priority: string;
+            /** Queue Item Id */
+            queue_item_id: number;
         };
         /** AuditEntryResponse */
         AuditEntryResponse: {
@@ -862,6 +896,56 @@ export interface components {
             /** Unavailable Reason */
             unavailable_reason?: string | null;
         };
+        /**
+         * CancelReply
+         * @description A cancel request: what it stopped, or ``chain: null`` when nothing was running.
+         */
+        CancelReply: {
+            /**
+             * Ai Fallback
+             * @description True when the rule parser answered instead of the model
+             */
+            ai_fallback: boolean;
+            /**
+             * Behavior
+             * @enum {string}
+             */
+            behavior: "GENERATE" | "CLARIFY" | "REFUSE";
+            /** Cached */
+            cached: boolean;
+            /** Chain */
+            chain: null;
+            /** Chain Id */
+            chain_id: string | null;
+            /** Command Id */
+            command_id: string;
+            /** Dequeued */
+            dequeued: string[] | null;
+            disposition: components["schemas"]["Disposition"];
+            /** Fallback Reasons */
+            fallback_reasons: string[];
+            help: components["schemas"]["HelpCardRecord"] | null;
+            /** Injection Suspected */
+            injection_suspected: boolean;
+            intent: components["schemas"]["Intent"];
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "cancel";
+            model_intent: components["schemas"]["Intent"];
+            /** Notes */
+            notes: string[];
+            policy: components["schemas"]["PolicyRecord"] | null;
+            /** Prompt Version */
+            prompt_version: string;
+            question: components["schemas"]["ClarificationRecord"] | null;
+            resolved: components["schemas"]["ResolvedRecord"];
+            /** Stopped */
+            stopped: string[] | null;
+            /** Warnings */
+            warnings: string[];
+        };
         /** CancelResponse */
         CancelResponse: {
             /**
@@ -873,6 +957,24 @@ export interface components {
             result: string;
             /** Run Id */
             run_id: string;
+        };
+        /**
+         * CancelResult
+         * @description ``chains.cancel()``: what cancelling a chain stopped.
+         */
+        CancelResult: {
+            /** Chain Id */
+            chain_id: string;
+            /**
+             * Dequeued
+             * @description Queued jobs taken off the queue
+             */
+            dequeued: string[];
+            /**
+             * Stopped
+             * @description Running builds stopped, as name#number
+             */
+            stopped: string[];
         };
         /** ChainPage */
         ChainPage: {
@@ -911,6 +1013,29 @@ export interface components {
             /** Status */
             status: string;
         };
+        /**
+         * ClarificationRecord
+         * @description The question the assistant needs answered (``Clarification``, app/ai/clarify.py).
+         */
+        ClarificationRecord: {
+            /**
+             * Field
+             * @description The intent field the answer fills, such as service
+             */
+            field: string;
+            /**
+             * Free Text
+             * @description True when the answer is words, not a choice
+             */
+            free_text: boolean;
+            /**
+             * Options
+             * @description Answers to offer as buttons; typing still works
+             */
+            options: string[];
+            /** Question */
+            question: string;
+        };
         /** CommandResponse */
         CommandResponse: {
             /** Clarification Rounds */
@@ -922,8 +1047,7 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
-            /** Disposition */
-            disposition: string | null;
+            disposition: components["schemas"]["Disposition"] | null;
             /** Id */
             id: string;
             /** Model */
@@ -932,16 +1056,15 @@ export interface components {
             parser: string;
             /** Raw Text */
             raw_text: string;
-            /**
-             * Record
-             * @description The intent card: intent, question, policy, resolved
-             */
-            record: {
-                [key: string]: unknown;
-            };
-            /** Status */
-            status: string;
+            /** @description The intent card: intent, question, policy, resolved (D-058). Every command the parser stores has one; null only for a row stored without. */
+            record: components["schemas"]["IntentRecord"] | null;
+            status: components["schemas"]["CommandStatus"];
         };
+        /**
+         * CommandStatus
+         * @enum {string}
+         */
+        CommandStatus: "PARSED" | "NEEDS_CLARIFICATION" | "CONFIRMED" | "REFUSED" | "UNSUPPORTED";
         /** ComponentHealth */
         ComponentHealth: {
             /** Detail */
@@ -1019,6 +1142,11 @@ export interface components {
             /** @default DEVELOPER */
             role: components["schemas"]["Role"];
         };
+        /**
+         * Disposition
+         * @enum {string}
+         */
+        Disposition: "READY" | "NEEDS_CLARIFICATION" | "NEEDS_JUSTIFICATION" | "REFUSED" | "UNSUPPORTED" | "HELP";
         /**
          * ErrorBody
          * @description The inside of every error response. ``code`` is the field to switch on.
@@ -1146,6 +1274,11 @@ export interface components {
             workload_hash: string | null;
         };
         /**
+         * ExtraStage
+         * @enum {string}
+         */
+        ExtraStage: "lint" | "security_scan" | "integration_tests" | "smoke_test";
+        /**
          * FailureFacts
          * @description What code found in the log. The explanation may word it; it never decides it.
          */
@@ -1233,6 +1366,28 @@ export interface components {
             version: string;
         };
         /**
+         * HelpCardRecord
+         * @description What the assistant can do (``HelpCard``, app/ai/clarify.py).
+         */
+        HelpCardRecord: {
+            /** Lines */
+            lines: string[];
+            /** Title */
+            title: string;
+        };
+        /**
+         * HelpReply
+         * @description ``/help``, answered with the help card and nothing parsed.
+         */
+        HelpReply: {
+            help: components["schemas"]["HelpCardRecord"];
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "help";
+        };
+        /**
          * IngestResponse
          * @description What happened, in the body rather than the status code.
          *
@@ -1259,6 +1414,38 @@ export interface components {
             parked: number;
         };
         /**
+         * Intent
+         * @description One parsed CI/CD request.
+         *
+         *     Frozen: an intent is a record of what was understood. A change -- a policy downgrade, a user's
+         *     edit on the intent card -- is a new intent, so the original stays available to explain itself.
+         */
+        Intent: {
+            action: components["schemas"]["Action"];
+            /** Branch */
+            branch: string | null;
+            /** Commit */
+            commit: string | null;
+            /**
+             * Confidence
+             * @default 0
+             */
+            confidence: number;
+            environment: components["schemas"]["TargetEnvironment"] | null;
+            /**
+             * Extra Stages
+             * @default []
+             */
+            extra_stages: components["schemas"]["ExtraStage"][];
+            /** Justification */
+            justification: string | null;
+            /** Service */
+            service: string | null;
+            /** Test Suite */
+            test_suite: string | null;
+            urgency: components["schemas"]["Urgency"] | null;
+        };
+        /**
          * IntentEdit
          * @description Fields the intent card may change. Values are checked against the catalog afterwards.
          *
@@ -1282,6 +1469,86 @@ export interface components {
             test_suite?: string | null;
             /** Urgency */
             urgency?: string | null;
+        };
+        /**
+         * IntentRecord
+         * @description ``ParseOutcome.to_record()``: the intent and how it was reached.
+         *
+         *     Stored as ``nl_commands.parsed_intent``, and spread into the reply's payload. ``intent`` is what
+         *     to act on, after answers and the policy; ``model_intent`` is what the parser itself produced.
+         */
+        IntentRecord: {
+            /**
+             * Ai Fallback
+             * @description True when the rule parser answered instead of the model
+             */
+            ai_fallback: boolean;
+            /**
+             * Behavior
+             * @enum {string}
+             */
+            behavior: "GENERATE" | "CLARIFY" | "REFUSE";
+            /** Cached */
+            cached: boolean;
+            disposition: components["schemas"]["Disposition"];
+            /** Fallback Reasons */
+            fallback_reasons: string[];
+            help: components["schemas"]["HelpCardRecord"] | null;
+            /** Injection Suspected */
+            injection_suspected: boolean;
+            intent: components["schemas"]["Intent"];
+            model_intent: components["schemas"]["Intent"];
+            /** Notes */
+            notes: string[];
+            policy: components["schemas"]["PolicyRecord"] | null;
+            /** Prompt Version */
+            prompt_version: string;
+            question: components["schemas"]["ClarificationRecord"] | null;
+            resolved: components["schemas"]["ResolvedRecord"];
+            /** Warnings */
+            warnings: string[];
+        };
+        /**
+         * IntentReply
+         * @description Understood, and ready to generate or act on.
+         */
+        IntentReply: {
+            /**
+             * Ai Fallback
+             * @description True when the rule parser answered instead of the model
+             */
+            ai_fallback: boolean;
+            /**
+             * Behavior
+             * @enum {string}
+             */
+            behavior: "GENERATE" | "CLARIFY" | "REFUSE";
+            /** Cached */
+            cached: boolean;
+            /** Command Id */
+            command_id: string;
+            disposition: components["schemas"]["Disposition"];
+            /** Fallback Reasons */
+            fallback_reasons: string[];
+            help: components["schemas"]["HelpCardRecord"] | null;
+            /** Injection Suspected */
+            injection_suspected: boolean;
+            intent: components["schemas"]["Intent"];
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "intent";
+            model_intent: components["schemas"]["Intent"];
+            /** Notes */
+            notes: string[];
+            policy: components["schemas"]["PolicyRecord"] | null;
+            /** Prompt Version */
+            prompt_version: string;
+            question: components["schemas"]["ClarificationRecord"] | null;
+            resolved: components["schemas"]["ResolvedRecord"];
+            /** Warnings */
+            warnings: string[];
         };
         /** JobPage */
         JobPage: {
@@ -1390,13 +1657,18 @@ export interface components {
             created_at: string;
             /** Id */
             id: string;
-            /** Payload */
-            payload: {
-                [key: string]: unknown;
-            } | null;
-            /** Role */
-            role: string;
+            /**
+             * Payload
+             * @description What the reply carries for the UI, by kind (D-058); null on your own messages
+             */
+            payload: (components["schemas"]["IntentReply"] | components["schemas"]["QuestionReply"] | components["schemas"]["RefusalReply"] | components["schemas"]["ParsedHelpReply"] | components["schemas"]["HelpReply"] | components["schemas"]["StatusReply"] | components["schemas"]["NothingToRerunReply"] | components["schemas"]["RerunStartedReply"] | components["schemas"]["ApprovedRunReply"] | components["schemas"]["CancelReply"] | components["schemas"]["PipelineReply"]) | null;
+            role: components["schemas"]["MessageRole"];
         };
+        /**
+         * MessageRole
+         * @enum {string}
+         */
+        MessageRole: "USER" | "ASSISTANT";
         /** MetricBatchRequest */
         MetricBatchRequest: {
             /** Events */
@@ -1435,6 +1707,110 @@ export interface components {
             unit: string;
             /** Value */
             value: number;
+        };
+        /**
+         * NothingToRerunReply
+         * @description A re-run was asked for, but no test job had failed.
+         */
+        NothingToRerunReply: {
+            /**
+             * Ai Fallback
+             * @description True when the rule parser answered instead of the model
+             */
+            ai_fallback: boolean;
+            /**
+             * Behavior
+             * @enum {string}
+             */
+            behavior: "GENERATE" | "CLARIFY" | "REFUSE";
+            /** Cached */
+            cached: boolean;
+            /** Chain */
+            chain: null;
+            /** Command Id */
+            command_id: string;
+            disposition: components["schemas"]["Disposition"];
+            /** Fallback Reasons */
+            fallback_reasons: string[];
+            help: components["schemas"]["HelpCardRecord"] | null;
+            /** Injection Suspected */
+            injection_suspected: boolean;
+            intent: components["schemas"]["Intent"];
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "rerun";
+            model_intent: components["schemas"]["Intent"];
+            /** Notes */
+            notes: string[];
+            policy: components["schemas"]["PolicyRecord"] | null;
+            /** Prompt Version */
+            prompt_version: string;
+            question: components["schemas"]["ClarificationRecord"] | null;
+            resolved: components["schemas"]["ResolvedRecord"];
+            /** Warnings */
+            warnings: string[];
+        };
+        /**
+         * ParsedHelpReply
+         * @description The parser decided the message asked for help.
+         */
+        ParsedHelpReply: {
+            /**
+             * Ai Fallback
+             * @description True when the rule parser answered instead of the model
+             */
+            ai_fallback: boolean;
+            /**
+             * Behavior
+             * @enum {string}
+             */
+            behavior: "GENERATE" | "CLARIFY" | "REFUSE";
+            /** Cached */
+            cached: boolean;
+            /** Command Id */
+            command_id: string;
+            disposition: components["schemas"]["Disposition"];
+            /** Fallback Reasons */
+            fallback_reasons: string[];
+            help: components["schemas"]["HelpCardRecord"] | null;
+            /** Injection Suspected */
+            injection_suspected: boolean;
+            intent: components["schemas"]["Intent"];
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "help";
+            model_intent: components["schemas"]["Intent"];
+            /** Notes */
+            notes: string[];
+            policy: components["schemas"]["PolicyRecord"] | null;
+            /** Prompt Version */
+            prompt_version: string;
+            question: components["schemas"]["ClarificationRecord"] | null;
+            resolved: components["schemas"]["ResolvedRecord"];
+            /** Warnings */
+            warnings: string[];
+        };
+        /**
+         * PipelineReply
+         * @description A plan was generated and validated, or not (``generation._store``).
+         */
+        PipelineReply: {
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "pipeline";
+            /** Pipeline Id */
+            pipeline_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "VALIDATED" | "INVALID";
         };
         /** PipelineResponse */
         PipelineResponse: {
@@ -1478,10 +1854,11 @@ export interface components {
             plan: {
                 [key: string]: unknown;
             } | null;
-            /** Progress */
-            progress: {
-                [key: string]: unknown;
-            }[];
+            /**
+             * Progress
+             * @description 4.7.4's progress line: the steps reached, a failed one last (D-058)
+             */
+            progress: components["schemas"]["ProgressStep"][];
             /** Spec Yaml */
             spec_yaml: string;
             /** Status */
@@ -1491,13 +1868,41 @@ export interface components {
              * @description What approving will do, for the approval dialog
              */
             summary: string | null;
+            /** @description The checklist (4.6.3), in order; null when nothing was rendered to check */
+            validation: components["schemas"]["ValidationReportRecord"] | null;
+        };
+        /**
+         * PolicyOutcome
+         * @enum {string}
+         */
+        PolicyOutcome: "ALLOW" | "ALLOW_WITH_CHANGES" | "NEEDS_JUSTIFICATION" | "REFUSE";
+        /**
+         * PolicyReasonRecord
+         * @description One rule's verdict: a code to switch on and a sentence to show (``PolicyReason``).
+         */
+        PolicyReasonRecord: {
+            code: components["schemas"]["ErrorCode"];
+            /** Message */
+            message: string;
+        };
+        /**
+         * PolicyRecord
+         * @description The policy's decision on the intent (``PolicyDecision``, app/ai/policy.py).
+         */
+        PolicyRecord: {
             /**
-             * Validation
-             * @description The checklist (4.6.3), in order
+             * Can Cancel Running
+             * @description An Admin may cancel the running chain and go ahead (4.5.5)
              */
-            validation: {
-                [key: string]: unknown;
-            } | null;
+            can_cancel_running: boolean;
+            /**
+             * Flags
+             * @description Shown in the preview without blocking anything
+             */
+            flags: string[];
+            outcome: components["schemas"]["PolicyOutcome"];
+            /** Reasons */
+            reasons: components["schemas"]["PolicyReasonRecord"][];
         };
         /**
          * PolicyResponse
@@ -1531,6 +1936,66 @@ export interface components {
             devops: string;
             /** Rule */
             rule: string;
+        };
+        /**
+         * ProgressStep
+         * @description One step of 4.7.4's progress line (``generation._progress``).
+         */
+        ProgressStep: {
+            /**
+             * Detail
+             * @description How a step passed, or the exact error when it failed
+             */
+            detail: string;
+            /** Ok */
+            ok: boolean;
+            /**
+             * Step
+             * @enum {string}
+             */
+            step: "Understood" | "Planned" | "Rendered" | "Validated";
+        };
+        /**
+         * QuestionReply
+         * @description A question before the assistant can go on; the record's ``question`` holds it.
+         */
+        QuestionReply: {
+            /**
+             * Ai Fallback
+             * @description True when the rule parser answered instead of the model
+             */
+            ai_fallback: boolean;
+            /**
+             * Behavior
+             * @enum {string}
+             */
+            behavior: "GENERATE" | "CLARIFY" | "REFUSE";
+            /** Cached */
+            cached: boolean;
+            /** Command Id */
+            command_id: string;
+            disposition: components["schemas"]["Disposition"];
+            /** Fallback Reasons */
+            fallback_reasons: string[];
+            help: components["schemas"]["HelpCardRecord"] | null;
+            /** Injection Suspected */
+            injection_suspected: boolean;
+            intent: components["schemas"]["Intent"];
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "question";
+            model_intent: components["schemas"]["Intent"];
+            /** Notes */
+            notes: string[];
+            policy: components["schemas"]["PolicyRecord"] | null;
+            /** Prompt Version */
+            prompt_version: string;
+            question: components["schemas"]["ClarificationRecord"] | null;
+            resolved: components["schemas"]["ResolvedRecord"];
+            /** Warnings */
+            warnings: string[];
         };
         /** QueueItemResponse */
         QueueItemResponse: {
@@ -1599,6 +2064,50 @@ export interface components {
             /** Refresh Token */
             refresh_token: string;
         };
+        /**
+         * RefusalReply
+         * @description Refused. The record's ``policy`` says why; a run request refused while it was carried out
+         *     (a lock, a permission, Jenkins down) also gives the ``error`` code.
+         */
+        RefusalReply: {
+            /**
+             * Ai Fallback
+             * @description True when the rule parser answered instead of the model
+             */
+            ai_fallback: boolean;
+            /**
+             * Behavior
+             * @enum {string}
+             */
+            behavior: "GENERATE" | "CLARIFY" | "REFUSE";
+            /** Cached */
+            cached: boolean;
+            /** Command Id */
+            command_id: string;
+            disposition: components["schemas"]["Disposition"];
+            error: components["schemas"]["ErrorCode"] | null;
+            /** Fallback Reasons */
+            fallback_reasons: string[];
+            help: components["schemas"]["HelpCardRecord"] | null;
+            /** Injection Suspected */
+            injection_suspected: boolean;
+            intent: components["schemas"]["Intent"];
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "refusal";
+            model_intent: components["schemas"]["Intent"];
+            /** Notes */
+            notes: string[];
+            policy: components["schemas"]["PolicyRecord"] | null;
+            /** Prompt Version */
+            prompt_version: string;
+            question: components["schemas"]["ClarificationRecord"] | null;
+            resolved: components["schemas"]["ResolvedRecord"];
+            /** Warnings */
+            warnings: string[];
+        };
         /** RegenerateRequest */
         RegenerateRequest: {
             /**
@@ -1606,6 +2115,66 @@ export interface components {
              * @description An edited spec to validate and render. Omit to plan again.
              */
             spec_yaml?: string | null;
+        };
+        /**
+         * RerunStartedReply
+         * @description A failed test job re-run as a new chain (``conversations._rerun``).
+         */
+        RerunStartedReply: {
+            /**
+             * Ai Fallback
+             * @description True when the rule parser answered instead of the model
+             */
+            ai_fallback: boolean;
+            /**
+             * Behavior
+             * @enum {string}
+             */
+            behavior: "GENERATE" | "CLARIFY" | "REFUSE";
+            /** Cached */
+            cached: boolean;
+            /** Chain Id */
+            chain_id: string;
+            /** Command Id */
+            command_id: string;
+            disposition: components["schemas"]["Disposition"];
+            /** Fallback Reasons */
+            fallback_reasons: string[];
+            /** First Job */
+            first_job: string;
+            help: components["schemas"]["HelpCardRecord"] | null;
+            /** Injection Suspected */
+            injection_suspected: boolean;
+            intent: components["schemas"]["Intent"];
+            /** Jobs */
+            jobs: string[];
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "run";
+            model_intent: components["schemas"]["Intent"];
+            /** Notes */
+            notes: string[];
+            policy: components["schemas"]["PolicyRecord"] | null;
+            /** Prompt Version */
+            prompt_version: string;
+            question: components["schemas"]["ClarificationRecord"] | null;
+            /** Queue Item Id */
+            queue_item_id: number;
+            resolved: components["schemas"]["ResolvedRecord"];
+            /** Warnings */
+            warnings: string[];
+        };
+        /**
+         * ResolvedRecord
+         * @description The branch and commit the backend resolved in Git, when it did.
+         */
+        ResolvedRecord: {
+            /** Branch */
+            branch: string | null;
+            /** Commit */
+            commit: string | null;
         };
         /** ResyncResponse */
         ResyncResponse: {
@@ -1619,6 +2188,89 @@ export interface components {
          * @enum {string}
          */
         Role: "DEVELOPER" | "DEVOPS" | "ADMIN";
+        /**
+         * RunCard
+         * @description 4.7.4's run card: each job's state and run, Pipeline stages, and the queue position.
+         */
+        RunCard: {
+            /** Duration Ms */
+            duration_ms: number | null;
+            /**
+             * Failed Run Id
+             * @description The run Explain failure explains (T5.9)
+             */
+            failed_run_id: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /** Id */
+            id: string;
+            /** Job Type */
+            job_type: string;
+            /** Jobs */
+            jobs: components["schemas"]["RunCardJob"][];
+            /** Lock Expires At */
+            lock_expires_at: string | null;
+            /** Parameters */
+            parameters: {
+                [key: string]: string;
+            };
+            /** Pipeline Id */
+            pipeline_id: string | null;
+            /** Position */
+            position: number;
+            queue: components["schemas"]["RunCardQueue"] | null;
+            /** Service */
+            service: string;
+            /** Stages */
+            stages: components["schemas"]["StageView"][];
+            /** Started At */
+            started_at: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "RUNNING" | "SUCCESS" | "FAILURE" | "ABORTED" | "EXPIRED";
+        };
+        /** RunCardJob */
+        RunCardJob: {
+            /** Name */
+            name: string;
+            /** Position */
+            position: number;
+            run: components["schemas"]["RunView"] | null;
+            /**
+             * State
+             * @description The run's result in lower case, or queued, waiting or not_started
+             * @enum {string}
+             */
+            state: "success" | "unstable" | "failure" | "aborted" | "not_built" | "running" | "queued" | "waiting" | "not_started";
+        };
+        /**
+         * RunCardQueue
+         * @description Where the chain's job waits: everything the run card's score bar draws.
+         */
+        RunCardQueue: {
+            components: components["schemas"]["ScoreComponentsResponse"];
+            /** Job */
+            job: string;
+            /** Level */
+            level: string;
+            /** Rank */
+            rank: number;
+            /** Score */
+            score: number;
+            /** Wait Seconds */
+            wait_seconds: number;
+            /** Waiting Reason */
+            waiting_reason: string | null;
+            /**
+             * Weights
+             * @description The plugin's weights, as in /api/queue
+             */
+            weights: {
+                [key: string]: number;
+            };
+        };
         /** RunFailureResponse */
         RunFailureResponse: {
             /** Build Number */
@@ -1708,6 +2360,34 @@ export interface components {
             total_runs: number;
         };
         /**
+         * RunView
+         * @description One job's run (``chains._run_view``).
+         */
+        RunView: {
+            /** Build Number */
+            build_number: number;
+            /** Duration Ms */
+            duration_ms: number | null;
+            /** Finished At */
+            finished_at: string | null;
+            /** Id */
+            id: string;
+            /** Queue Wait Ms */
+            queue_wait_ms: number | null;
+            /**
+             * Result
+             * @description SUCCESS, UNSTABLE, FAILURE, ABORTED, NOT_BUILT or RUNNING
+             */
+            result: string;
+            /** Started At */
+            started_at: string | null;
+            /**
+             * Url
+             * @description The build's page, as Jenkins reports it
+             */
+            url: string | null;
+        };
+        /**
          * ScoreComponentsResponse
          * @description Algorithm 1 broken out, so the UI can explain a rank instead of only showing it.
          *
@@ -1782,6 +2462,73 @@ export interface components {
             /** Test Suites */
             test_suites: components["schemas"]["TestSuiteResponse"][];
         };
+        /**
+         * StageView
+         * @description One Pipeline stage, as Jenkins' stage view reports it (``chains._stage_view``).
+         */
+        StageView: {
+            /** Duration Ms */
+            duration_ms: number;
+            /** Name */
+            name: string;
+            /** Status */
+            status: string;
+        };
+        /**
+         * StatusReply
+         * @description "What's the status of my last deploy?": the newest chain's run card, as it was then.
+         */
+        StatusReply: {
+            /**
+             * Ai Fallback
+             * @description True when the rule parser answered instead of the model
+             */
+            ai_fallback: boolean;
+            /**
+             * Behavior
+             * @enum {string}
+             */
+            behavior: "GENERATE" | "CLARIFY" | "REFUSE";
+            /** Cached */
+            cached: boolean;
+            /** @description Null when there is no run yet */
+            chain: components["schemas"]["RunCard"] | null;
+            /** Command Id */
+            command_id: string;
+            disposition: components["schemas"]["Disposition"];
+            /** Fallback Reasons */
+            fallback_reasons: string[];
+            help: components["schemas"]["HelpCardRecord"] | null;
+            /** Injection Suspected */
+            injection_suspected: boolean;
+            intent: components["schemas"]["Intent"];
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "status";
+            model_intent: components["schemas"]["Intent"];
+            /** Notes */
+            notes: string[];
+            policy: components["schemas"]["PolicyRecord"] | null;
+            /** Prompt Version */
+            prompt_version: string;
+            question: components["schemas"]["ClarificationRecord"] | null;
+            resolved: components["schemas"]["ResolvedRecord"];
+            /** Warnings */
+            warnings: string[];
+        };
+        /**
+         * TargetEnvironment
+         * @description Where a deploy goes.
+         *
+         *     ``production`` is a valid *parse* even though it is never a valid *deploy*. Appendix E says so
+         *     explicitly: "If the user asks for production, still set environment to production and let the
+         *     policy layer refuse it. Never silently change it to staging." A parser that quietly rewrote it
+         *     would turn a refused request into an unrequested staging deploy.
+         * @enum {string}
+         */
+        TargetEnvironment: "staging" | "production";
         /** TestSuiteResponse */
         TestSuiteResponse: {
             /** Approx Seconds */
@@ -1822,6 +2569,11 @@ export interface components {
             active?: boolean | null;
             role?: components["schemas"]["Role"] | null;
         };
+        /**
+         * Urgency
+         * @enum {string}
+         */
+        Urgency: "HIGH" | "MEDIUM" | "LOW";
         /** UserPage */
         UserPage: {
             /** Items */
@@ -1842,6 +2594,38 @@ export interface components {
             /** Id */
             id: string;
             role: components["schemas"]["Role"];
+        };
+        /**
+         * ValidationCheck
+         * @description One line of the 4.6.3 checklist (``Check.to_record``, app/generation/validate.py).
+         */
+        ValidationCheck: {
+            /**
+             * Cause
+             * @description What to fix: the plan, the user's input, or a template
+             */
+            cause: ("plan" | "input" | "template") | null;
+            /** Label */
+            label: string;
+            /** Message */
+            message: string;
+            /** Name */
+            name: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "passed" | "warning" | "failed";
+        };
+        /**
+         * ValidationReportRecord
+         * @description The checklist, in order (``ValidationReport.to_record``).
+         */
+        ValidationReportRecord: {
+            /** Checks */
+            checks: components["schemas"]["ValidationCheck"][];
+            /** Ok */
+            ok: boolean;
         };
     };
     responses: never;
@@ -2447,9 +3231,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["RunCard"];
                 };
             };
             /** @description Refused. The error code says why. */
@@ -2489,9 +3271,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["CancelResult"];
                 };
             };
             /** @description Refused. The error code says why. */

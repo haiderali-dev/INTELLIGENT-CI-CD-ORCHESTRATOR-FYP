@@ -22,7 +22,7 @@ function plan(overrides: Partial<PreviewPlan> = {}): PreviewPlan {
       { step: "Rendered", ok: true, detail: "2 job(s)" },
       { step: "Validated", ok: true, detail: "all checks passed" },
     ],
-    checks: [{ name: "schema", label: "Spec schema", status: "passed", message: null }],
+    checks: [{ name: "schema", label: "Spec schema", status: "passed", message: "", cause: null }],
     explanation: { text: null, loading: false, onExplain: vi.fn() },
     approval: {
       summary: "Creates 2 jobs and starts fs-payment-service-build on main at MEDIUM priority.",

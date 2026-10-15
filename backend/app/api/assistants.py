@@ -15,14 +15,14 @@ Any signed-in user may use either assistant; what they may *do* is the policy's 
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, Any, Literal
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Query, Request
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.clarify import ClarificationService
-from app.ai.parser import IntentParser
+from app.ai.parser import Disposition, IntentParser
 from app.api.deps import (
     ApiRateLimit,
     AssistantRateLimit,
@@ -30,9 +30,10 @@ from app.api.deps import (
     get_clarifier,
     get_intent_parser,
 )
+from app.api.payloads import IntentRecord, MessagePayload
 from app.core.settings import Settings
 from app.db.models import Assistant as AssistantKind
-from app.db.models import Conversation, Message, NlCommand
+from app.db.models import CommandStatus, Conversation, Message, MessageRole, NlCommand
 from app.db.session import get_db
 from app.services import conversations as service
 from app.services.dependencies import (
@@ -80,20 +81,29 @@ class ConversationPage(BaseModel):
     offset: int
 
 
+_MESSAGE_PAYLOAD: TypeAdapter[MessagePayload] = TypeAdapter(MessagePayload)
+
+
 class MessageResponse(BaseModel):
     id: str
-    role: str
+    role: MessageRole
     content: str
-    payload: dict[str, Any] | None
+    payload: MessagePayload | None = Field(
+        description="What the reply carries for the UI, by kind (D-058); null on your own messages"
+    )
     created_at: datetime
 
     @classmethod
     def of(cls, message: Message) -> MessageResponse:
         return cls(
             id=message.id,
-            role=message.role,
+            role=MessageRole(message.role),
             content=message.content,
-            payload=message.payload,
+            payload=(
+                _MESSAGE_PAYLOAD.validate_python(message.payload)
+                if message.payload is not None
+                else None
+            ),
             created_at=message.created_at,
         )
 
@@ -109,31 +119,34 @@ class MessageRequest(BaseModel):
 
 class CommandResponse(BaseModel):
     id: str
-    status: str
-    disposition: str | None
+    status: CommandStatus
+    disposition: Disposition | None
     raw_text: str
     parser: str
     model: str | None
     confidence: float | None
     clarification_rounds: int
-    record: dict[str, Any] = Field(
-        description="The intent card: intent, question, policy, resolved"
+    record: IntentRecord | None = Field(
+        description=(
+            "The intent card: intent, question, policy, resolved (D-058). Every command the "
+            "parser stores has one; null only for a row stored without."
+        )
     )
     created_at: datetime
 
     @classmethod
     def of(cls, command: NlCommand) -> CommandResponse:
-        record = command.parsed_intent or {}
+        record = command.parsed_intent
         return cls(
             id=command.id,
-            status=command.status,
-            disposition=record.get("disposition"),
+            status=CommandStatus(command.status),
+            disposition=record.get("disposition") if record else None,
             raw_text=command.raw_text,
             parser=command.parser,
             model=command.model,
             confidence=command.confidence,
             clarification_rounds=command.clarification_rounds,
-            record=record,
+            record=IntentRecord.model_validate(record) if record else None,
             created_at=command.created_at,
         )
 
