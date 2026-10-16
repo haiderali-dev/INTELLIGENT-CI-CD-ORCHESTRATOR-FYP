@@ -11,6 +11,69 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 6
 
+### D-062 The browser flows run against the backend in fake mode, with nothing outside it
+**Date:** 2026-10-16 · **Status:** accepted (T6.8)
+
+**The backend.** 4.7.6 runs the Playwright flows "against the backend with `LLM_MODE=fake`".
+`backend/browser_backend.py` starts that backend as a process of its own, and the Playwright
+configuration starts it.
+- **What is real:** the app with every router, the policy and the generators, the run tracker, the
+  WebSocket hub, sign-in with token rotation, and the app's own seeders.
+- **What is not:** the model is in fake mode. Jenkins, its plugin and Git are the in-memory
+  stand-ins the backend's tests use. The database is SQLite in a temporary folder, made fresh for
+  each run.
+- **Why:** the flows are then the same on every run and need no Jenkins, network or credential.
+  CI runs nothing that needs a Jenkins, so this is what lets CI run them. The running stack's
+  backend is an older image that is not rebuilt without approval. The flows through a real Jenkins
+  are T5.8's end-to-end suite, at the API.
+
+**Accounts and secrets.**
+- **Made up for each run:** `playwright.config.ts` makes up an Admin and a Developer with random
+  passwords, and hands them to the backend through the environment.
+- **No real secret reaches the harness:** the launcher sets every setting that could hold a secret
+  (database, JWT secret, metrics token, Jenkins credentials, Groq key, seed password). A `.env` in
+  the working directory is therefore never the source of one.
+
+**Controls only the test process has.** Routes under `/__e2e`, mounted by the launcher on its own
+app and never in the application, let a flow:
+- set the plugin's ranking, in the plugin's own format, or make the plugin unreadable;
+- switch the model off, so the chain falls back to the rule parser with `ai_fallback` set, as it
+  does with Groq unreachable (a `ProviderRejectedError`, which falls back without retries or a
+  quota block);
+- reset, which cancels every running chain as an Admin would. Each flow then gets its own
+  per-service chain lock (4.6.4).
+
+**The real sign-in limit is kept.** Every flow signs in from 127.0.0.1, so all of them share its
+limit of five sign-ins a minute. A flow that gets a 429 waits for as long as the backend asks
+(`retry_after_seconds`). The harness never loosens the limit.
+
+**The built app, through `vite preview`.**
+- **What it is:** `vite preview` has the same `/api` and `/ws` proxy as the dev server, and the
+  build is what users get.
+- **Why not the dev server:** against it, two flows saw the page come back empty right after
+  sending a first message, with the chat already made. Against the build that never happened, in
+  two full runs and 15 repeats of the assistant flows. The likely cause is the dev server
+  optimising a dependency it met on demand and reloading the page; its log did not show the
+  reload, so that is not confirmed.
+
+**Chrome as installed.** `channel: "chrome"` uses the Google Chrome on this machine and on GitHub's
+runners, so no browser is downloaded.
+
+**The queue flow's ranking** is the live plugin's recording of three waiting jobs, with its MEDIUM
+job made LOW: urgency factor 0.3, and the score worked out again by the report's formula, 0.150.
+
+**4.7.6's Vitest half was done already.** T6.4 wrote tests for the intent card (7), clarification
+(3), composer (8) and score bar (9), and they still pass.
+
+**Where the flows run.**
+- **`verify.py --phase 6`:** a new check runs them, passing its own uv (D-010).
+- **CI:** a "Browser flows" job runs them, keeping the traces when one fails.
+
+**What they cannot show:** a real Jenkins building and deploying, the live plugin scoring a real
+queue, real Git, the live model, and the stack's own frontend, for which there is no container yet.
+
+---
+
 ### D-061 The last five pages show what the API reports, and say plainly what it does not
 **Date:** 2026-10-16 · **Status:** accepted (T6.7)
 

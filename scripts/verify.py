@@ -294,7 +294,8 @@ def check_legacy_not_normalised() -> Result:
     return fail("no `legacy/** -text` rule; normalisation would modify the frozen copy")
 
 
-EXPECTED_CI_JOBS = {"plugin", "backend", "frontend"}
+# "flows" since T6.8: 4.7.6's browser flows, against the backend in fake mode.
+EXPECTED_CI_JOBS = {"plugin", "backend", "frontend", "flows"}
 
 
 def _scan_yaml_mapping_keys(text: str, indent: int, under: str | None = None) -> list[str]:
@@ -2776,6 +2777,40 @@ def check_frontend_quality_bars() -> Result:
                 return fail(f"npm run test: {skipped.group(1)} skipped")
             tests = passed.group(1)
     return ok(f"lint, typecheck and build clean; {tests} tests passed")
+
+
+@check(6, "the browser flows of 4.7.6 pass against the backend in fake mode")
+def check_browser_flows() -> Result:
+    """T6.8: Playwright, in the installed Google Chrome, against `backend/browser_backend.py` (the
+    real app with LLM_MODE=fake and in-memory stand-ins for Jenkins, its plugin and Git) and the
+    built app. The Playwright configuration starts both and makes up the accounts, so this check
+    needs no other check first, no Docker and no credential. A skipped or flaky flow is a failure,
+    as everywhere in this file."""
+    npm, why = _frontend_ready()
+    if npm is None:
+        return fail(why)
+    runner = _uv_runner()
+    if runner is None:
+        return fail("uv is not installed; see docs/decisions.md D-010")
+    result = run(
+        [*npm, "exec", "--", "playwright", "test"],
+        cwd=FRONTEND,
+        timeout=1800,
+        env={"E2E_UV": runner[0]},
+    )
+    output = _ANSI_CODES.sub("", result.stdout + result.stderr).strip()
+    if result.returncode != 0:
+        tail = [line for line in output.splitlines() if line.strip()][-3:]
+        saved = _keep_output("browser flows", output)
+        return fail("npx playwright test failed: " + " / ".join(tail)[:300] + f" ({saved})")
+    for outcome in ("skipped", "flaky", "did not run"):
+        found = re.search(rf"(\d+) {outcome}", output)
+        if found and int(found.group(1)):
+            return fail(f"npx playwright test: {found.group(1)} {outcome}")
+    passed = re.search(r"(\d+) passed", output)
+    if not passed:
+        return fail("npx playwright test reported nothing passing")
+    return ok(f"{passed.group(1)} flows passed in Chrome, against the backend in fake mode")
 
 
 @check(6, "the frontend's API types are generated from the backend's current OpenAPI schema")

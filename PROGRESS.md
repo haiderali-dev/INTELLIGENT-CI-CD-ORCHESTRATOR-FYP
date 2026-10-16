@@ -1,6 +1,6 @@
 # Progress
 
-Updated: 2026-10-16 · Current phase: 6 (T6.1 approved; T6.2 to T6.7 done; T6.8 next) ·
+Updated: 2026-10-16 · Current phase: 6 (T6.1 approved; T6.2 to T6.8 done; T6.9 next) ·
 Branch: phase-6-frontend
 
 ## Needs human
@@ -930,7 +930,7 @@ Preparation, 2026-10-11, after PR #9 merged. Still **no task checked off**.
 ## Phase 6: Frontend
 
 In progress on `phase-6-frontend`, branched from `main` at `8da58b9`. T6.1 is done and was
-approved on 2026-10-15; T6.2 to T6.7 are done; T6.8 next.
+approved on 2026-10-15; T6.2 to T6.8 are done; T6.9 next.
 
 - [x] T6.1 Write `frontend/DESIGN.md` using the process in Part 4.7.2, then stop and add "Approve
       DESIGN.md" under Needs human. Build no screens before approval. Work on T6.2
@@ -1305,8 +1305,64 @@ approved on 2026-10-15; T6.2 to T6.7 are done; T6.8 next.
       - **Not done:**
         - **Not seen against the running stack,** for the same reason as T6.5 and T6.6.
         - **No charts on Analytics:** no experiment data exists before Phase 7 (D-061).
-- [ ] T6.8 Vitest unit tests and Playwright flows (Part 4.7.6), run against the backend in fake
-      mode.
+- [x] T6.8 Vitest unit tests and Playwright flows (Part 4.7.6), run against the backend in fake
+      mode. Evidence, all run on 2026-10-16 (D-062):
+      - **The backend:** `backend/browser_backend.py`, the real app with LLM_MODE=fake.
+        - **Stand-ins:** the backend tests' own in-memory Jenkins, plugin and Git, and a fresh
+          SQLite database for each run.
+        - **Accounts:** an Admin and a Developer, made up for each run by
+          `frontend/playwright.config.ts`.
+        - **Controls:** routes under `/__e2e`, on that process alone, set the plugin's ranking,
+          switch the model off, and cancel running chains between flows.
+        - **Sign-in keeps its real limit,** which the flows wait out.
+      - **Eleven flows** (`frontend/e2e/`) in Google Chrome, against the built app served by
+        `vite preview`:
+        - **4.7.6's seven:**
+          - sign in;
+          - a freestyle deploy with a clarification ("Which service should I deploy?");
+          - a Pipeline deploy with its Jenkinsfile;
+          - the production refusal;
+          - the AI fallback notice, with the model switched off;
+          - approval with the keyboard alone;
+          - the queue with a HIGH job above a LOW one.
+        - **Failure states and roles:**
+          - a wrong password answered precisely;
+          - returning to the page that was asked for;
+          - "Ranking unavailable" when the plugin cannot be read;
+          - a Developer not offered Admin, and told why `/admin` is closed;
+          - an Admin adding a user, which shows in the audit log.
+      - **Results:**
+        - all 11 passed in two consecutive full runs (1.6 minutes each), and the five assistant
+          flows passed 15 of 15 when repeated three times;
+        - three mutations of the app each failed the flow meant for them, and every file was
+          restored byte for byte. The three were: the queue drawn in reverse, Admin offered to
+          every role, and the fallback notice never shown.
+      - **Faults the flows found in their own first drafts, fixed:**
+        - wrong locators;
+        - a toast matched twice, once in its screen-reader announcement;
+        - a deploy expected to make three jobs when it makes one;
+        - "Creates" expected where a second run truly says "Updates";
+        - the sign-in limit hit by flows that did not wait.
+        - Against the dev server, two flows saw the page come back empty after sending. They never
+          did against the build, so the flows run against the build (D-062).
+      - **4.7.6's Vitest half:** T6.4's tests for the intent card (7), clarification (3), composer
+        (8) and score bar (9) still pass.
+      - **Checks:**
+        - **verify.py:** a new Phase 6 check, "the browser flows of 4.7.6 pass against the backend
+          in fake mode", passed when run alone ("11 flows passed", 97 s). `--phase 6` now lists 76
+          checks. `--phase 0` passes, and it now also requires the new "flows" job in CI.
+        - **CI:** a new "Browser flows" job.
+        - **The frontend:** `npm run lint`, `typecheck`, `test` (290) and `build` are clean.
+        - **The launcher:** ruff, its format check and mypy are clean on it.
+      - **Not done: flows that need the real stack.** None of these is covered in a browser:
+        - a real Jenkins building and deploying;
+        - the live plugin scoring a real queue;
+        - real Git branches;
+        - the live model (`GROQ_API_KEY`);
+        - signing in as the stack's seeded Admin (its password is in `.env`).
+        - Running the flows against the stack needs approval for rebuilding the backend image,
+          which still has pre-D-057 code, and a frontend container (`frontend/Dockerfile` is still
+          open).
 - [ ] T6.9 Screenshots of every screen in light and dark themes at 1440 px and 390 px, saved to
       `docs/screenshots/`, reviewed against `DESIGN.md`, with fixes applied.
 
@@ -1325,6 +1381,12 @@ Found in T6.3, for T6.7's Admin page:
 - [x] **The Admin entry is shown to every role.** The backend refuses non-admins, so this is not
       a hole. But a sidebar entry that ends in a refusal is a dead end. Fixed in T6.7 (D-061):
       only an Admin sees the entry, and anyone else who opens `/admin` is told why it is closed.
+
+Found in T6.8 (D-062):
+- **The backend uses a constant Starlette 1.7 deprecates.** `app/core/errors.py` line 197 sends
+  validation errors with `status.HTTP_422_UNPROCESSABLE_ENTITY`, and every 422 logs a
+  `StarletteDeprecationWarning` naming `HTTP_422_UNPROCESSABLE_CONTENT` instead. The status is still
+  422, so nothing breaks yet. A one-line change, left for a backend task.
 
 Found in T6.7 (D-061), for decisions outside the frontend:
 - **No endpoint serves the chatbot evaluation's results,** though 4.4.4 lists "evaluation results"
@@ -1582,3 +1644,7 @@ Details in `docs/decisions.md`.
   passing when run directly, and seen in headless Chrome (D-061). The Admin entry now shows for
   Admins only. Found: no endpoint serves the evaluation results or the rate limits, and the health
   check cannot say whether the AI provider answers. Next: T6.8.
+- 2026-10-16 T6.8 done: eleven browser flows in Chrome against the backend in fake mode
+  (`backend/browser_backend.py`), passing in two full runs and 15 repeats, with a new Phase 6 check
+  and a "Browser flows" CI job (D-062). 4.7.6's Vitest half was already covered. Not covered in a
+  browser: a real Jenkins, the live plugin, the live model and the stack's own frontend. Next: T6.9.
