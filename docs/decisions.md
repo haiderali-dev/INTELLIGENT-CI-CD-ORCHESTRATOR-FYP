@@ -11,6 +11,70 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 6
 
+### D-061 The last five pages show what the API reports, and say plainly what it does not
+**Date:** 2026-10-16 · **Status:** accepted (T6.7)
+
+The pages are built on the backend's contracts as they stand. Where 4.7.3 or a DESIGN.md sketch asks
+for something no endpoint reports, the page says what is missing instead of making it up, and the
+gap is recorded under Phase 6's open items. No backend code changed.
+
+**Jobs and runs lists chains, not runs.**
+- **Why chains:** a run from `GET /api/runs` carries no service, assistant or stages, and the API
+  filters runs by one job at a time. `GET /api/jobs` names a job's service only by an id that the
+  catalog API never returns. A chain carries its service, job type (which assistant made it) and
+  outcome, and its run card carries the stages and the run ids whose logs can be read. Every run
+  the backend tracks belongs to a chain, a re-run included.
+- **Filters:** the service filter is the API's own. The assistant and result filters narrow the
+  newest 200 chains, the API's largest page, and the page says so when there are more.
+- **The duration column is "Start to finish",** the chain's time from start to end, queue waits
+  included. The run card's "in 6s" adds up its jobs' build times. Both are honest; they are
+  different measures, so they have different words.
+- **The log tail** reads the 64 KB windows forward to the end, keeps the last 200 lines, and asks
+  again every 2 seconds while Jenkins is still writing.
+
+**Analytics shows run statistics, the stored experiments, and no chart yet.**
+- **Run statistics** are computed by the backend from every run. A null is shown as "Not
+  measured", never as 0.
+- **Experiments:** a table of the stored runs, and each run's metrics (name, band, value with its
+  standard deviation, sample size). None exist before Phase 7. No chart is drawn: a chart's form
+  depends on which metrics the harness stores, and choosing those now would be inventing them. The
+  charts, each with Show as table, and the score bar's 20 px Analytics size wait for Phase 7's data.
+- **Chatbot evaluation:** no endpoint serves its results (4.4.4 lists "evaluation results"), so the
+  section says so.
+
+**Admin is for Admins, and shows the policy as fixed.**
+- **Access:** the sidebar lists Admin only for an Admin, which settles T6.3's finding. Anyone else
+  who opens `/admin` is told the page is for Admins, and the page asks the backend nothing.
+- **Users:** an Admin changes a role, adds a user, or deactivates someone after a confirmation that
+  says exactly what happens. Their own row has no controls, because the backend refuses them.
+- **Policy:** the HIGH quota and 4.5.5's rules are shown read-only, as the API reports them
+  (`editable: false`).
+- **Rate limits are not shown.** They are constants in `app/core/ratelimit.py` (300 a minute for
+  the API, 20 for the assistants) that no endpoint reports. Copying them into the UI would let it
+  drift from the backend. The Admin entry's description no longer promises them.
+- **Passwords:** the form sets a first password and says that it cannot be reset there later,
+  because no endpoint resets one.
+
+**The Overview.**
+- **My active runs** are the active chains whose `started_by` is the signed-in user. The API lists
+  every active chain, and each says who started it.
+- **The AI provider line** shows `GET /api/health`'s `llm` entry as reported: its status as a word
+  and an icon, and its detail. That check reads the configuration and never calls the model, so
+  the page never says the model is answering. DESIGN.md's sketch, "AI provider: Groq, answering",
+  cannot be shown honestly, and the Overview's description changed to match.
+- **Refresh:** the jobs-waiting figure refreshes every 10 seconds, as the Queue page does (D-060).
+
+**Shared code.**
+- **One client context.** `ApiClientContext` with `useApi(factory)` replaces the two per-page
+  contexts. Every page builds its requests over the client in context, so a test gives every page
+  one fake backend.
+- **One table.** `DataTable` draws every new table, and turns it into stacked blocks of labelled
+  facts below 768 px (DESIGN.md sections 7 and 9).
+- **Times.** An API timestamp without an offset is read as UTC. PostgreSQL returns offsets; the
+  SQLite test database drops them, and the backend writes every time in UTC.
+
+---
+
 ### D-060 The Queue page shows the plugin's ranking as reported, and asks again every 10 seconds
 **Date:** 2026-10-16 · **Status:** accepted (T6.6)
 

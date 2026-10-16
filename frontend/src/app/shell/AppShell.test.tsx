@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { THEME_STORAGE_KEY } from "@/app/theme/theme";
 import { REFRESH_TOKEN_KEY, type Session } from "@/auth/session";
-import { apiError, DEVELOPER, signedInSession } from "@/test/backend";
+import { ADMIN, apiError, DEVELOPER, signedInSession } from "@/test/backend";
 import { currentPath, renderRoutes } from "@/test/renderRoutes";
 
 const sessions: Session[] = [];
@@ -28,7 +28,7 @@ const mainNav = () => screen.getByRole("navigation", { name: "Main" });
 
 describe("app shell", () => {
   it("names every page, with the two assistants as separate entries", async () => {
-    await renderAt("/");
+    await renderAt("/", ADMIN);
 
     const links = within(mainNav()).getAllByRole("link");
     expect(links.map((link) => link.textContent)).toEqual([
@@ -40,6 +40,21 @@ describe("app shell", () => {
       "Analytics",
       "Service catalog",
       "Admin",
+    ]);
+  });
+
+  it("lists Admin only for Admins, since the backend refuses everyone else", async () => {
+    await renderAt("/");
+
+    const links = within(mainNav()).getAllByRole("link");
+    expect(links.map((link) => link.textContent)).toEqual([
+      "Overview",
+      "Freestyle Assistant",
+      "Pipeline Assistant",
+      "Queue",
+      "Jobs and runs",
+      "Analytics",
+      "Service catalog",
     ]);
   });
 

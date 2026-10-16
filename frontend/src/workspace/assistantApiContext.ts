@@ -1,15 +1,9 @@
-import { createContext, useContext } from "react";
-
+import { useApi } from "@/api/apiClientContext";
 import { assistantApi, type AssistantApi } from "@/api/assistantApi";
 
-const defaultApi = assistantApi();
-
-/** The requests the assistant pages make. The app uses the real client; a test can supply one
- * over a fake backend. */
-export const AssistantApiContext = createContext<AssistantApi>(defaultApi);
-
+/** The requests the assistant pages make, over the client in context (src/api/apiClientContext). */
 export function useAssistantApi(): AssistantApi {
-  return useContext(AssistantApiContext);
+  return useApi(assistantApi);
 }
 
 /** React Query keys, one place, so a mutation invalidates exactly what it changed. */

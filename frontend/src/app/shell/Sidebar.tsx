@@ -1,5 +1,7 @@
 import { NavLink } from "react-router";
 
+import { isAdmin } from "@/auth/roles";
+import { useSignedInUser } from "@/auth/sessionContext";
 import { cn } from "@/lib/cn";
 
 import { ACCENT_TEXT, NAV_ITEMS, PRODUCT_NAME } from "./nav";
@@ -9,13 +11,16 @@ import { ThemeSwitch } from "./ThemeSwitch";
 /** Every page by name, the assistants as separate entries in their own colours, and a footer that
  * says Staging and who is signed in (DESIGN.md section 4, Shell). */
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+  // An entry that could only end in a refusal is a dead end (4.7.3), so Admin is listed for Admins.
+  const admin = isAdmin(useSignedInUser());
+  const items = NAV_ITEMS.filter(({ adminOnly }) => !adminOnly || admin);
   return (
     <div className="flex h-full flex-col gap-6 bg-ground px-3 py-4">
       <p className="px-3 text-base font-semibold">{PRODUCT_NAME}</p>
 
       <nav aria-label="Main">
         <ul className="flex flex-col gap-1">
-          {NAV_ITEMS.map(({ to, label, icon: Icon, accent }) => (
+          {items.map(({ to, label, icon: Icon, accent }) => (
             <li key={to}>
               <NavLink
                 to={to}

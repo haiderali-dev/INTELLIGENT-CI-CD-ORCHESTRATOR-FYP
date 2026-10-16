@@ -22,6 +22,13 @@ export const DEVELOPER: User = {
   active: true,
 };
 
+export const ADMIN: User = {
+  id: "user-9",
+  email: "admin@example.com",
+  role: "ADMIN",
+  active: true,
+};
+
 export function json(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {
     status,

@@ -44,6 +44,11 @@ const CHAIN_RESULTS: Record<RunCardData["status"], BuildState | null> = {
   EXPIRED: "aborted",
 };
 
+/** A chain job's state as a build state, wherever a job is listed on its own. */
+export function jobState(state: JobState): BuildState {
+  return JOB_STATES[state];
+}
+
 export interface RunCardView {
   jobName: string;
   queue: RunQueue | null;

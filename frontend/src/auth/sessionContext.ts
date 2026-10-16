@@ -1,6 +1,6 @@
 import { createContext, useContext, useSyncExternalStore } from "react";
 
-import type { Session, SessionState } from "./session";
+import type { Session, SessionState, User } from "./session";
 
 export const SessionContext = createContext<Session | null>(null);
 
@@ -17,4 +17,10 @@ export function useSessionClient(): Session {
 export function useSession(): SessionState {
   const session = useSessionClient();
   return useSyncExternalStore(session.subscribe, session.getState, session.getState);
+}
+
+/** Who is signed in, or null in the moment there is no one (inside the shell, there always is). */
+export function useSignedInUser(): User | null {
+  const state = useSession();
+  return state.status === "signed-in" ? state.user : null;
 }

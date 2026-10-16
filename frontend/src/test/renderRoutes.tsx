@@ -2,16 +2,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import { assistantApi } from "@/api/assistantApi";
+import { ApiClientContext } from "@/api/apiClientContext";
 import { createApiClient, getAccessToken } from "@/api/client";
-import { queueApi } from "@/api/queueApi";
 import { routes } from "@/app/routes";
 import { ThemeProvider } from "@/app/theme/ThemeProvider";
 import type { Session } from "@/auth/session";
 import { SessionProvider } from "@/auth/SessionProvider";
 import { ToastProvider } from "@/components/toast/ToastProvider";
-import { QueueApiContext } from "@/queue/queueApiContext";
-import { AssistantApiContext } from "@/workspace/assistantApiContext";
 import { LiveEventsClient } from "@/ws/LiveEventsClient";
 import { LiveEventsProvider } from "@/ws/LiveEventsProvider";
 
@@ -42,13 +39,11 @@ export function renderRoutes(path: string, session: Session, backend = new FakeB
       <QueryClientProvider client={queryClient}>
         <LiveEventsProvider client={liveEvents}>
           <SessionProvider session={session} liveEvents={liveEvents} queryClient={queryClient}>
-            <AssistantApiContext value={assistantApi(client)}>
-              <QueueApiContext value={queueApi(client)}>
-                <ToastProvider>
-                  <RouterProvider router={router} />
-                </ToastProvider>
-              </QueueApiContext>
-            </AssistantApiContext>
+            <ApiClientContext value={client}>
+              <ToastProvider>
+                <RouterProvider router={router} />
+              </ToastProvider>
+            </ApiClientContext>
           </SessionProvider>
         </LiveEventsProvider>
       </QueryClientProvider>

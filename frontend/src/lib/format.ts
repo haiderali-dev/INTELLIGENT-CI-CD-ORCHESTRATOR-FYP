@@ -32,6 +32,34 @@ export function formatTimeOfDay(date: Date): string {
     .join(":");
 }
 
+/**
+ * A timestamp from the API. PostgreSQL's carry their offset; a SQLite test database drops it. The
+ * backend writes every time in UTC, so one without an offset is read as UTC, never as local time.
+ */
+export function parseApiTime(text: string): Date {
+  return new Date(/[zZ]$|[+-]\d\d:?\d\d$/.test(text) ? text : `${text}Z`);
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** "14:02" today, "16 Oct 14:02" earlier this year, "16 Oct 2025 14:02" before that. Local time,
+ * 24-hour clock, the same in every browser. */
+export function formatWhen(date: Date, now: Date = new Date()): string {
+  const time = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+  if (date.toDateString() === now.toDateString()) {
+    return time;
+  }
+  const day = `${String(date.getDate())} ${MONTHS[date.getMonth()] ?? ""}`;
+  return date.getFullYear() === now.getFullYear()
+    ? `${day} ${time}`
+    : `${day} ${String(date.getFullYear())} ${time}`;
+}
+
+/** 0.5 as "50%". */
+export function formatPercent(ratio: number): string {
+  return `${String(Math.round(ratio * 100))}%`;
+}
+
 /** "40s", "1m 20s", "2m 00s", "1h 05m": seconds are padded once there are minutes, so a column of
  * durations lines up. */
 export function formatDuration(milliseconds: number): string {

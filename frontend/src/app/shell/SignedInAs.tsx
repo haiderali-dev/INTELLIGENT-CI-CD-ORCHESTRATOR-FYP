@@ -1,13 +1,7 @@
 import { useState } from "react";
 
-import type { User } from "@/auth/session";
+import { ROLE_LABEL } from "@/auth/roles";
 import { useSession, useSessionClient } from "@/auth/sessionContext";
-
-const ROLE_LABEL: Record<User["role"], string> = {
-  DEVELOPER: "Developer",
-  DEVOPS: "DevOps",
-  ADMIN: "Admin",
-};
 
 /** Who is signed in, and the way out (DESIGN.md section 4: the sidebar's footer says who). */
 export function SignedInAs() {

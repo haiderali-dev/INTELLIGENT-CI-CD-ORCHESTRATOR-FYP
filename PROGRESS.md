@@ -1,6 +1,6 @@
 # Progress
 
-Updated: 2026-10-16 · Current phase: 6 (T6.1 approved; T6.2 to T6.6 done; T6.7 next) ·
+Updated: 2026-10-16 · Current phase: 6 (T6.1 approved; T6.2 to T6.7 done; T6.8 next) ·
 Branch: phase-6-frontend
 
 ## Needs human
@@ -930,7 +930,7 @@ Preparation, 2026-10-11, after PR #9 merged. Still **no task checked off**.
 ## Phase 6: Frontend
 
 In progress on `phase-6-frontend`, branched from `main` at `8da58b9`. T6.1 is done and was
-approved on 2026-10-15; T6.2 to T6.6 are done; T6.7 next.
+approved on 2026-10-15; T6.2 to T6.7 are done; T6.8 next.
 
 - [x] T6.1 Write `frontend/DESIGN.md` using the process in Part 4.7.2, then stop and add "Approve
       DESIGN.md" under Needs human. Build no screens before approval. Work on T6.2
@@ -1241,7 +1241,70 @@ approved on 2026-10-15; T6.2 to T6.6 are done; T6.7 next.
           password, which is in `.env`.
         - **The running backend container is still the old image,** from before D-057. Against it,
           this page would draw every bar empty beside the right score. It was not rebuilt.
-- [ ] T6.7 Jobs and runs, Analytics, Service catalog, Admin and Overview pages.
+- [x] T6.7 Jobs and runs, Analytics, Service catalog, Admin and Overview pages. Evidence, all run on
+      2026-10-16 (D-061):
+      - **Overview** (`/`), to DESIGN.md's sketch:
+        - "jobs waiting" as the lead figure, then my active runs and how many of the last ten
+          finished runs failed;
+        - my active runs, each with its queue position and score bar, or its current stage;
+        - the latest results, with Explain failure on a failed run;
+        - the AI provider's status and detail, exactly as `/api/health` reports them.
+      - **Jobs and runs** (`/runs`):
+        - every chain, filtered by service, assistant and result, with the filters in the
+          address;
+        - a chosen run shows its run card (stages, result, Jenkins link), each job's run, the
+          last 200 lines of its log (followed while Jenkins writes), and Explain failure.
+      - **Analytics** (`/analytics`):
+        - the run statistics, with "Not measured" where the backend measured nothing;
+        - the stored experiments and each one's metrics;
+        - the chatbot evaluation, which says that no endpoint serves its results yet.
+      - **Service catalog** (`/catalog`): each service's repository, reachability with its live
+        branches, default branch, agent label, suites, environments and extra stages, and an
+        Admin-only resync.
+      - **Admin** (`/admin`), listed and usable only for Admins:
+        - users and roles, with no controls on your own row;
+        - deactivation after a confirmation that says what happens;
+        - adding a user, with the backend's refusals placed under the right field;
+        - the HIGH quota and the rules in force, read-only;
+        - the audit log, a page of 50 at a time.
+      - **Shared:**
+        - one API client context instead of one per page;
+        - `DataTable`, which stacks every new table into labelled facts below 768 px;
+        - the shared request helper of T6.6.
+      - **Tests** run on 39 real responses (`src/test/fixtures/pages.ts`).
+        - **How they were captured:** a temporary backend test, deleted after use, drove the
+          backend in its test configuration. Approvals ran a freestyle chain whose unit tests
+          failed on jenkins-dev's real recorded log. A second chain was left queued and a Pipeline
+          left building. Users were created, changed and refused. The capture also read the
+          catalog, health in three modes, and analytics.
+        - **Experiments:** the two experiment rows were inserted the way the backend's own tests
+          insert them. They are not results.
+        - **Counts:** 62 new tests. The five pages have 44; the run, log, audit, catalog and role
+          models 14; the time and percentage formats 3; and the role-based sidebar 1.
+        - **They catch breakage:** three mutations each failed the tests meant for them, and every
+          file was restored byte for byte. The three: everyone treated as an Admin (3 tests
+          failed), the assistant filter ignored (2), and every active chain counted as mine (1).
+      - **Checks:** `npm run lint`, `typecheck` and `build` are clean, and `npm run test` passed
+        290 with no warning. `verify.py`'s four Phase 6 checks, run directly, all passed,
+        including "290 tests passed" and "openapi.json is the backend's schema (39 paths)".
+      - **Seen in a real browser:** headless Chrome, driven over its DevTools protocol, against a
+        throwaway server in the session's scratch folder serving the built app and the captures.
+        - **Fourteen screenshots** at 1440 and 390 px, light and dark, as an Admin and as a
+          Developer. No page scrolled sideways, no table outgrew its box, and no console error
+          was logged.
+        - **Faults found and fixed:**
+          - the run detail and its run card had the same accessible name, so the detail is now
+            titled by its service and start time;
+          - the audit log broke names mid-word, so targets now stay whole and details wrap;
+          - a long id could overflow a stacked block at 360 px;
+          - a duration that read "Took 0s" beside the card's "in 6s" is now "Start to finish";
+          - the Overview's description promised "whether the AI provider is answering".
+        - The screenshots were not committed; T6.9 makes the real ones.
+      - **The build:** the main chunk is 746 kB, against 697 kB before T6.7. The over-500 kB
+        warning that predates T6.6 is still there; splitting the routes would fix it.
+      - **Not done:**
+        - **Not seen against the running stack,** for the same reason as T6.5 and T6.6.
+        - **No charts on Analytics:** no experiment data exists before Phase 7 (D-061).
 - [ ] T6.8 Vitest unit tests and Playwright flows (Part 4.7.6), run against the backend in fake
       mode.
 - [ ] T6.9 Screenshots of every screen in light and dark themes at 1440 px and 390 px, saved to
@@ -1259,8 +1322,26 @@ Found in T6.3, for T6.7's Admin page:
   administrator", but no endpoint lets an administrator set a new password: `PATCH
   /api/admin/users/{id}` changes only the role and whether the account is active. An admin
   password reset needs a backend endpoint.
-- **The Admin entry is shown to every role.** The backend refuses non-admins, so this is not a
-  hole. But a sidebar entry that ends in a refusal is a dead end.
+- [x] **The Admin entry is shown to every role.** The backend refuses non-admins, so this is not
+      a hole. But a sidebar entry that ends in a refusal is a dead end. Fixed in T6.7 (D-061):
+      only an Admin sees the entry, and anyone else who opens `/admin` is told why it is closed.
+
+Found in T6.7 (D-061), for decisions outside the frontend:
+- **No endpoint serves the chatbot evaluation's results,** though 4.4.4 lists "evaluation results"
+  under analytics. T8.2 writes them; the Analytics page needs an endpoint (or a published file) to
+  read them from.
+- **No endpoint reports the rate limits** that 4.7.3 lists for the Admin page. They are constants
+  in `app/core/ratelimit.py`. Reporting them, as the policy endpoint reports the HIGH quota, would
+  let the page show them without copying them.
+- **The health check cannot say whether the AI provider answers.** By design it reads the
+  configuration and never calls the model, to save quota. DESIGN.md's Overview sketch ("Groq,
+  answering") needs a signal the backend does not have, such as the outcome of the latest model
+  call.
+- **The API filters chains by service only, and runs by one job only.** Jobs and runs filters the
+  newest 200 chains by assistant and result on the page, and says so when there are more. Filters
+  on `GET /api/chains` would make them exact.
+- **`JobResponse.service_id` names a service by an id the catalog never returns,** so a job cannot
+  be shown with its service's name. Jobs and runs reads chains instead.
 
 Found in T6.6 (D-060):
 - **The Queue page cannot show a job held for its upstream.** `DependencyGate` blocks in
@@ -1496,3 +1577,8 @@ Details in `docs/decisions.md`.
   tests and the four Phase 6 checks passing when run directly, and seen in headless Chrome at four
   widths in both themes (D-060). Found: a job held for its upstream never reaches the ranking, and a
   lone waiting job can go unscored. Next: T6.7.
+- 2026-10-16 T6.7 done: the Overview, Jobs and runs, Analytics, Service catalog and Admin pages,
+  tested against 39 captured real responses, with 290 frontend tests and the four Phase 6 checks
+  passing when run directly, and seen in headless Chrome (D-061). The Admin entry now shows for
+  Admins only. Found: no endpoint serves the evaluation results or the rate limits, and the health
+  check cannot say whether the AI provider answers. Next: T6.8.

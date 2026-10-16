@@ -24,6 +24,8 @@ export interface NavItem {
   description: string;
   /** The task that builds the page (PROGRESS.md, Phase 6). */
   task: string;
+  /** Listed only for Admins, because the backend refuses everyone else every request it makes. */
+  adminOnly?: boolean;
 }
 
 /** The sidebar, in order. The two assistants are separate entries (4.7.4, Identity). */
@@ -32,7 +34,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     to: "/",
     label: "Overview",
     icon: LayoutDashboard,
-    description: "What is running, waiting and finished, and whether the AI provider is answering.",
+    description: "What is running, waiting and finished, and how the AI provider is set up.",
     task: "T6.7",
   },
   ...(["freestyle", "pipeline"] as const).map((kind) => {
@@ -58,7 +60,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     to: "/analytics",
     label: "Analytics",
     icon: ChartColumn,
-    description: "The Milestone 2 series, the experiment's results and the chatbot evaluation.",
+    description: "Run statistics, the experiments with the Milestone 2 series, and the chatbot evaluation.",
     task: "T6.7",
   },
   {
@@ -72,8 +74,9 @@ export const NAV_ITEMS: readonly NavItem[] = [
     to: "/admin",
     label: "Admin",
     icon: ShieldCheck,
-    description: "Users and roles, the HIGH quota, rate limits and the audit log.",
+    description: "Users and roles, the HIGH quota and the rules in force, and the audit log.",
     task: "T6.7",
+    adminOnly: true,
   },
 ];
 
