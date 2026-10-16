@@ -60,6 +60,18 @@ describe("the runs model", () => {
       state: "queued",
       text: "fs-auth-service-build",
     });
+    // Between jobs: the build passed and the tests have not been triggered yet.
+    const between = {
+      ...captured.chainFailed,
+      status: "RUNNING" as const,
+      jobs: captured.chainFailed.jobs.map((job, index) =>
+        index === 0 ? job : { ...job, state: "not_started" as const, run: null },
+      ),
+    };
+    expect(currentStep(between)).toEqual({
+      state: "running",
+      text: "Waiting to start fs-payment-service-test-unit",
+    });
   });
 
   it("keeps the newest finished runs, leaving out those still building", () => {

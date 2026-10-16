@@ -74,7 +74,14 @@ export function ChainDetail({
                 className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-rule py-2 text-sm"
               >
                 <span className="min-w-0 font-semibold">{job.name}</span>
-                <BuildStateLabel state={jobState(job.state)} />
+                {/* A job the chain never reached is "Not started", as the run card says it; "Not
+                    built" is Jenkins' word for a build it skipped. One name per thing (principle 4). */}
+                <BuildStateLabel
+                  state={jobState(job.state)}
+                  {...(job.state === "not_started" || job.state === "waiting"
+                    ? { label: "Not started" }
+                    : {})}
+                />
                 {job.run ? (
                   <>
                     <span className="tabular-nums">{`#${String(job.run.build_number)}`}</span>

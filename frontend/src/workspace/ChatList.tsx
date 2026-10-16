@@ -3,15 +3,10 @@ import { Plus } from "lucide-react";
 import type { components } from "@/api/schema";
 import { button } from "@/components/button";
 import { cn } from "@/lib/cn";
+import { formatWhen, parseApiTime } from "@/lib/format";
 
 type Conversation = components["schemas"]["ConversationResponse"];
 
-const WHEN = new Intl.DateTimeFormat(undefined, {
-  day: "numeric",
-  month: "short",
-  hour: "2-digit",
-  minute: "2-digit",
-});
 
 /** This assistant's chats, newest first as the API sends them, and the way to start another. */
 export function ChatList({
@@ -49,7 +44,8 @@ export function ChatList({
                 >
                   <span className="truncate text-sm">{title}</span>
                   <span className="text-sm font-normal text-graphite tabular-nums">
-                    {WHEN.format(new Date(createdAt))}
+                    {/* The 24-hour time every other page shows, read as UTC like every API time. */}
+                    {formatWhen(parseApiTime(createdAt))}
                   </span>
                 </button>
               </li>

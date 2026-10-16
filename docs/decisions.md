@@ -11,6 +11,46 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 6
 
+### D-063 The screenshots are made by Playwright from the build, and the review's fixes stay small
+**Date:** 2026-10-16 · **Status:** accepted (T6.9)
+
+**How they are made.** `frontend/e2e/screenshots.spec.ts` is a Playwright project that runs only
+with `SCREENSHOTS=1`, because it rewrites committed files. It uses the same harness as the flows
+(D-062): the production build, and the backend in fake mode with made-up accounts.
+- **The data:** it is made through the API first, the way the assistants make it. There is a
+  freestyle chain under way, a failed run carrying jenkins-dev's real failing log (a new `/__e2e/builds`
+  control finishes queued builds in the fake Jenkins, and the run tracker picks them up as from a real
+  one), and a Pipeline waiting first in the plugin's recorded ranking.
+- **The views:** each screen is loaded once, with the theme on System. The viewport and colour scheme
+  then change in place, so the theme follows the scheme. Sign-ins are rate limited (D-062), and this
+  needs one per role.
+- **Full page or not:** every screen is captured full page, except the two assistants. They are app
+  screens: on a phone the thread scrolls under a composer pinned to the bottom, and a full-page
+  capture froze that composer mid-page. They are captured as the screen a person sees.
+- **Coverage:** 4.7.3's nine screens, plus the Admin page as a Developer finds it, at 1440 and 390 px,
+  light and dark. That makes 40 files in `docs/screenshots/`, named `<screen>-<width>-<theme>.png`.
+  `verify.py` checks that each is there and is a PNG of the width its name gives.
+
+**What the review changed.**
+- **The theme switch** lost its icons and became three equal parts. With icons the three were 229px
+  wide in a 192px sidebar footer, so System ran out of the sidebar. DESIGN.md names the three choices,
+  not their icons, and the words carry them.
+- **The chat list** printed times as "Oct 16, 09:44 AM" from the browser's locale. Every other page
+  prints "09:44" or "16 Oct 09:44". It now uses the same formatter, and reads API times as UTC (D-061).
+- **An active chain between jobs** said "Running" beside the name of the job that had already finished.
+  It now says "Waiting to start" and names the next job.
+- **The run detail's jobs list** called a job the chain never reached "Not built", beside a run card
+  that called it "not started". It now says "Not started" too (principle 4: one name per thing).
+
+**Left as they are, and why.**
+- **The main bundle, 745 kB:** every page is in it. Loading each page lazily from the routes is the
+  fix. That is a performance change, not a visual one, so it is left for a task of its own.
+- **Lighthouse:** not run. The session lives in sessionStorage, which a Lighthouse run starts without,
+  so measuring a signed-in assistant page needs a scripted user flow (Lighthouse with Puppeteer), and
+  those dependencies are not in the project.
+
+---
+
 ### D-062 The browser flows run against the backend in fake mode, with nothing outside it
 **Date:** 2026-10-16 · **Status:** accepted (T6.8)
 

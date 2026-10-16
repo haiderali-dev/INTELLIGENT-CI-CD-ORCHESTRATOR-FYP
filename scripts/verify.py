@@ -2813,6 +2813,49 @@ def check_browser_flows() -> Result:
     return ok(f"{passed.group(1)} flows passed in Chrome, against the backend in fake mode")
 
 
+# 4.7.3's nine screens, and the Admin page as a Developer finds it (T6.9).
+SCREENSHOT_SCREENS = (
+    "sign-in",
+    "overview",
+    "freestyle-assistant",
+    "pipeline-assistant",
+    "queue",
+    "jobs-and-runs",
+    "analytics",
+    "service-catalog",
+    "admin",
+    "admin-as-developer",
+)
+
+
+@check(6, "screenshots are present for every screen, in both themes at 1440 and 390 px")
+def check_screenshots() -> Result:
+    """T6.9 and Part 7's Phase 6 row: `docs/screenshots/<screen>-<width>-<theme>.png` for each
+    screen. Each must be a PNG whose width is the one its name gives, so a stray or renamed file
+    cannot stand in for one. They are made with `SCREENSHOTS=1 npx playwright test --project=
+    screenshots` in frontend/."""
+    folder = REPO_ROOT / "docs" / "screenshots"
+    missing: list[str] = []
+    wrong: list[str] = []
+    for screen in SCREENSHOT_SCREENS:
+        for width in (1440, 390):
+            for theme in ("light", "dark"):
+                name = f"{screen}-{width}-{theme}.png"
+                path = folder / name
+                if not path.is_file():
+                    missing.append(name)
+                    continue
+                head = path.read_bytes()[:24]
+                if head[:8] != b"\x89PNG\r\n\x1a\n" or int.from_bytes(head[16:20], "big") != width:
+                    wrong.append(name)
+    if missing:
+        return fail(f"{len(missing)} missing, such as {', '.join(missing[:3])}")
+    if wrong:
+        return fail(f"not a PNG of the width its name gives: {', '.join(wrong[:3])}")
+    count = len(SCREENSHOT_SCREENS) * 4
+    return ok(f"{count} screenshots: {len(SCREENSHOT_SCREENS)} screens, 1440 and 390 px, light and dark")
+
+
 @check(6, "the frontend's API types are generated from the backend's current OpenAPI schema")
 def check_api_types_current() -> Result:
     """4.7.1: "API types are generated from the backend OpenAPI schema; never hand-write them."

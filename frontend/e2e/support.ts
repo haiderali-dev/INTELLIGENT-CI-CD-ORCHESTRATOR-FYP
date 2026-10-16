@@ -99,6 +99,10 @@ export const switchModel = (request: APIRequestContext, answering: boolean) =>
 export const setRanking = (request: APIRequestContext, ranking: unknown) =>
   control(request, "ranking", ranking);
 
+/** Every queued build starts and ends with `result`; a FAILURE carries the real failing log. */
+export const finishBuilds = (request: APIRequestContext, result: "SUCCESS" | "FAILURE") =>
+  control(request, "builds", { result });
+
 interface RecordedItem {
   rank: number;
   jobName: string;

@@ -1,13 +1,11 @@
-import { Monitor, Moon, Sun, type LucideIcon } from "lucide-react";
-
 import { THEME_PREFERENCES, type ThemePreference } from "@/app/theme/theme";
 import { useTheme } from "@/app/theme/themeContext";
 import { cn } from "@/lib/cn";
 
-const OPTIONS: Record<ThemePreference, { label: string; icon: LucideIcon }> = {
-  light: { label: "Light", icon: Sun },
-  dark: { label: "Dark", icon: Moon },
-  system: { label: "System", icon: Monitor },
+const OPTIONS: Record<ThemePreference, { label: string }> = {
+  light: { label: "Light" },
+  dark: { label: "Dark" },
+  system: { label: "System" },
 };
 
 /** Light, Dark or System, as native radio buttons: arrow keys move between them. */
@@ -15,11 +13,13 @@ export function ThemeSwitch() {
   const { preference, setPreference } = useTheme();
 
   return (
-    <fieldset className="min-w-0">
+    // Three equal parts, words only: with icons the three were 229px wide, and the sidebar's footer
+    // has 192px, so System ran out of it (seen in T6.9's screenshots).
+    <fieldset className="w-full max-w-56 min-w-0">
       <legend className="mb-1 text-sm text-graphite">Theme</legend>
-      <div className="flex gap-1">
+      <div className="grid grid-cols-3 gap-1">
         {THEME_PREFERENCES.map((value) => {
-          const { label, icon: Icon } = OPTIONS[value];
+          const { label } = OPTIONS[value];
           return (
             <label key={value} className="relative">
               <input
@@ -34,12 +34,11 @@ export function ThemeSwitch() {
               />
               <span
                 className={cn(
-                  "flex items-center gap-1 rounded-control border border-graphite px-2 py-1 text-sm",
+                  "flex items-center justify-center rounded-control border border-graphite px-1 py-1 text-sm max-md:min-h-11",
                   "peer-checked:bg-ink peer-checked:text-panel",
                   "peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ink",
                 )}
               >
-                <Icon aria-hidden="true" className="size-4" />
                 {label}
               </span>
             </label>

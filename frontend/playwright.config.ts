@@ -43,6 +43,12 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
+  // The flows always; T6.9's screenshots (docs/screenshots/) only when asked for with SCREENSHOTS=1,
+  // since they rewrite committed files.
+  projects: [
+    { name: "flows", testIgnore: /screenshots\.spec\.ts/ },
+    ...(process.env.SCREENSHOTS ? [{ name: "screenshots", testMatch: /screenshots\.spec\.ts/ }] : []),
+  ],
   webServer: [
     {
       // --no-sync: the backend is installed already, and a sync here would try to rebuild it (CLAUDE.md).

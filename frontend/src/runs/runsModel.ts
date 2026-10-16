@@ -103,6 +103,12 @@ export function currentStep(card: ChainCard): { state: BuildState; text: string 
   if (queued) {
     return { state: "queued", text: queued.name };
   }
+  // Between jobs: the last one finished and the next has not been triggered yet. Naming the
+  // finished job here read as if it were still running (seen in T6.9's screenshots).
+  const next = card.jobs.find(({ state }) => state === "waiting" || state === "not_started");
+  if (next) {
+    return { state: "running", text: `Waiting to start ${next.name}` };
+  }
   return { state: "running", text: card.jobs[0]?.name ?? card.service };
 }
 

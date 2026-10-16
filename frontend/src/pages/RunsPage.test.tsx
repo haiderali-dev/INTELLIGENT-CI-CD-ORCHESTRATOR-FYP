@@ -153,8 +153,8 @@ describe("jobs and runs", () => {
     expect(within(jobs).getAllByRole("listitem").map((item) => item.textContent)).toEqual([
       "fs-payment-service-buildSucceeded#11sShow the log of fs-payment-service-build",
       "fs-payment-service-test-unitFailed#14sLog shown below",
-      "fs-payment-service-test-integrationNot built",
-      "fs-payment-service-deploy-stagingNot built",
+      "fs-payment-service-test-integrationNot started",
+      "fs-payment-service-deploy-stagingNot started",
     ]);
 
     // The failed run's log, read to its end: the last lines are how Jenkins ended it.

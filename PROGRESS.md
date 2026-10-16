@@ -1,6 +1,6 @@
 # Progress
 
-Updated: 2026-10-16 · Current phase: 6 (T6.1 approved; T6.2 to T6.8 done; T6.9 next) ·
+Updated: 2026-10-16 · Current phase: 6 (all tasks done; the gate and Lighthouse are open) ·
 Branch: phase-6-frontend
 
 ## Needs human
@@ -930,7 +930,7 @@ Preparation, 2026-10-11, after PR #9 merged. Still **no task checked off**.
 ## Phase 6: Frontend
 
 In progress on `phase-6-frontend`, branched from `main` at `8da58b9`. T6.1 is done and was
-approved on 2026-10-15; T6.2 to T6.8 are done; T6.9 next.
+approved on 2026-10-15; T6.2 to T6.9 are done. Open: the phase gate, and Lighthouse.
 
 - [x] T6.1 Write `frontend/DESIGN.md` using the process in Part 4.7.2, then stop and add "Approve
       DESIGN.md" under Needs human. Build no screens before approval. Work on T6.2
@@ -1363,8 +1363,50 @@ approved on 2026-10-15; T6.2 to T6.8 are done; T6.9 next.
         - Running the flows against the stack needs approval for rebuilding the backend image,
           which still has pre-D-057 code, and a frontend container (`frontend/Dockerfile` is still
           open).
-- [ ] T6.9 Screenshots of every screen in light and dark themes at 1440 px and 390 px, saved to
-      `docs/screenshots/`, reviewed against `DESIGN.md`, with fixes applied.
+- [x] T6.9 Screenshots of every screen in light and dark themes at 1440 px and 390 px, saved to
+      `docs/screenshots/`, reviewed against `DESIGN.md`, with fixes applied. Evidence, all run on
+      2026-10-16 (D-063):
+      - **40 screenshots** in `docs/screenshots/`: 4.7.3's nine screens and the Admin page as a
+        Developer finds it, each at 1440 and 390 px, light and dark.
+        - **How:** `SCREENSHOTS=1 npx playwright test --project=screenshots` in frontend/, from the
+          production build against the backend in fake mode, with made-up accounts.
+        - **The data:** a freestyle chain under way, a failed run carrying jenkins-dev's real
+          failing log, and a Pipeline first in the recorded ranking.
+        - **Roles:** Developer for every screen but Admin, which is shown both as an Admin and as a
+          Developer.
+      - **Reviewed against DESIGN.md, screen by screen. Fixed, then the whole set made again from
+        the final code and looked at:**
+        - the theme switch ran 37px past the sidebar (229px in 192px); it is now three equal
+          parts, words only;
+        - the chat list printed 12-hour locale times ("Oct 16, 09:44 AM"), unlike every other page,
+          and read API times as local; it now uses the shared 24-hour formatter;
+        - an active chain between jobs read "Running" beside a job that had finished; it now says
+          "Waiting to start" and names the next job;
+        - the run detail's jobs list said "Not built" where the run card said "not started"; both
+          now say "Not started".
+      - **What the review found sound:**
+        - no page scrolls sideways at 390 px, and wide tables and code views scroll in their own
+          boxes;
+        - both themes keep their contrast;
+        - the stacked tables and the queue's bars read correctly.
+        - The assistants' 390 px full-page capture showed the composer mid-page. That was the capture
+          freezing a sticky bar, not the layout, so the assistants are captured as the screen a
+          person sees.
+      - **Checks:**
+        - **verify.py:** a new Phase 6 check, "screenshots are present for every screen, in both
+          themes at 1440 and 390 px", passed (40). All six Phase 6 checks passed when run directly,
+          including "290 tests passed" and "11 flows passed", and `--phase 0` passes.
+        - **The frontend:** `npm run lint`, `typecheck` and `build` are clean.
+        - **One unit test timed out once.** `npm run test` failed one test in one of four runs, at
+          its 5-second limit ("invites a first request, and makes the chat only when one is sent").
+          It passed alone and in the next two full runs, 290 of 290. Recorded, not loosened.
+      - **Not done:**
+        - **Lighthouse** (Phase 6 acceptance: 95 or more on both assistant pages) was not run. A
+          signed-in page needs a scripted Lighthouse user flow, whose dependencies the project does
+          not have (D-063).
+        - **The 745 kB main bundle:** loading pages lazily from the routes would fix it. It is
+          documented, not done in T6.9 (D-063).
+        - **Not seen against the running stack,** for the same reasons as T6.5 to T6.8.
 
 **Acceptance:** all frontend quality bars pass; Lighthouse accessibility score of 95 or more on
 both assistant pages; screenshots committed.
@@ -1648,3 +1690,7 @@ Details in `docs/decisions.md`.
   (`backend/browser_backend.py`), passing in two full runs and 15 repeats, with a new Phase 6 check
   and a "Browser flows" CI job (D-062). 4.7.6's Vitest half was already covered. Not covered in a
   browser: a real Jenkins, the live plugin, the live model and the stack's own frontend. Next: T6.9.
+- 2026-10-16 T6.9 done: 40 screenshots of ten screens at 1440 and 390 px in both themes, made from
+  the build and reviewed against DESIGN.md. The review fixed four faults, among them the theme
+  switch running out of the sidebar, and a new Phase 6 check covers the screenshots (D-063).
+  Lighthouse and the 745 kB bundle are recorded, not done. Next: the full Phase 6 gate.

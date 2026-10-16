@@ -179,6 +179,31 @@ def control_router(
         plugin.ranking_result = parse_ranking(body)
         return {"items": len(plugin.ranking_result.items)}
 
+    @router.post("/builds")
+    async def finish_builds(result: Annotated[str, Body(embed=True)]) -> dict[str, int]:
+        """Every queued build starts and ends with `result`, as Jenkins would report it.
+
+        A FAILURE gets the real jenkins-dev log of the intentional failing unit test
+        (tests/data/failure_logs), so Explain failure has something true to read. The run tracker
+        picks the builds up on its next poll, as it does from a real Jenkins.
+        """
+        failing_log = (
+            Path(__file__).parent
+            / "tests"
+            / "data"
+            / "failure_logs"
+            / "payment-service-test-unit.log"
+        ).read_text(encoding="utf-8")
+        finished = 0
+        for item in list(jenkins.queue.values()):
+            if item.cancelled or item.build_number is not None:
+                continue
+            info = jenkins.complete_queue_item(item.id, result=result)
+            if result == "FAILURE":
+                jenkins.jobs[item.job_name or ""].logs[info.number] = failing_log
+            finished += 1
+        return {"finished": finished}
+
     @router.post("/reset")
     async def reset() -> dict[str, int]:
         """Cancel every running chain, as an Admin would, so the next flow may start its own."""
