@@ -17,6 +17,7 @@ from typing import Any
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.logging import get_logger
@@ -82,6 +83,33 @@ class ErrorCode(StrEnum):
 
     # Catch-all
     INTERNAL_ERROR = "INTERNAL_ERROR"
+
+
+class ErrorBody(BaseModel):
+    """The inside of every error response. ``code`` is the field to switch on."""
+
+    code: ErrorCode
+    message: str
+    details: dict[str, Any]
+
+
+class ErrorResponse(BaseModel):
+    """The one error shape, as the OpenAPI schema documents it (D-055).
+
+    It describes what ``ApiError.to_payload`` writes; a test holds the two together. It exists so
+    the frontend's generated types carry the error codes, since 4.7.1 forbids hand-written ones.
+    """
+
+    error: ErrorBody
+
+
+# Every route's error responses, declared once on the app. Declaring "4XX" also stops FastAPI from
+# documenting its own 422 shape, HTTPValidationError, which this API never sends: validation
+# failures reach the client through ``_validation_error`` below, in the shape above.
+ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
+    "4XX": {"model": ErrorResponse, "description": "Refused. The error code says why."},
+    "5XX": {"model": ErrorResponse, "description": "Failed on the server or upstream of it."},
+}
 
 
 class ApiError(Exception):

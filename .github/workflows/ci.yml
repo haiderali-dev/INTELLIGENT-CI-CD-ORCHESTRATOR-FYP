@@ -93,6 +93,13 @@ jobs:
         working-directory: backend
       - run: uv run mypy app
         working-directory: backend
+      # The frontend's API types are generated from this schema (BUILD_PROMPT 4.7.1). An API
+      # change that was not exported into frontend/openapi.json fails here.
+      - name: frontend/openapi.json is the current schema
+        run: |
+          uv run python -m app.openapi_export ../frontend/openapi.json
+          git diff --exit-code -- ../frontend/openapi.json
+        working-directory: backend
       # `live` needs a Groq key and `e2e` needs a running Jenkins. Neither belongs in CI.
       - run: uv run pytest -m "not live and not e2e"
         working-directory: backend
@@ -111,6 +118,12 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
         working-directory: frontend
+      # Never hand-written (4.7.1): the types must be exactly what openapi.json generates.
+      - name: src/api/schema.d.ts is generated from openapi.json
+        run: |
+          npm run generate:api
+          git diff --exit-code -- src/api/schema.d.ts
+        working-directory: frontend
       - run: npm run lint
         working-directory: frontend
       - run: npm run typecheck
@@ -119,3 +132,36 @@ jobs:
         working-directory: frontend
       - run: npm run build
         working-directory: frontend
+
+  # 4.7.6's browser flows (T6.8), against the backend in fake mode: backend/browser_backend.py runs
+  # the real app with LLM_MODE=fake and in-memory stand-ins for Jenkins, its plugin and Git, so no
+  # Jenkins, model or credential is needed. The runner's own Google Chrome runs them.
+  flows:
+    name: Browser flows
+    needs: detect
+    if: needs.detect.outputs.backend == 'true' && needs.detect.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras
+        working-directory: backend
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npx playwright test
+        working-directory: frontend
+      # The accounts in these traces are made up for the run and die with it.
+      - name: Keep the traces of a failed flow
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-flow-traces
+          path: frontend/test-results/
+          retention-days: 7

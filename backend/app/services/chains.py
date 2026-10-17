@@ -433,6 +433,9 @@ async def run_card(
         names = set(chain.jobs)
         for item in ranking.items:
             if item.job_name in names:
+                # Everything the run card's score bar draws (DESIGN.md section 6), in the same
+                # shape as /api/queue's: the factors, the scores before inheritance, and the
+                # plugin's weights, which the UI never writes for itself.
                 queue = {
                     "job": item.job_name,
                     "rank": item.rank,
@@ -443,7 +446,10 @@ async def run_card(
                         "dependency": item.components.dependency,
                         "execution_time": item.components.execution_time,
                         "aging_bonus": item.components.aging_bonus,
+                        "base_score": item.components.base_score,
+                        "own_score": item.components.own_score,
                     },
+                    "weights": dict(ranking.weights),
                     "waiting_reason": item.blocked_reason,
                     "wait_seconds": item.wait_seconds,
                 }

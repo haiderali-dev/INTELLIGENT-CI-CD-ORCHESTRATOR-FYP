@@ -1,7 +1,8 @@
 # Progress
 
-Updated: 2026-10-13 · Current phase: 5 done (T5.1 to T5.9; PR #10 awaiting review and merge) ·
-Branch: phase-5-assistants
+Updated: 2026-10-17 · Current phase: 6 (all tasks done; acceptance met; the gate passed 78 of 78 on
+`ff70254`) ·
+Branch: phase-6-frontend
 
 ## Needs human
 - [x] **Create the two sample-service GitHub repositories**, push them, create the
@@ -23,8 +24,11 @@ Branch: phase-5-assistants
       own branch. Done, checked 2026-10-11: `gh` 2.102.0 is logged in as `haiderali-dev`. PRs
       #5 to #9 were opened with it. Open each phase PR against `main`, never against the previous
       phase branch: stacking them is what kept Phases 2 to 4 out of `main` (PRs #2 to #4).
-- [ ] **Review and merge the Phase 5 PR (#10) into `main`.** Claude opens and updates it but
-      never merges.
+- [x] **Review and merge the Phase 5 PR (#10) into `main`.** Done 2026-10-13, at the user's
+      request: merged as merge commit `8da58b9` (`gh pr merge 10 --merge`, the method PR #9 used,
+      so every commit the Phase 5 records cite is in `main`'s history). CI on `main` passed:
+      Backend, Plugin and the phase checks. Frontend was skipped, as designed until Phase 6 adds
+      it.
 - [x] **Decide on a checkout retry for transient DNS failures** (Known gaps, "Agent DNS").
       Decided on 2026-10-13: `scmCheckoutRetryCount: 2` under `jenkins:` in
       `jenkins/casc/dev.yaml` (D-050).
@@ -41,10 +45,18 @@ Branch: phase-5-assistants
         - the full `verify.py --phase 5`: ALL CHECKS PASSED, 71 of 71.
       - **Not yet proven:** that it cures the flakiness. No build in that gate run met a DNS error,
         so none needed a retry.
+      - **Seen working once, 2026-10-14:** in the first Phase 6 gate run, agent-2's clone for
+        `fs-payment-service-test-unit` #60 could not resolve `github.com`. The retry got past it
+        10 seconds later, and the build went on to its intended test failure. The error the
+        retry left in the log then broke Explain failure's replay, which D-053 fixed.
 - [ ] **Re-run the Phase 5 security review independently.** The reviewer agent stopped on an
       account usage limit, so `docs/security-review-phase-5.md` was written by the agent that
       wrote the code.
-- [ ] **Approve `frontend/DESIGN.md`** when T6.1 produces it. No screen is built before that.
+- [x] **Approve `frontend/DESIGN.md`.** T6.1 wrote it on 2026-10-13. Its section 10 lists the
+      choices most worth questioning, and D-052 records how its palette reads 4.7.2's "4 to 6
+      named hex values". No screen (T6.3 onward) is built before approval. T6.2's plumbing does
+      not wait for it. Done 2026-10-15: the user approved the design as written ("Frontend
+      design is approved"), with no changes. D-052 is now accepted; T6.3 onward may build screens.
 - [ ] **Label and review the evaluation gold answers** (Phase 8). At most 30 drafted items, each
       marked `needs_review: true` and excluded from scoring until a human clears the flag.
 - [ ] **Schedule the long runs:** the full experiment matrix, about 50 runs (Phase 7), and the final
@@ -580,7 +592,7 @@ has been reviewed by a human yet.
 
 ## Phase 5: Freestyle Assistant and Pipeline Assistant
 
-In progress on `phase-5-assistants`. T5.1 to T5.7 done; T5.8 next.
+Done. Built on `phase-5-assistants`, merged into `main` as `8da58b9` on 2026-10-13 (PR #10).
 
 - [x] T5.1 Spec model (Pydantic) with YAML round-trip and the planner schema, plus one revision
       rule for both job types (D-041). Evidence, all run on 2026-10-12:
@@ -855,8 +867,11 @@ Phase 5 close-out, 2026-10-13. Every item ran in this session:
   Every Phase 5 route is in its OpenAPI, and each refuses an unauthenticated request with 401.
 - **CI:** green on `b662871`, both the push and PR #10. It had been red on `f787450` until the
   fixtures were committed.
-- **PR:** #10 (`phase-5-assistants` → `main`) was retitled and described; it is open, mergeable
-  and **not merged**. Merging is under Needs human.
+- **PR:** #10 (`phase-5-assistants` → `main`) was retitled and described, then **merged on
+  2026-10-13 as merge commit `8da58b9`**, at the user's request. `main`'s tree is identical to the
+  branch head, `93b38cf`. CI on `main` passed after the merge: Backend, Plugin and the phase
+  checks, with Frontend skipped. `phase-5-assistants` is kept, and the `m2-final` tag is
+  untouched.
 
 Audit of T5.1 to T5.8, 2026-10-13. I re-read Part 3, 4.4.3 to 4.4.5, 4.5.5, 4.6 and 4.7.4
 against the code. Five gaps were found and fixed, each with a regression test that fails without
@@ -912,6 +927,655 @@ Preparation, 2026-10-11, after PR #9 merged. Still **no task checked off**.
   `params.COMMIT ?: params.BRANCH`. Settled in T5.1 by D-041.
 - **Not a Phase 5 prerequisite:** labelling the evaluation set is Phase 8. All 30 drafts are still
   `needs_review: true`, and no Phase 5 acceptance clause uses them.
+
+## Phase 6: Frontend
+
+In progress on `phase-6-frontend`, branched from `main` at `8da58b9`. T6.1 is done and was
+approved on 2026-10-15; T6.2 to T6.9 are done. The phase gate passed 77 of 77 on `86d9a8d`
+(2026-10-17). Lighthouse scored 100 for accessibility on both assistant pages (D-064), and the gate
+gained a check for it: it passed 78 of 78 on `ff70254` (2026-10-17).
+
+- [x] T6.1 Write `frontend/DESIGN.md` using the process in Part 4.7.2, then stop and add "Approve
+      DESIGN.md" under Needs human. Build no screens before approval. Work on T6.2
+      infrastructure meanwhile. Evidence, all run on 2026-10-13 and 2026-10-14:
+      - **The document:** subject and audience, a palette of six named values plus the score
+        bar's four colours and three build-state colours (D-052), type, three wireframed
+        layouts, five principles with the score bar as the memorable element, the score bar's
+        own specification, and the review against 4.7.2's generic traits with what changed.
+        "Approve frontend/DESIGN.md" is under Needs human.
+      - **Its check:** a new Phase 6 check in `verify.py` reads the document's own tables and
+        recomputes everything it claims. In the gate run below it passed: "6 named colours, 4
+        score bar and 3 build-state colours; worst text contrast 6.86:1 (Graphite on Ground,
+        light); score bar neighbours at least 20.0 apart, 11.9 under CVD; 5 principles;
+        wireframes for Assistant workspace, Queue, Overview".
+      - **The check is negative-tested.** Eight edited copies each failed for their own reason:
+        - a paler Graphite;
+        - a dependency colour equal to the failure red;
+        - the first success green;
+        - no review section;
+        - seven named colours;
+        - a 92ch measure;
+        - two principles;
+        - no queue wireframe.
+      - **It caught one real defect.** The first success green, `#0ca30c`, was 2.96:1 on Ground,
+        the colour of a hovered row; the document now uses `#069c07`. Its section 9 records this
+        and the two other changes that came from measuring.
+      - **Colours:** the score bar passed the dataviz skill's `validate_palette.js` in both
+        themes, against this product's panels. Light: worst adjacent CVD ΔE 15.3. Dark: 11.9.
+        Every contrast pair was measured with WCAG's formula, with zero failures.
+      - **The gate, `verify.py --phase 6`, did not pass as a whole at first:** 71 of 72 checks
+        passed. The one failure was Phase 5's end-to-end test of Explain failure, whose
+        explanation fell back to rules after a replay miss. The cause was a checkout that Jenkins
+        had retried (D-053), fixed in the next commit. A full re-run after that fix was stopped
+        by Claude Code because the machine ran low on memory.
+      - **Re-run on 2026-10-15, on `c2b7e4f`: ALL CHECKS PASSED, 75 of 75.** That includes Phase
+        5's Explain failure (170 passed) and all four Phase 6 checks. Before it ran, the host had
+        2.5 GB free of 16 GB, and Docker's VM had 7.6 GB with the containers using about 1 GB. Free
+        memory stayed between 1.9 and 2.8 GB throughout.
+- [x] T6.2 Vite, React and TypeScript project; tokens; app shell; routing; API client generated
+      from the backend OpenAPI schema; WebSocket hook. Evidence, all run on 2026-10-14:
+      - **Project:** Vite 8, React 19 and TypeScript 5.9 in strict mode, with
+        `noUncheckedIndexedAccess`. Every version is exact and recorded in `docs/versions.md`,
+        including why three trail the newest release.
+      - **Tokens:** `src/styles/tokens.css` holds DESIGN.md's colours for both themes. Tailwind's
+        own palette, radii, shadows, breakpoints and type scale are cleared, so only DESIGN.md's
+        values exist as utilities. A test compares all 13 colours with DESIGN.md's tables.
+      - **Shell and routing:** React Router 8 with a sidebar of every page. The two assistants
+        are separate entries in Spruce and Plum. The footer says Staging and has the
+        Light/Dark/System switch. Below 768 px a menu button opens the same sidebar as a Radix
+        dialog. Every route is a placeholder that names the task building it; no screen is
+        built before DESIGN.md's approval.
+      - **API client:** the schema is exported from the app object by
+        `python -m app.openapi_export`, needing no server and no `.env`, into
+        `frontend/openapi.json`. `openapi-typescript` turns that into `src/api/schema.d.ts`, the
+        only API types. The client, `openapi-fetch`, adds the bearer token, held in memory only.
+      - **WebSocket hook:** one shared `LiveEventsClient`:
+        - it authenticates in its first frame;
+        - it stops on close 1008;
+        - otherwise it reconnects with backoff from 1 s to 30 s;
+        - it closes a socket that misses two heartbeats.
+        `useLiveEvent` and `useLiveStatus` expose it.
+      - **Checks:** verify.py has three new Phase 6 checks, each run directly and each passing:
+        - "lint, typecheck and build clean; 49 tests passed";
+        - "openapi.json is the backend's schema (39 paths), and schema.d.ts is its output";
+        - "12 event types and 4 topics, the same on both sides".
+      - **The checks are negative-tested.** Four drifted copies each failed with the command
+        that fixes them: a stale `openapi.json`, a hand-edited `schema.d.ts`, a missing event
+        type, and no `node_modules`.
+      - **CI:** the backend job now fails if `openapi.json` is stale, and the frontend job fails if
+        `schema.d.ts` was hand-edited.
+      - **Backend:** ruff, format and mypy are clean, and the offline suite passed 1641, with 4 new
+        export tests.
+      - **Not yet done:** the shell has not been looked at in a browser; T6.9's screenshots cover
+        that. The full `verify.py --phase 6` ran with these checks on 2026-10-15 and passed
+        (see T6.1).
+- [x] T6.3 Sign in and session handling. Evidence, all run on 2026-10-15:
+      - **Session (D-054):**
+        - The access token is in memory only. The refresh token is in this tab's
+          sessionStorage, so a reload keeps you signed in and closing the tab signs you out.
+        - The access token is renewed a minute before its 15 minutes run out.
+        - A 401 from anything outside `/api/auth/` gets one single-flight refresh and one repeat
+          of the request.
+        - Sign-out revokes the refresh token on the server, then forgets both tokens whatever
+          the answer.
+        - The live-events connection reopens with the new token on sign-in and closes on
+          sign-out. Cached server data is dropped on sign-out. A connection the server refuses
+          (1008) gets one refresh and one retry, never a loop.
+      - **Routing:** every page except Sign in sits behind `RequireSession`.
+        - Without a session you are sent to `/sign-in?next=<page>`, and back there afterwards.
+        - `next` is followed only to a path on this site, so the page cannot be used to
+          redirect elsewhere.
+        - After an explicit sign-out, `next` is dropped, because whoever signs in next may be
+          someone else.
+        - A reload shows "Restoring your session" until the refresh answers.
+      - **Sign in page (4.7.3: specific errors, no dead ends):**
+        - Built with react-hook-form and zod, as 4.7.1 asks.
+        - Each failure says what happened and what to do: a missing or malformed email, a
+          missing or over-long password, a wrong email or password (the email is kept, the
+          password cleared and focused), a disabled account, "wait N seconds" after the rate
+          limit, and a server that did not answer.
+        - It also says why you arrived: you signed out, your session ended, your account was
+          disabled, or the session could not be restored.
+        - Errors are in Ink with an icon, not red, because DESIGN.md reserves the state colours.
+        - The sidebar's footer now says who is signed in, with their role and Sign out.
+      - **Error codes (D-055):** the API's one error shape is now in the OpenAPI schema on every
+        route, so `ErrorCode` is generated rather than hand-written. FastAPI's false 422
+        `HTTPValidationError` entries are gone. `openapi.json` and `schema.d.ts` were regenerated.
+        - Three new backend tests. The two schema tests were confirmed to fail without the
+          change.
+      - **Frontend checks:** `verify.py`'s four Phase 6 checks, run directly, all passed.
+        - "lint, typecheck and build clean; 92 tests passed". 43 of those are new: the session
+          14, sign-in page 16, API client 5, next address 3, the provider and live connection 2,
+          and the shell 3.
+        - The API types are the backend's schema (39 paths).
+        - The DESIGN.md and WebSocket checks pass unchanged.
+        - No test printed a warning.
+      - **Backend:** ruff, format and mypy are clean. The offline suite passed 1644, with 49
+        deselected. Its 5 warnings predate this task: they come from `_validation_error`'s use
+        of the deprecated `HTTP_422_UNPROCESSABLE_ENTITY` constant.
+      - **Live check:** through the Vite dev server, against the running Compose backend:
+        - `/sign-in` serves the app.
+        - A malformed sign-in through the `/api` proxy came back 422 with
+          `details.fields.email`, the shape the page maps to the email field.
+        - No real credentials were used.
+      - **Dependencies:** react-hook-form 7.89.0, zod 4.6.5 and @hookform/resolvers 5.9.1, under
+        the seven-day cooldown, recorded in `docs/versions.md`. `npm audit --omit=dev` found
+        no vulnerabilities.
+      - **Not done:**
+        - **The sign-in page has not been looked at in a browser.** T6.9's screenshots cover
+          that.
+        - **Mutation checks on the session's security tests were not run.** Weakening the
+          redirect check or the auth-endpoint exemption to watch the tests fail was refused by
+          Claude Code's auto mode, and the code was restored at once. The tests assert those
+          behaviours directly.
+- [x] T6.4 Shared assistant workspace components (Part 4.7.4). Evidence, all run on 2026-10-15:
+      - **Built, in `src/workspace/` and `src/components/`:**
+        - the workspace layout: chats, thread and preview side by side from 1280 px; a drawer
+          below that; a bottom sheet with a one-line summary below 768 px;
+        - the chat list, the thread (`aria-live="polite"`), and the empty state with one
+          sentence, four example commands from 4.6.5, and the services it knows;
+        - the intent card, whose editor offers only catalog values through react-hook-form and
+          zod, and sends only the fields that changed;
+        - clarification with at most four answers, and the progress line (Understood, Planned,
+          Rendered, Validated, each with a check or the exact error);
+        - Approve and run: the dialog states the backend's own sentence, the button says
+          Approve and run, and the toast says Run started;
+        - the run card, the composer and the fallback notice;
+        - the preview: Spec, Config or Jenkinsfile, Checks, Explanation.
+      - **Shared pieces:**
+        - the score bar, to DESIGN.md section 6;
+        - build states as an icon and a word;
+        - toasts, sheets and button styles;
+        - code views on CodeMirror 6: read-only `config.xml` and Jenkinsfile, editable spec
+          YAML with inline errors and a written list of them, and a diff after a regenerate.
+        - Each assistant's identity (name, glyph, accent, sentence, examples, placeholder) has
+          one source, which the sidebar now reads too.
+      - **DESIGN.md in code:**
+        - **Score bar:** a fixed 0 to 1.15 scale. Segments are weight times factor, with the
+          weights taken from the queue API, never written in the UI. There is a 2px gap, only
+          the data end is rounded, a factor of zero draws nothing, and there is a Graphite tick
+          at 1.0. An inherited score gets an Ink tick, and the bar's name uses section 6's words.
+        - **No state colours outside build states:** code views are Ink and Graphite only, and
+          their errors and diffs are never red or green. The progress line and checklist use
+          Ink icons and words.
+        - **Floating layers:** 8px corners with the one shadow, or a Rule border in dark mode.
+        - **Touch targets:** at least 44px under 768 px.
+        - **Type:** `text-xs` only for the keyboard hint.
+        - **Motion:** a 120 ms message fade and a 160 ms toast, both off under reduced motion.
+      - **Tests:** `npm run test` passed 179, 87 of them new: score bar 14, code views 10,
+        composer 12, preview 9, intent card 7, run card 6, layout 5, progress line 5, build
+        states 5, workspace parts 5, approval 3, clarification 3, formats 3. 4.7.6 asks for
+        Vitest tests of the intent card, clarification, score bar and composer; all four have
+        them.
+        - The approval test goes from the button to Run started with the keyboard alone.
+        - No test printed a warning. Two full runs passed back to back after one fix: a test
+          that waited one second for the lazily loaded editor timed out under load, and now
+          loads it first.
+      - **Checks:** `npm run lint`, `npm run typecheck` and `npm run build` are clean.
+        `verify.py`'s four Phase 6 checks, run directly, passed with "179 tests passed", and
+        `verify.py --phase 0` passed.
+      - **Dependencies:** ten CodeMirror packages, recorded in `docs/versions.md`. `npm audit
+        --omit=dev` found no vulnerabilities.
+      - **D-056:** the components take props rather than API payloads, because four payloads
+        are untyped dictionaries in the schema.
+      - **Not done:**
+        - **Not seen in a browser.** No page uses these components until T6.5, and T6.9
+          screenshots them.
+        - **The editor's split into its own chunk is unconfirmed.** It is lazily loaded, but
+          the build has nothing to split until T6.5 imports the preview. The build's existing
+          500 kB chunk warning (556 kB, 555 in T6.3) predates this task.
+        - **Left to later tasks:** the score bar's 20 px Analytics size with an axis (T6.7) and
+          its one-time growth on the queue page (T6.6).
+- [x] T6.5 Freestyle Assistant and Pipeline Assistant pages. Evidence, all run on 2026-10-16:
+      - **The page** (`src/pages/AssistantPage.tsx`) is one component used by both assistants,
+        each with its own sidebar entry, header, empty state, composer placeholder and preview.
+        The chat is in the address, `/assistants/<assistant>/<chat id>`. A chat is created only
+        when its first message is sent.
+      - **The thread** shows each reply by its payload kind (D-058):
+        - the intent card, read from the command's current record, so an edit shows and a
+          justification question after an edit is asked;
+        - the clarification, with only the newest question answerable;
+        - a refusal's reasons, and an Admin's offer to cancel the running chain (4.5.5);
+        - help as a list;
+        - a status reply's run card, and the run card after Approve and run or a re-run;
+        - the fallback notice when the rule parser answered.
+        - Sending shows the message at once with "Working on it". Stop cancels the wait. A
+          message that was not sent keeps its text and says why.
+      - **The preview** shows the newest plan:
+        - the spec as editable YAML, with the backend's schema errors on their lines;
+        - each job's config.xml, or the Jenkinsfile;
+        - the checks and progress line;
+        - the explanation, streamed as it arrives;
+        - a diff against the plan it replaced.
+        - "Generate from this spec" re-validates an edit. Approve and run sends one
+          idempotency key per plan, says Run started, and shows "Approved and started" after.
+      - **Live updates:** run cards refetch their typed `RunCard` whenever a run, chain or queue
+        event arrives on the WebSocket.
+      - **D-059:**
+        - the untyped `plan`, `approval`, `stage` and approval `result` are not needed and are
+          not read;
+        - the page's API types come from the client's return types, because openapi-fetch's
+          `Readable` drops properties typed exactly `null`;
+        - the thread orders a message before its reply on a timestamp tie.
+      - **Tests** run against the real API responses: the backend was driven in fake mode, and
+        19 responses were captured into `src/test/fixtures/captured.ts` and type-checked.
+        - The page has 14 tests: first message to intent card, example commands, thread order,
+          editing, generate and preview, approve, live run card refresh, an inline spec error, a
+          clarification, a streamed explanation, a refused send, Stop, the Pipeline Assistant,
+          and a chat that cannot be opened.
+        - The helpers have 12: spec problems, thread order, the run card view and the preview
+          summary.
+      - **Checks:** `npm run lint`, `typecheck` and `build` are clean, and `npm run test` passed
+        206 with no warning. `verify.py`'s four Phase 6 checks, run directly, all passed,
+        including "206 tests passed" and "openapi.json is the backend's schema (39 paths), and
+        schema.d.ts is its output".
+      - **The build:** CodeMirror is now its own lazy chunk, 395 kB. The main chunk is 683 kB,
+        against 556 kB before T6.5, so the over-500 kB warning that predates T6.5 is still there.
+        Splitting routes would fix it.
+      - **Not done:**
+        - **Not seen in a browser.** No browser tool was available in this session. Signing in
+          to the stack needs the seeded admin password, which is in `.env`. T6.8's Playwright
+          flows and T6.9's screenshots are where this gets seen.
+        - **The running backend container is still the old image,** without D-057 and D-058.
+          It was not rebuilt.
+      - **The full gate, re-run on 2026-10-16 on `f43f0db`: ALL CHECKS PASSED, 75 of 75,
+        exit 0.** By phase: 11, 17, 6, 22, 10, 5 and 4 passed, none failed. A first run on
+        2026-10-15 was stopped by Claude Code for low memory after 39 checks, all passing.
+        - **CI run 38792947715 on `f43f0db`:** all five jobs passed. Backend 1662 passed;
+          frontend 206; plugin 108 unit tests and 65 integration tests with no failure.
+        - **Memory during the re-run:** it started with 3.4 GB of 16 GB free and 3.0 GB of
+          commit headroom. Headroom fell to 368 MB during Phase 6's frontend checks, so the
+          machine runs this gate with little to spare.
+        - **What took the memory:** Docker's VM grows as the end-to-end builds run, and Chrome
+          and VS Code held about 3 GB between them. The pagefile is 1.86 GB.
+- [x] T6.6 Queue page with score bars. Evidence, all run on 2026-10-16:
+      - **The page** (`src/pages/QueuePage.tsx`) is the plugin's live ranking:
+        - one row per waiting job, giving rank, job, type, urgency, score bar, estimate, wait and
+          blocked reason, as 4.7.3 lists;
+        - the header says how many are waiting, whether the optimizer is on ("Optimizer off:
+          Jenkins' own order" when it is not), and whether live events are arriving;
+        - a key to the bar's colours, and a Show the numbers switch that adds each contribution
+          as a column;
+        - a table from 768 px, and below that one stacked block per job, with the bar on its own
+          line and labelled facts.
+      - **What the plugin sends, shown as sent (D-060):**
+        - the blocked reason verbatim;
+        - a missing upstream job under the job's name;
+        - unscored items listed as "Waiting without a score" and counted in the waiting total;
+        - "Ranking unavailable" with the backend's reason, never an empty bar.
+        - An empty queue invites a build through either assistant.
+        - A failed load says why and offers Try again. A failed refresh keeps the last ranking
+          and says from when.
+      - **Live:** it asks again on `queue.changed`, `run.queued`, `run.started` and
+        `run.finished`, and every 10 seconds, because the events cover only runs the backend
+        started, and waits and aging grow between them (D-060). The bars grow once on first load
+        and jump on a live update.
+      - **Tests** run on 6 real `GET /api/queue` responses (`src/test/fixtures/queue.ts`).
+        - **What they are:** the three rankings recorded from the live plugin
+          (`backend/tests/data/plugin/`), each passed through the backend's own parser and
+          endpoint in its test configuration. Three more: the same ranking with the optimizer off,
+          an empty queue, and the plugin unreadable, with the real HTTP client's reason for a 404.
+        - **The tests:** 14 for the page, 6 for the queue model, and one each for the score bar's
+          growth and the time format.
+        - **They catch breakage:** three mutations of the page each failed the test meant for
+          them, and the file was restored byte for byte. The three were: no 10-second refresh, no
+          live events, and bars that always grow.
+      - **Checks:** `npm run lint`, `typecheck` and `build` are clean, and `npm run test` passed
+        228 with no warning. `verify.py`'s four Phase 6 checks, run directly, all passed,
+        including "228 tests passed" and "openapi.json is the backend's schema (39 paths)".
+      - **Seen in a real browser:** headless Chrome, driven over its DevTools protocol. It loaded
+        the built app from a throwaway server in the session's scratch folder, which answered
+        sign-in and served the captured queue responses.
+        - **Twelve screenshots** at 1440, 1024, 390 and 360 px, light and dark, covering every
+          state. No page scrolled sideways, no console error was logged, and the live status
+          reached Live.
+        - **Faults found and fixed:**
+          - with the numbers shown, job names broke at every hyphen into rows 140 px tall;
+          - the table's first column sat 12 px off the page's 24 px gutter;
+          - fixing that wrapped the blocked reason at 1440 px, until inner padding went from 12
+            to 8 px.
+        - **The growth, measured in Chrome:** `score-grow` ran for 0.24 s with ease-out, no bar
+          was still growing a second later, and under reduced motion it ran for 0.01 ms.
+        - The screenshots were not committed; T6.9 makes the real ones.
+      - **The build:** the main chunk is 697 kB, against 683 kB before T6.6. The over-500 kB
+        warning that predates T6.6 is still there.
+      - **Not done:**
+        - **Not seen against the running stack.** Signing in there needs the seeded admin
+          password, which is in `.env`.
+        - **The running backend container is still the old image,** from before D-057. Against it,
+          this page would draw every bar empty beside the right score. It was not rebuilt.
+- [x] T6.7 Jobs and runs, Analytics, Service catalog, Admin and Overview pages. Evidence, all run on
+      2026-10-16 (D-061):
+      - **Overview** (`/`), to DESIGN.md's sketch:
+        - "jobs waiting" as the lead figure, then my active runs and how many of the last ten
+          finished runs failed;
+        - my active runs, each with its queue position and score bar, or its current stage;
+        - the latest results, with Explain failure on a failed run;
+        - the AI provider's status and detail, exactly as `/api/health` reports them.
+      - **Jobs and runs** (`/runs`):
+        - every chain, filtered by service, assistant and result, with the filters in the
+          address;
+        - a chosen run shows its run card (stages, result, Jenkins link), each job's run, the
+          last 200 lines of its log (followed while Jenkins writes), and Explain failure.
+      - **Analytics** (`/analytics`):
+        - the run statistics, with "Not measured" where the backend measured nothing;
+        - the stored experiments and each one's metrics;
+        - the chatbot evaluation, which says that no endpoint serves its results yet.
+      - **Service catalog** (`/catalog`): each service's repository, reachability with its live
+        branches, default branch, agent label, suites, environments and extra stages, and an
+        Admin-only resync.
+      - **Admin** (`/admin`), listed and usable only for Admins:
+        - users and roles, with no controls on your own row;
+        - deactivation after a confirmation that says what happens;
+        - adding a user, with the backend's refusals placed under the right field;
+        - the HIGH quota and the rules in force, read-only;
+        - the audit log, a page of 50 at a time.
+      - **Shared:**
+        - one API client context instead of one per page;
+        - `DataTable`, which stacks every new table into labelled facts below 768 px;
+        - the shared request helper of T6.6.
+      - **Tests** run on 39 real responses (`src/test/fixtures/pages.ts`).
+        - **How they were captured:** a temporary backend test, deleted after use, drove the
+          backend in its test configuration. Approvals ran a freestyle chain whose unit tests
+          failed on jenkins-dev's real recorded log. A second chain was left queued and a Pipeline
+          left building. Users were created, changed and refused. The capture also read the
+          catalog, health in three modes, and analytics.
+        - **Experiments:** the two experiment rows were inserted the way the backend's own tests
+          insert them. They are not results.
+        - **Counts:** 62 new tests. The five pages have 44; the run, log, audit, catalog and role
+          models 14; the time and percentage formats 3; and the role-based sidebar 1.
+        - **They catch breakage:** three mutations each failed the tests meant for them, and every
+          file was restored byte for byte. The three: everyone treated as an Admin (3 tests
+          failed), the assistant filter ignored (2), and every active chain counted as mine (1).
+      - **Checks:** `npm run lint`, `typecheck` and `build` are clean, and `npm run test` passed
+        290 with no warning. `verify.py`'s four Phase 6 checks, run directly, all passed,
+        including "290 tests passed" and "openapi.json is the backend's schema (39 paths)".
+      - **Seen in a real browser:** headless Chrome, driven over its DevTools protocol, against a
+        throwaway server in the session's scratch folder serving the built app and the captures.
+        - **Fourteen screenshots** at 1440 and 390 px, light and dark, as an Admin and as a
+          Developer. No page scrolled sideways, no table outgrew its box, and no console error
+          was logged.
+        - **Faults found and fixed:**
+          - the run detail and its run card had the same accessible name, so the detail is now
+            titled by its service and start time;
+          - the audit log broke names mid-word, so targets now stay whole and details wrap;
+          - a long id could overflow a stacked block at 360 px;
+          - a duration that read "Took 0s" beside the card's "in 6s" is now "Start to finish";
+          - the Overview's description promised "whether the AI provider is answering".
+        - The screenshots were not committed; T6.9 makes the real ones.
+      - **The build:** the main chunk is 746 kB, against 697 kB before T6.7. The over-500 kB
+        warning that predates T6.6 is still there; splitting the routes would fix it.
+      - **Not done:**
+        - **Not seen against the running stack,** for the same reason as T6.5 and T6.6.
+        - **No charts on Analytics:** no experiment data exists before Phase 7 (D-061).
+- [x] T6.8 Vitest unit tests and Playwright flows (Part 4.7.6), run against the backend in fake
+      mode. Evidence, all run on 2026-10-16 (D-062):
+      - **The backend:** `backend/browser_backend.py`, the real app with LLM_MODE=fake.
+        - **Stand-ins:** the backend tests' own in-memory Jenkins, plugin and Git, and a fresh
+          SQLite database for each run.
+        - **Accounts:** an Admin and a Developer, made up for each run by
+          `frontend/playwright.config.ts`.
+        - **Controls:** routes under `/__e2e`, on that process alone, set the plugin's ranking,
+          switch the model off, and cancel running chains between flows.
+        - **Sign-in keeps its real limit,** which the flows wait out.
+      - **Eleven flows** (`frontend/e2e/`) in Google Chrome, against the built app served by
+        `vite preview`:
+        - **4.7.6's seven:**
+          - sign in;
+          - a freestyle deploy with a clarification ("Which service should I deploy?");
+          - a Pipeline deploy with its Jenkinsfile;
+          - the production refusal;
+          - the AI fallback notice, with the model switched off;
+          - approval with the keyboard alone;
+          - the queue with a HIGH job above a LOW one.
+        - **Failure states and roles:**
+          - a wrong password answered precisely;
+          - returning to the page that was asked for;
+          - "Ranking unavailable" when the plugin cannot be read;
+          - a Developer not offered Admin, and told why `/admin` is closed;
+          - an Admin adding a user, which shows in the audit log.
+      - **Results:**
+        - all 11 passed in two consecutive full runs (1.6 minutes each), and the five assistant
+          flows passed 15 of 15 when repeated three times;
+        - three mutations of the app each failed the flow meant for them, and every file was
+          restored byte for byte. The three were: the queue drawn in reverse, Admin offered to
+          every role, and the fallback notice never shown.
+      - **Faults the flows found in their own first drafts, fixed:**
+        - wrong locators;
+        - a toast matched twice, once in its screen-reader announcement;
+        - a deploy expected to make three jobs when it makes one;
+        - "Creates" expected where a second run truly says "Updates";
+        - the sign-in limit hit by flows that did not wait.
+        - Against the dev server, two flows saw the page come back empty after sending. They never
+          did against the build, so the flows run against the build (D-062).
+      - **4.7.6's Vitest half:** T6.4's tests for the intent card (7), clarification (3), composer
+        (8) and score bar (9) still pass.
+      - **Checks:**
+        - **verify.py:** a new Phase 6 check, "the browser flows of 4.7.6 pass against the backend
+          in fake mode", passed when run alone ("11 flows passed", 97 s). `--phase 6` now lists 76
+          checks. `--phase 0` passes, and it now also requires the new "flows" job in CI.
+        - **CI:** a new "Browser flows" job.
+        - **The frontend:** `npm run lint`, `typecheck`, `test` (290) and `build` are clean.
+        - **The launcher:** ruff, its format check and mypy are clean on it.
+      - **Not done: flows that need the real stack.** None of these is covered in a browser:
+        - a real Jenkins building and deploying;
+        - the live plugin scoring a real queue;
+        - real Git branches;
+        - the live model (`GROQ_API_KEY`);
+        - signing in as the stack's seeded Admin (its password is in `.env`).
+        - Running the flows against the stack needs approval for rebuilding the backend image,
+          which still has pre-D-057 code, and a frontend container (`frontend/Dockerfile` is still
+          open).
+- [x] T6.9 Screenshots of every screen in light and dark themes at 1440 px and 390 px, saved to
+      `docs/screenshots/`, reviewed against `DESIGN.md`, with fixes applied. Evidence, all run on
+      2026-10-16 (D-063):
+      - **40 screenshots** in `docs/screenshots/`: 4.7.3's nine screens and the Admin page as a
+        Developer finds it, each at 1440 and 390 px, light and dark.
+        - **How:** `SCREENSHOTS=1 npx playwright test --project=screenshots` in frontend/, from the
+          production build against the backend in fake mode, with made-up accounts.
+        - **The data:** a freestyle chain under way, a failed run carrying jenkins-dev's real
+          failing log, and a Pipeline first in the recorded ranking.
+        - **Roles:** Developer for every screen but Admin, which is shown both as an Admin and as a
+          Developer.
+      - **Reviewed against DESIGN.md, screen by screen. Fixed, then the whole set made again from
+        the final code and looked at:**
+        - the theme switch ran 37px past the sidebar (229px in 192px); it is now three equal
+          parts, words only;
+        - the chat list printed 12-hour locale times ("Oct 16, 09:44 AM"), unlike every other page,
+          and read API times as local; it now uses the shared 24-hour formatter;
+        - an active chain between jobs read "Running" beside a job that had finished; it now says
+          "Waiting to start" and names the next job;
+        - the run detail's jobs list said "Not built" where the run card said "not started"; both
+          now say "Not started".
+      - **What the review found sound:**
+        - no page scrolls sideways at 390 px, and wide tables and code views scroll in their own
+          boxes;
+        - both themes keep their contrast;
+        - the stacked tables and the queue's bars read correctly.
+        - The assistants' 390 px full-page capture showed the composer mid-page. That was the capture
+          freezing a sticky bar, not the layout, so the assistants are captured as the screen a
+          person sees.
+      - **Checks:**
+        - **verify.py:** a new Phase 6 check, "screenshots are present for every screen, in both
+          themes at 1440 and 390 px", passed (40). All six Phase 6 checks passed when run directly,
+          including "290 tests passed" and "11 flows passed", and `--phase 0` passes.
+        - **The frontend:** `npm run lint`, `typecheck` and `build` are clean.
+        - **One unit test timed out once.** `npm run test` failed one test in one of four runs, at
+          its 5-second limit ("invites a first request, and makes the chat only when one is sent").
+          It passed alone and in the next two full runs, 290 of 290. Recorded, not loosened.
+      - **What the full gate found after a5519fa, and fixed (run on 2026-10-17, D-063):**
+        - **Run 1, 75 of 76:** `verify.py` read subprocess output as cp1252, and Vitest's U+276F
+          crashed the quality-bars check. It now reads UTF-8.
+        - **Run 2, stopped after 72 checks:** printing a failure crashed on cp1252 stdout (now
+          UTF-8). The failure was the test above, timed out at 5 s under the gate's load. It now
+          types without per-key delays, and its file allows 15 s per test.
+        - **Run 3, 76 of 77:** the keyboard flow showed an empty chat against the build. Its trace
+          showed a race from T6.5: a new chat's address was opened before its first message was
+          stored, and the chat's own load landed empty after the reply. The page now opens a new
+          chat only once its first exchange is stored. A new Vitest test failed against the old
+          order and passes now. D-062's guess (a dev-server reload) is corrected.
+        - **After the fixes:** `npm run lint`, `typecheck` and `build` are clean; `npm run test`
+          291 passed; `npx playwright test` 11 flows passed; the screenshots were made again from
+          this code (16 of 40 changed, in times and ids only) and looked at.
+        - **Run 4, on `86d9a8d` with a clean tree: ALL CHECKS PASSED, 77 of 77, exit code 0**
+          (`python -u scripts/verify.py --phase 6`, 15:52 to 16:24). The real-Jenkins end-to-end
+          suite took 16 minutes, and the plugin reported builds throughout. CI run 39026561925
+          passed all six jobs on the same commit.
+      - **Not done:**
+        - **Lighthouse** (Phase 6 acceptance: 95 or more on both assistant pages) was not run in
+          T6.9. A signed-in page needs Lighthouse driven through Puppeteer, whose dependencies the
+          project did not have (D-063). Done on 2026-10-17; see the acceptance evidence below.
+        - **The 745 kB main bundle:** loading pages lazily from the routes would fix it. It is
+          documented, not done in T6.9 (D-063).
+        - **Not seen against the running stack,** for the same reasons as T6.5 to T6.8.
+
+**Acceptance:** all frontend quality bars pass; Lighthouse accessibility score of 95 or more on
+both assistant pages; screenshots committed.
+
+Acceptance evidence, all run on 2026-10-17:
+- **Quality bars and screenshots:** `verify.py --phase 6` passed 77 of 77 on `86d9a8d`.
+- **Lighthouse: 100 on both assistant pages, in all 16 audits (D-064).**
+  - **How:** `LIGHTHOUSE=1 npx playwright test --project=lighthouse` in frontend/, with Lighthouse
+    13.5.0 and puppeteer-core 25.12.0 (new, pinned dev dependencies). It runs against the build and
+    the backend in fake mode.
+  - **What:** Puppeteer signs in through the form in Chrome, and Lighthouse audits the same tab with
+    storage reset off. Each assistant page is audited empty and with a chat that has a plan and a run
+    card, in light and dark, at mobile and desktop settings.
+  - **Guards:** each audit's final URL, heading and theme are asserted. The chat pages had 27 to 30
+    applicable audits against the empty pages' 25.
+  - **Negative control:** a throwaway copy of the spec planted a nameless button, an image with no
+    alt and low-contrast text. All 16 audits flagged all three, scoring 86 to 89, and the test
+    failed. The copy was deleted.
+  - **verify.py:** a new Phase 6 check, "Lighthouse scores both assistant pages 95 or more for
+    accessibility", passed when run on its own ("16 audits; lowest accessibility score 100
+    (Freestyle), 100 (Pipeline)"). The gate now has 78 checks.
+  - **Other checks after the change:** `npm run lint` and `typecheck` clean; `npx playwright test`
+    11 flows passed; the screenshot spec, now using the helpers it shares with the Lighthouse spec,
+    passed 4 of 4. Its output was not kept, since no screen changed.
+- **The full gate, on `ff70254` with a clean tree: ALL CHECKS PASSED, 78 of 78, exit code 0**
+  (`python -u scripts/verify.py --phase 6`, 16:47 to 17:13). Among them, the Lighthouse check:
+  "16 audits; lowest accessibility score 100 (Freestyle), 100 (Pipeline)". CI run 39030064897
+  passed all six jobs on the same commit.
+
+Open in Phase 6, outside any one task: `frontend/Dockerfile`, and removing the `frontend` service's
+Compose profile, which D-018 left for "once Phase 6 builds the image". Best done once the
+screens exist, before T6.8's Playwright flows run against the stack.
+
+Found in T6.3, for T6.7's Admin page:
+- **There is no way to reset a password.** The sign-in page says "Forgotten your password? Ask an
+  administrator", but no endpoint lets an administrator set a new password: `PATCH
+  /api/admin/users/{id}` changes only the role and whether the account is active. An admin
+  password reset needs a backend endpoint.
+- [x] **The Admin entry is shown to every role.** The backend refuses non-admins, so this is not
+      a hole. But a sidebar entry that ends in a refusal is a dead end. Fixed in T6.7 (D-061):
+      only an Admin sees the entry, and anyone else who opens `/admin` is told why it is closed.
+
+Found in T6.8 (D-062):
+- **The backend uses a constant Starlette 1.7 deprecates.** `app/core/errors.py` line 197 sends
+  validation errors with `status.HTTP_422_UNPROCESSABLE_ENTITY`, and every 422 logs a
+  `StarletteDeprecationWarning` naming `HTTP_422_UNPROCESSABLE_CONTENT` instead. The status is still
+  422, so nothing breaks yet. A one-line change, left for a backend task.
+
+Found in T6.7 (D-061), for decisions outside the frontend:
+- **No endpoint serves the chatbot evaluation's results,** though 4.4.4 lists "evaluation results"
+  under analytics. T8.2 writes them; the Analytics page needs an endpoint (or a published file) to
+  read them from.
+- **No endpoint reports the rate limits** that 4.7.3 lists for the Admin page. They are constants
+  in `app/core/ratelimit.py`. Reporting them, as the policy endpoint reports the HIGH quota, would
+  let the page show them without copying them.
+- **The health check cannot say whether the AI provider answers.** By design it reads the
+  configuration and never calls the model, to save quota. DESIGN.md's Overview sketch ("Groq,
+  answering") needs a signal the backend does not have, such as the outcome of the latest model
+  call.
+- **The API filters chains by service only, and runs by one job only.** Jobs and runs filters the
+  newest 200 chains by assistant and result on the page, and says so when there are more. Filters
+  on `GET /api/chains` would make them exact.
+- **`JobResponse.service_id` names a service by an id the catalog never returns,** so a job cannot
+  be shown with its service's name. Jobs and runs reads chains instead.
+
+Found in T6.6 (D-060):
+- **The Queue page cannot show a job held for its upstream.** `DependencyGate` blocks in
+  `canRun`, so Jenkins keeps the held item among its blocked items. The plugin's ranking lists only
+  buildable items, so the held job is neither ranked nor listed as unscored, and the page cannot say
+  why it waits. DESIGN.md's Queue sketch has such a row ("Waits for fs-payment-service-build"). To
+  show it, the plugin's API would have to list blocked items with their reason, a Phase 2 change.
+- **A lone waiting job can show as unscored, or with an old score.** The sorter scores nothing when
+  the optimizer is off or fewer than two items are buildable. `DynamicQueueSorter` returns early in
+  both cases, and nothing else writes the heap. The ranking's wait is computed when it is asked
+  for, but the score and the aging come from the last sort. With one job waiting, the page can show
+  it as "Not scored by the optimizer", or show an aging bonus older than its wait. The run card's
+  score comes from the same heap.
+- **The sidebar's System theme button runs 13 px past the 240 px sidebar,** seen in Chrome at
+  1440 px. This is T6.2's shell, for T6.9's review.
+
+Found in T6.5:
+- **The backend can return a reply before the message it answers.** `list_messages` orders by
+  `created_at`, then by message id. The id is a random UUID. A message and its reply are written in
+  one request, and on Windows both were stamped with the same time: the captured `/help` pair came
+  back reply first. The thread now sorts user-before-reply on a tie (D-059). The backend fix is
+  still to do: a sequence column, or a reply stamped after its message.
+
+Found in T6.4, to settle before T6.5 and T6.6 show real scores:
+- [x] **The backend read the plugin's score factors under the wrong names.** Fixed on 2026-10-15
+      (D-057).
+      - **The defect:** the backend read flat `urgencyFactor`, `agingBonus` and
+        `estimateSeconds`. Those are the names of the plugin's metric events. The ranking
+        endpoint nests the factors under `components` and gives `estimateMillis`. Against the
+        live plugin every factor parsed as 0 and every estimate as unknown.
+      - **Inspected:** `DynamicQueueApi.renderItem` and the plugin's own `ApiJsonIT`, which
+        asserts the nested keys, against `parse_ranking`. 4.3.10 names the fields but gives no
+        keys, so the backend's names had been guessed.
+      - **Recorded:** three live responses from jenkins-dev, verbatim, in
+        `backend/tests/data/plugin/`, recorded through the backend container's own client
+        without handling the token:
+        - three waiting items with real estimates (3.6 s, 2.9 s, 22.6 s);
+        - an item that waited 300.8 s and earned 0.05 aging;
+        - a dependency group of two, where the MEDIUM upstream inherits 0.979994 over its own
+          0.800, with three unscored Pipeline items counted in `queueLength` 8.
+      - **Fixed:**
+        - the parser reads the plugin's names, plus `ownScore` and `unscoredItems`;
+        - `/api/queue` gains `components.own_score` and `unscored_items`;
+        - the chain detail's queue block gains `base_score`, `own_score` and the weights;
+        - the frontend's score bar uses the plugin's own score for the inherited tick.
+      - **Checked:**
+        - 16 tests on the recordings, 15 for the parser and client and one through
+          `/api/queue`, including that weight times factor plus aging equals the plugin's own
+          score for every recorded item;
+        - 9 of them fail with the old names;
+        - a fresh live response parsed by the fixed parser inside the container matched its raw
+          fields;
+        - backend: ruff, format and mypy clean, offline suite 1653 passed;
+        - frontend: lint, typecheck and build clean, 180 tests.
+      - **Not done:** the running backend container still has the old parser until its image
+        is rebuilt (`docker compose build backend`). Nothing reads `/api/queue` from the stack
+        until T6.5 and T6.6.
+- [x] **T6.5 needed the assistant payloads typed in the API schema first (D-056).** Done on
+      2026-10-15 (D-058).
+      - **Inspected:** every producer:
+        - `ParseOutcome.to_record`;
+        - `describe`, the `/help` shortcut and the status, rerun and cancel handlers in
+          `conversations.py`;
+        - the pipeline and approval messages, `_progress` and `ValidationReport.to_record` in
+          the generation code;
+        - `run_card` and `cancel` in `chains.py`.
+      - **Typed** in `backend/app/api/payloads.py`:
+        - the message payload as a union of 11 reply models (`help` and `run` each have two
+          producers);
+        - the intent record, using the parser's own `Intent`;
+        - the progress line and the validation report;
+        - the run card the status reply carries, and the cancel result.
+        - They are used by `MessageResponse`, `CommandResponse`, `PipelineResponse`,
+          `GET /api/chains/{id}` and its cancel. The shapes stay flat, as stored.
+      - **Checked:**
+        - `test_payloads.py` runs real flows through the API, reads back everything stored, and
+          requires each item to dump back unchanged and all 11 kinds to appear. Removing one
+          field from a model fails it.
+        - The 146 API tests that produce these shapes pass through the typed responses.
+        - Backend: ruff, format and mypy clean, offline suite 1658 passed.
+        - The frontend's `IntentFields`, `ProgressStep` and `ValidationCheck` are now the
+          generated types. Lint, typecheck and build are clean, and 180 tests pass.
+      - **Not proven:** the stack's database held no messages, commands or pipelines (0 rows),
+        so no older stored row could be checked.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
@@ -969,6 +1633,9 @@ Details in `docs/decisions.md`.
   - **Mitigated, not removed (D-050):** jenkins-dev now retries a failed checkout twice,
     10 seconds apart. Still exposed: an outage longer than that window, and the backend's own
     `git ls-remote` calls from the host.
+  - **What a recovered failure leaves behind:** its error stays in the build's log. Since D-053,
+    Explain failure does not read a checkout attempt that Jenkins retried, so the error neither
+    reaches the model nor takes the blame for a later failure.
 
 - 2026-09-28 The job property field is `level`, with an XStream/`readResolve` fallback onto M2's
   `priority`, so old job configurations still load. Decided in D-005, implemented in T2.1.
@@ -1019,3 +1686,71 @@ Details in `docs/decisions.md`.
   Five gate runs failed first, each on an intermittent DNS failure on this machine; the
   mitigations are under Needs human. Next: review and merge PR #10, then Phase 6, starting
   with T6.1's `DESIGN.md`.
+- 2026-10-13 PR #10 merged into `main` as merge commit `8da58b9` at the user's request; CI on
+  `main` passed. Phase 6 started on `phase-6-frontend`, branched from `main`:
+  - this file gains the Phase 6 tasks;
+  - T6.8's wrong section reference is recorded as D-051.
+
+  Next: T6.1's `frontend/DESIGN.md`, then stop for approval, with T6.2's infrastructure
+  meanwhile.
+- 2026-10-14 T6.1 done: `frontend/DESIGN.md` is written, measured and checked by a new Phase 6
+  `verify.py` check. It now waits for a person's approval; no screen is built before it. The
+  Phase 6 gate passed 71 of 72. Its one failure, in Phase 5's Explain failure, is D-053. A
+  re-run after the fix was stopped by Claude Code for low memory. Next: T6.2.
+- 2026-10-14 T6.2 done: the frontend project, tokens, shell, routing, generated API client and
+  WebSocket client, with three new `verify.py` checks run directly and passing, and CI guarding
+  the API types. Next: T6.3 onward builds screens, so it waits for DESIGN.md's approval. The full
+  Phase 6 gate also needs a re-run once the machine has the memory for it.
+- 2026-10-15 The user approved `frontend/DESIGN.md` as written; D-052 is accepted (`c2b7e4f`).
+  `verify.py --phase 6` then printed ALL CHECKS PASSED, 75 of 75, on `c2b7e4f`. Next: T6.3.
+- 2026-10-15 T6.3 done: sign in, session handling and sign-out (D-054), with the API's error
+  shape now in the OpenAPI schema (D-055). The four Phase 6 checks pass when run directly, with
+  92 frontend tests. The offline backend suite passed 1644. Found for T6.7: there is no password
+  reset, and the Admin entry is shown to every role. Next: T6.4.
+- 2026-10-15 T6.4 done: the shared assistant workspace components, the score bar, and CodeMirror
+  code views, with 87 new tests (179 in all) and the four Phase 6 checks passing when run
+  directly. Found: the backend reads the plugin's score factors under names the plugin never
+  sends, so live score bars would be empty (Phase 6 open items). Also, T6.5 needs the assistant
+  payloads typed in the API schema first (D-056). Next: those two, then T6.5.
+- 2026-10-15 The ranking parser fix (D-057): the plugin's real names, three live responses
+  recorded as fixtures, and `own_score` and `unscored_items` in `/api/queue`. Next: type the
+  assistant payloads (D-056), then T6.5.
+- 2026-10-15 The assistant payloads are typed in the OpenAPI schema (D-058): message payloads,
+  the intent record, the progress line, the validation report and the run card. Each was checked
+  against what real flows store. Next: T6.5.
+- 2026-10-16 T6.5 done: both assistant pages on the shared workspace, tested against 19 captured
+  real responses, with 206 frontend tests and the four Phase 6 checks passing when run directly
+  (D-059). Found: the backend can order a reply before its message. Next: T6.6.
+- 2026-10-16 `verify.py --phase 6` printed ALL CHECKS PASSED, 75 of 75, on `f43f0db`. The first
+  attempt had been stopped for low memory. CI run 38792947715 passed all five jobs. Next: T6.6.
+- 2026-10-16 T6.6 done: the Queue page, tested against 6 real queue responses, with 228 frontend
+  tests and the four Phase 6 checks passing when run directly, and seen in headless Chrome at four
+  widths in both themes (D-060). Found: a job held for its upstream never reaches the ranking, and a
+  lone waiting job can go unscored. Next: T6.7.
+- 2026-10-16 T6.7 done: the Overview, Jobs and runs, Analytics, Service catalog and Admin pages,
+  tested against 39 captured real responses, with 290 frontend tests and the four Phase 6 checks
+  passing when run directly, and seen in headless Chrome (D-061). The Admin entry now shows for
+  Admins only. Found: no endpoint serves the evaluation results or the rate limits, and the health
+  check cannot say whether the AI provider answers. Next: T6.8.
+- 2026-10-16 T6.8 done: eleven browser flows in Chrome against the backend in fake mode
+  (`backend/browser_backend.py`), passing in two full runs and 15 repeats, with a new Phase 6 check
+  and a "Browser flows" CI job (D-062). 4.7.6's Vitest half was already covered. Not covered in a
+  browser: a real Jenkins, the live plugin, the live model and the stack's own frontend. Next: T6.9.
+- 2026-10-16 T6.9 done: 40 screenshots of ten screens at 1440 and 390 px in both themes, made from
+  the build and reviewed against DESIGN.md. The review fixed four faults, among them the theme
+  switch running out of the sidebar, and a new Phase 6 check covers the screenshots (D-063).
+  Lighthouse and the 745 kB bundle are recorded, not done. Next: the full Phase 6 gate.
+- 2026-10-17 The full Phase 6 gate failed three times, and each failure is fixed: `verify.py` now
+  reads and writes UTF-8, a slow unit test no longer types key by key, and a race in the assistant
+  page that could show a new chat empty, there since T6.5, is fixed with a test that catches it
+  (D-063). 291 unit tests and 11 flows pass; the screenshots were made again.
+- 2026-10-17 `verify.py --phase 6` printed ALL CHECKS PASSED, 77 of 77, exit code 0, on `86d9a8d`.
+  Open in Phase 6: Lighthouse. Next: Lighthouse on both assistant pages.
+- 2026-10-17 Lighthouse: 100 for accessibility on both assistant pages, in 16 audits (empty and with
+  a chat, light and dark, mobile and desktop), signed in through Puppeteer in the audited tab. A
+  planted-violation control was caught in every audit. A new Phase 6 check runs it (D-064). Next:
+  the full 78-check gate.
+- 2026-10-17 `verify.py --phase 6` printed ALL CHECKS PASSED, 78 of 78, exit code 0, on `ff70254`.
+  Phase 6's acceptance is met. Still open in Phase 6, outside any task: `frontend/Dockerfile` and
+  the Compose profile, and the flows against the running stack (needs approval to rebuild the
+  backend image).

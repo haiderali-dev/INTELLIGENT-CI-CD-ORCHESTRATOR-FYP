@@ -1,0 +1,99 @@
+{
+  "configuration": {
+    "optimizerEnabled": true,
+    "weightUrgency": 0.5,
+    "weightDependency": 0.3,
+    "weightExecutionTime": 0.2,
+    "agingBonusPerInterval": 0.05,
+    "agingIntervalMinutes": 5,
+    "agingCap": 0.15,
+    "estimatorK": 5,
+    "similarityThreshold": 0.35,
+    "recencyLambdaPerDay": 0.1,
+    "historyWindow": 50,
+    "rescoreIntervalSeconds": 60,
+    "metricsEnabled": true,
+    "metricsBackendUrl": "http://backend:8000/api/metrics",
+    "metricsTokenConfigured": true,
+    "weightsSumToOne": true
+  },
+  "queueLength": 3,
+  "items": [
+    {
+      "rank": 1,
+      "itemId": 1370,
+      "jobName": "it-revision-freestyle",
+      "jobType": "FreeStyleProject",
+      "level": "HIGH",
+      "score": 0.671179,
+      "ownScore": 0.671179,
+      "baseScore": 0.671179,
+      "inheritedGroupScore": false,
+      "components": {
+        "urgency": 1.0,
+        "dependency": 0.0,
+        "executionTime": 0.855893,
+        "aging": 0.0
+      },
+      "estimateMillis": 3605,
+      "estimateKnown": true,
+      "waitSeconds": 6.182,
+      "groupId": "it-revision-freestyle",
+      "groupSize": 1,
+      "topologicalRank": 0,
+      "blockedReason": "Executor slot already in use",
+      "unresolvedDependencies": []
+    },
+    {
+      "rank": 2,
+      "itemId": 1369,
+      "jobName": "it-revision-probe-freestyle",
+      "jobType": "FreeStyleProject",
+      "level": "MEDIUM",
+      "score": 0.477962,
+      "ownScore": 0.477962,
+      "baseScore": 0.477962,
+      "inheritedGroupScore": false,
+      "components": {
+        "urgency": 0.6,
+        "dependency": 0.0,
+        "executionTime": 0.889811,
+        "aging": 0.0
+      },
+      "estimateMillis": 2853,
+      "estimateKnown": true,
+      "waitSeconds": 6.204,
+      "groupId": "it-revision-probe-freestyle",
+      "groupSize": 1,
+      "topologicalRank": 0,
+      "blockedReason": "Executor slot already in use",
+      "unresolvedDependencies": []
+    },
+    {
+      "rank": 3,
+      "itemId": 1365,
+      "jobName": "it-failure-payment-service-test-unit",
+      "jobType": "FreeStyleProject",
+      "level": "MEDIUM",
+      "score": 0.3,
+      "ownScore": 0.3,
+      "baseScore": 0.3,
+      "inheritedGroupScore": false,
+      "components": {
+        "urgency": 0.6,
+        "dependency": 0.0,
+        "executionTime": 0.0,
+        "aging": 0.0
+      },
+      "estimateMillis": 22581,
+      "estimateKnown": true,
+      "waitSeconds": 6.296,
+      "groupId": "it-failure-payment-service-test-unit",
+      "groupSize": 1,
+      "topologicalRank": 0,
+      "blockedReason": "Executor slot already in use",
+      "unresolvedDependencies": []
+    }
+  ],
+  "unscoredItems": []
+}

@@ -13,7 +13,7 @@ who started it, or DevOps and Admin.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, Any
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
@@ -21,6 +21,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import ApiRateLimit, CurrentUser
+from app.api.payloads import CancelResult, RunCard
 from app.db.models import Chain, ChainStatus
 from app.db.session import get_db
 from app.services import chains as service
@@ -98,25 +99,27 @@ async def list_chains(
     )
 
 
-@router.get("/chains/{chain_id}", dependencies=[ApiRateLimit])
+@router.get("/chains/{chain_id}", response_model=RunCard, dependencies=[ApiRateLimit])
 async def get_chain(
     chain_id: str,
     user: CurrentUser,
     session: Annotated[AsyncSession, Depends(get_db)],
     jenkins: Annotated[JenkinsClient, Depends(get_jenkins_client)],
     plugin: Annotated[PluginClient, Depends(get_plugin_client)],
-) -> dict[str, Any]:
+) -> RunCard:
     """The run card: each job's state and run, Pipeline stages, and the queue position."""
     chain = await service.get_chain(session, chain_id)
-    return await service.run_card(session, chain, jenkins=jenkins, plugin=plugin)
+    card = await service.run_card(session, chain, jenkins=jenkins, plugin=plugin)
+    return RunCard.model_validate(card)
 
 
-@router.post("/chains/{chain_id}/cancel", dependencies=[ApiRateLimit])
+@router.post("/chains/{chain_id}/cancel", response_model=CancelResult, dependencies=[ApiRateLimit])
 async def cancel_chain(
     chain_id: str,
     user: CurrentUser,
     session: Annotated[AsyncSession, Depends(get_db)],
     jenkins: Annotated[JenkinsClient, Depends(get_jenkins_client)],
-) -> dict[str, Any]:
+) -> CancelResult:
     chain = await service.get_chain(session, chain_id)
-    return await service.cancel(session, jenkins=jenkins, chain=chain, actor=user)
+    result = await service.cancel(session, jenkins=jenkins, chain=chain, actor=user)
+    return CancelResult.model_validate(result)

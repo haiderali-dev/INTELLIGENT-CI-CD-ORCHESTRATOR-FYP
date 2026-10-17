@@ -9,6 +9,574 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ---
 
+## Phase 6
+
+### D-064 Lighthouse audits the signed-in assistant pages in the tab Puppeteer signed in
+**Date:** 2026-10-17 · **Status:** accepted (Phase 6 acceptance)
+
+**The problem.** Phase 6's acceptance asks for a Lighthouse accessibility score of 95 or more on both
+assistant pages. Both need a session, and the session is in the tab's sessionStorage (D-054). A
+Lighthouse run of its own opens a fresh tab and clears storage, so it would audit the sign-in page
+and report that page's score as the assistant's.
+
+**How it is done.** `frontend/e2e/lighthouse.spec.ts`, a Playwright project that runs only with
+`LIGHTHOUSE=1`, uses the flows' harness (D-062): the production build, and the backend in fake mode
+with made-up accounts.
+- **The data:** made through the API first, as for the screenshots (D-063): a freestyle chain under
+  way, and a Pipeline waiting to start.
+- **The browser:** Puppeteer drives the installed Chrome, headless, and signs in through the form.
+  Lighthouse then audits that same tab with `disableStorageReset`, so the session survives.
+- **What is audited:** each assistant page empty and with a chat that has a plan and a run card, in
+  light and dark, at Lighthouse's mobile (412 px) and desktop (1350 px) settings. That makes 16
+  audits, accessibility only.
+- **Guards against auditing the wrong page:** after each audit the spec asserts the report's final
+  URL is the page asked for, and that the tab shows that assistant's heading in that theme.
+- **Results:** the reports and `summary.json` go to `.tmp/lighthouse/`, which is not committed. The
+  spec fails if any audit is under 0.95.
+- **Dependencies:** `lighthouse` 13.5.0 and `puppeteer-core` 25.12.0, both pinned exactly as every
+  frontend dependency is. puppeteer-core is the version Lighthouse itself uses, so there is one copy.
+  It downloads no browser.
+
+**Why not the alternatives.**
+- **Lighthouse CLI with `--extra-headers`:** the app takes its token from storage, not from a header
+  Lighthouse could add.
+- **Playwright's own browser with a debugging port:** two drivers on one tab. Each sets its own
+  emulation.
+- **A user flow (`startFlow`):** gives the same audit as a navigation with storage kept, with more
+  moving parts.
+
+**The result, 2026-10-17:** 100 in all 16 audits. The chat pages had 27 to 30 applicable audits
+against the empty pages' 25, so their content was there when audited.
+- **Negative control:** a throwaway copy of the spec planted a nameless button, an image with no
+  `alt` and low-contrast text. Every one of the 16 audits flagged all three (`button-name`,
+  `image-alt`, `color-contrast`), scored 86 to 89, and the test failed. The copy was deleted.
+
+**Where it runs.**
+- **`verify.py --phase 6`:** a new check runs the project. It then reads the summary, which must have
+  been written by that run and cover both assistants, with every score at 0.95 or more.
+- **CI:** not run. It would add minutes to every push, and the gate covers it. Adding it to the
+  "Browser flows" job is a small follow-up if a regression guard on every push is wanted.
+
+---
+
+### D-063 The screenshots are made by Playwright from the build, and the review's fixes stay small
+**Date:** 2026-10-16 · **Status:** accepted (T6.9)
+
+**How they are made.** `frontend/e2e/screenshots.spec.ts` is a Playwright project that runs only
+with `SCREENSHOTS=1`, because it rewrites committed files. It uses the same harness as the flows
+(D-062): the production build, and the backend in fake mode with made-up accounts.
+- **The data:** it is made through the API first, the way the assistants make it. There is a
+  freestyle chain under way, a failed run carrying jenkins-dev's real failing log (a new `/__e2e/builds`
+  control finishes queued builds in the fake Jenkins, and the run tracker picks them up as from a real
+  one), and a Pipeline waiting first in the plugin's recorded ranking.
+- **The views:** each screen is loaded once, with the theme on System. The viewport and colour scheme
+  then change in place, so the theme follows the scheme. Sign-ins are rate limited (D-062), and this
+  needs one per role.
+- **Full page or not:** every screen is captured full page, except the two assistants. They are app
+  screens: on a phone the thread scrolls under a composer pinned to the bottom, and a full-page
+  capture froze that composer mid-page. They are captured as the screen a person sees.
+- **Coverage:** 4.7.3's nine screens, plus the Admin page as a Developer finds it, at 1440 and 390 px,
+  light and dark. That makes 40 files in `docs/screenshots/`, named `<screen>-<width>-<theme>.png`.
+  `verify.py` checks that each is there and is a PNG of the width its name gives.
+
+**What the review changed.**
+- **The theme switch** lost its icons and became three equal parts. With icons the three were 229px
+  wide in a 192px sidebar footer, so System ran out of the sidebar. DESIGN.md names the three choices,
+  not their icons, and the words carry them.
+- **The chat list** printed times as "Oct 16, 09:44 AM" from the browser's locale. Every other page
+  prints "09:44" or "16 Oct 09:44". It now uses the same formatter, and reads API times as UTC (D-061).
+- **An active chain between jobs** said "Running" beside the name of the job that had already finished.
+  It now says "Waiting to start" and names the next job.
+- **The run detail's jobs list** called a job the chain never reached "Not built", beside a run card
+  that called it "not started". It now says "Not started" too (principle 4: one name per thing).
+
+**What the gate found.** The first full `verify.py --phase 6` runs after the screenshots failed, and
+none of the three failures was visual.
+- **A race in the assistant page (a real bug, from T6.5).** Sending the first message of a new chat
+  created the chat, opened its address at once, then sent the message. Opening the address started
+  the chat's own load, which could read the chat before the message was stored and arrive after the
+  reply, so the page showed an empty chat. The trace of the keyboard flow showed the load start
+  during the send and return empty after it. The page now opens a new chat only once its first
+  exchange is stored and loaded. A Vitest test holds the send open and fails if the chat is ever
+  loaded before it is stored; it failed against the old order.
+- **`verify.py` read its subprocesses as cp1252.** Vitest prints the character U+276F, which cp1252
+  cannot decode, so a reader thread died and a check crashed instead of reporting. It now reads them as
+  UTF-8, and writes its own output as UTF-8, since printing a failure could crash the same way.
+- **An assistant-page test timed out under load** at Vitest's 5 s default while the gate ran other
+  suites. It now types without per-key delays, and that file allows 15 s per test.
+
+**Left as they are, and why.**
+- **The main bundle, 745 kB:** every page is in it. Loading each page lazily from the routes is the
+  fix. That is a performance change, not a visual one, so it is left for a task of its own.
+- **Lighthouse:** not run. The session lives in sessionStorage, which a Lighthouse run starts without,
+  so measuring a signed-in assistant page needs a scripted user flow (Lighthouse with Puppeteer), and
+  those dependencies are not in the project. Done since, by D-064.
+
+---
+
+### D-062 The browser flows run against the backend in fake mode, with nothing outside it
+**Date:** 2026-10-16 · **Status:** accepted (T6.8)
+
+**The backend.** 4.7.6 runs the Playwright flows "against the backend with `LLM_MODE=fake`".
+`backend/browser_backend.py` starts that backend as a process of its own, and the Playwright
+configuration starts it.
+- **What is real:** the app with every router, the policy and the generators, the run tracker, the
+  WebSocket hub, sign-in with token rotation, and the app's own seeders.
+- **What is not:** the model is in fake mode. Jenkins, its plugin and Git are the in-memory
+  stand-ins the backend's tests use. The database is SQLite in a temporary folder, made fresh for
+  each run.
+- **Why:** the flows are then the same on every run and need no Jenkins, network or credential.
+  CI runs nothing that needs a Jenkins, so this is what lets CI run them. The running stack's
+  backend is an older image that is not rebuilt without approval. The flows through a real Jenkins
+  are T5.8's end-to-end suite, at the API.
+
+**Accounts and secrets.**
+- **Made up for each run:** `playwright.config.ts` makes up an Admin and a Developer with random
+  passwords, and hands them to the backend through the environment.
+- **No real secret reaches the harness:** the launcher sets every setting that could hold a secret
+  (database, JWT secret, metrics token, Jenkins credentials, Groq key, seed password). A `.env` in
+  the working directory is therefore never the source of one.
+
+**Controls only the test process has.** Routes under `/__e2e`, mounted by the launcher on its own
+app and never in the application, let a flow:
+- set the plugin's ranking, in the plugin's own format, or make the plugin unreadable;
+- switch the model off, so the chain falls back to the rule parser with `ai_fallback` set, as it
+  does with Groq unreachable (a `ProviderRejectedError`, which falls back without retries or a
+  quota block);
+- reset, which cancels every running chain as an Admin would. Each flow then gets its own
+  per-service chain lock (4.6.4).
+
+**The real sign-in limit is kept.** Every flow signs in from 127.0.0.1, so all of them share its
+limit of five sign-ins a minute. A flow that gets a 429 waits for as long as the backend asks
+(`retry_after_seconds`). The harness never loosens the limit.
+
+**The built app, through `vite preview`.**
+- **What it is:** `vite preview` has the same `/api` and `/ws` proxy as the dev server, and the
+  build is what users get.
+- **Why not the dev server:** against it, two flows saw the page come back empty right after
+  sending a first message, with the chat already made. Against the build that never happened, in
+  two full runs and 15 repeats of the assistant flows. The likely cause is the dev server
+  optimising a dependency it met on demand and reloading the page; its log did not show the
+  reload, so that is not confirmed.
+- **Corrected in T6.9:** that guess was wrong. The empty chat was a race in the page, and the build
+  only made it rarer. The Phase 6 gate then hit it against the build, and its trace showed the
+  cause (D-063, "What the gate found"). The flows still use the build, because the build is what
+  users get.
+
+**Chrome as installed.** `channel: "chrome"` uses the Google Chrome on this machine and on GitHub's
+runners, so no browser is downloaded.
+
+**The queue flow's ranking** is the live plugin's recording of three waiting jobs, with its MEDIUM
+job made LOW: urgency factor 0.3, and the score worked out again by the report's formula, 0.150.
+
+**4.7.6's Vitest half was done already.** T6.4 wrote tests for the intent card (7), clarification
+(3), composer (8) and score bar (9), and they still pass.
+
+**Where the flows run.**
+- **`verify.py --phase 6`:** a new check runs them, passing its own uv (D-010).
+- **CI:** a "Browser flows" job runs them, keeping the traces when one fails.
+
+**What they cannot show:** a real Jenkins building and deploying, the live plugin scoring a real
+queue, real Git, the live model, and the stack's own frontend, for which there is no container yet.
+
+---
+
+### D-061 The last five pages show what the API reports, and say plainly what it does not
+**Date:** 2026-10-16 · **Status:** accepted (T6.7)
+
+The pages are built on the backend's contracts as they stand. Where 4.7.3 or a DESIGN.md sketch asks
+for something no endpoint reports, the page says what is missing instead of making it up, and the
+gap is recorded under Phase 6's open items. No backend code changed.
+
+**Jobs and runs lists chains, not runs.**
+- **Why chains:** a run from `GET /api/runs` carries no service, assistant or stages, and the API
+  filters runs by one job at a time. `GET /api/jobs` names a job's service only by an id that the
+  catalog API never returns. A chain carries its service, job type (which assistant made it) and
+  outcome, and its run card carries the stages and the run ids whose logs can be read. Every run
+  the backend tracks belongs to a chain, a re-run included.
+- **Filters:** the service filter is the API's own. The assistant and result filters narrow the
+  newest 200 chains, the API's largest page, and the page says so when there are more.
+- **The duration column is "Start to finish",** the chain's time from start to end, queue waits
+  included. The run card's "in 6s" adds up its jobs' build times. Both are honest; they are
+  different measures, so they have different words.
+- **The log tail** reads the 64 KB windows forward to the end, keeps the last 200 lines, and asks
+  again every 2 seconds while Jenkins is still writing.
+
+**Analytics shows run statistics, the stored experiments, and no chart yet.**
+- **Run statistics** are computed by the backend from every run. A null is shown as "Not
+  measured", never as 0.
+- **Experiments:** a table of the stored runs, and each run's metrics (name, band, value with its
+  standard deviation, sample size). None exist before Phase 7. No chart is drawn: a chart's form
+  depends on which metrics the harness stores, and choosing those now would be inventing them. The
+  charts, each with Show as table, and the score bar's 20 px Analytics size wait for Phase 7's data.
+- **Chatbot evaluation:** no endpoint serves its results (4.4.4 lists "evaluation results"), so the
+  section says so.
+
+**Admin is for Admins, and shows the policy as fixed.**
+- **Access:** the sidebar lists Admin only for an Admin, which settles T6.3's finding. Anyone else
+  who opens `/admin` is told the page is for Admins, and the page asks the backend nothing.
+- **Users:** an Admin changes a role, adds a user, or deactivates someone after a confirmation that
+  says exactly what happens. Their own row has no controls, because the backend refuses them.
+- **Policy:** the HIGH quota and 4.5.5's rules are shown read-only, as the API reports them
+  (`editable: false`).
+- **Rate limits are not shown.** They are constants in `app/core/ratelimit.py` (300 a minute for
+  the API, 20 for the assistants) that no endpoint reports. Copying them into the UI would let it
+  drift from the backend. The Admin entry's description no longer promises them.
+- **Passwords:** the form sets a first password and says that it cannot be reset there later,
+  because no endpoint resets one.
+
+**The Overview.**
+- **My active runs** are the active chains whose `started_by` is the signed-in user. The API lists
+  every active chain, and each says who started it.
+- **The AI provider line** shows `GET /api/health`'s `llm` entry as reported: its status as a word
+  and an icon, and its detail. That check reads the configuration and never calls the model, so
+  the page never says the model is answering. DESIGN.md's sketch, "AI provider: Groq, answering",
+  cannot be shown honestly, and the Overview's description changed to match.
+- **Refresh:** the jobs-waiting figure refreshes every 10 seconds, as the Queue page does (D-060).
+
+**Shared code.**
+- **One client context.** `ApiClientContext` with `useApi(factory)` replaces the two per-page
+  contexts. Every page builds its requests over the client in context, so a test gives every page
+  one fake backend.
+- **One table.** `DataTable` draws every new table, and turns it into stacked blocks of labelled
+  facts below 768 px (DESIGN.md sections 7 and 9).
+- **Times.** An API timestamp without an offset is read as UTC. PostgreSQL returns offsets; the
+  SQLite test database drops them, and the backend writes every time in UTC.
+
+---
+
+### D-060 The Queue page shows the plugin's ranking as reported, and asks again every 10 seconds
+**Date:** 2026-10-16 · **Status:** accepted (T6.6)
+
+**It polls as well as listening.** The page asks for `GET /api/queue` again on `queue.changed`,
+`run.queued`, `run.started` and `run.finished`, and every 10 seconds while the tab is visible. The
+events come from the backend's tracker, so they cover only runs the backend started. A build queued
+any other way changes the queue without an event, and so does time: every wait grows, and so does
+its aging. `src/api/queryClient.ts` still polls nothing by default; this one query sets its own
+interval, which React Query pauses in a hidden tab.
+
+**What each row shows, from what the plugin really sends.**
+- **The blocked reason is Jenkins' own, shown verbatim.** Every ranked item is buildable, so its
+  reason is an executor wait ("Waiting for next available executor on 'linux'", "Executor slot
+  already in use"). It is in Graphite, because every waiting job has one.
+- **A job held by the dependency gate never reaches the ranking.** `DependencyGate` blocks in
+  `canRun`, so Jenkins keeps the item among its blocked items, and the ranking lists only buildable
+  ones (`DynamicQueueApi`). DESIGN.md's Queue sketch has a row reading "Waits for
+  fs-payment-service-build". The real page cannot show such a row. Recorded under Phase 6's open
+  items.
+- **`unresolved_dependencies` names upstream jobs that do not exist.** The gate reports them and
+  never waits on them (`DependencyGate.unresolvedUpstream`). The page shows them under the job's
+  name, "Upstream job not found: ...", as a mistake in configuration rather than a reason to wait.
+- **Unscored items are listed below the ranking**, under "Waiting without a score", with the
+  plugin's reason. The header's "N waiting" is the plugin's `queueLength`, which counts them.
+- **The type is the plugin's Jenkins class in words:** FreeStyleProject is Freestyle, WorkflowJob
+  is Pipeline and MavenModuleSet is Maven. Any other class is shown as sent.
+- **Estimates and waits.** An estimate under half a second reads "Under 1s" rather than "0s", and
+  a missing one reads "No history". A wait is in seconds for its first minute, then in whole
+  minutes, because aging moves in five-minute steps.
+
+**Show the numbers** adds four columns: "From urgency", "From dependency", "From execution time" and
+"From aging". "Urgency" already names the level's column. At 1440 px, the table with these columns
+is wider than its box, so it scrolls inside the box, never the page. Job names never break, and the
+default view keeps each row on one 40 px line.
+
+**The bars grow once.** `ScoreBar` takes `grow`, which the page passes for 300 ms after its first
+ranking arrives.
+- **What moves:** the segments and the inherited tick grow from 0 in 240 ms with ease-out. The 1.0
+  tick and the empty track stay still, a live update jumps straight to the new value, and the
+  global reduced-motion rule stops it.
+- **Checked in headless Chrome:** `score-grow` ran for 0.24 s with ease-out, no bar was still
+  growing a second later, and under reduced motion it ran for 0.01 ms.
+
+**Shared request handling.** `answer`, `ApiRequestError` and `failureOf` moved from `assistantApi.ts`
+to `src/api/request.ts`, so the queue's request and T6.7's share them. The queue's types come from
+the client's return types, as D-059 does for the assistants.
+
+---
+
+### D-059 The assistant pages read only typed fields, from what the client returns
+**Date:** 2026-10-16 · **Status:** accepted (T6.5)
+
+**The untyped fields.** Four response fields are still `dict[str, Any]` in the schema, and T6.5
+needs none of them, so none was typed and nothing reads them:
+- **`PipelineResponse.plan`:** the progress line already says how the plan was made.
+- **`PipelineResponse.approval`:** the page knows a plan was approved from `status` and
+  `approved_at`, and follows the run from the approved-run reply, whose `chain_id` is typed.
+- **`JobPreview.stage`:** the Config tab needs each job's `name` and `config_xml`.
+- **`ApprovalResponse.result`:** after Approve and run the page refetches the conversation, which
+  carries the same facts in the typed reply.
+
+**The page types come from what the client returns, not `components["schemas"]`.**
+openapi-fetch passes response data through `Readable<T>`, from `openapi-typescript-helpers`. That
+rebuilds every object type and drops any property typed exactly `null`, because the key filter
+asks whether `NonNullable<null>` (`never`) extends `$Write<any>`, which is true. The "nothing to
+re-run" and "nothing to cancel" replies have `chain: null`, so they lose the key. The payload union
+then has the same name as the schema's but a different shape, and TypeScript refuses to mix the
+two. `src/api/assistantApi.ts` therefore takes each type from the request's return type. Nothing
+reads those two keys.
+
+**Two more.**
+- **The thread orders a message before its reply when both have the same time.** The backend
+  orders by `created_at`, then by a random id. One request writes a message and its reply, and
+  Windows' clock can stamp both alike. The captured `/help` pair was returned reply first. The UI
+  sorts by time with the user's message first on a tie. The backend defect is recorded under
+  Phase 6's open items.
+- **The page tests run on captured responses.** The backend was driven in fake mode against the fake
+  Jenkins, and its responses were written to `src/test/fixtures/captured.ts` by a script. The
+  module is typed by the client's return types, so all 19 responses are checked by the compiler,
+  extra keys included.
+
+---
+
+### D-058 The assistant payloads are typed in the OpenAPI schema
+**Date:** 2026-10-15 · **Status:** accepted (before T6.5, settling D-056)
+
+**Problem.** D-056 found that the frontend could not read several things without hand-writing
+types, which 4.7.1 forbids. Message payloads, the intent record, and a pipeline's progress line and
+validation report were `dict[str, Any]` in the schema. So was the run card, which a status reply
+contains.
+
+**Decision.** Models in `backend/app/api/payloads.py` describe each one exactly as the backend
+writes it, and the responses use them:
+- **`MessageResponse.payload`** is a union of 11 reply models chosen by `kind`. Two kinds have two
+  producers each, so for them the shape also decides:
+  - `help` from `/help` carries only the help card, while the parser's help reply carries the
+    whole record;
+  - `run` from an approval carries `pipeline_id`, while a re-run carries the record.
+- **`CommandResponse.record`** is `IntentRecord` (`ParseOutcome.to_record()`). Its `intent` is the
+  parser's own `Intent` model, so the two cannot drift apart.
+- **`PipelineResponse.progress` and `.validation`** are `ProgressStep` and
+  `ValidationReportRecord`.
+- **`GET /api/chains/{id}` and its cancel** return `RunCard` and `CancelResult`.
+- **The shapes stay flat, as stored.** Stored rows and the existing tests read
+  `payload["question"]["field"]`.
+- **Every field a response always carries is marked required** in the schema
+  (`json_schema_serialization_defaults_required`), so the frontend's types do not call it
+  optional. Request schemas are unaffected.
+- **A run card stored in a status message before D-057** lacks `base_score`, `own_score` and
+  `weights`. It is read as not inherited and with no weights, so its bar says its parts cannot be
+  shown rather than drawing wrong ones.
+
+**How it is held.**
+- **`tests/test_payloads.py` runs real flows** through the API and the fake Jenkins: every reply
+  kind, a generated and approved pipeline, a failed test re-run, a status with a live run card,
+  and cancelling. It then reads back everything stored. Each item must validate into its model
+  and dump back unchanged, and every one of the 11 kinds must appear.
+- **Removing one field from a model fails it.**
+- **The 146 tests of the assistant, chain, generation, failure and router APIs** now pass
+  through the typed responses as well.
+
+**Not proven.** An audit of the stack's own database found no stored messages, commands or
+pipelines (0 rows), so no older row was checked. The intent record's fields have all existed since
+its first commit (T4.5), so older records have this shape.
+
+---
+
+### D-057 The ranking parser reads the plugin's own names, tested against recorded responses
+**Date:** 2026-10-15 · **Status:** decided and applied (found in T6.4)
+
+**Defect.** `parse_ranking` read flat `urgencyFactor`, `dependencyFactor`, `executionTimeFactor`,
+`agingBonus` and `estimateSeconds`. Those are the names in the plugin's metric events
+(`QueueMetricsRecorder`). The ranking endpoint (`DynamicQueueApi.renderItem`) nests the factors as
+`components: {urgency, dependency, executionTime, aging}` and gives `estimateMillis`.
+- **The effect:** against the live plugin every factor parsed as 0 and every estimate as unknown,
+  in `/api/queue` and in the chain detail behind the run card. Every score bar would have been
+  empty beside a correct score.
+- **Why nothing caught it:** the parser's fixture was written from 4.3.10's prose, which names
+  the fields but gives no keys. The gate's live check ran on an empty queue, so it never parsed an
+  item.
+
+**Fix.**
+- **The parser reads the plugin's names** and keeps none of the invented ones, because nothing
+  ever sent them.
+- **It reads two things it used to drop.** `ownScore` (base plus aging, before group inheritance)
+  lets the score bar mark an inherited score. `unscoredItems` is buildable work the optimizer has
+  not scored. `queue_length` is now the plugin's `queueLength`, which counts those items.
+- **`/api/queue` gains `components.own_score` and `unscored_items`.**
+- **The chain detail's queue block gains `base_score`, `own_score` and the plugin's weights,** so
+  the run card can draw its bar from that response alone.
+
+**How it is held.**
+- **Three responses recorded verbatim from the live jenkins-dev** are in
+  `backend/tests/data/plugin/`: three waiting items with estimates, an item aged 300 s, and a
+  dependency group with an inherited score and unscored items.
+- **The tests check** every factor and estimate, and that weight times factor plus aging equals
+  the plugin's own score for every recorded item. One test pins the nested shape itself.
+- **Reverting the parser to the old names fails 9 of them.**
+- **A fresh live response,** parsed by the fixed parser inside the backend container, matched its
+  raw fields exactly.
+
+---
+
+### D-056 The workspace components take what they show, not API payloads
+**Date:** 2026-10-15 · **Status:** accepted (T6.4). Its prerequisite for T6.5 was met by D-058,
+and the view types `IntentFields`, `ProgressStep` and `ValidationCheck` are now the generated ones.
+
+**Problem.** 4.7.1 says API types are generated from the OpenAPI schema and never hand-written.
+The workspace shows several things the schema does not describe. `MessageResponse.payload`,
+`CommandResponse.record` (the intent card), `PipelineResponse.progress` and `.validation`, and the
+chain detail behind the run card are all `{[key: string]: unknown}`. A component that read those
+dictionaries would have to declare their shape itself, which is a hand-written API type.
+
+**Decision.** The T6.4 components take props, not payloads.
+- **Typed fields are used as they are.** Where the schema types a field, the component uses the
+  generated type: `ScoreComponentsResponse` and `QueueResponse.weights` for the score bar,
+  `ServiceResponse` for the intent card's catalog values, `ConversationResponse` for the chat
+  list, and `IntentEdit` for what an edit sends.
+- **Untyped fields become small view types.** Where the schema has only a dictionary, the
+  component declares what it renders: `IntentFields`, `ProgressStep` and `ValidationCheck`.
+- **No component imports the API client or parses a payload.** That mapping is T6.5's.
+
+**What T6.5 must do first.** Type those dictionaries in the backend's response models, as D-055
+did for errors, so the pages map generated types onto these props instead of guessing at
+dictionaries. The backend already builds each one from a fixed structure: `ParseOutcome.to_record`,
+`generation._progress`, and `ValidationReport.to_record`.
+
+---
+
+### D-055 The error shape is part of the OpenAPI schema
+**Date:** 2026-10-15 · **Status:** accepted (T6.3)
+
+**Problem.** Every error the API sends has one shape, `{"error": {"code", "message", "details"}}`
+(`app/core/errors.py`), and `ErrorCode` is an enum "so the frontend can switch on them
+exhaustively". But the schema the frontend's types are generated from never mentioned it. The
+sign-in page has to tell `INVALID_CREDENTIALS` from `ACCOUNT_DISABLED` and `RATE_LIMITED`, and
+4.7.1 forbids hand-written API types. The schema was also wrong: FastAPI documented every 422 as
+its own `HTTPValidationError`, a shape this API never sends, because `_validation_error` turns
+validation failures into the error shape.
+
+**Decision.** Two Pydantic models, `ErrorResponse` and `ErrorBody`, describe the shape. The app
+declares them as every route's `4XX` and `5XX` response. Declaring `4XX` also stops FastAPI from
+adding its own 422 entry (FastAPI 0.141.1, `fastapi/openapi/utils.py`). The frontend gets
+`ErrorCode` as a generated union of the 35 codes.
+
+**How it is held.** Backend tests check four things: every operation documents both ranges with
+`ErrorResponse`; the schema's `ErrorCode` enum equals the Python enum; `HTTPValidationError`
+appears nowhere in the schema; and `ApiError`'s payload validates against the model. The drift
+checks from T6.2 keep `openapi.json` and `schema.d.ts` current.
+
+---
+
+### D-054 The session: the access token in memory, the refresh token in sessionStorage
+**Date:** 2026-10-15 · **Status:** accepted (T6.3)
+
+**Question.** The backend (4.4.4, T3.3) returns both tokens in the response body. The access
+token lasts 15 minutes. The refresh token lasts 7 days and is rotated on every use. Where the
+frontend keeps them decides two things: whether a reload signs you out, and what a script
+injected into the page could take.
+
+**Decision.**
+- **The access token** stays in memory only, as in T6.2.
+- **The refresh token** goes in sessionStorage, under `orchestrator.session`. A reload, which
+  happens often in a live demo, keeps you signed in. Closing the tab signs you out.
+- **Renewal.** The access token is renewed a minute before it expires. A 401 from any endpoint
+  outside `/api/auth/` triggers one refresh and one repeat of the request. Refreshes are
+  single-flight: once the first has rotated the token, a second sent with the old one would be
+  refused.
+- **Signing out** revokes the refresh token on the server, then forgets both tokens whatever the
+  answer.
+
+**Alternatives.**
+- **An httpOnly cookie** would keep the refresh token away from page scripts entirely. It needs
+  the backend to set and read the cookie, and CSRF protection on refresh and logout. That changes
+  the 4.4.4 contract T3.3 built and tested, which is too much for a staging-only tool. It is the
+  upgrade path.
+- **localStorage** is shared by every tab. With rotation, two tabs refreshing from the same token
+  race: the first revokes the token the second is about to use. sessionStorage is per tab, so each
+  tab has its own chain.
+- **Memory only** signs you out on every reload.
+
+**Consequences, both accepted.**
+- **A stolen refresh token outlives the page.** A script injected into the page could read it and
+  keep using it after the tab closes, for up to its 7 days. Such a script could equally act with
+  the in-memory access token while the page is open, so this is the extra exposure. Rotation
+  limits it: whichever holder refreshes first revokes the token the other one has.
+- **A duplicated tab copies sessionStorage,** so it starts with the same token. Whichever tab
+  refreshes second is signed out with "Your session ended".
+
+---
+
+### D-053 The failure analysis does not read a checkout attempt that Jenkins retried
+**Date:** 2026-10-14 · **Status:** decided and applied (found by the first Phase 6 gate run)
+
+**What happened.** The first `verify.py --phase 6` run failed one check of 72, the end-to-end test
+`test_the_failed_tests_are_explained_from_their_real_log`. Its explanation came from the rules,
+because both models missed their replay recordings (`replay_miss`).
+- **The build.** `fs-payment-service-test-unit` #60. Its first clone could not resolve
+  `github.com` on agent-2. D-050's retry got past that 10 seconds later, and the unit test then
+  failed as designed.
+- **What changed the prompt.** The recovered error's lines (`ERROR: Error cloning remote repo`,
+  the `GitException`) matched the excerpt's signals and were added to the excerpt.
+- **Measured.** Builds #55, #56, #58 and #61 render the identical prompt; #60 rendered a
+  different one, so its hash had no recording.
+
+**Why it matters beyond replay.** Since D-050, a dropped lookup during a clone no longer fails the
+build, so these lines will keep turning up in builds that fail later for other reasons. The
+whole-log rules read them too: a later step that failed without printing why would have been put
+down to the network.
+
+**Decision.** `analysis._superseded` finds every checkout attempt that Jenkins retried. An attempt
+runs from its start (the top of the log, a Pipeline's `[Pipeline] checkout`, or the previous
+retry) to Jenkins's `Retrying after 10 seconds`. Those lines are left out of the excerpt and out of
+both rule passes. An attempt that was not retried is still read, so a checkout that failed every
+time is diagnosed from its last attempt, the one that failed the build.
+
+**Checked.**
+- With the fix, build #60 renders the same prompt as #55, #56, #58 and #61.
+- Build #60's log is now a fixture, `payment-service-test-unit-retried-checkout.log`. Four new
+  tests fail without the fix and pass with it:
+  - the retried build's prompt equals that of the same build without its failed attempt;
+  - a recovered error never explains a later failure;
+  - a checkout that failed all three attempts is read through its last;
+  - a Pipeline's retried `checkout` step leaves the excerpt unchanged.
+- The offline suite: 1641 passed, 49 deselected.
+
+**Also learned.** Build #60 is the first observed case of D-050 working. It survived a DNS failure
+that would have failed it before.
+
+---
+
+### D-052 Six named colours for the interface; the score bar's four colours are a data scale
+**Date:** 2026-10-13 · **Status:** accepted 2026-10-15, when the user approved
+`frontend/DESIGN.md` as written
+
+**Conflict.** Part 4.7.2 asks for "4 to 6 named hex values with their roles, plus separate
+build-state colors". The same part makes the score bar the memorable element: one stacked bar of
+four contributions, which needs four colours that can be told apart. Part 4.7.4 adds a separate
+accent for each assistant. Four bar colours, two accents and the neutrals that every interface
+needs do not fit in six.
+
+**Decision.** Six named values run the interface: Ground, Panel, Ink and Graphite, plus Spruce
+and Plum for the Freestyle and Pipeline assistants. The divider colour, Rule, is a mix of Graphite
+into Panel rather than a seventh value. The score bar's four colours are treated like the
+build-state colours: a separate scale that only score bar segments and their legend keys may use.
+Section 10 of `DESIGN.md` puts this first in the list of choices to question.
+
+**How it is held.** `verify.py --phase 6` reads the colours from `DESIGN.md`'s tables and checks
+that there are 4 to 6 named values, then recomputes:
+- text at 4.5:1 or more, and every meaningful graphic at 3:1, on Panel and on Ground, in both
+  themes;
+- adjacent score bar segments at least 15 ΔE apart, and at least 8 under simulated colour vision
+  deficiency;
+- every score bar colour at least 15 ΔE from every build-state colour, because 4.7.5 reserves the
+  status colours.
+
+---
+
+### D-051 T6.8's test plan is Part 4.7.6, not 4.7.8
+**Date:** 2026-10-13 · **Status:** decided; the specification is left unchanged
+
+**Conflict.** T6.8 asks for "Vitest unit tests and Playwright flows (Part 4.7.8)", but Part 4.7
+ends at 4.7.6. Part 4.7.6, "Tests", is the only test plan in Part 4.7: Vitest for the intent card,
+clarification, score bar and composer, and seven Playwright flows run against the backend with
+`LLM_MODE=fake`. Nothing else in the specification refers to a 4.7.8.
+
+**Decision.** 4.7.6 is the intended reference, as with T5.8's 4.6.7 (D-040). Unlike D-040,
+`BUILD_PROMPT.md` is not edited: that correction was made at the user's request, and this one has
+none. Rule 1.4 asks only that the deviation be recorded. `PROGRESS.md` cites 4.7.6.
+
+---
+
 ## Phase 5
 
 ### D-050 jenkins-dev retries a failed SCM checkout twice (`scmCheckoutRetryCount: 2`)

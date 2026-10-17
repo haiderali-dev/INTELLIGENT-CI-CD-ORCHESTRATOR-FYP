@@ -26,7 +26,7 @@ from app.api import (
     queue,
     services,
 )
-from app.core.errors import register_exception_handlers
+from app.core.errors import ERROR_RESPONSES, register_exception_handlers
 from app.core.logging import (
     REQUEST_ID_HEADER,
     RequestContextMiddleware,
@@ -111,6 +111,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         redoc_url=None,
         openapi_url="/openapi.json",
         lifespan=lifespan,
+        # The one error shape, on every route, so the frontend's types carry the codes (D-055).
+        responses=ERROR_RESPONSES,
     )
     app.state.settings = settings
 

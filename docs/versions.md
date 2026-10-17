@@ -77,9 +77,67 @@ Milestone 2 used parent POM 5.9 and `java.level` 17 against Jenkins 2.479.3. Bot
 
 ## Frontend
 
-| Component | Pinned | Source | Checked |
+Pinned in `frontend/package.json` during T6.2, exact versions only (`frontend/.npmrc` sets
+`save-exact`). Each was read from the npm registry on 2026-10-13 with `npm view`, and each is the
+newest stable release published at least seven days earlier. That cooldown skipped releases a day
+or two old, such as `lucide-react` 1.56.0 and `vitest` 5.0.4, whose problems nobody has had time to
+find yet. Every peer dependency range was checked before install, and `npm install` reported no
+conflict and no known vulnerability in the production dependencies.
+
+| Component | Pinned | Latest on 2026-10-13 | Note |
 | --- | --- | --- | --- |
-| Vite, React, TypeScript, Tailwind, shadcn/ui, TanStack Query, CodeMirror 6, Recharts, Vitest, Playwright | *pending T6.2* | npm registry | |
+| `react`, `react-dom` | 19.3.0 | 19.3.0 | |
+| `react-router` | 8.4.0 | 8.4.0 | Needs Node 22.22 or later; this machine has 24.12 |
+| `@tanstack/react-query` | 5.104.1 | 5.104.2 | |
+| `openapi-fetch` | 0.17.0 | 0.17.0 | The typed client over `src/api/schema.d.ts` |
+| `openapi-typescript` | 7.13.0 | 7.13.0 | Generates `schema.d.ts` from `openapi.json` |
+| `radix-ui` | 1.7.0 | 1.8.1 | The Radix primitives shadcn/ui is built on |
+| `class-variance-authority`, `clsx`, `tailwind-merge` | 0.7.1, 2.1.1, 3.7.0 | the same | shadcn/ui's helpers |
+| `lucide-react` | 1.52.0 | 1.56.0 | Icons |
+| `react-hook-form` | 7.89.0 | 7.90.0 on 2026-10-15 | Forms (4.7.1). Added in T6.3 |
+| `zod` | 4.6.5 | 4.6.7 on 2026-10-15 | Form schemas (4.7.1). Added in T6.3 |
+| `@hookform/resolvers` | 5.9.1 | 5.9.1 on 2026-10-15 | Connects the two. Added in T6.3 |
+| `@codemirror/state`, `/view`, `/language`, `/commands` | 6.7.6, 6.43.14, 6.13.1, 6.11.1 | the same on 2026-10-15 | Code views (4.7.1). Added in T6.4 |
+| `@codemirror/lang-yaml`, `/lang-xml`, `/legacy-modes` | 6.1.3, 6.1.0, 6.5.5 | the same on 2026-10-15 | The spec, `config.xml`, and the Jenkinsfile as Groovy |
+| `@codemirror/lint`, `@codemirror/merge` | 6.9.7, 6.12.2 | the same on 2026-10-15 | Inline spec errors, and the diff after a regenerate |
+| `@lezer/highlight` | 1.2.5 | the same on 2026-10-15 | The tags the code views' monochrome highlight style is written against |
+| `@fontsource/ibm-plex-sans`, `@fontsource/ibm-plex-mono` | 5.3.0 | 5.3.0 | Self-hosted fonts, Latin subset only |
+| `vite`, `@vitejs/plugin-react` | 8.3.2, 6.1.2 | 8.3.4, 6.1.2 | |
+| `tailwindcss`, `@tailwindcss/vite` | 4.3.3 | 4.3.3 | |
+| `typescript` | **5.9.3** | 7.0.2 | See below |
+| `eslint`, `@eslint/js` | 10.12.0, 10.0.1 | the same | |
+| `typescript-eslint` | 8.71.1 | 8.71.2 | |
+| `eslint-plugin-react-hooks`, `eslint-plugin-react-refresh`, `globals` | 7.1.1, 0.5.7, 17.13.0 | the same | |
+| `vitest` | 5.0.3 | 5.0.4 | |
+| `jsdom` | **29.1.1** | 30.1.2 | See below |
+| `@testing-library/react`, `/dom`, `/jest-dom`, `/user-event` | 16.3.3, 10.4.2, 7.0.1, 14.6.7 | 16.3.3, 10.4.2, 7.0.1, 14.6.8 | `/dom` is `/react`'s peer |
+| `@types/react`, `@types/react-dom`, `@types/node` | 19.3.0, 19.3.0, **24.19.1** | 19.3.0, 19.3.0, 26.6.5 | Node types follow the Node in use, 24 |
+
+Three pins are deliberately behind the newest release:
+- **TypeScript 5.9.3, not 7.0.2.** `typescript-eslint` 8.71 accepts `>=4.8.4 <6.1.0` and
+  `openapi-typescript` 7.13 accepts `^5.x`. TypeScript 7 is the native port, and neither tool
+  supports it yet. 5.9.3 is the newest release both accept.
+- **jsdom 29.1.1, not 30.1.2.** jsdom 30 requires Node `^24.15.0` on the 24 line, and this machine
+  runs 24.12.0. 29.1.1 accepts `>=24.0.0`.
+- **`@types/node` 24, not 26,** because the frontend is built and tested on Node 24.
+
+The three form packages were read from the npm registry on 2026-10-15 under the same seven-day
+cooldown. It skipped `react-hook-form` 7.90.0 (4 days old) and `zod` 4.6.6 and 4.6.7 (4 and 3
+days old). Their peer ranges fit: `@hookform/resolvers` 5.9.1 wants `react-hook-form` `^7.55.0`
+and accepts `zod` `^3.25.0 || ^4.0.0`, and its other peers are optional, so none was installed.
+`zod` was already in the tree at 4.6.7, through `eslint-plugin-react-hooks`, whose range 4.6.5
+also satisfies. npm now resolves one copy at 4.6.5 for both. `npm audit --omit=dev` found no
+vulnerabilities.
+
+The ten CodeMirror packages were read from the npm registry on 2026-10-15. Each one's newest
+release was already past the seven-day cutoff of 2026-10-08, the most recent being `/view`,
+`/language` and `/legacy-modes` from 2026-10-07. npm resolves a single copy of `/state`, `/view`,
+`/language` and `@lezer/highlight` across all of them. `/lang-xml` brings `@codemirror/autocomplete`
+6.20.3 in as its own dependency. `npm audit --omit=dev` found no vulnerabilities.
+
+shadcn/ui is not a package: its components are copied into `src/` and restyled to DESIGN.md's
+tokens (4.7.1). Recharts and Playwright are pinned by the tasks that first use them: T6.7 for
+charts and T6.8 for the browser tests.
 
 ## LLM provider
 

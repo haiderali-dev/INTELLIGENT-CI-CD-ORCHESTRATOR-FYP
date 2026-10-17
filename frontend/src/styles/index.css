@@ -1,0 +1,136 @@
+@import "tailwindcss";
+@import "@fontsource/ibm-plex-sans/latin-400.css";
+@import "@fontsource/ibm-plex-sans/latin-600.css";
+@import "@fontsource/ibm-plex-mono/latin-400.css";
+@import "./tokens.css";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/*
+ * Only DESIGN.md's values exist as utilities: Tailwind's own palette, radii, shadows, breakpoints
+ * and type scale are cleared first, so a class such as bg-red-500 or rounded-xl does not build.
+ */
+@theme {
+  --color-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+  --breakpoint-*: initial;
+  --text-*: initial;
+  --font-*: initial;
+  --font-weight-*: initial;
+
+  /* DESIGN.md section 7: 768 px for the bottom sheet and stacked rows, 1280 px for the drawer. */
+  --breakpoint-md: 48rem;
+  --breakpoint-xl: 80rem;
+
+  /* Radius follows role (section 7). */
+  --radius-control: 2px;
+  --radius-data: 4px;
+  --radius-float: 8px;
+
+  /* Section 3. */
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-weight-normal: 400;
+  --font-weight-semibold: 600;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.25rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.5rem;
+  --text-xl--line-height: 2rem;
+  --text-hero: 2.5rem;
+  --text-hero--line-height: 3rem;
+}
+
+/* `inline`, so each utility reads the token at run time and follows the theme. */
+@theme inline {
+  --color-ground: var(--ground);
+  --color-panel: var(--panel);
+  --color-ink: var(--ink);
+  --color-graphite: var(--graphite);
+  --color-rule: var(--rule);
+  --color-spruce: var(--spruce);
+  --color-plum: var(--plum);
+  --color-factor-urgency: var(--factor-urgency);
+  --color-factor-dependency: var(--factor-dependency);
+  --color-factor-execution-time: var(--factor-execution-time);
+  --color-factor-aging: var(--factor-aging);
+  --color-state-succeeded: var(--state-succeeded);
+  --color-state-failed: var(--state-failed);
+  --color-state-unstable: var(--state-unstable);
+  --shadow-float: var(--float-shadow);
+}
+
+@layer base {
+  html {
+    background-color: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+  }
+
+  /* Section 8: a 2px Ink outline with a 2px offset, on everything interactive, never removed. */
+  :focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+
+  /* Plex Mono belongs to code views only (section 3). */
+  code,
+  pre {
+    font-family: var(--font-mono);
+  }
+}
+
+/*
+ * Section 7's motion, and nothing else: a new message fades in, a toast slides in, and the queue's
+ * score bars grow once on first load (section 6). All of them stop under reduced motion (below).
+ */
+@keyframes message-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes score-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

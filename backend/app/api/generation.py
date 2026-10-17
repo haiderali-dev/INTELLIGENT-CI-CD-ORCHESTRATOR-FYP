@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.ai.prompting import load_prompt
 from app.ai.quota import get_quota_tracker
 from app.api.deps import ApiRateLimit, AssistantRateLimit, CurrentUser, get_planner
+from app.api.payloads import ProgressStep, ValidationReportRecord
 from app.core.errors import ErrorCode, conflict
 from app.core.settings import Settings
 from app.db import session as db_session
@@ -67,8 +68,12 @@ class PipelineResponse(BaseModel):
     jobs: list[JobPreview]
     jenkinsfile: str | None
     parameters: dict[str, str]
-    progress: list[dict[str, Any]]
-    validation: dict[str, Any] | None = Field(description="The checklist (4.6.3), in order")
+    progress: list[ProgressStep] = Field(
+        description="4.7.4's progress line: the steps reached, a failed one last (D-058)"
+    )
+    validation: ValidationReportRecord | None = Field(
+        description="The checklist (4.6.3), in order; null when nothing was rendered to check"
+    )
     plan: dict[str, Any] | None = Field(description="How the plan was made, attempts and repairs")
     summary: str | None = Field(description="What approving will do, for the approval dialog")
     attempts: int
@@ -92,8 +97,12 @@ class PipelineResponse(BaseModel):
             jobs=[JobPreview(**job.to_record()) for job in (artifact.jobs if artifact else ())],
             jenkinsfile=artifact.jenkinsfile if artifact else None,
             parameters=artifact.parameters if artifact else {},
-            progress=list(results.get("progress") or []),
-            validation=results.get("report"),
+            progress=[ProgressStep.model_validate(step) for step in results.get("progress") or []],
+            validation=(
+                ValidationReportRecord.model_validate(results["report"])
+                if results.get("report") is not None
+                else None
+            ),
             plan=results.get("plan"),
             summary=results.get("summary"),
             attempts=pipeline.attempts,

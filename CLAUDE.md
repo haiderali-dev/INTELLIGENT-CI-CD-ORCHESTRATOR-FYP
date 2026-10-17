@@ -14,6 +14,8 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
 - Plugin: `cd plugin && mvn -B verify`
 - Backend: `cd backend && uv run python -m ruff check . && uv run python -m mypy app && uv run python -m pytest -m "not live and not e2e and not integration"`
 - Frontend: `cd frontend && npm run lint && npm run typecheck && npm run test`
+- Browser flows: `cd frontend && npx playwright test` (Google Chrome; starts its own backend in fake
+  mode from `backend/browser_backend.py`, and needs no Docker or credential)
 - Stack: `docker compose up -d` · Reset demo: `python scripts/demo_reset.py`
 - Phase check: `python scripts/verify.py --phase N`
 
@@ -81,3 +83,8 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
   (D-039).
 - An empty Git branch spec means "any branch" to the Git plugin, and the build reports SUCCESS
   on whatever it picked. A revision must never reach Jenkins empty. Use `select_revision` (D-041).
+- Git Bash rewrites any command argument that starts with `/` into a Windows path, a regex
+  included. It broke a `docker exec` path (2026-10-13) and a `node -e` regex (2026-10-14). Put
+  such arguments in a script file, or inside `sh -c '...'`.
+- The backend's pytest `addopts` already has `-q`. A second one prints no summary line at all,
+  which reads like no tests ran. It happened twice; never add `-q` to backend pytest commands.

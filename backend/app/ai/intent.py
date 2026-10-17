@@ -76,7 +76,11 @@ class Intent(BaseModel):
     edit on the intent card -- is a new intent, so the original stays available to explain itself.
     """
 
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    # The last setting touches only the API's response schema (D-058): the intent card always
+    # carries every field, so the frontend's types should not call any of them optional.
+    model_config = ConfigDict(
+        frozen=True, extra="forbid", json_schema_serialization_defaults_required=True
+    )
 
     action: Action
     service: str | None = None
