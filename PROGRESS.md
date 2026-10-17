@@ -1,7 +1,7 @@
 # Progress
 
-Updated: 2026-10-17 · Current phase: 6 (all tasks done; the gate passed 77 of 77; Lighthouse 100 on
-both assistant pages; the 78-check gate is to be re-run) ·
+Updated: 2026-10-17 · Current phase: 6 (all tasks done; acceptance met; the gate passed 78 of 78 on
+`ff70254`) ·
 Branch: phase-6-frontend
 
 ## Needs human
@@ -933,7 +933,7 @@ Preparation, 2026-10-11, after PR #9 merged. Still **no task checked off**.
 In progress on `phase-6-frontend`, branched from `main` at `8da58b9`. T6.1 is done and was
 approved on 2026-10-15; T6.2 to T6.9 are done. The phase gate passed 77 of 77 on `86d9a8d`
 (2026-10-17). Lighthouse scored 100 for accessibility on both assistant pages (D-064), and the gate
-gained a check for it; the full 78-check gate has not run yet.
+gained a check for it: it passed 78 of 78 on `ff70254` (2026-10-17).
 
 - [x] T6.1 Write `frontend/DESIGN.md` using the process in Part 4.7.2, then stop and add "Approve
       DESIGN.md" under Needs human. Build no screens before approval. Work on T6.2
@@ -1448,10 +1448,14 @@ Acceptance evidence, all run on 2026-10-17:
     failed. The copy was deleted.
   - **verify.py:** a new Phase 6 check, "Lighthouse scores both assistant pages 95 or more for
     accessibility", passed when run on its own ("16 audits; lowest accessibility score 100
-    (Freestyle), 100 (Pipeline)"). The gate now has 78 checks; the full 78 have not yet run.
+    (Freestyle), 100 (Pipeline)"). The gate now has 78 checks.
   - **Other checks after the change:** `npm run lint` and `typecheck` clean; `npx playwright test`
     11 flows passed; the screenshot spec, now using the helpers it shares with the Lighthouse spec,
     passed 4 of 4. Its output was not kept, since no screen changed.
+- **The full gate, on `ff70254` with a clean tree: ALL CHECKS PASSED, 78 of 78, exit code 0**
+  (`python -u scripts/verify.py --phase 6`, 16:47 to 17:13). Among them, the Lighthouse check:
+  "16 audits; lowest accessibility score 100 (Freestyle), 100 (Pipeline)". CI run 39030064897
+  passed all six jobs on the same commit.
 
 Open in Phase 6, outside any one task: `frontend/Dockerfile`, and removing the `frontend` service's
 Compose profile, which D-018 left for "once Phase 6 builds the image". Best done once the
@@ -1746,3 +1750,7 @@ Details in `docs/decisions.md`.
   a chat, light and dark, mobile and desktop), signed in through Puppeteer in the audited tab. A
   planted-violation control was caught in every audit. A new Phase 6 check runs it (D-064). Next:
   the full 78-check gate.
+- 2026-10-17 `verify.py --phase 6` printed ALL CHECKS PASSED, 78 of 78, exit code 0, on `ff70254`.
+  Phase 6's acceptance is met. Still open in Phase 6, outside any task: `frontend/Dockerfile` and
+  the Compose profile, and the flows against the running stack (needs approval to rebuild the
+  backend image).
