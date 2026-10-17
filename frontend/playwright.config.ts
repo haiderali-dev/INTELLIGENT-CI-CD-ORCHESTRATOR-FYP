@@ -44,10 +44,12 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
   // The flows always; T6.9's screenshots (docs/screenshots/) only when asked for with SCREENSHOTS=1,
-  // since they rewrite committed files.
+  // since they rewrite committed files; the Lighthouse audits only with LIGHTHOUSE=1, since they
+  // take minutes.
   projects: [
-    { name: "flows", testIgnore: /screenshots\.spec\.ts/ },
+    { name: "flows", testIgnore: /(screenshots|lighthouse)\.spec\.ts/ },
     ...(process.env.SCREENSHOTS ? [{ name: "screenshots", testMatch: /screenshots\.spec\.ts/ }] : []),
+    ...(process.env.LIGHTHOUSE ? [{ name: "lighthouse", testMatch: /lighthouse\.spec\.ts/ }] : []),
   ],
   webServer: [
     {

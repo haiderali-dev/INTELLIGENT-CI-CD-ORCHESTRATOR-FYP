@@ -11,6 +11,54 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 6
 
+### D-064 Lighthouse audits the signed-in assistant pages in the tab Puppeteer signed in
+**Date:** 2026-10-17 · **Status:** accepted (Phase 6 acceptance)
+
+**The problem.** Phase 6's acceptance asks for a Lighthouse accessibility score of 95 or more on both
+assistant pages. Both need a session, and the session is in the tab's sessionStorage (D-054). A
+Lighthouse run of its own opens a fresh tab and clears storage, so it would audit the sign-in page
+and report that page's score as the assistant's.
+
+**How it is done.** `frontend/e2e/lighthouse.spec.ts`, a Playwright project that runs only with
+`LIGHTHOUSE=1`, uses the flows' harness (D-062): the production build, and the backend in fake mode
+with made-up accounts.
+- **The data:** made through the API first, as for the screenshots (D-063): a freestyle chain under
+  way, and a Pipeline waiting to start.
+- **The browser:** Puppeteer drives the installed Chrome, headless, and signs in through the form.
+  Lighthouse then audits that same tab with `disableStorageReset`, so the session survives.
+- **What is audited:** each assistant page empty and with a chat that has a plan and a run card, in
+  light and dark, at Lighthouse's mobile (412 px) and desktop (1350 px) settings. That makes 16
+  audits, accessibility only.
+- **Guards against auditing the wrong page:** after each audit the spec asserts the report's final
+  URL is the page asked for, and that the tab shows that assistant's heading in that theme.
+- **Results:** the reports and `summary.json` go to `.tmp/lighthouse/`, which is not committed. The
+  spec fails if any audit is under 0.95.
+- **Dependencies:** `lighthouse` 13.5.0 and `puppeteer-core` 25.12.0, both pinned exactly as every
+  frontend dependency is. puppeteer-core is the version Lighthouse itself uses, so there is one copy.
+  It downloads no browser.
+
+**Why not the alternatives.**
+- **Lighthouse CLI with `--extra-headers`:** the app takes its token from storage, not from a header
+  Lighthouse could add.
+- **Playwright's own browser with a debugging port:** two drivers on one tab. Each sets its own
+  emulation.
+- **A user flow (`startFlow`):** gives the same audit as a navigation with storage kept, with more
+  moving parts.
+
+**The result, 2026-10-17:** 100 in all 16 audits. The chat pages had 27 to 30 applicable audits
+against the empty pages' 25, so their content was there when audited.
+- **Negative control:** a throwaway copy of the spec planted a nameless button, an image with no
+  `alt` and low-contrast text. Every one of the 16 audits flagged all three (`button-name`,
+  `image-alt`, `color-contrast`), scored 86 to 89, and the test failed. The copy was deleted.
+
+**Where it runs.**
+- **`verify.py --phase 6`:** a new check runs the project. It then reads the summary, which must have
+  been written by that run and cover both assistants, with every score at 0.95 or more.
+- **CI:** not run. It would add minutes to every push, and the gate covers it. Adding it to the
+  "Browser flows" job is a small follow-up if a regression guard on every push is wanted.
+
+---
+
 ### D-063 The screenshots are made by Playwright from the build, and the review's fixes stay small
 **Date:** 2026-10-16 · **Status:** accepted (T6.9)
 
@@ -62,7 +110,7 @@ none of the three failures was visual.
   fix. That is a performance change, not a visual one, so it is left for a task of its own.
 - **Lighthouse:** not run. The session lives in sessionStorage, which a Lighthouse run starts without,
   so measuring a signed-in assistant page needs a scripted user flow (Lighthouse with Puppeteer), and
-  those dependencies are not in the project.
+  those dependencies are not in the project. Done since, by D-064.
 
 ---
 

@@ -103,6 +103,47 @@ export const setRanking = (request: APIRequestContext, ranking: unknown) =>
 export const finishBuilds = (request: APIRequestContext, result: "SUCCESS" | "FAILURE") =>
   control(request, "builds", { result });
 
+/**
+ * Signs in through the API, for making data before a page is opened, and returns the header that
+ * carries the token. A 429 is waited out as `submitCredentials` does.
+ */
+export async function apiHeaders(request: APIRequestContext, role: Role): Promise<Record<string, string>> {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const answer = await request.post("/api/auth/login", { data: ACCOUNTS[role] });
+    if (answer.status() !== 429) {
+      expect(answer.ok()).toBe(true);
+      const { access_token: token } = (await answer.json()) as { access_token: string };
+      return { Authorization: `Bearer ${token}` };
+    }
+    const body = (await answer.json()) as { error?: { details?: { retry_after_seconds?: number } } };
+    await new Promise((resolve) => setTimeout(resolve, ((body.error?.details?.retry_after_seconds ?? 12) + 1) * 1000));
+  }
+  throw new Error("the sign-in limit never let the setup through");
+}
+
+/** Asks an assistant, generates the plan and approves it, as the pages do. Returns the chat and chain. */
+export async function askAndApprove(
+  request: APIRequestContext,
+  headers: Record<string, string>,
+  assistant: "freestyle" | "pipeline",
+  text: string,
+): Promise<{ chat: string; chain: string }> {
+  const chat = (await (await request.post(`/api/assistants/${assistant}/conversations`, { headers })).json()) as { id: string };
+  const sent = await request.post(`/api/conversations/${chat.id}/messages`, { headers, data: { text } });
+  expect(sent.ok(), await sent.text()).toBe(true);
+  const { command } = (await sent.json()) as { command: { id: string } | null };
+  expect(command, `no command for "${text}"`).not.toBeNull();
+  const plan = await request.post(`/api/commands/${command?.id ?? ""}/generate`, { headers });
+  expect(plan.ok(), await plan.text()).toBe(true);
+  const { id } = (await plan.json()) as { id: string };
+  const approved = await request.post(`/api/pipelines/${id}/approve`, {
+    headers: { ...headers, "Idempotency-Key": `e2e-${id}` },
+  });
+  expect(approved.ok(), await approved.text()).toBe(true);
+  const { result } = (await approved.json()) as { result: { chain_id: string } };
+  return { chat: chat.id, chain: result.chain_id };
+}
+
 interface RecordedItem {
   rank: number;
   jobName: string;

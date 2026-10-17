@@ -2860,6 +2860,59 @@ def check_screenshots() -> Result:
     return ok(f"{count} screenshots: {len(SCREENSHOT_SCREENS)} screens, 1440 and 390 px, light and dark")
 
 
+LIGHTHOUSE_FLOOR = 0.95
+# Each assistant page empty and with a chat, in light and dark, at mobile and desktop settings.
+LIGHTHOUSE_AUDITS = 16
+
+
+@check(6, "Lighthouse scores both assistant pages 95 or more for accessibility")
+def check_lighthouse() -> Result:
+    """Phase 6's acceptance (BUILD_PROMPT Part 7), D-064: `LIGHTHOUSE=1 npx playwright test
+    --project=lighthouse` signs in through the form in the installed Chrome and audits both
+    assistant pages in that tab, against the built app and the backend in fake mode. The spec fails
+    under the floor; this check also reads the summary it wrote in this run, so a stale summary
+    cannot stand in for one."""
+    npm, why = _frontend_ready()
+    if npm is None:
+        return fail(why)
+    runner = _uv_runner()
+    if runner is None:
+        return fail("uv is not installed; see docs/decisions.md D-010")
+    summary_path = REPO_ROOT / ".tmp" / "lighthouse" / "summary.json"
+    started = time.time()
+    result = run(
+        [*npm, "exec", "--", "playwright", "test", "--project=lighthouse"],
+        cwd=FRONTEND,
+        timeout=1800,
+        env={"E2E_UV": runner[0], "LIGHTHOUSE": "1"},
+    )
+    output = _ANSI_CODES.sub("", result.stdout + result.stderr).strip()
+    if result.returncode != 0:
+        tail = [line for line in output.splitlines() if line.strip()][-3:]
+        saved = _keep_output("lighthouse", output)
+        return fail("the Lighthouse audits failed: " + " / ".join(tail)[:300] + f" ({saved})")
+    if not re.search(r"\b1 passed", output):
+        return fail("npx playwright test --project=lighthouse did not report its one test passing")
+    if not summary_path.is_file() or summary_path.stat().st_mtime < started:
+        return fail(f"{summary_path.relative_to(REPO_ROOT)} was not written by this run")
+    audited = json.loads(summary_path.read_text(encoding="utf-8")).get("audited", [])
+    if len(audited) != LIGHTHOUSE_AUDITS:
+        return fail(f"{len(audited)} audits in the summary, expected {LIGHTHOUSE_AUDITS}")
+    lowest: dict[str, float] = {}
+    for audit in audited:
+        score = audit.get("score")
+        if not isinstance(score, (int, float)) or score < LIGHTHOUSE_FLOOR:
+            return fail(f"{audit.get('name')}: accessibility {score}, under {LIGHTHOUSE_FLOOR}")
+        assistant = str(audit.get("assistant"))
+        lowest[assistant] = min(lowest.get(assistant, 1.0), float(score))
+    if sorted(lowest) != ["freestyle", "pipeline"]:
+        return fail(f"the summary covers {sorted(lowest)}, not both assistants")
+    return ok(
+        f"{LIGHTHOUSE_AUDITS} audits; lowest accessibility score "
+        f"{round(lowest['freestyle'] * 100)} (Freestyle), {round(lowest['pipeline'] * 100)} (Pipeline)"
+    )
+
+
 @check(6, "the frontend's API types are generated from the backend's current OpenAPI schema")
 def check_api_types_current() -> Result:
     """4.7.1: "API types are generated from the backend OpenAPI schema; never hand-write them."

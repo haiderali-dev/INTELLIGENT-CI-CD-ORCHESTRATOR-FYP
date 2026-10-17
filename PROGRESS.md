@@ -1,6 +1,7 @@
 # Progress
 
-Updated: 2026-10-17 · Current phase: 6 (all tasks done; the gate passed 77 of 77; Lighthouse is open) ·
+Updated: 2026-10-17 · Current phase: 6 (all tasks done; the gate passed 77 of 77; Lighthouse 100 on
+both assistant pages; the 78-check gate is to be re-run) ·
 Branch: phase-6-frontend
 
 ## Needs human
@@ -931,7 +932,8 @@ Preparation, 2026-10-11, after PR #9 merged. Still **no task checked off**.
 
 In progress on `phase-6-frontend`, branched from `main` at `8da58b9`. T6.1 is done and was
 approved on 2026-10-15; T6.2 to T6.9 are done. The phase gate passed 77 of 77 on `86d9a8d`
-(2026-10-17). Open: Lighthouse.
+(2026-10-17). Lighthouse scored 100 for accessibility on both assistant pages (D-064), and the gate
+gained a check for it; the full 78-check gate has not run yet.
 
 - [x] T6.1 Write `frontend/DESIGN.md` using the process in Part 4.7.2, then stop and add "Approve
       DESIGN.md" under Needs human. Build no screens before approval. Work on T6.2
@@ -1420,15 +1422,36 @@ approved on 2026-10-15; T6.2 to T6.9 are done. The phase gate passed 77 of 77 on
           suite took 16 minutes, and the plugin reported builds throughout. CI run 39026561925
           passed all six jobs on the same commit.
       - **Not done:**
-        - **Lighthouse** (Phase 6 acceptance: 95 or more on both assistant pages) was not run. A
-          signed-in page needs a scripted Lighthouse user flow, whose dependencies the project does
-          not have (D-063).
+        - **Lighthouse** (Phase 6 acceptance: 95 or more on both assistant pages) was not run in
+          T6.9. A signed-in page needs Lighthouse driven through Puppeteer, whose dependencies the
+          project did not have (D-063). Done on 2026-10-17; see the acceptance evidence below.
         - **The 745 kB main bundle:** loading pages lazily from the routes would fix it. It is
           documented, not done in T6.9 (D-063).
         - **Not seen against the running stack,** for the same reasons as T6.5 to T6.8.
 
 **Acceptance:** all frontend quality bars pass; Lighthouse accessibility score of 95 or more on
 both assistant pages; screenshots committed.
+
+Acceptance evidence, all run on 2026-10-17:
+- **Quality bars and screenshots:** `verify.py --phase 6` passed 77 of 77 on `86d9a8d`.
+- **Lighthouse: 100 on both assistant pages, in all 16 audits (D-064).**
+  - **How:** `LIGHTHOUSE=1 npx playwright test --project=lighthouse` in frontend/, with Lighthouse
+    13.5.0 and puppeteer-core 25.12.0 (new, pinned dev dependencies). It runs against the build and
+    the backend in fake mode.
+  - **What:** Puppeteer signs in through the form in Chrome, and Lighthouse audits the same tab with
+    storage reset off. Each assistant page is audited empty and with a chat that has a plan and a run
+    card, in light and dark, at mobile and desktop settings.
+  - **Guards:** each audit's final URL, heading and theme are asserted. The chat pages had 27 to 30
+    applicable audits against the empty pages' 25.
+  - **Negative control:** a throwaway copy of the spec planted a nameless button, an image with no
+    alt and low-contrast text. All 16 audits flagged all three, scoring 86 to 89, and the test
+    failed. The copy was deleted.
+  - **verify.py:** a new Phase 6 check, "Lighthouse scores both assistant pages 95 or more for
+    accessibility", passed when run on its own ("16 audits; lowest accessibility score 100
+    (Freestyle), 100 (Pipeline)"). The gate now has 78 checks; the full 78 have not yet run.
+  - **Other checks after the change:** `npm run lint` and `typecheck` clean; `npx playwright test`
+    11 flows passed; the screenshot spec, now using the helpers it shares with the Lighthouse spec,
+    passed 4 of 4. Its output was not kept, since no screen changed.
 
 Open in Phase 6, outside any one task: `frontend/Dockerfile`, and removing the `frontend` service's
 Compose profile, which D-018 left for "once Phase 6 builds the image". Best done once the
@@ -1719,3 +1742,7 @@ Details in `docs/decisions.md`.
   (D-063). 291 unit tests and 11 flows pass; the screenshots were made again.
 - 2026-10-17 `verify.py --phase 6` printed ALL CHECKS PASSED, 77 of 77, exit code 0, on `86d9a8d`.
   Open in Phase 6: Lighthouse. Next: Lighthouse on both assistant pages.
+- 2026-10-17 Lighthouse: 100 for accessibility on both assistant pages, in 16 audits (empty and with
+  a chat, light and dark, mobile and desktop), signed in through Puppeteer in the audited tab. A
+  planted-violation control was caught in every audit. A new Phase 6 check runs it (D-064). Next:
+  the full 78-check gate.

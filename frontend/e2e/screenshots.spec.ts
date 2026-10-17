@@ -3,13 +3,13 @@ import { fileURLToPath } from "node:url";
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 
 import {
-  ACCOUNTS,
+  apiHeaders,
+  askAndApprove,
   finishBuilds,
   rankingWithHighAboveLow,
   reset,
   setRanking,
   signIn,
-  type Role,
 } from "./support";
 
 /**
@@ -35,43 +35,6 @@ const made: { freestyleChat: string; pipelineChat: string; failedChain: string }
   failedChain: "",
 };
 
-async function login(request: APIRequestContext, role: Role): Promise<Record<string, string>> {
-  for (let attempt = 0; attempt < 5; attempt += 1) {
-    const answer = await request.post("/api/auth/login", { data: ACCOUNTS[role] });
-    if (answer.status() !== 429) {
-      expect(answer.ok()).toBe(true);
-      const { access_token: token } = (await answer.json()) as { access_token: string };
-      return { Authorization: `Bearer ${token}` };
-    }
-    const body = (await answer.json()) as { error?: { details?: { retry_after_seconds?: number } } };
-    await new Promise((resolve) => setTimeout(resolve, ((body.error?.details?.retry_after_seconds ?? 12) + 1) * 1000));
-  }
-  throw new Error("the sign-in limit never let the setup through");
-}
-
-/** Asks an assistant, generates the plan and approves it, as the pages do. Returns the chat and chain. */
-async function approve(
-  request: APIRequestContext,
-  headers: Record<string, string>,
-  assistant: "freestyle" | "pipeline",
-  text: string,
-): Promise<{ chat: string; chain: string }> {
-  const chat = (await (await request.post(`/api/assistants/${assistant}/conversations`, { headers })).json()) as { id: string };
-  const sent = await request.post(`/api/conversations/${chat.id}/messages`, { headers, data: { text } });
-  expect(sent.ok(), await sent.text()).toBe(true);
-  const { command } = (await sent.json()) as { command: { id: string } | null };
-  expect(command, `no command for "${text}"`).not.toBeNull();
-  const plan = await request.post(`/api/commands/${command?.id ?? ""}/generate`, { headers });
-  expect(plan.ok(), await plan.text()).toBe(true);
-  const { id } = (await plan.json()) as { id: string };
-  const approved = await request.post(`/api/pipelines/${id}/approve`, {
-    headers: { ...headers, "Idempotency-Key": `screens-${id}` },
-  });
-  expect(approved.ok(), await approved.text()).toBe(true);
-  const { result } = (await approved.json()) as { result: { chain_id: string } };
-  return { chat: chat.id, chain: result.chain_id };
-}
-
 /** Until the tracker has seen what the fake Jenkins did: it polls every 3 seconds. */
 async function chainStatus(request: APIRequestContext, headers: Record<string, string>, chain: string, status: string) {
   await expect
@@ -83,21 +46,21 @@ async function chainStatus(request: APIRequestContext, headers: Record<string, s
 
 test("makes the data the screens show", async ({ request }) => {
   await reset(request);
-  const headers = await login(request, "developer");
+  const headers = await apiHeaders(request, "developer");
 
   // A failed run: auth-service's tests fail on the real failing log.
-  const failed = await approve(request, headers, "freestyle", "Build, test and deploy the latest commit of auth-service to staging");
+  const failed = await askAndApprove(request, headers, "freestyle", "Build, test and deploy the latest commit of auth-service to staging");
   await finishBuilds(request, "FAILURE");
   await chainStatus(request, headers, failed.chain, "FAILURE");
   made.failedChain = failed.chain;
 
   // A freestyle chain under way: its build passed, its tests have not started.
-  const running = await approve(request, headers, "freestyle", "Build, test and deploy the latest commit of payment-service to staging");
+  const running = await askAndApprove(request, headers, "freestyle", "Build, test and deploy the latest commit of payment-service to staging");
   await finishBuilds(request, "SUCCESS");
   made.freestyleChat = running.chat;
 
   // A Pipeline waiting in the queue, first in the plugin's ranking.
-  const waiting = await approve(request, headers, "pipeline", "Build, test and deploy the latest commit of auth-service to staging");
+  const waiting = await askAndApprove(request, headers, "pipeline", "Build, test and deploy the latest commit of auth-service to staging");
   made.pipelineChat = waiting.chat;
   const ranking = rankingWithHighAboveLow() as { items: { jobName: string }[]; queueLength: number };
   const card = (await (await request.get(`/api/chains/${waiting.chain}`, { headers })).json()) as { jobs: { name: string }[] };
