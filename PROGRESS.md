@@ -1400,6 +1400,20 @@ approved on 2026-10-15; T6.2 to T6.9 are done. Open: the phase gate, and Lightho
         - **One unit test timed out once.** `npm run test` failed one test in one of four runs, at
           its 5-second limit ("invites a first request, and makes the chat only when one is sent").
           It passed alone and in the next two full runs, 290 of 290. Recorded, not loosened.
+      - **What the full gate found after a5519fa, and fixed (run on 2026-10-17, D-063):**
+        - **Run 1, 75 of 76:** `verify.py` read subprocess output as cp1252, and Vitest's U+276F
+          crashed the quality-bars check. It now reads UTF-8.
+        - **Run 2, stopped after 72 checks:** printing a failure crashed on cp1252 stdout (now
+          UTF-8). The failure was the test above, timed out at 5 s under the gate's load. It now
+          types without per-key delays, and its file allows 15 s per test.
+        - **Run 3, 76 of 77:** the keyboard flow showed an empty chat against the build. Its trace
+          showed a race from T6.5: a new chat's address was opened before its first message was
+          stored, and the chat's own load landed empty after the reply. The page now opens a new
+          chat only once its first exchange is stored. A new Vitest test failed against the old
+          order and passes now. D-062's guess (a dev-server reload) is corrected.
+        - **After the fixes:** `npm run lint`, `typecheck` and `build` are clean; `npm run test`
+          291 passed; `npx playwright test` 11 flows passed; the screenshots were made again from
+          this code (16 of 40 changed, in times and ids only) and looked at.
       - **Not done:**
         - **Lighthouse** (Phase 6 acceptance: 95 or more on both assistant pages) was not run. A
           signed-in page needs a scripted Lighthouse user flow, whose dependencies the project does
@@ -1694,3 +1708,7 @@ Details in `docs/decisions.md`.
   the build and reviewed against DESIGN.md. The review fixed four faults, among them the theme
   switch running out of the sidebar, and a new Phase 6 check covers the screenshots (D-063).
   Lighthouse and the 745 kB bundle are recorded, not done. Next: the full Phase 6 gate.
+- 2026-10-17 The full Phase 6 gate failed three times, and each failure is fixed: `verify.py` now
+  reads and writes UTF-8, a slow unit test no longer types key by key, and a race in the assistant
+  page that could show a new chat empty, there since T6.5, is fixed with a test that catches it
+  (D-063). 291 unit tests and 11 flows pass; the screenshots were made again.

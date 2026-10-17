@@ -96,6 +96,10 @@ def run(
         cwd=str(cwd or REPO_ROOT),
         capture_output=True,
         text=True,
+        # Tools print UTF-8, and Windows' default code page cannot decode all of it: Vitest's U+276F
+        # (byte 0x9d) crashed the reader and failed a gate run with no output (2026-10-16).
+        encoding="utf-8",
+        errors="replace",
         timeout=timeout,
         check=False,
         env={**os.environ, **env} if env else None,
@@ -2956,6 +2960,12 @@ IMPLEMENTED_PHASES = {0, 1, 2, 3, 4, 5, 6}
 
 
 def main() -> int:
+    # A check's message can quote a tool's UTF-8 output. Printed to a file or a pipe on Windows,
+    # stdout's default code page cannot encode all of it, and a failing check's message crashed a
+    # gate run before the checks after it had run (2026-10-16).
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(
         prog="verify.py",
         description="Run every acceptance check for phases 0 to N.",

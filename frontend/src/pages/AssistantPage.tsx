@@ -102,13 +102,18 @@ export function AssistantPage({ assistant }: { assistant: AssistantKind }) {
     const abort = new AbortController();
     inFlight.current = abort;
     let id = activeId;
+    // A new chat is opened only once its first exchange is stored. Opening it as soon as it was
+    // created let the chat's own load race the send: it read the chat empty, landed after the
+    // reply, and the page showed an empty chat (caught by T6.8's flows, traced in T6.9).
+    let created: string | null = null;
     try {
       if (id === null) {
         id = (await api.createConversation(assistant)).id;
-        void navigate(`${base}/${id}`);
+        created = id;
       }
-      const exchange = await api.send(id, text, abort.signal);
-      queryClient.setQueryData<ConversationDetail>(keys.conversation(id), (current) =>
+      const chat = id;
+      const exchange = await api.send(chat, text, abort.signal);
+      queryClient.setQueryData<ConversationDetail>(keys.conversation(chat), (current) =>
         current
           ? { ...current, messages: [...current.messages, exchange.user_message, exchange.assistant_message] }
           : current,
@@ -117,7 +122,9 @@ export function AssistantPage({ assistant }: { assistant: AssistantKind }) {
         queryClient.setQueryData(keys.command(exchange.command.id), exchange.command);
       }
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: keys.conversation(id) }),
+        created
+          ? queryClient.query({ queryKey: keys.conversation(chat), queryFn: () => api.conversation(chat) })
+          : queryClient.invalidateQueries({ queryKey: keys.conversation(chat) }),
         queryClient.invalidateQueries({ queryKey: keys.conversations(assistant) }),
       ]);
     } catch (error) {
@@ -133,6 +140,10 @@ export function AssistantPage({ assistant }: { assistant: AssistantKind }) {
         void queryClient.invalidateQueries({ queryKey: keys.conversation(id) });
       }
     } finally {
+      // Stopped, failed or answered, a chat that was made is where the person now is.
+      if (created !== null) {
+        void navigate(`${base}/${created}`);
+      }
       setPending(null);
       inFlight.current = null;
     }

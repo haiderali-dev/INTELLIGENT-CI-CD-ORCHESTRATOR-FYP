@@ -42,6 +42,21 @@ with `SCREENSHOTS=1`, because it rewrites committed files. It uses the same harn
 - **The run detail's jobs list** called a job the chain never reached "Not built", beside a run card
   that called it "not started". It now says "Not started" too (principle 4: one name per thing).
 
+**What the gate found.** The first full `verify.py --phase 6` runs after the screenshots failed, and
+none of the three failures was visual.
+- **A race in the assistant page (a real bug, from T6.5).** Sending the first message of a new chat
+  created the chat, opened its address at once, then sent the message. Opening the address started
+  the chat's own load, which could read the chat before the message was stored and arrive after the
+  reply, so the page showed an empty chat. The trace of the keyboard flow showed the load start
+  during the send and return empty after it. The page now opens a new chat only once its first
+  exchange is stored and loaded. A Vitest test holds the send open and fails if the chat is ever
+  loaded before it is stored; it failed against the old order.
+- **`verify.py` read its subprocesses as cp1252.** Vitest prints the character U+276F, which cp1252
+  cannot decode, so a reader thread died and a check crashed instead of reporting. It now reads them as
+  UTF-8, and writes its own output as UTF-8, since printing a failure could crash the same way.
+- **An assistant-page test timed out under load** at Vitest's 5 s default while the gate ran other
+  suites. It now types without per-key delays, and that file allows 15 s per test.
+
 **Left as they are, and why.**
 - **The main bundle, 745 kB:** every page is in it. Loading each page lazily from the routes is the
   fix. That is a performance change, not a visual one, so it is left for a task of its own.
@@ -95,6 +110,10 @@ limit of five sign-ins a minute. A flow that gets a 429 waits for as long as the
   two full runs and 15 repeats of the assistant flows. The likely cause is the dev server
   optimising a dependency it met on demand and reloading the page; its log did not show the
   reload, so that is not confirmed.
+- **Corrected in T6.9:** that guess was wrong. The empty chat was a race in the page, and the build
+  only made it rarer. The Phase 6 gate then hit it against the build, and its trace showed the
+  cause (D-063, "What the gate found"). The flows still use the build, because the build is what
+  users get.
 
 **Chrome as installed.** `channel: "chrome"` uses the Google Chrome on this machine and on GitHub's
 runners, so no browser is downloaded.

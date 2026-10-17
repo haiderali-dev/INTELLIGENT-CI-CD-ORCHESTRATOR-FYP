@@ -76,9 +76,46 @@ function renderPage(path: string, backend: FakeBackend, session: Session) {
 
 const composer = () => screen.getByRole("textbox", { name: /^Message the / });
 
-describe("an assistant page", () => {
+// The whole app, signed in, per test, and the first of them also starts it cold: 1.3 to 1.9 s on an
+// idle machine, and past the default 5 s limit while the Phase 6 gate's Jenkins builds load it. The
+// limit is about the machine, not the page, so it is wider here; every assertion is unchanged.
+describe("an assistant page", { timeout: 15_000 }, () => {
+  it("opens a new chat only once its first exchange is stored, so it never loads it empty", async () => {
+    // T6.8's flows caught the page showing a new chat empty: it was opened when created, its own
+    // load raced the send, read it empty and landed after the reply. Here the send takes a while,
+    // and no load of the chat may start before it has finished.
+    const user = userEvent.setup({ delay: null });
+    const { backend, session, store } = await backendWith(null);
+    let stored = false;
+    const loadsBeforeStored: boolean[] = [];
+    backend
+      .on("POST /api/conversations/:id/messages", async () => {
+        // Long enough for the router to have opened the chat, had it been opened on creation: at
+        // 50 ms the old order was not caught here, at 400 ms it was.
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        store.messages = [captured.intentExchange.user_message, captured.intentExchange.assistant_message];
+        stored = true;
+        return json(201, captured.intentExchange);
+      })
+      .on("GET /api/conversations/:id", () => {
+        loadsBeforeStored.push(!stored);
+        return json(200, store);
+      });
+    const { router } = renderPage("/assistants/freestyle", backend, session);
+    await screen.findByText("Services it knows:");
+
+    await user.type(composer(), "Build, test and deploy payment-service to staging{Enter}");
+
+    expect(await screen.findByRole("region", { name: "Intent" })).toBeInTheDocument();
+    expect(currentPath(router)).toBe(`/assistants/freestyle/${CHAT}`);
+    expect(loadsBeforeStored.length).toBeGreaterThan(0);
+    expect(loadsBeforeStored).not.toContain(true);
+  });
+
   it("invites a first request, and makes the chat only when one is sent", async () => {
-    const user = userEvent.setup();
+    // Every key is still pressed, without a timer between them: typing fifty of them with one
+    // took this test past its 5 s limit under load, twice, during the Phase 6 gate.
+    const user = userEvent.setup({ delay: null });
     const { backend, session, store } = await backendWith(null);
     backend.on("POST /api/conversations/:id/messages", () => {
       store.messages = [
