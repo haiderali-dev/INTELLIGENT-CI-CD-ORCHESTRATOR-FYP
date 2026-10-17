@@ -1,6 +1,6 @@
 # Progress
 
-Updated: 2026-10-16 · Current phase: 6 (all tasks done; the gate and Lighthouse are open) ·
+Updated: 2026-10-17 · Current phase: 6 (all tasks done; the gate passed 77 of 77; Lighthouse is open) ·
 Branch: phase-6-frontend
 
 ## Needs human
@@ -930,7 +930,8 @@ Preparation, 2026-10-11, after PR #9 merged. Still **no task checked off**.
 ## Phase 6: Frontend
 
 In progress on `phase-6-frontend`, branched from `main` at `8da58b9`. T6.1 is done and was
-approved on 2026-10-15; T6.2 to T6.9 are done. Open: the phase gate, and Lighthouse.
+approved on 2026-10-15; T6.2 to T6.9 are done. The phase gate passed 77 of 77 on `86d9a8d`
+(2026-10-17). Open: Lighthouse.
 
 - [x] T6.1 Write `frontend/DESIGN.md` using the process in Part 4.7.2, then stop and add "Approve
       DESIGN.md" under Needs human. Build no screens before approval. Work on T6.2
@@ -1414,6 +1415,10 @@ approved on 2026-10-15; T6.2 to T6.9 are done. Open: the phase gate, and Lightho
         - **After the fixes:** `npm run lint`, `typecheck` and `build` are clean; `npm run test`
           291 passed; `npx playwright test` 11 flows passed; the screenshots were made again from
           this code (16 of 40 changed, in times and ids only) and looked at.
+        - **Run 4, on `86d9a8d` with a clean tree: ALL CHECKS PASSED, 77 of 77, exit code 0**
+          (`python -u scripts/verify.py --phase 6`, 15:52 to 16:24). The real-Jenkins end-to-end
+          suite took 16 minutes, and the plugin reported builds throughout. CI run 39026561925
+          passed all six jobs on the same commit.
       - **Not done:**
         - **Lighthouse** (Phase 6 acceptance: 95 or more on both assistant pages) was not run. A
           signed-in page needs a scripted Lighthouse user flow, whose dependencies the project does
@@ -1712,3 +1717,5 @@ Details in `docs/decisions.md`.
   reads and writes UTF-8, a slow unit test no longer types key by key, and a race in the assistant
   page that could show a new chat empty, there since T6.5, is fixed with a test that catches it
   (D-063). 291 unit tests and 11 flows pass; the screenshots were made again.
+- 2026-10-17 `verify.py --phase 6` printed ALL CHECKS PASSED, 77 of 77, exit code 0, on `86d9a8d`.
+  Open in Phase 6: Lighthouse. Next: Lighthouse on both assistant pages.
