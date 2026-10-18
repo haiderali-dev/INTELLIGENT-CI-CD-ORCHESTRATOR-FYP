@@ -24,6 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import AdminUser, ApiRateLimit
 from app.core.errors import ErrorCode, conflict, not_found
 from app.core.logging import get_logger
+from app.core.ratelimit import RATE_LIMITS
 from app.core.security import hash_password
 from app.core.settings import Settings
 from app.db.models import AuditLog, Role, User
@@ -78,6 +79,20 @@ class CreateUserRequest(BaseModel):
 class UpdateUserRequest(BaseModel):
     role: Role | None = None
     active: bool | None = None
+
+
+class ResetPasswordRequest(BaseModel):
+    # The same floor as creating a user: this is a password being chosen.
+    password: str = Field(min_length=12, max_length=256)
+
+
+class RateLimitResponse(BaseModel):
+    """One of the backend's rate limits, as `app/core/ratelimit.py` defines it."""
+
+    name: str
+    capacity: int
+    per_seconds: float
+    applies_to: str
 
 
 class AuditEntryResponse(BaseModel):
@@ -355,6 +370,60 @@ async def get_policy(
         high_urgency_daily_quota=settings.high_urgency_daily_quota,
         rules=list(POLICY_RULES),
     )
+
+
+@router.post(
+    "/admin/users/{user_id}/password",
+    response_model=AdminUserResponse,
+    summary="Set a new password for a user",
+)
+async def reset_password(
+    user_id: str,
+    payload: ResetPasswordRequest,
+    admin: AdminUser,
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> AdminUserResponse:
+    """The way back for someone who forgot their password: the sign-in page tells them to ask an
+    administrator (found in T6.3, when no endpoint let one help).
+
+    Every session the old password opened ends: tokens issued before now are refused, and the
+    user's live connections are dropped. Resetting your own password signs you out too. The audit
+    entry records who reset whose password, never the password.
+    """
+    user = await session.get(User, user_id)
+    if user is None:
+        raise not_found(ErrorCode.USER_NOT_FOUND, "No such user.", user_id=user_id)
+    user.password_hash = hash_password(payload.password)
+    user.token_epoch = (user.token_epoch or 0) + 1
+    session.add(
+        AuditLog(
+            actor_id=admin.id,
+            action="admin.user.password_reset",
+            target=user.email,
+            details={},
+        )
+    )
+    await session.commit()
+    await get_hub().drop_user(user.id)
+    logger.info("admin_password_reset", actor=admin.id, target=user.id)
+    return AdminUserResponse.of(user)
+
+
+@router.get(
+    "/admin/limits", response_model=list[RateLimitResponse], summary="The rate limits in force"
+)
+async def get_rate_limits(admin: AdminUser) -> list[RateLimitResponse]:
+    """4.7.3 lists the rate limits on the Admin page. Read from the limits themselves, so the page
+    cannot show numbers the backend does not enforce (found in T6.7)."""
+    return [
+        RateLimitResponse(
+            name=limit.name,
+            capacity=limit.capacity,
+            per_seconds=limit.per_seconds,
+            applies_to=applies_to,
+        )
+        for limit, applies_to in RATE_LIMITS
+    ]
 
 
 # Weakest first. `tests/test_admin.py` checks this against `role_allows`, so the Admin page's

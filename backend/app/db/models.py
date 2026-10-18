@@ -120,6 +120,11 @@ class User(UuidPrimaryKey, TimestampedCreation, Base):
     password_hash: Mapped[str] = mapped_column(String(255))
     role: Mapped[str] = mapped_column(String(16), default=Role.DEVELOPER.value)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Every token carries the epoch it was issued in, and one from another epoch is refused. An
+    # Admin's password reset moves it on, so whoever was using the old password is signed out
+    # everywhere (found in T6.3: there was no reset). A counter rather than a time: a token's
+    # ``iat`` has whole seconds, which cannot order a reset and a sign-in in the same second.
+    token_epoch: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
     conversations: Mapped[list[Conversation]] = relationship(back_populates="user")
 

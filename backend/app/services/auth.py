@@ -219,17 +219,23 @@ def issue_tokens(settings: Settings, user: User, *, family: str | None = None) -
     effect at the next refresh rather than lasting for the refresh token's whole seven days.
 
     The refresh token carries its ``fam``ily: one per sign-in, kept by every rotation, so the reuse
-    of a spent token can sign out every token descended from it.
+    of a spent token can sign out every token descended from it. Both carry the user's ``ep``och,
+    which a password reset moves on (``issued_before_reset``).
     """
+    epoch = user.token_epoch or 0
     return TokenPair(
         access_token=create_token(
-            settings, subject=user.id, token_type=TokenType.ACCESS, role=user.role
+            settings,
+            subject=user.id,
+            token_type=TokenType.ACCESS,
+            role=user.role,
+            extra={"ep": epoch},
         ),
         refresh_token=create_token(
             settings,
             subject=user.id,
             token_type=TokenType.REFRESH,
-            extra={"fam": family or uuid.uuid4().hex},
+            extra={"fam": family or uuid.uuid4().hex, "ep": epoch},
         ),
     )
 
@@ -274,6 +280,8 @@ async def refresh_tokens(
             ErrorCode.ACCOUNT_DISABLED,
             "This account is disabled. Ask an administrator to re-enable it.",
         )
+    if issued_before_reset(user, claims):
+        raise signed_out
 
     logger.info("token_refreshed", user_id=user.id)
     return user, issue_tokens(settings, user, family=family)
@@ -318,7 +326,20 @@ async def load_user_from_access_token(
             ErrorCode.ACCOUNT_DISABLED,
             "This account is disabled. Ask an administrator to re-enable it.",
         )
+    if issued_before_reset(user, claims):
+        raise unauthorized(
+            ErrorCode.TOKEN_INVALID, "This password was reset. Sign in with the new one."
+        )
     return user
+
+
+def issued_before_reset(user: User, claims: dict[str, Any]) -> bool:
+    """True when the token was issued before the user's last password reset by an Admin.
+
+    Tokens carry ``ep``, the user's epoch when they were issued; a reset moves the epoch on. A
+    token from before epochs existed has none and reads as 0, the epoch every user starts in.
+    """
+    return int(claims.get("ep", 0)) != user.token_epoch
 
 
 def role_allows(actual: Role, required: Role) -> bool:

@@ -63,6 +63,15 @@ API_LIMIT = RateLimit(name="api", capacity=300, per_seconds=60.0)
 # is draining the whole team's quota rather than chatting.
 ASSISTANT_LIMIT = RateLimit(name="assistant", capacity=20, per_seconds=60.0)
 
+# Every limit, with what it is counted against, as the Admin page shows them (4.7.3).
+RATE_LIMITS: tuple[tuple[RateLimit, str], ...] = (
+    (LOGIN_LIMIT, "sign-in, per address and account"),
+    (LOGIN_ADDRESS_LIMIT, "sign-in, per address across accounts"),
+    (REFRESH_LIMIT, "session renewal, per address"),
+    (API_LIMIT, "every signed-in request, per user"),
+    (ASSISTANT_LIMIT, "assistant messages, generation and explanations, per user"),
+)
+
 
 class RateLimiter:
     """Thread-safe token buckets keyed by (limit name, identifier)."""

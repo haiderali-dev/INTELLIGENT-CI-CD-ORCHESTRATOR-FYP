@@ -18,6 +18,7 @@ megabyte repeatedly.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, Final
@@ -82,6 +83,15 @@ async def count_rows(session: AsyncSession, statement: Select[Any]) -> int:
 # ---------------------------------------------------------------------------
 # Jobs
 # ---------------------------------------------------------------------------
+
+
+async def service_names(session: AsyncSession, jobs: Sequence[Job]) -> dict[str, str]:
+    """The catalog name of each job's service, by service id, in one query."""
+    ids = {job.service_id for job in jobs if job.service_id}
+    if not ids:
+        return {}
+    rows = await session.execute(select(Service.id, Service.name).where(Service.id.in_(ids)))
+    return {service_id: name for service_id, name in rows}  # noqa: C416 (rows are not pairs to mypy)
 
 
 async def list_jobs(

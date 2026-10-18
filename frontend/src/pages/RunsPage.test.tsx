@@ -21,8 +21,17 @@ function runs(backend: FakeBackend): FakeBackend {
   return backend
     .on("GET /api/services", () => json(200, captured.services))
     .on("GET /api/chains", (request) => {
-      const service = new URL(request.url).searchParams.get("service");
-      const items = captured.chains.items.filter((chain) => !service || chain.service === service);
+      // The backend's own filters (tests/test_api_gaps.py), applied to the captured chains.
+      const query = new URL(request.url).searchParams;
+      const service = query.get("service");
+      const jobType = query.get("job_type");
+      const status = query.get("status");
+      const items = captured.chains.items.filter(
+        (chain) =>
+          (!service || chain.service === service) &&
+          (!jobType || chain.job_type === jobType) &&
+          (!status || chain.status === status),
+      );
       return json(200, { ...captured.chains, items, total: items.length });
     })
     .on("GET /api/chains/:id", (request) => {
@@ -70,23 +79,27 @@ describe("jobs and runs", () => {
     expect(screen.getByText("3 runs, newest first.")).toBeInTheDocument();
   });
 
-  it("filters by service in the API, and by assistant and result on the page, in the address", async () => {
+  it("filters by service, assistant and result in the API, and keeps them in the address", async () => {
     const user = userEvent.setup();
     const { backend, session } = await signedIn();
     const { router } = renderRoutes("/runs", session, runs(backend));
     await screen.findByRole("table", { name: "Runs, newest first" });
 
     await user.selectOptions(screen.getByLabelText("Assistant"), "freestyle");
-    expect(rowNames()).toEqual(["fs-auth-service-build", "fs-payment-service-build"]);
+    await waitFor(() => {
+      expect(rowNames()).toEqual(["fs-auth-service-build", "fs-payment-service-build"]);
+    });
 
     await user.selectOptions(screen.getByLabelText("Result"), "failed");
-    expect(rowNames()).toEqual(["fs-payment-service-build"]);
+    await waitFor(() => {
+      expect(rowNames()).toEqual(["fs-payment-service-build"]);
+    });
 
     await user.selectOptions(await screen.findByLabelText("Service"), "auth-service");
     expect(await screen.findByText("No runs match these filters.")).toBeInTheDocument();
     expect(currentPath(router)).toBe("/runs?assistant=freestyle&result=failed&service=auth-service");
     expect(backend.calls("GET /api/chains").map((request) => new URL(request.url).search)).toContain(
-      "?service=auth-service&limit=200",
+      "?service=auth-service&job_type=FREESTYLE&status=FAILURE&limit=200",
     );
 
     await user.click(screen.getByRole("link", { name: "Clear the filters" }));
@@ -94,16 +107,12 @@ describe("jobs and runs", () => {
     expect(await screen.findAllByRole("rowheader")).toHaveLength(3);
   });
 
-  it("says when the filters look at only the newest runs", async () => {
+  it("says when only the newest runs are shown", async () => {
     const { backend, session } = await signedIn();
     runs(backend).on("GET /api/chains", () => json(200, { ...captured.chains, total: 250 }));
     renderRoutes("/runs", session, backend);
 
-    expect(
-      await screen.findByText(
-        "3 of the newest 3 runs, of 250 in all. The assistant and result filters look at these 3.",
-      ),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("The newest 3 of 250 runs.")).toBeInTheDocument();
   });
 
   it("invites a first run when there are none", async () => {

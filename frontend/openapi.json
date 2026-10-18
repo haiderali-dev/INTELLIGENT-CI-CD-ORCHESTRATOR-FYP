@@ -529,6 +529,18 @@
         "title": "ChainPage",
         "type": "object"
       },
+      "ChainStatus": {
+        "description": "A chain's outcome. EXPIRED: its 30-minute lock ran out before it finished (4.6.4).",
+        "enum": [
+          "RUNNING",
+          "SUCCESS",
+          "FAILURE",
+          "ABORTED",
+          "EXPIRED"
+        ],
+        "title": "ChainStatus",
+        "type": "string"
+      },
       "ChainSummary": {
         "properties": {
           "finished_at": {
@@ -2217,6 +2229,17 @@
             "title": "Priority Level",
             "type": "string"
           },
+          "service": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service"
+          },
           "service_id": {
             "anyOf": [
               {
@@ -2234,6 +2257,7 @@
           "jenkins_name",
           "job_type",
           "service_id",
+          "service",
           "priority_level",
           "depends_on",
           "chain_position",
@@ -2241,6 +2265,15 @@
         ],
         "title": "JobResponse",
         "type": "object"
+      },
+      "JobType": {
+        "enum": [
+          "FREESTYLE",
+          "MAVEN",
+          "PIPELINE"
+        ],
+        "title": "JobType",
+        "type": "string"
       },
       "LogResponse": {
         "properties": {
@@ -3420,6 +3453,35 @@
         "title": "QueueResponse",
         "type": "object"
       },
+      "RateLimitResponse": {
+        "description": "One of the backend's rate limits, as `app/core/ratelimit.py` defines it.",
+        "properties": {
+          "applies_to": {
+            "title": "Applies To",
+            "type": "string"
+          },
+          "capacity": {
+            "title": "Capacity",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "per_seconds": {
+            "title": "Per Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "capacity",
+          "per_seconds",
+          "applies_to"
+        ],
+        "title": "RateLimitResponse",
+        "type": "object"
+      },
       "RefreshRequest": {
         "properties": {
           "refresh_token": {
@@ -3734,6 +3796,21 @@
           "jobs"
         ],
         "title": "RerunStartedReply",
+        "type": "object"
+      },
+      "ResetPasswordRequest": {
+        "properties": {
+          "password": {
+            "maxLength": 256,
+            "minLength": 12,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "password"
+        ],
+        "title": "ResetPasswordRequest",
         "type": "object"
       },
       "ResolvedRecord": {
@@ -5123,6 +5200,57 @@
         ]
       }
     },
+    "/api/admin/limits": {
+      "get": {
+        "description": "4.7.3 lists the rate limits on the Admin page. Read from the limits themselves, so the page\ncannot show numbers the backend does not enforce (found in T6.7).",
+        "operationId": "get_rate_limits_api_admin_limits_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RateLimitResponse"
+                  },
+                  "title": "Response Get Rate Limits Api Admin Limits Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Refused. The error code says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Failed on the server or upstream of it."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "The rate limits in force",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/api/admin/policy": {
       "get": {
         "description": "4.5.5's rules and the configured quota.\n\nReported rather than editable: see this module's docstring and D-032.",
@@ -5421,6 +5549,74 @@
           }
         ],
         "summary": "Change a role or deactivate",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/users/{user_id}/password": {
+      "post": {
+        "description": "The way back for someone who forgot their password: the sign-in page tells them to ask an\nadministrator (found in T6.3, when no endpoint let one help).\n\nEvery session the old password opened ends: tokens issued before now are refused, and the\nuser's live connections are dropped. Resetting your own password signs you out too. The audit\nentry records who reset whose password, never the password.",
+        "operationId": "reset_password_api_admin_users__user_id__password_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Refused. The error code says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Failed on the server or upstream of it."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Set a new password for a user",
         "tags": [
           "admin"
         ]
@@ -5881,6 +6077,7 @@
     },
     "/api/chains": {
       "get": {
+        "description": "Chains, newest first. Filtered here rather than on the page, so a filter covers every chain\nand not only the newest page of them (found in T6.7).",
         "operationId": "list_chains_api_chains_get",
         "parameters": [
           {
@@ -5907,6 +6104,42 @@
               "default": false,
               "title": "Active",
               "type": "boolean"
+            }
+          },
+          {
+            "description": "FREESTYLE (the Freestyle Assistant) or PIPELINE",
+            "in": "query",
+            "name": "job_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/JobType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "FREESTYLE (the Freestyle Assistant) or PIPELINE",
+              "title": "Job Type"
+            }
+          },
+          {
+            "description": "One chain status",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ChainStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "One chain status",
+              "title": "Status"
             }
           },
           {

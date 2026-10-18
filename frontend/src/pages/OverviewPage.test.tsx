@@ -47,7 +47,7 @@ describe("the overview", () => {
     expect(figure("runs failed")).toHaveTextContent("runs failed1 of the last 2");
   });
 
-  it("says how the AI provider is configured, never that it is answering", async () => {
+  it("says how the AI provider is configured, and how its latest call ended", async () => {
     const { backend, session } = await signedIn(captured.me);
     const { unmount } = renderRoutes("/", session, overview(backend));
     const provider = await screen.findByRole("group", { name: "AI provider" });
@@ -56,8 +56,10 @@ describe("the overview", () => {
     unmount();
 
     for (const [health, words] of [
-      [captured.healthLive, "AI providerLivelive; chain openai/gpt-oss-120b -> openai/gpt-oss-20b"],
-      [captured.healthLiveNoKey.body, "AI providerDownRuntimeError: LLM_MODE=live but GROQ_API_KEY is empty"],
+      [captured.healthLive, /^AI providerLivelive; chain openai\/gpt-oss-120b -> openai\/gpt-oss-20b$/],
+      [captured.healthLiveNoKey.body, /^AI providerDownLLM_MODE=live but GROQ_API_KEY is empty$/],
+      [captured.healthLiveAnswered.body, /^AI providerLivelive; chain .+The latest call answered, .+\.$/],
+      [captured.healthLiveFailed.body, /^AI providerDegradedlive; chain .+The latest call was rate limited, .+\.$/],
     ] as const) {
       const signed = await signedIn(captured.me);
       overview(signed.backend).on("GET /api/health", () => json(200, health));

@@ -7,10 +7,13 @@
 import { api, type ApiClient } from "./client";
 import { answer } from "./request";
 
-/** The API's own filters. A chain's assistant and outcome are not among them. */
+/** The API's own filters, all of them applied by the backend to every chain. */
 export interface ChainQuery {
   service?: string;
   active?: boolean;
+  /** FREESTYLE or PIPELINE: which assistant started the chain. */
+  jobType?: "FREESTYLE" | "PIPELINE";
+  status?: "RUNNING" | "SUCCESS" | "FAILURE" | "ABORTED" | "EXPIRED";
   limit?: number;
 }
 
@@ -24,13 +27,15 @@ export const PAGE_MAX = 200;
 
 export function runsApi(client: ApiClient = api) {
   return {
-    chains: ({ service, active, limit }: ChainQuery = {}) =>
+    chains: ({ service, active, jobType, status, limit }: ChainQuery = {}) =>
       answer(
         client.GET("/api/chains", {
           params: {
             query: {
               ...(service ? { service } : {}),
               ...(active ? { active } : {}),
+              ...(jobType ? { job_type: jobType } : {}),
+              ...(status ? { status } : {}),
               ...(limit ? { limit } : {}),
             },
           },

@@ -27,6 +27,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/limits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The rate limits in force
+         * @description 4.7.3 lists the rate limits on the Admin page. Read from the limits themselves, so the page
+         *     cannot show numbers the backend does not enforce (found in T6.7).
+         */
+        get: operations["get_rate_limits_api_admin_limits_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/policy": {
         parameters: {
             query?: never;
@@ -109,6 +130,31 @@ export interface paths {
          *     that means editing the database by hand.
          */
         patch: operations["update_user_api_admin_users__user_id__patch"];
+        trace?: never;
+    };
+    "/api/admin/users/{user_id}/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set a new password for a user
+         * @description The way back for someone who forgot their password: the sign-in page tells them to ask an
+         *     administrator (found in T6.3, when no endpoint let one help).
+         *
+         *     Every session the old password opened ends: tokens issued before now are refused, and the
+         *     user's live connections are dropped. Resetting your own password signs you out too. The audit
+         *     entry records who reset whose password, never the password.
+         */
+        post: operations["reset_password_api_admin_users__user_id__password_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/analytics/experiments": {
@@ -262,7 +308,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Chains */
+        /**
+         * List Chains
+         * @description Chains, newest first. Filtered here rather than on the page, so a filter covers every chain
+         *     and not only the newest page of them (found in T6.7).
+         */
         get: operations["list_chains_api_chains_get"];
         put?: never;
         post?: never;
@@ -987,6 +1037,12 @@ export interface components {
             /** Total */
             total: number;
         };
+        /**
+         * ChainStatus
+         * @description A chain's outcome. EXPIRED: its 30-minute lock ran out before it finished (4.6.4).
+         * @enum {string}
+         */
+        ChainStatus: "RUNNING" | "SUCCESS" | "FAILURE" | "ABORTED" | "EXPIRED";
         /** ChainSummary */
         ChainSummary: {
             /** Finished At */
@@ -1603,9 +1659,16 @@ export interface components {
             job_type: string;
             /** Priority Level */
             priority_level: string;
+            /** Service */
+            service: string | null;
             /** Service Id */
             service_id: string | null;
         };
+        /**
+         * JobType
+         * @enum {string}
+         */
+        JobType: "FREESTYLE" | "MAVEN" | "PIPELINE";
         /** LogResponse */
         LogResponse: {
             /** More Data */
@@ -2063,6 +2126,20 @@ export interface components {
                 [key: string]: number;
             };
         };
+        /**
+         * RateLimitResponse
+         * @description One of the backend's rate limits, as `app/core/ratelimit.py` defines it.
+         */
+        RateLimitResponse: {
+            /** Applies To */
+            applies_to: string;
+            /** Capacity */
+            capacity: number;
+            /** Name */
+            name: string;
+            /** Per Seconds */
+            per_seconds: number;
+        };
         /** RefreshRequest */
         RefreshRequest: {
             /** Refresh Token */
@@ -2169,6 +2246,11 @@ export interface components {
             resolved: components["schemas"]["ResolvedRecord"];
             /** Warnings */
             warnings: string[];
+        };
+        /** ResetPasswordRequest */
+        ResetPasswordRequest: {
+            /** Password */
+            password: string;
         };
         /**
          * ResolvedRecord
@@ -2683,6 +2765,44 @@ export interface operations {
             };
         };
     };
+    get_rate_limits_api_admin_limits_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RateLimitResponse"][];
+                };
+            };
+            /** @description Refused. The error code says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     get_policy_api_admin_policy_get: {
         parameters: {
             query?: never;
@@ -2854,6 +2974,50 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["UpdateUserRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUserResponse"];
+                };
+            };
+            /** @description Refused. The error code says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    reset_password_api_admin_users__user_id__password_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetPasswordRequest"];
             };
         };
         responses: {
@@ -3180,6 +3344,10 @@ export interface operations {
             query?: {
                 service?: string | null;
                 active?: boolean;
+                /** @description FREESTYLE (the Freestyle Assistant) or PIPELINE */
+                job_type?: components["schemas"]["JobType"] | null;
+                /** @description One chain status */
+                status?: components["schemas"]["ChainStatus"] | null;
                 limit?: number | null;
                 offset?: number | null;
             };

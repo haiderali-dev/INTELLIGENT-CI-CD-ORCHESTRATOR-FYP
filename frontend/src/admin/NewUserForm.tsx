@@ -14,9 +14,9 @@ import { button } from "@/components/button";
 import { useToast } from "@/components/toast/toastContext";
 import { cn } from "@/lib/cn";
 
-/** The backend's own limits (app/api/admin.py, CreateUserRequest). */
-const PASSWORD_MIN = 12;
-const PASSWORD_MAX = 256;
+/** The backend's own limits (app/api/admin.py, CreateUserRequest and ResetPasswordRequest). */
+export const PASSWORD_MIN = 12;
+export const PASSWORD_MAX = 256;
 
 const newUserSchema = z.object({
   email: z
@@ -63,8 +63,8 @@ function fieldErrors(failure: Failure): Partial<Record<FieldName, string>> {
 }
 
 /**
- * Adds a user with a first password the Admin chooses and hands over. Nothing is emailed, and no
- * endpoint resets a password later, so the form says so.
+ * Adds a user with a first password the Admin chooses and hands over. Nothing is emailed, so the
+ * form says so. A forgotten password is reset from the users table.
  */
 export function NewUserForm({ roles }: { roles: readonly string[] | null }) {
   const api = useApi(adminApi);
@@ -138,7 +138,7 @@ export function NewUserForm({ roles }: { roles: readonly string[] | null }) {
       <Field
         id={`${ids}-password`}
         label="First password"
-        hint={`At least ${String(PASSWORD_MIN)} characters. Give it to them yourself: nothing is emailed, and it cannot be reset here later.`}
+        hint={`At least ${String(PASSWORD_MIN)} characters. Give it to them yourself: nothing is emailed. If they forget it, reset it from the table above.`}
         error={errors.password?.message}
       >
         <input

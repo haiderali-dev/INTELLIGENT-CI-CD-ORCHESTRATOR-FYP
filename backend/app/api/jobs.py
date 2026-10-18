@@ -51,18 +51,22 @@ class JobResponse(BaseModel):
     jenkins_name: str
     job_type: str
     service_id: str | None
+    # The service's catalog name, which the catalog and the chains use; ``service_id`` is a
+    # database id no other endpoint returns (found in T6.7).
+    service: str | None
     priority_level: str
     depends_on: list[str]
     chain_position: int
     created_at: datetime
 
     @classmethod
-    def of(cls, job: Job) -> JobResponse:
+    def of(cls, job: Job, service: str | None = None) -> JobResponse:
         return cls(
             id=job.id,
             jenkins_name=job.jenkins_name,
             job_type=job.job_type,
             service_id=job.service_id,
+            service=service,
             priority_level=job.priority_level,
             # Stored comma-separated to match the plugin property (D-011); split here so the API
             # is a list and the frontend never parses a string.
@@ -250,8 +254,9 @@ async def list_jobs(
     page = await runs_service.list_jobs(
         session, service=service, job_type=job_type, limit=limit, offset=offset
     )
+    names = await runs_service.service_names(session, page.items)
     return JobPage(
-        items=[JobResponse.of(job) for job in page.items],
+        items=[JobResponse.of(job, names.get(job.service_id or "")) for job in page.items],
         total=page.total,
         limit=page.limit,
         offset=page.offset,

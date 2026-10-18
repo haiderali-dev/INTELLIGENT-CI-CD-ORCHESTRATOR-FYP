@@ -16,7 +16,7 @@ import {
   assistantOf,
   chainDurationMs,
   chainState,
-  filterChains,
+  chainQuery,
   isAssistantFilter,
   isResultFilter,
   RESULT_FILTERS,
@@ -55,7 +55,7 @@ export function RunsPage({ item }: { item: Pick<NavItem, "label" | "description"
   const chainId = params.get("chain");
   const runId = params.get("run");
 
-  const query = { ...(service ? { service } : {}), limit: PAGE_MAX };
+  const query = { ...chainQuery({ service, assistant, result }), limit: PAGE_MAX };
   const chains = useQuery({ queryKey: runsKeys.chainList(query), queryFn: () => api.chains(query) });
   useLiveEvent(RUN_EVENTS, () => {
     void queryClient.invalidateQueries({ queryKey: runsKeys.chainLists });
@@ -135,7 +135,7 @@ export function RunsPage({ item }: { item: Pick<NavItem, "label" | "description"
   let body: ReactNode;
   if (chains.data) {
     const { items, total } = chains.data;
-    const shown = filterChains(items, { assistant, result });
+    const shown = items;
     const filtered = Boolean(service || assistant || result);
     if (items.length === 0 && !filtered) {
       body = (
@@ -167,7 +167,7 @@ export function RunsPage({ item }: { item: Pick<NavItem, "label" | "description"
         <>
           <p aria-live="polite" className="px-6 text-sm text-graphite tabular-nums">
             {total > items.length
-              ? `${String(shown.length)} of the newest ${String(items.length)} runs, of ${String(total)} in all. The assistant and result filters look at these ${String(items.length)}.`
+              ? `The newest ${String(items.length)} of ${String(total)} runs.`
               : `${String(shown.length)} ${shown.length === 1 ? "run" : "runs"}, newest first.`}
           </p>
           <DataTable

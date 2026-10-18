@@ -15,6 +15,7 @@ function admin(backend: FakeBackend): FakeBackend {
     .on("GET /api/admin/users", () => json(200, captured.users))
     .on("GET /api/admin/roles", () => json(200, captured.roles))
     .on("GET /api/admin/policy", () => json(200, captured.policy))
+    .on("GET /api/admin/limits", () => json(200, captured.limits))
     .on("GET /api/admin/audit", () => json(200, captured.audit));
 }
 
@@ -175,6 +176,67 @@ describe("the admin page", () => {
       captured.policy.rules.map(({ rule }) => rule),
     );
     expect(policy).toHaveTextContent("this page shows them and cannot change them.");
+  });
+
+  it("shows the rate limits the backend enforces", async () => {
+    await asAdmin();
+
+    const policy = await screen.findByRole("region", { name: "Policy" });
+    const limits = await within(policy).findByRole("table", { name: "Rate limits" });
+    const rows = within(limits).getAllByRole("row").slice(1).map((row) => row.textContent);
+    expect(rows).toEqual([
+      "sign-in, per address and account5 a minute",
+      "sign-in, per address across accounts30 a minute",
+      "session renewal, per address30 a minute",
+      "every signed-in request, per user300 a minute",
+      "assistant messages, generation and explanations, per user20 a minute",
+    ]);
+  });
+
+  it("resets someone's password, checking it before asking, but never yours", async () => {
+    const user = userEvent.setup();
+    const { backend } = await asAdmin();
+    backend.on("POST /api/admin/users/:id/password", () =>
+      json(captured.passwordReset.status, captured.passwordReset.body),
+    );
+    expect(within(userRow("admin@example.com")).queryByRole("button", { name: "Reset password" })).toBeNull();
+
+    await user.click(within(userRow("ops@example.com")).getByRole("button", { name: "Reset password" }));
+    const dialog = await screen.findByRole("dialog", { name: "Reset the password of ops@example.com" });
+    expect(dialog).toHaveTextContent("They are signed out everywhere at once");
+    await user.type(within(dialog).getByLabelText("New password"), "short");
+    await user.click(within(dialog).getByRole("button", { name: "Reset password" }));
+    expect(await within(dialog).findByText("Choose a password of 12 to 256 characters.")).toBeInTheDocument();
+    expect(backend.calls("POST /api/admin/users/:id/password")).toHaveLength(0);
+
+    await user.clear(within(dialog).getByLabelText("New password"));
+    await user.type(within(dialog).getByLabelText("New password"), "a long enough password");
+    await user.click(within(dialog).getByRole("button", { name: "Reset password" }));
+
+    expect(
+      await screen.findByText("ops@example.com has a new password and was signed out everywhere"),
+    ).toBeInTheDocument();
+    expect(await bodyOf(backend.calls("POST /api/admin/users/:id/password")[0])).toEqual({
+      password: "a long enough password",
+    });
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+  });
+
+  it("says why a password was not reset", async () => {
+    const user = userEvent.setup();
+    const { backend } = await asAdmin();
+    backend.on("POST /api/admin/users/:id/password", () =>
+      json(captured.passwordTooShort.status, captured.passwordTooShort.body),
+    );
+
+    await user.click(within(userRow("ops@example.com")).getByRole("button", { name: "Reset password" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.type(within(dialog).getByLabelText("New password"), "a long enough password");
+    await user.click(within(dialog).getByRole("button", { name: "Reset password" }));
+
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent("The password was not changed.");
   });
 
   it("shows the audit log a page at a time, newest first", async () => {

@@ -1464,7 +1464,7 @@ Acceptance evidence, all run on 2026-10-17:
 service's Compose profile (D-018).~~ Done on 2026-10-18 in the hardening pass below.
 
 Found in T6.3, for T6.7's Admin page:
-- **There is no way to reset a password.** The sign-in page says "Forgotten your password? Ask an
+- [x] **There is no way to reset a password.** Fixed 2026-10-18: `POST /api/admin/users/{id}/password` and a Reset password dialog; every older session ends. The sign-in page says "Forgotten your password? Ask an
   administrator", but no endpoint lets an administrator set a new password: `PATCH
   /api/admin/users/{id}` changes only the role and whether the account is active. An admin
   password reset needs a backend endpoint.
@@ -1473,26 +1473,26 @@ Found in T6.3, for T6.7's Admin page:
       only an Admin sees the entry, and anyone else who opens `/admin` is told why it is closed.
 
 Found in T6.8 (D-062):
-- **The backend uses a constant Starlette 1.7 deprecates.** `app/core/errors.py` line 197 sends
+- [x] **The backend uses a constant Starlette 1.7 deprecates.** Fixed 2026-10-18. `app/core/errors.py` line 197 sends
   validation errors with `status.HTTP_422_UNPROCESSABLE_ENTITY`, and every 422 logs a
   `StarletteDeprecationWarning` naming `HTTP_422_UNPROCESSABLE_CONTENT` instead. The status is still
   422, so nothing breaks yet. A one-line change, left for a backend task.
 
 Found in T6.7 (D-061), for decisions outside the frontend:
-- **No endpoint serves the chatbot evaluation's results,** though 4.4.4 lists "evaluation results"
+- **No endpoint serves the chatbot evaluation's results,** Phase 8 (T8.2 produces them): left there. though 4.4.4 lists "evaluation results"
   under analytics. T8.2 writes them; the Analytics page needs an endpoint (or a published file) to
   read them from.
-- **No endpoint reports the rate limits** that 4.7.3 lists for the Admin page. They are constants
+- [x] **No endpoint reports the rate limits** Fixed 2026-10-18: `GET /api/admin/limits`, shown in the Admin page's Policy section. that 4.7.3 lists for the Admin page. They are constants
   in `app/core/ratelimit.py`. Reporting them, as the policy endpoint reports the HIGH quota, would
   let the page show them without copying them.
-- **The health check cannot say whether the AI provider answers.** By design it reads the
+- [x] **The health check cannot say whether the AI provider answers.** Fixed 2026-10-18: the latest call's outcome, shown on the Overview. By design it reads the
   configuration and never calls the model, to save quota. DESIGN.md's Overview sketch ("Groq,
   answering") needs a signal the backend does not have, such as the outcome of the latest model
   call.
-- **The API filters chains by service only, and runs by one job only.** Jobs and runs filters the
+- [x] **The API filters chains by service only, and runs by one job only.** Fixed 2026-10-18 for chains: `job_type` and `status` filters, which Jobs and runs now uses. Jobs and runs filters the
   newest 200 chains by assistant and result on the page, and says so when there are more. Filters
   on `GET /api/chains` would make them exact.
-- **`JobResponse.service_id` names a service by an id the catalog never returns,** so a job cannot
+- [x] **`JobResponse.service_id` names a service by an id the catalog never returns,** Fixed 2026-10-18: `JobResponse.service` gives the name. so a job cannot
   be shown with its service's name. Jobs and runs reads chains instead.
 
 Found in T6.6 (D-060):
@@ -1507,11 +1507,11 @@ Found in T6.6 (D-060):
   for, but the score and the aging come from the last sort. With one job waiting, the page can show
   it as "Not scored by the optimizer", or show an aging bonus older than its wait. The run card's
   score comes from the same heap.
-- **The sidebar's System theme button runs 13 px past the 240 px sidebar,** seen in Chrome at
+- [x] **The sidebar's System theme button runs 13 px past the 240 px sidebar,** Fixed in T6.9. seen in Chrome at
   1440 px. This is T6.2's shell, for T6.9's review.
 
 Found in T6.5:
-- **The backend can return a reply before the message it answers.** `list_messages` orders by
+- [x] **The backend can return a reply before the message it answers.** Fixed 2026-10-18 in the backend too: each message is stamped after the last. `list_messages` orders by
   `created_at`, then by message id. The id is a random UUID. A message and its reply are written in
   one request, and on Windows both were stamped with the same time: the captured `/help` pair came
   back reply first. The thread now sorts user-before-reply on a tie (D-059). The backend fix is
@@ -1628,6 +1628,25 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
       four messages back in order.
 - [x] **The AI provider's health (found in T6.7):** `/api/health` reports the latest model call's
       outcome and time, and a failed one marks the LLM degraded. Covered by `test_health.py`.
+- [x] **The API gaps the pages ran into (found in T6.3 and T6.7):**
+      - **Password reset:** `POST /api/admin/users/{id}/password` and the Admin page's Reset
+        password dialog. Every token carries the user's epoch and a reset moves it on, so every
+        older session ends (migration `9d4f2b6e8a10`).
+      - **Rate limits:** `GET /api/admin/limits`, read from the limits themselves, shown in the
+        Admin page's Policy section.
+      - **Chain filters:** `job_type` and `status` on `GET /api/chains`. Jobs and runs now filters on
+        the server, not within the newest 200.
+      - **Job service:** `JobResponse.service` gives the service's name.
+      - **The Overview** says how the model's latest call ended.
+      - **Fixtures:** the frontend's new fixtures were captured from the app in its test
+        configuration, and the stale live-without-key health fixture was recaptured.
+      - **Checks:**
+        - `tests/test_api_gaps.py` 5 passed;
+        - the backend's offline suite passed, 1692;
+        - frontend lint and typecheck clean, 294 tests passed (3 new Admin tests, the Jobs and runs
+          filter tests rewritten for the server's filters, and 4 provider states on the Overview).
+- **Left for Phase 8:** an endpoint for the chatbot evaluation's results. T8.2 is what produces
+  them.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not

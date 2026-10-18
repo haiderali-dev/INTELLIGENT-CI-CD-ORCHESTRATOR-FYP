@@ -26,6 +26,18 @@ export function adminApi(client: ApiClient = api) {
         }),
       ),
 
+    /** A new password, chosen by the Admin. Every session the old one opened ends. */
+    resetPassword: (id: string, password: string) =>
+      answer(
+        client.POST("/api/admin/users/{user_id}/password", {
+          params: { path: { user_id: id } },
+          body: { password },
+        }),
+      ),
+
+    /** The rate limits the backend enforces, read from the limits themselves. */
+    limits: () => answer(client.GET("/api/admin/limits")),
+
     /** The roles, weakest first, as the guards treat them. */
     roles: () => answer(client.GET("/api/admin/roles")),
 
@@ -43,6 +55,7 @@ type Returned<K extends keyof AdminApi> = Awaited<ReturnType<AdminApi[K]>>;
 export type UserPage = Returned<"users">;
 export type AdminUser = UserPage["items"][number];
 export type Policy = Returned<"policy">;
+export type RateLimit = Returned<"limits">[number];
 export type AuditPage = Returned<"audit">;
 export type AuditEntry = AuditPage["items"][number];
 
@@ -50,6 +63,7 @@ export const adminKeys = {
   users: ["admin-users"] as const,
   roles: ["admin-roles"] as const,
   policy: ["admin-policy"] as const,
+  limits: ["admin-limits"] as const,
   audits: ["admin-audit"] as const,
   audit: (offset: number) => ["admin-audit", offset] as const,
 };
