@@ -266,3 +266,38 @@ async def test_alembic_upgrade_matches_the_models() -> None:
     container, so it is marked `integration` and excluded from the default run.
     """
     pytest.skip("needs a PostgreSQL container; run with -m integration against the Compose stack")
+
+
+async def test_seed_admin_stays_deactivated_while_another_admin_is_active(
+    db, settings: Settings
+) -> None:
+    """Security review, finding 15: the seed runs on every start, so re-enabling an Admin another
+    Admin deactivated would undo that decision at each restart. It stays off, and the audit log
+    says why."""
+    from sqlalchemy import select
+
+    from app.core.security import hash_password
+    from app.db.models import AuditLog, Role
+
+    await seed_admin(db, settings)
+    await db.commit()
+    db.add(
+        User(
+            email="second-admin@example.com",
+            password_hash=hash_password("another-long-password"),
+            role=Role.ADMIN.value,
+            active=True,
+        )
+    )
+    user = await db.scalar(select(User).where(User.email == settings.seed_admin_email.lower()))
+    assert user is not None
+    user.active = False
+    await db.commit()
+
+    await seed_admin(db, settings)
+    await db.commit()
+
+    await db.refresh(user)
+    assert user.active is False
+    audit = await db.scalar(select(AuditLog).where(AuditLog.action == "seed.admin.left_inactive"))
+    assert audit is not None and audit.details == {"reason": "another Admin is active"}

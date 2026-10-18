@@ -659,6 +659,8 @@ DOCKER_FILES = [
     "jenkins/casc/experiment-baseline.yaml",
     "jenkins/casc/experiment-plugin.yaml",
     "backend/Dockerfile",
+    "frontend/Dockerfile",
+    "frontend/nginx.conf",
 ]
 
 # Secrets that must never be silently defaulted by Compose.
@@ -747,6 +749,35 @@ def check_compose_shape() -> Result:
     if problems:
         return fail("; ".join(problems))
     return ok(f"{len(services)} services, {len(default)} default, {len(profiled)} profiled")
+
+
+@check(1, "every published port is bound to loopback, and Jenkins keeps its safety checks")
+def check_ports_on_loopback() -> Result:
+    """Security review (docs/security-review-phases-3-5-6.md), findings 2 and 13.
+
+    A port published as "8087:8080" listens on every interface, so anyone on the same network
+    reaches the Jenkins login, and the agents hold the Docker socket. Every published port must be
+    "127.0.0.1:...". The inbound agent port (50000) stays unpublished, since agents use SSH, and no
+    Jenkins option may switch off update-site signature checks."""
+    doc, error = _load_yaml(REPO_ROOT / "docker-compose.yml")
+    if error:
+        return fail(f"docker-compose.yml: {error}")
+    open_ports: list[str] = []
+    count = 0
+    for name, service in (doc.get("services") or {}).items():
+        for port in service.get("ports") or []:
+            count += 1
+            text = str(port.get("published", port) if isinstance(port, dict) else port)
+            if not text.startswith("127.0.0.1:"):
+                open_ports.append(f"{name} {text}")
+            if text.endswith(":50000"):
+                open_ports.append(f"{name} publishes the inbound agent port")
+    if open_ports:
+        return fail("published beyond loopback: " + ", ".join(open_ports))
+    for path in (REPO_ROOT / "docker-compose.yml", REPO_ROOT / "jenkins" / "controller" / "Dockerfile"):
+        if "noSignatureCheck" in path.read_text(encoding="utf-8"):
+            return fail(f"{path.relative_to(REPO_ROOT)} switches off update-site signature checks")
+    return ok(f"{count} published ports, all on 127.0.0.1; no agent port; signatures checked")
 
 
 @check(1, "Compose refuses to start rather than defaulting a secret")
@@ -2878,6 +2909,32 @@ def check_screenshots() -> Result:
         return fail(f"not a PNG of the width its name gives: {', '.join(wrong[:3])}")
     count = len(SCREENSHOT_SCREENS) * 4
     return ok(f"{count} screenshots: {len(SCREENSHOT_SCREENS)} screens, 1440 and 390 px, light and dark")
+
+
+SECURITY_REVIEW = REPO_ROOT / "docs" / "security-review-phases-3-5-6.md"
+
+
+@check(6, "an independent security review covers Phases 3, 5 and 6, each finding with its fix")
+def check_security_review() -> Result:
+    """BUILD_PROMPT asks for an independent security review at the end of Phases 3, 5 and 6. The
+    document must say it was independent, and every row of its findings table must name a fix and a
+    regression test, so a finding cannot be listed and left."""
+    if not SECURITY_REVIEW.is_file():
+        return fail(f"{SECURITY_REVIEW.relative_to(REPO_ROOT)} does not exist")
+    text = SECURITY_REVIEW.read_text(encoding="utf-8")
+    if "independent" not in text.lower() or "Phases 3, 5 and 6" not in text:
+        return fail("the review does not say it is an independent review of Phases 3, 5 and 6")
+    rows = [line for line in text.splitlines() if re.match(r"^\| \d+ \|", line)]
+    if not rows:
+        return fail("the review has no numbered findings table")
+    open_rows = []
+    for row in rows:
+        cells = [cell.strip() for cell in row.strip("|").split("|")]
+        if len(cells) < 5 or not cells[3] or not cells[4]:
+            open_rows.append(cells[0])
+    if open_rows:
+        return fail(f"findings without a fix and a test: {', '.join(open_rows)}")
+    return ok(f"{len(rows)} findings, each with its fix and regression test")
 
 
 LIGHTHOUSE_FLOOR = 0.95

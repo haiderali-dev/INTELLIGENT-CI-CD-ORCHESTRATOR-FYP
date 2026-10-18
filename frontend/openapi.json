@@ -750,6 +750,29 @@
             "title": "Detail",
             "type": "string"
           },
+          "last_call_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Call At"
+          },
+          "last_outcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Outcome"
+          },
           "latency_ms": {
             "anyOf": [
               {
@@ -5704,7 +5727,7 @@
     },
     "/api/auth/login": {
       "post": {
-        "description": "Exchange an email and password for an access and refresh token pair.\n\nRate limited to five attempts a minute per client address: enough for a person who mistypes,\nuseless for a password spray.",
+        "description": "Exchange an email and password for an access and refresh token pair.\n\nRate limited to five attempts a minute per account from one address, enough for a person who\nmistypes, and thirty a minute per address across all accounts, which stops a password spray.",
         "operationId": "login_api_auth_login_post",
         "requestBody": {
           "content": {
@@ -7416,7 +7439,7 @@
     },
     "/api/runs/{run_id}/log": {
       "get": {
-        "description": "A window of the log, with the offset to ask for next.\n\nWindowed rather than whole: the UI tails a running build, and returning the entire log on each\npoll would move the same megabyte over and over.",
+        "description": "A window of the log, with the offset to ask for next, redacted.\n\nWindowed rather than whole: the UI tails a running build, and returning the entire log on each\npoll would move the same megabyte over and over.",
         "operationId": "get_run_log_api_runs__run_id__log_get",
         "parameters": [
           {

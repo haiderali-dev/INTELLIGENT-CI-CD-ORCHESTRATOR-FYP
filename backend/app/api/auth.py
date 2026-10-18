@@ -14,8 +14,14 @@ from fastapi import APIRouter, Depends, Request, status
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import CurrentUser, client_identifier, rate_limit
-from app.core.ratelimit import LOGIN_LIMIT, REFRESH_LIMIT
+from app.api.deps import ApiRateLimit, CurrentUser, client_identifier, rate_limit
+from app.core.ratelimit import (
+    LOGIN_ADDRESS_LIMIT,
+    LOGIN_LIMIT,
+    REFRESH_LIMIT,
+    RateLimiter,
+    get_rate_limiter,
+)
 from app.core.settings import Settings
 from app.db.models import Role, User
 from app.db.session import get_db
@@ -80,19 +86,22 @@ class TokenResponse(BaseModel):
     "/auth/login",
     response_model=TokenResponse,
     summary="Sign in",
-    dependencies=[Depends(rate_limit(LOGIN_LIMIT))],
+    dependencies=[Depends(rate_limit(LOGIN_ADDRESS_LIMIT))],
 )
 async def login(
     payload: LoginRequest,
     request: Request,
     session: Annotated[AsyncSession, Depends(get_db)],
     settings: Annotated[Settings, Depends(get_settings_dep)],
+    limiter: Annotated[RateLimiter, Depends(get_rate_limiter)],
 ) -> TokenResponse:
     """Exchange an email and password for an access and refresh token pair.
 
-    Rate limited to five attempts a minute per client address: enough for a person who mistypes,
-    useless for a password spray.
+    Rate limited to five attempts a minute per account from one address, enough for a person who
+    mistypes, and thirty a minute per address across all accounts, which stops a password spray.
     """
+    account = str(payload.email).strip().lower()
+    limiter.check(LOGIN_LIMIT, f"{client_identifier(request)}|{account}")
     user = await authenticate(
         session,
         settings,
@@ -153,7 +162,12 @@ async def logout(
     await sign_out(session, settings, refresh_token=payload.refresh_token, user=user)
 
 
-@router.get("/me", response_model=UserResponse, summary="The signed-in user")
+@router.get(
+    "/me",
+    response_model=UserResponse,
+    summary="The signed-in user",
+    dependencies=[ApiRateLimit],
+)
 async def me(user: CurrentUser) -> UserResponse:
     """Who the caller is.
 

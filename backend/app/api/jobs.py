@@ -20,7 +20,13 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import AssistantRateLimit, CurrentUser, DevOpsUser, get_failure_explainer
+from app.api.deps import (
+    ApiRateLimit,
+    AssistantRateLimit,
+    CurrentUser,
+    DevOpsUser,
+    get_failure_explainer,
+)
 from app.core.settings import Settings
 from app.db.models import Job, JobRun
 from app.db.session import get_db
@@ -31,7 +37,8 @@ from app.services import runs as runs_service
 from app.services.dependencies import get_jenkins_client, get_settings_dep
 from app.services.jenkins import JenkinsClient
 
-router = APIRouter(tags=["jobs"])
+# Every route here carries the general per-user limit (security review, findings 5 and 10).
+router = APIRouter(tags=["jobs"], dependencies=[ApiRateLimit])
 
 
 # ---------------------------------------------------------------------------
@@ -312,15 +319,22 @@ async def get_run_log(
     user: CurrentUser,
     session: Annotated[AsyncSession, Depends(get_db)],
     jenkins: Annotated[JenkinsClient, Depends(get_jenkins_client)],
+    settings: Annotated[Settings, Depends(get_settings_dep)],
     start: Annotated[int, Query(ge=0, description="Byte offset to read from")] = 0,
 ) -> LogResponse:
-    """A window of the log, with the offset to ask for next.
+    """A window of the log, with the offset to ask for next, redacted.
 
     Windowed rather than whole: the UI tails a running build, and returning the entire log on each
     poll would move the same megabyte over and over.
     """
     run = await runs_service.get_run(session, run_id)
-    window = await runs_service.run_log(session, jenkins, run=run, start=start)
+    window = await runs_service.run_log(
+        session,
+        jenkins,
+        run=run,
+        start=start,
+        secrets=failures_service.known_secrets(settings),
+    )
     return LogResponse(
         run_id=run.id,
         text=window.text,

@@ -20,8 +20,8 @@ export const ACCOUNTS: Readonly<Record<Role, { email: string; password: string }
 
 /**
  * Signs in through the form, as a person does, and waits for the shell. Sign-in keeps its real
- * limit of five a minute from one address, which every flow shares; when the backend answers 429,
- * this waits as long as it asks, then tries again.
+ * limits, five a minute per account and thirty per address, which every flow shares; when the
+ * backend answers 429, this waits as long as it asks, then tries again.
  */
 export async function signIn(page: Page, role: Role, next = "/"): Promise<void> {
   await page.goto(next === "/" ? "/sign-in" : `/sign-in?next=${encodeURIComponent(next)}`);

@@ -199,8 +199,8 @@ export interface paths {
          * Sign in
          * @description Exchange an email and password for an access and refresh token pair.
          *
-         *     Rate limited to five attempts a minute per client address: enough for a person who mistypes,
-         *     useless for a password spray.
+         *     Rate limited to five attempts a minute per account from one address, enough for a person who
+         *     mistypes, and thirty a minute per address across all accounts, which stops a password spray.
          */
         post: operations["login_api_auth_login_post"];
         delete?: never;
@@ -702,7 +702,7 @@ export interface paths {
         };
         /**
          * Console output
-         * @description A window of the log, with the offset to ask for next.
+         * @description A window of the log, with the offset to ask for next, redacted.
          *
          *     Windowed rather than whole: the UI tails a running build, and returning the entire log on each
          *     poll would move the same megabyte over and over.
@@ -1069,6 +1069,10 @@ export interface components {
         ComponentHealth: {
             /** Detail */
             detail: string;
+            /** Last Call At */
+            last_call_at?: string | null;
+            /** Last Outcome */
+            last_outcome?: string | null;
             /** Latency Ms */
             latency_ms?: number | null;
             status: components["schemas"]["ComponentStatus"];

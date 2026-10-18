@@ -51,9 +51,10 @@ Branch: phase-6-frontend
         `fs-payment-service-test-unit` #60 could not resolve `github.com`. The retry got past it
         10 seconds later, and the build went on to its intended test failure. The error the
         retry left in the log then broke Explain failure's replay, which D-053 fixed.
-- [ ] **Re-run the Phase 5 security review independently.** The reviewer agent stopped on an
-      account usage limit, so `docs/security-review-phase-5.md` was written by the agent that
-      wrote the code.
+- [x] **Re-run the Phase 5 security review independently.** Done on 2026-10-18, at the user's
+      request, widened to Phases 3, 5 and 6 as BUILD_PROMPT asks. An independent subagent reviewed
+      `main` at `31a725f` read-only, in its own worktree. It found 15 issues (2 Medium, 7 Low,
+      6 Info), and all 15 are fixed with regression tests: `docs/security-review-phases-3-5-6.md`.
 - [x] **Approve `frontend/DESIGN.md`.** T6.1 wrote it on 2026-10-13. Its section 10 lists the
       choices most worth questioning, and D-052 records how its palette reads 4.7.2's "4 to 6
       named hex values". No screen (T6.3 onward) is built before approval. T6.2's plumbing does
@@ -1459,9 +1460,8 @@ Acceptance evidence, all run on 2026-10-17:
   "16 audits; lowest accessibility score 100 (Freestyle), 100 (Pipeline)". CI run 39030064897
   passed all six jobs on the same commit.
 
-Open in Phase 6, outside any one task: `frontend/Dockerfile`, and removing the `frontend` service's
-Compose profile, which D-018 left for "once Phase 6 builds the image". Best done once the
-screens exist, before T6.8's Playwright flows run against the stack.
+~~Open in Phase 6, outside any one task: `frontend/Dockerfile`, and removing the `frontend`
+service's Compose profile (D-018).~~ Done on 2026-10-18 in the hardening pass below.
 
 Found in T6.3, for T6.7's Admin page:
 - **There is no way to reset a password.** The sign-in page says "Forgotten your password? Ask an
@@ -1578,6 +1578,56 @@ Found in T6.4, to settle before T6.5 and T6.6 show real scores:
           generated types. Lint, typecheck and build are clean, and 180 tests pass.
       - **Not proven:** the stack's database held no messages, commands or pipelines (0 rows),
         so no older stored row could be checked.
+
+## Hardening of Phases 1 to 6 (2026-10-18, branch `phase-6-hardening`)
+
+The user asked for every remaining issue from Phases 1 to 6 to be fixed and verified before Phase 7.
+The audit of 2026-10-18 listed them. Each item below ends with the check that ran.
+
+- [x] **D-017, the JCasC floating-point defect: root cause found and fixed** (`c7c15c1`). See Needs
+      human above.
+- [x] **Independent security review of Phases 3, 5 and 6, with all 15 findings fixed**
+      (`docs/security-review-phases-3-5-6.md`). Evidence, all run on 2026-10-18:
+      - **Backend:**
+        - one approval per request, enforced in the services and by a partial unique index
+          (migration `5e0b9c3a7d21`);
+        - single-use refresh tokens with families;
+        - a bounded, redacted run log;
+        - per-user and per-account rate limits;
+        - a `JWT_SECRET` floor;
+        - health details that name no host, and a limited health endpoint;
+        - WebSockets that close at token expiry and on deactivation;
+        - a screened plan explanation;
+        - a seed that no longer undoes a deactivation;
+        - curl's attached `-u` form redacted.
+      - **Stack:**
+        - every published port bound to 127.0.0.1;
+        - the inbound agent port off;
+        - update-site signatures checked.
+      - **Frontend:**
+        - `safeNext` refuses resolved `//` paths;
+        - a build-time Content-Security-Policy, with the theme script by hash;
+        - `frontend/Dockerfile` and `nginx.conf`, with the `frontend` service a Compose default
+          again (D-018 closed).
+      - **Checks:**
+        - backend: ruff, ruff format and mypy clean; offline suite 1687 passed;
+          `test_security_review_fixes.py` 25 passed;
+        - each fix was removed in turn, and its test failed;
+        - frontend: lint and typecheck clean; `npm run test` 291 passed; `npx playwright test`
+          12 flows passed, including a new one that runs six pages under the CSP and fails on any
+          violation;
+        - `docker build ./frontend` succeeded. The image served a client-side route with the CSP
+          and security headers, and started without a backend (502 on `/api`, not a crash);
+        - new verify.py checks, run on their own: Phase 1 "every published port is bound to
+          loopback" (fails on the old Compose file with seven exposures) and Phase 6 "an
+          independent security review covers Phases 3, 5 and 6" (15 findings, each with its fix).
+- [x] **The Starlette 422 deprecation (found in T6.8):** `HTTP_422_UNPROCESSABLE_CONTENT`. The auth
+      and router tests pass with deprecation warnings as errors.
+- [x] **Message order (found in T6.5):** each message is stamped strictly after the last one in its
+      conversation, so `created_at` alone orders a thread. The test freezes the clock and reads
+      four messages back in order.
+- [x] **The AI provider's health (found in T6.7):** `/api/health` reports the latest model call's
+      outcome and time, and a failed one marks the LLM degraded. Covered by `test_health.py`.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not

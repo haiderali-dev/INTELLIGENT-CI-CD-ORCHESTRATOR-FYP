@@ -43,8 +43,13 @@ class RateLimit:
 
 
 # Sign-in is the endpoint worth protecting hardest: it is the only one that turns a guess into
-# access. Five attempts a minute is generous for a human and useless for a password spray.
+# access. Five attempts a minute per account from one address is generous for a human and useless
+# for guessing one password. It is keyed by address and account, because keyed by address alone
+# five wrong passwords from anyone behind a shared proxy locked everyone out (independent security
+# review, finding 7). LOGIN_ADDRESS_LIMIT then caps an address across all accounts, which is what
+# stops a password spray.
 LOGIN_LIMIT = RateLimit(name="login", capacity=5, per_seconds=60.0)
+LOGIN_ADDRESS_LIMIT = RateLimit(name="login-address", capacity=30, per_seconds=60.0)
 
 # Refresh is called automatically by the frontend whenever an access token expires, so its limit
 # has to accommodate several browser tabs without letting a stolen refresh token be farmed.

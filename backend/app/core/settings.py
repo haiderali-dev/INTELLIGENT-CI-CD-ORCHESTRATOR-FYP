@@ -34,6 +34,10 @@ class Environment(StrEnum):
     PRODUCTION = "production"
 
 
+# The shortest JWT signing key accepted outside tests.
+MIN_JWT_SECRET = 32
+
+
 class Settings(BaseSettings):
     """Validated application configuration."""
 
@@ -119,6 +123,14 @@ class Settings(BaseSettings):
             raise ValueError(
                 f"missing required setting(s): {', '.join(missing)}. "
                 "Copy .env.example to .env and fill them in."
+            )
+        # HS256 with a guessable key lets anyone mint an Admin token (independent security review,
+        # finding 9). .env.example asks for 48 random bytes; 32 is the floor, and its placeholder is
+        # refused even if someone pads it.
+        if len(self.jwt_secret) < MIN_JWT_SECRET or self.jwt_secret.startswith("replace_me"):
+            raise ValueError(
+                f"JWT_SECRET must be at least {MIN_JWT_SECRET} random characters; generate one "
+                'with python -c "import secrets; print(secrets.token_urlsafe(48))"'
             )
         if self.llm_mode is LlmMode.LIVE and not self.groq_api_key:
             raise ValueError("LLM_MODE=live needs GROQ_API_KEY; use fake or replay without a key")

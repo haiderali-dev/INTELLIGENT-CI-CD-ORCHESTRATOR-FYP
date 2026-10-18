@@ -20,6 +20,11 @@ describe("where to go after signing in", () => {
       "/\\elsewhere.example",
       "/\t/elsewhere.example",
       "javascript:alert(1)",
+      // Paths that only become protocol-relative once resolved (security review, finding 8).
+      "/.//evil.example",
+      "/..//evil.example",
+      "/a/..//evil.example",
+      "/./\\evil.example",
       "/sign-in",
     ]) {
       expect(safeNext(raw), String(raw)).toBe("/");

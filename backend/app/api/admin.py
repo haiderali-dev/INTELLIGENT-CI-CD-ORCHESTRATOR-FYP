@@ -21,7 +21,7 @@ from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import AdminUser
+from app.api.deps import AdminUser, ApiRateLimit
 from app.core.errors import ErrorCode, conflict, not_found
 from app.core.logging import get_logger
 from app.core.security import hash_password
@@ -30,9 +30,11 @@ from app.db.models import AuditLog, Role, User
 from app.db.session import get_db
 from app.services.dependencies import get_settings_dep
 from app.services.runs import MAX_PAGE_SIZE, clamp_page
+from app.ws.hub import get_hub
 
 logger = get_logger(__name__)
-router = APIRouter(tags=["admin"])
+# Every route here carries the general per-user limit (security review, findings 5 and 10).
+router = APIRouter(tags=["admin"], dependencies=[ApiRateLimit])
 
 
 # ---------------------------------------------------------------------------
@@ -254,6 +256,11 @@ async def update_user(
             )
         )
         logger.info("admin_user_updated", actor=admin.id, target=user.id, changed=list(changed))
+
+    if payload.active is False and "active" in changed:
+        # Committed first, so the reconnect their client attempts is refused at its auth frame.
+        await session.commit()
+        await get_hub().drop_user(user.id)
 
     return AdminUserResponse.of(user)
 

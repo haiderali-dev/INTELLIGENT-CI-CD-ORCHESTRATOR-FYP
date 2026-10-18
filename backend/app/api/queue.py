@@ -17,7 +17,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
-from app.api.deps import CurrentUser
+from app.api.deps import ApiRateLimit, CurrentUser
 from app.services.dependencies import get_plugin_client
 from app.services.plugin import PluginClient, RankedItem, UnscoredItem
 
@@ -107,7 +107,8 @@ class QueueResponse(BaseModel):
     unavailable_reason: str | None = None
 
 
-router = APIRouter(tags=["queue"])
+# Every route here carries the general per-user limit (security review, findings 5 and 10).
+router = APIRouter(tags=["queue"], dependencies=[ApiRateLimit])
 
 
 @router.get("/queue", response_model=QueueResponse, summary="The prioritised build queue")

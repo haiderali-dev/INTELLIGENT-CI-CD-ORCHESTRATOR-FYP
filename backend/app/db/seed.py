@@ -28,7 +28,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.core.logging import configure_logging, get_logger
 from app.core.security import hash_password
 from app.core.settings import Settings, get_settings
-from app.db.models import Role, Service, User
+from app.db.models import AuditLog, Role, Service, User
 from app.db.session import create_engine
 from app.services.catalog import (
     Catalog,
@@ -58,11 +58,25 @@ async def seed_admin(session: AsyncSession, settings: Settings) -> tuple[str, bo
 
     existing = await session.scalar(select(User).where(User.email == email))
     if existing is not None:
-        # Re-activate rather than skip entirely: a deactivated admin locks everyone out, and the
-        # seed is the documented way back in.
         if not existing.active:
-            existing.active = True
-            logger.info("seed_admin_reactivated", email=email)
+            # The seed is the documented way back in when no Admin can sign in, so it re-enables
+            # this account then, and only then. It runs on every stack start: re-enabling it while
+            # another Admin is active would undo that Admin's decision to deactivate it at each
+            # restart (independent security review, finding 15). Either way the audit log says so.
+            other_admin = await session.scalar(
+                select(User.id).where(
+                    User.role == Role.ADMIN.value, User.active.is_(True), User.id != existing.id
+                )
+            )
+            if other_admin is None:
+                existing.active = True
+                action, reason = "seed.admin.reactivated", "no active Admin was left"
+            else:
+                action, reason = "seed.admin.left_inactive", "another Admin is active"
+            session.add(
+                AuditLog(actor_id=None, action=action, target=email, details={"reason": reason})
+            )
+            logger.info(action.replace(".", "_"), email=email, reason=reason)
         return email, False
 
     session.add(

@@ -25,6 +25,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+import time
 import uuid
 from typing import Annotated, Any, Final
 
@@ -33,6 +34,7 @@ from starlette.websockets import WebSocketState
 
 from app.core.errors import ApiError
 from app.core.logging import get_logger
+from app.core.security import TokenType, decode_token
 from app.core.settings import Settings
 from app.db.session import get_session_factory
 from app.services.auth import load_user_from_access_token
@@ -70,8 +72,11 @@ def _parse_topics(raw: Any) -> set[Topic]:
     return known or set(Topic)
 
 
-async def _authenticate(websocket: WebSocket, settings: Settings) -> tuple[str, set[Topic]] | None:
-    """Wait for the auth frame. Returns ``(user_id, topics)``, or None after closing the socket."""
+async def _authenticate(
+    websocket: WebSocket, settings: Settings
+) -> tuple[str, set[Topic], float] | None:
+    """Wait for the auth frame. Returns ``(user_id, topics, token expiry)``, or None after closing
+    the socket."""
     try:
         raw = await asyncio.wait_for(websocket.receive_text(), timeout=AUTH_TIMEOUT_SECONDS)
     except TimeoutError:
@@ -104,6 +109,7 @@ async def _authenticate(websocket: WebSocket, settings: Settings) -> tuple[str, 
     try:
         async with factory() as session:
             user = await load_user_from_access_token(session, settings, token)
+        expires_at = float(decode_token(settings, token, expected=TokenType.ACCESS)["exp"])
     except ApiError as exc:
         # The specific reason is logged, not sent. "Your token expired" and "no such user" are the
         # same instruction to the client -- sign in again -- and distinguishing them over an
@@ -116,7 +122,7 @@ async def _authenticate(websocket: WebSocket, settings: Settings) -> tuple[str, 
         await _close(websocket, CLOSE_INTERNAL, "internal error")
         return None
 
-    return user.id, _parse_topics(frame.get("topics"))
+    return user.id, _parse_topics(frame.get("topics")), expires_at
 
 
 async def _close(websocket: WebSocket, code: int, reason: str) -> None:
@@ -173,7 +179,7 @@ async def websocket_endpoint(
     authenticated = await _authenticate(websocket, settings)
     if authenticated is None:
         return
-    user_id, topics = authenticated
+    user_id, topics, expires_at = authenticated
 
     subscriber_id = uuid.uuid4().hex
     subscriber = await hub.subscribe(subscriber_id, user_id, topics)
@@ -194,7 +200,12 @@ async def websocket_endpoint(
         # away, the sender when the hub shuts the subscriber down or the socket breaks.
         reader = asyncio.create_task(_drain_incoming(websocket))
         sender = asyncio.create_task(_send_events(websocket, subscriber))
-        done, pending = await asyncio.wait({reader, sender}, return_when=asyncio.FIRST_COMPLETED)
+        # The token was checked once, at the auth frame, so the socket ends when the token does
+        # (independent security review, finding 11). The client renews its session and reconnects.
+        expiry = asyncio.create_task(asyncio.sleep(max(0.0, expires_at - time.time())))
+        done, pending = await asyncio.wait(
+            {reader, sender, expiry}, return_when=asyncio.FIRST_COMPLETED
+        )
         for task in pending:
             task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
@@ -203,6 +214,8 @@ async def websocket_endpoint(
             # Surface a genuine fault; a disconnect is not one.
             with contextlib.suppress(WebSocketDisconnect, RuntimeError, asyncio.CancelledError):
                 task.result()
+        if expiry in done:
+            await _close(websocket, CLOSE_POLICY, "token expired")
     except WebSocketDisconnect:
         pass
     except Exception:

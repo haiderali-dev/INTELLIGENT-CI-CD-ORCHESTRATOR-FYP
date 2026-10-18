@@ -78,6 +78,9 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
   U+2139, typed into a regex, arrived as the literal character, while `\b`, `\d` and `\n`
   survived. It happened again while recording this lesson. For non-ASCII in source, use a
   `"\N{NAME}"` constant, then grep the file for the raw character.
+  Repeated on 2026-10-18: a hex escape for NUL in a regex, patched through a heredoc, landed as a
+  real NUL byte. After any scripted edit, scan the file for bytes below 0x20 other than tab and
+  newline.
 - A Pipeline reports `building: false` and its result before `Finished: SUCCESS` is in the log.
   Wait on progressiveText's `X-More-Data`, never on `building`, before treating a log as whole
   (D-039).

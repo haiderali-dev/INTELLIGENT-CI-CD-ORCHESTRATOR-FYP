@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.ai.clarify import ClarificationService
 from app.ai.factory import build_intent_parser
 from app.ai.parser import IntentParser
-from app.core.errors import ErrorCode, forbidden, unauthorized
+from app.core.errors import ApiError, ErrorCode, forbidden, unauthorized
 from app.core.ratelimit import (
     API_LIMIT,
     ASSISTANT_LIMIT,
@@ -25,6 +25,7 @@ from app.core.ratelimit import (
     RateLimiter,
     get_rate_limiter,
 )
+from app.core.security import TokenType, decode_token
 from app.core.settings import Settings
 from app.db.models import Role, User
 from app.db.session import get_db
@@ -57,14 +58,38 @@ def client_identifier(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
-def rate_limit(limit: RateLimit) -> Callable[..., None]:
-    """Build a dependency enforcing one named limit, keyed by client address."""
+def caller_identifier(request: Request, settings: Settings) -> str:
+    """Who to rate-limit for signed-in traffic: the user a valid access token names, else the
+    address.
+
+    Keying by address alone put everyone behind one proxy in one bucket. Through the dev server's
+    /api proxy every user arrives from 127.0.0.1, so one person's assistant calls starved everyone
+    (independent security review, finding 7). The token is only verified here, not looked up:
+    ``CurrentUser`` still decides whether the request is allowed at all.
+    """
+    header = request.headers.get("authorization", "")
+    scheme, _, token = header.partition(" ")
+    if scheme.lower() == "bearer" and token:
+        try:
+            claims = decode_token(settings, token.strip(), expected=TokenType.ACCESS)
+        except ApiError:
+            pass
+        else:
+            return f"user:{claims.get('sub', '')}"
+    return f"address:{client_identifier(request)}"
+
+
+def rate_limit(limit: RateLimit, *, per_user: bool = False) -> Callable[..., None]:
+    """Build a dependency enforcing one named limit, keyed by client address, or by the signed-in
+    user when ``per_user`` is set."""
 
     def _check(
         request: Request,
         limiter: Annotated[RateLimiter, Depends(get_rate_limiter)],
+        settings: Annotated[Settings, Depends(get_settings_dep)],
     ) -> None:
-        limiter.check(limit, client_identifier(request))
+        key = caller_identifier(request, settings) if per_user else client_identifier(request)
+        limiter.check(limit, key)
 
     return _check
 
@@ -144,7 +169,7 @@ DeveloperUser = Annotated[User, Depends(require_role(Role.DEVELOPER))]
 DevOpsUser = Annotated[User, Depends(require_role(Role.DEVOPS))]
 AdminUser = Annotated[User, Depends(require_role(Role.ADMIN))]
 
-# The general ceiling for authenticated traffic.
-ApiRateLimit = Depends(rate_limit(API_LIMIT))
-# Messages and generation call the model, which has a quota of its own (4.5.1).
-AssistantRateLimit = Depends(rate_limit(ASSISTANT_LIMIT))
+# The general ceiling for authenticated traffic, per user.
+ApiRateLimit = Depends(rate_limit(API_LIMIT, per_user=True))
+# Messages and generation call the model, which has a quota of its own (4.5.1). Per user too.
+AssistantRateLimit = Depends(rate_limit(ASSISTANT_LIMIT, per_user=True))

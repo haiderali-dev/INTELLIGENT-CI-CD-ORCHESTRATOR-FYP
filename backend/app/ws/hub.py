@@ -211,6 +211,27 @@ class Hub:
         self._published += 1
         return delivered
 
+    async def drop_user(self, user_id: str) -> int:
+        """End every connection a user holds, when an Admin deactivates them. Returns how many.
+
+        Their sockets would otherwise keep receiving events until the access token expired
+        (independent security review, finding 11). A reconnect is then refused at its auth frame.
+        """
+        async with self._lock:
+            theirs = [s for s in self._subscribers.values() if s.user_id == user_id]
+            for subscriber in theirs:
+                del self._subscribers[subscriber.id]
+        for subscriber in theirs:
+            # A full queue would swallow the stop signal, so make room for it first.
+            with contextlib.suppress(asyncio.QueueEmpty):
+                if subscriber.queue.full():
+                    subscriber.queue.get_nowait()
+            with contextlib.suppress(asyncio.QueueFull):
+                subscriber.queue.put_nowait(None)
+        if theirs:
+            logger.info("ws_user_dropped", user_id=user_id, connections=len(theirs))
+        return len(theirs)
+
     async def close(self) -> None:
         """Signal every sender to finish. Used on shutdown."""
         async with self._lock:

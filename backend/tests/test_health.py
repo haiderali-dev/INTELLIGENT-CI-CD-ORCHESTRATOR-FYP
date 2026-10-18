@@ -8,9 +8,14 @@ endpoint that only works while everything is healthy is not a health endpoint.
 from __future__ import annotations
 
 import pytest
+from fastapi import FastAPI
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.health import ComponentStatus
+from app.core.settings import LlmMode, Settings
+from app.db.models import LlmCall
+from app.services.dependencies import get_settings_dep
 from app.services.jenkins import FakeJenkinsClient, JenkinsError
 
 
@@ -91,7 +96,10 @@ async def test_jenkins_down_degrades_rather_than_failing(
     body = response.json()
     assert body["status"] == ComponentStatus.DEGRADED.value
     assert body["components"]["jenkins"]["status"] == ComponentStatus.DOWN.value
-    assert "connection refused" in body["components"]["jenkins"]["detail"]
+    # The kind of failure, not its text: the response is world-readable, and an exception's message
+    # can name internal hosts (security review, finding 10). The text goes to the log.
+    assert body["components"]["jenkins"]["detail"] == "unreachable (JenkinsError)"
+    assert "connection refused" not in response.text
     assert body["components"]["database"]["status"] == ComponentStatus.UP.value
 
 
@@ -145,3 +153,28 @@ async def test_unknown_route_uses_the_one_error_shape(client: AsyncClient, path:
     body = response.json()
     assert set(body) == {"error"}
     assert set(body["error"]) == {"code", "message", "details"}
+
+
+async def test_the_llm_reports_how_its_latest_call_ended(
+    app: FastAPI, client: AsyncClient, db: AsyncSession, settings: Settings
+) -> None:
+    """The probe never calls the model, so the latest recorded call is what says it answers (found
+    in T6.7). A cached answer says nothing about the provider and is skipped; a failed call
+    degrades the component without degrading the backend."""
+    live = settings.model_copy(update={"llm_mode": LlmMode.LIVE, "groq_api_key": "test-key"})
+    app.dependency_overrides[get_settings_dep] = lambda: live
+    db.add(LlmCall(provider="groq", model="m", outcome="error"))
+    await db.commit()
+    db.add(LlmCall(provider="groq", model="m", outcome="cached"))
+    await db.commit()
+
+    llm = (await client.get("/api/health")).json()["components"]["llm"]
+
+    assert llm["last_outcome"] == "error"
+    assert llm["last_call_at"] is not None
+    assert llm["status"] == ComponentStatus.DEGRADED.value
+
+    db.add(LlmCall(provider="groq", model="m", outcome="ok"))
+    await db.commit()
+    llm = (await client.get("/api/health")).json()["components"]["llm"]
+    assert (llm["last_outcome"], llm["status"]) == ("ok", ComponentStatus.UP.value)

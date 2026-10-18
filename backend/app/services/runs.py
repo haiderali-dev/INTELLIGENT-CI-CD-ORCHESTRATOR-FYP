@@ -28,6 +28,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.errors import ErrorCode, conflict, not_found
 from app.core.logging import get_logger
 from app.db.models import AuditLog, Job, JobRun, RunResult, Service, User
+from app.failures.redact import redact
 from app.services.jenkins import JenkinsClient, JenkinsError
 
 logger = get_logger(__name__)
@@ -247,11 +248,18 @@ async def run_log(
     *,
     run: JobRun,
     start: int = 0,
+    secrets: tuple[str, ...] = (),
 ) -> LogWindow:
     """A window of a run's console output, starting at a byte offset.
 
     A run that never got a build number has no log yet; that is reported as an empty window rather
     than an error, because the UI opens the log view as soon as a run appears.
+
+    The window is read as a stream and reading stops at ``LOG_WINDOW_BYTES``, so a log of any size
+    costs about one window of memory (independent security review, finding 5). It is redacted as
+    Explain failure's input is, ``secrets`` included, because this is where developers, who have no
+    Jenkins accounts, read logs (finding 6). The next offset counts the bytes Jenkins sent, before
+    redaction changed their length.
     """
     if run.build_number <= 0:
         return LogWindow(text="", next_offset=0, more_data=run.result == RunResult.RUNNING.value)
@@ -260,7 +268,9 @@ async def run_log(
     offset = max(0, start)
 
     try:
-        chunk = await jenkins.console_window(job.jenkins_name, run.build_number, offset)
+        head = await jenkins.console_head(
+            job.jenkins_name, run.build_number, offset, LOG_WINDOW_BYTES
+        )
     except JenkinsError as exc:
         raise conflict(
             ErrorCode.JENKINS_UNAVAILABLE,
@@ -268,16 +278,12 @@ async def run_log(
             run_id=run.id,
         ) from exc
 
-    text = chunk.text
-    window = text[:LOG_WINDOW_BYTES]
     return LogWindow(
-        text=window,
-        next_offset=offset + len(window.encode("utf-8", "replace")),
+        text=redact(head.text, secrets).text,
+        next_offset=offset + len(head.raw),
         # More to come because this window was truncated, because the run is still marked running,
         # or because Jenkins says it is still writing the log. The last one matters at the end of a
         # Pipeline: the tracker can record SUCCESS before "Finished: SUCCESS" is in the log, and a
         # client that stopped tailing then would never see that line (ConsoleChunk).
-        more_data=(
-            len(text) > LOG_WINDOW_BYTES or run.result == RunResult.RUNNING.value or chunk.more_data
-        ),
+        more_data=head.truncated or run.result == RunResult.RUNNING.value or head.more_data,
     )

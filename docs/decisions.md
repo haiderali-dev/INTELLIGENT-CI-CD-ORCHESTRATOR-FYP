@@ -11,6 +11,42 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 6
 
+### D-065 The independent security review's fixes, and the choices inside them
+**Date:** 2026-10-18 · **Status:** accepted (hardening of Phases 1 to 6)
+
+The review and every fix are in `docs/security-review-phases-3-5-6.md`. Recorded here are the
+choices the fixes made, where another fix was possible.
+
+- **One request runs once.** A request that was approved cannot be generated, regenerated or
+  approved again; running it again takes a new message. This was already the rule for editing.
+  The partial unique index holds it under concurrency. The alternative, a fresh justification and
+  quota check on every approval, would have kept a second way to start the same HIGH chain.
+- **Refresh tokens have families.** A refresh token carries `fam`, kept through every rotation. A
+  spent token coming back means two parties hold the session, and neither can be told apart, so the
+  whole family is signed out. Like the revocation list (D-021), families are in memory.
+- **Rate-limit keys:**
+  - Signed-in traffic is keyed by the access token's user. The token is verified but not looked
+    up; authorisation is still `CurrentUser`'s.
+  - Sign-in is keyed by address and account (5 a minute), with an address-wide cap (30 a minute).
+  - `X-Forwarded-For` is still ignored. The frontend's nginx and the dev server's proxy both make
+    every client one address, which is why the keys moved off the address.
+- **Ports on loopback.** The stack is for the machine it runs on. A demo on another machine would
+  need a reverse proxy with TLS, not a published Jenkins.
+- **The frontend container is same-origin.** nginx serves the build and proxies `/api` and `/ws`,
+  so the CSP keeps `connect-src 'self'`, and no CORS or build-time API URL is needed.
+  `VITE_API_BASE_URL` remains for running the app against a backend elsewhere; the CSP then adds
+  that origin.
+- **The CSP is a meta tag added at build time.** The dev server injects inline scripts for hot
+  reload, which a strict policy would block. `frame-ancestors` cannot be set by a meta tag, so nginx
+  sends it as a header.
+- **The plan explanation is screened by sentence.** The stream is held back to whole sentences, so
+  a word split across chunks is still caught. Backticks are allowed, unlike in T5.9's suggestions,
+  because an explanation quotes job names in them.
+- **Health reports, but does not call, the model.** The LLM component shows the latest recorded
+  call's outcome. A call made just to probe would spend the free tier's daily quota on monitoring.
+
+---
+
 ### D-064 Lighthouse audits the signed-in assistant pages in the tab Puppeteer signed in
 **Date:** 2026-10-17 · **Status:** accepted (Phase 6 acceptance)
 
@@ -147,7 +183,8 @@ app and never in the application, let a flow:
   per-service chain lock (4.6.4).
 
 **The real sign-in limit is kept.** Every flow signs in from 127.0.0.1, so all of them share its
-limit of five sign-ins a minute. A flow that gets a 429 waits for as long as the backend asks
+limit of five sign-ins a minute (per account since the 2026-10-18 security fixes, with thirty per
+address across accounts). A flow that gets a 429 waits for as long as the backend asks
 (`retry_after_seconds`). The harness never loosens the limit.
 
 **The built app, through `vite preview`.**
@@ -1540,7 +1577,7 @@ same fix.
 ## Phase 1
 
 ### D-018 The frontend service sits behind a Compose profile until Phase 6
-**Date:** 2026-09-29 · **Status:** decided
+**Date:** 2026-09-29 · **Status:** closed 2026-10-18: `frontend/Dockerfile` exists and the profile is gone (D-065)
 
 `BUILD_PROMPT.md` 4.2.3 lists `frontend` (5173) among the default Compose services. Phase 6 has not
 run, so `frontend/Dockerfile` does not exist, and a default service with a missing build context
