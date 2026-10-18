@@ -24,11 +24,13 @@ import org.junit.jupiter.api.Test;
  * somebody's memory of which checkboxes were ticked. Milestone 2 configured two Jenkins homes by
  * hand, which is why its two arms were not otherwise comparable.
  *
- * <p><b>A known limitation is pinned by this class rather than hidden by it.</b> On
- * {@code configuration-as-code:2121.v86fe99d4b_b_a_b_}, floating-point attributes of this
- * {@code GlobalConfiguration} are silently ignored on import, while {@code int}, {@code boolean},
- * {@code String} and {@code Secret} attributes apply correctly. See
- * {@link #floatingPointAttributesAreNotAppliedKnownDefect} and {@code docs/decisions.md} D-017.
+ * <p><b>Floating-point values must be quoted in YAML.</b> On
+ * {@code configuration-as-code:2121.v86fe99d4b_b_a_b_}, JCasC's YAML model only builds nodes for
+ * YAML's {@code bool}, {@code int} and {@code str} tags, so an unquoted {@code 0.6} (tag
+ * {@code float}) is dropped from the parsed document without a warning. Quoted, it is a string,
+ * which JCasC converts to {@code double} like any other scalar. See
+ * {@link #quotedFloatingPointValuesApply}, {@link #unquotedFloatingPointValuesAreDroppedByJCasC} and
+ * {@code docs/decisions.md} D-017.
  */
 @WithJenkinsConfiguredWithCode
 class ConfigAsCodeIT {
@@ -63,44 +65,44 @@ class ConfigAsCodeIT {
     }
 
     @Test
-    @DisplayName("KNOWN DEFECT: JCasC silently ignores the floating-point fields on import")
+    @DisplayName("quoted floating-point values apply, so the aging ablation can be driven from YAML")
     @ConfiguredWithCode("optimizer-configuration.yaml")
-    void floatingPointAttributesAreNotAppliedKnownDefect(JenkinsConfiguredWithCodeRule j) {
-        // This test asserts behaviour that is WRONG, on purpose, so the defect is visible in the
-        // suite instead of lurking. When JCasC starts applying these, this test fails and should be
-        // replaced by one asserting the YAML values.
-        //
-        // The YAML sets weightUrgency 0.6, weightDependency 0.25, weightExecutionTime 0.15,
-        // agingBonusPerInterval 0.08, agingCap 0.24, similarityThreshold 0.4 and
-        // recencyLambdaPerDay 0.2. Every one is ignored and the Appendix D default remains.
-        //
-        // Established with a verified compile, after an earlier round of experiments turned out to
-        // be reading stale classes. Ruled out: the YAML scalar form (quoted and unquoted behave
-        // identically), integer-valued floats, the doCheck* validators, boxing the field, getter
-        // and setter as Double, and the JVM locale (en/US). Attribute discovery is correct -- JCasC
-        // reports all fifteen attributes with their proper types. Only the import silently fails.
-        //
-        // Impact is contained but real. optimizerEnabled applies, so the main baseline-versus-
-        // optimized comparison is fully reproducible from YAML. The aging-ablation arm of the
-        // experiment matrix varies agingBonusPerInterval and agingCap, so it cannot be driven
-        // through JCasC until this is resolved. Tracked in PROGRESS.md under Needs human.
+    void quotedFloatingPointValuesApply(JenkinsConfiguredWithCodeRule j) {
+        // The YAML quotes every one: weightUrgency "0.6", weightDependency "0.25",
+        // weightExecutionTime "0.15", agingBonusPerInterval "0.08", agingCap "0.24",
+        // similarityThreshold "0.4" and recencyLambdaPerDay "0.2". None is an Appendix D default.
         OptimizerConfiguration config = OptimizerConfiguration.get();
 
-        assertEquals(0.5, config.getWeightUrgency(), 0.0001, "still the default, not the YAML's 0.6");
-        assertEquals(0.3, config.getWeightDependency(), 0.0001);
-        assertEquals(0.2, config.getWeightExecutionTime(), 0.0001);
-        assertEquals(0.05, config.getAgingBonusPerInterval(), 0.0001);
-        assertEquals(0.15, config.getAgingCap(), 0.0001);
-        assertEquals(0.35, config.getSimilarityThreshold(), 0.0001);
-        assertEquals(0.1, config.getRecencyLambdaPerDay(), 0.0001);
+        assertEquals(0.6, config.getWeightUrgency(), 1e-9);
+        assertEquals(0.25, config.getWeightDependency(), 1e-9);
+        assertEquals(0.15, config.getWeightExecutionTime(), 1e-9);
+        assertEquals(0.08, config.getAgingBonusPerInterval(), 1e-9);
+        assertEquals(0.24, config.getAgingCap(), 1e-9);
+        assertEquals(0.4, config.getSimilarityThreshold(), 1e-9);
+        assertEquals(0.2, config.getRecencyLambdaPerDay(), 1e-9);
+    }
+
+    @Test
+    @DisplayName("JCASC BEHAVIOUR: unquoted floating-point values are dropped without a warning")
+    @ConfiguredWithCode("optimizer-unquoted-floats.yaml")
+    void unquotedFloatingPointValuesAreDroppedByJCasC(JenkinsConfiguredWithCodeRule j) {
+        // Pins JCasC's behaviour, not ours, so the quoting rule has a reason anyone can run. The
+        // file writes 0.6, 0.08 and 0.24 unquoted: each is dropped and its default stays, while the
+        // integer beside them applies. verify.py refuses an unquoted float in jenkins/casc/. If a
+        // later JCasC reads them, this fails, and the rule can go.
+        OptimizerConfiguration config = OptimizerConfiguration.get();
+
+        assertEquals(7, config.getEstimatorK(), "the integer in the same block applies");
+        assertEquals(0.5, config.getWeightUrgency(), 1e-9, "0.6 unquoted was dropped");
+        assertEquals(0.05, config.getAgingBonusPerInterval(), 1e-9, "0.08 unquoted was dropped");
+        assertEquals(0.15, config.getAgingCap(), 1e-9, "0.24 unquoted was dropped");
     }
 
     @Test
     @DisplayName("every field survives an export, including the floating-point ones")
     @ConfiguredWithCode("optimizer-configuration.yaml")
     void everyFieldSurvivesExport(JenkinsConfiguredWithCodeRule j) throws Exception {
-        // Export is unaffected by the import defect above, so the round-trip requirement still
-        // holds for the shape of the document: nothing is dropped.
+        // The round trip: every field the YAML set comes back out, with the value it set.
         ConfiguratorRegistry registry = ConfiguratorRegistry.get();
         ConfigurationContext context = new ConfigurationContext(registry);
         CNode exported =
@@ -128,12 +130,42 @@ class ConfigAsCodeIT {
             assertTrue(mapping.containsKey(field), "export dropped the field '" + field + "'");
         }
 
-        // The values that did import must export unchanged.
         assertEquals("false", mapping.get("optimizerEnabled").toString());
         assertEquals("7", mapping.get("estimatorK").toString());
+        assertEquals("0.6", mapping.get("weightUrgency").toString());
+        assertEquals("0.08", mapping.get("agingBonusPerInterval").toString());
+        assertEquals("0.24", mapping.get("agingCap").toString());
         assertEquals(
                 "http://backend:8000/api/metrics",
                 mapping.get("metricsBackendUrl").toString());
+    }
+
+    @Test
+    @DisplayName("an exported file imports again with its floating-point values")
+    @ConfiguredWithCode("optimizer-configuration.yaml")
+    void anExportedFileImportsAgainWithItsFloatingPointValues(JenkinsConfiguredWithCodeRule j) throws Exception {
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        io.jenkins.plugins.casc.ConfigurationAsCode.get().export(out);
+        String yaml = out.toString(java.nio.charset.StandardCharsets.UTF_8);
+
+        OptimizerConfiguration config = OptimizerConfiguration.get();
+        config.setWeightUrgency(0.5);
+        config.setAgingBonusPerInterval(0.05);
+        config.setAgingCap(0.15);
+        io.jenkins.plugins.casc.ConfigurationAsCode.get()
+                .configureWith(io.jenkins.plugins.casc.yaml.YamlSource.of(
+                        new java.io.ByteArrayInputStream(yaml.getBytes(java.nio.charset.StandardCharsets.UTF_8))));
+
+        assertEquals(0.6, config.getWeightUrgency(), 1e-9, "the export wrote: " + optimizerLines(yaml));
+        assertEquals(0.08, config.getAgingBonusPerInterval(), 1e-9);
+        assertEquals(0.24, config.getAgingCap(), 1e-9);
+    }
+
+    private static String optimizerLines(String yaml) {
+        return yaml.lines()
+                .filter(line -> line.contains("weightUrgency") || line.contains("agingCap"))
+                .map(String::strip)
+                .collect(java.util.stream.Collectors.joining(", "));
     }
 
     @Test

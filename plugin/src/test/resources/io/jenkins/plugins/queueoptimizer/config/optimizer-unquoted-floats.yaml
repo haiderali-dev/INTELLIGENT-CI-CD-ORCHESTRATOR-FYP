@@ -1,0 +1,9 @@
+# Floating-point values written unquoted, the natural way. JCasC drops every one of them without a
+# word (D-017), which ConfigAsCodeIT pins so the quoting rule is visible, and so it fails loudly if a
+# later JCasC starts reading them.
+unclassified:
+  dynamicQueueOptimizer:
+    weightUrgency: 0.6
+    agingBonusPerInterval: 0.08
+    agingCap: 0.24
+    estimatorK: 7

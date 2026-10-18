@@ -1554,7 +1554,8 @@ The alternative, leaving it as a default and telling people to ignore the error,
 ignore Compose errors, which is the last habit this project needs.
 
 ### D-019 JCasC sets only the optimizer's non-floating-point fields
-**Date:** 2026-09-29 · **Status:** decided, consequence of D-017
+**Date:** 2026-09-29 · **Status:** superseded 2026-10-18 by D-017's resolution: the files now set all
+seven floating-point fields, quoted
 
 The three JCasC files set `optimizerEnabled`, `agingIntervalMinutes`, `estimatorK`,
 `historyWindow`, `rescoreIntervalSeconds`, `metricsEnabled`, `metricsBackendUrl` and
@@ -1618,7 +1619,34 @@ bearing, and neither is dead code.
   its output is what will explain what moved.
 
 ### D-017 JCasC silently ignores the optimizer's floating-point fields
-**Date:** 2026-09-29 · **Status:** open defect, worked around · **Evidence:** `ConfigAsCodeIT`
+**Date:** 2026-09-29 · **Status:** resolved 2026-10-18: root cause found, values quoted · **Evidence:** `ConfigAsCodeIT`
+
+**Resolution, 2026-10-18.** The root cause is JCasC's YAML loader, not the import.
+- **Where:** `io.jenkins.plugins.casc.yaml.ModelConstructor` registers scalar constructors for
+  YAML's `bool`, `int` and `str` tags only. An unquoted `0.6` carries the `float` tag, falls through
+  to SnakeYAML's default constructor, comes back as a `Double` instead of a model node, and is
+  left out of the parsed document. So the setter is never called, no "unknown attribute" error is
+  raised, and the default stays.
+- **How it was found:** a debugging test in a JenkinsRule.
+  - Its setter traces showed JCasC calling `setAgingIntervalMinutes`, never `setWeightUrgency`.
+  - JCasC's FINE log showed no attempt to set it.
+  - The attribute's own setter and the `double` converter both worked when called directly.
+  - `YamlUtils.loadFrom` returned a mapping without the key.
+- **The fix:** quote floating-point values (`weightUrgency: "0.6"`). A quoted value is a
+  string, which JCasC converts to `double` like any other scalar.
+  - All three `jenkins/casc/` files now set all seven fields, quoted, at Appendix D's values.
+  - A Phase 1 `verify.py` check refuses an unquoted or missing one, and any value that is not
+    the report's.
+  - The aging-ablation arm can now be driven from YAML.
+- **Tests (`ConfigAsCodeIT`, 9 passed):**
+  - quoted values apply;
+  - unquoted ones are dropped (this pins JCasC's behaviour, so it fails if a later JCasC reads
+    them);
+  - an exported file imports again with its floating-point values.
+- **Correction:** the investigation below said quoted and unquoted forms behave identically.
+  That was wrong, very likely another stale-class run of the kind described below.
+
+The original record follows.
 
 On `configuration-as-code:2121.v86fe99d4b_b_a_b_` with Jenkins 2.568.3, importing a YAML file into
 `OptimizerConfiguration` applies every `int`, `boolean`, `String` and `Secret` attribute and

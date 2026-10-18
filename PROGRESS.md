@@ -11,15 +11,17 @@ Branch: phase-6-frontend
       Done, checked 2026-10-11 with `git ls-remote`. `haiderali-dev/payment-service` has `main`
       998844b and `demo/failing-tests` da997c8. `haiderali-dev/auth-service` has `main` 6413c6f
       and `demo/failing-tests` d4c4560. `catalog/services.yaml` points at both.
-- [ ] **Resolve or work around the JCasC floating-point defect (D-017).** Importing a YAML file
-      silently ignores `weightUrgency`, `weightDependency`, `weightExecutionTime`,
-      `agingBonusPerInterval`, `agingCap`, `similarityThreshold` and `recencyLambdaPerDay`, while
-      every other field applies. `optimizerEnabled` works, so the main baseline-versus-optimized
-      comparison is unaffected and Table 12.1 stays reproducible from YAML. The **aging-ablation arm**
-      of the Part 4.8.2 matrix varies `agingBonusPerInterval` and `agingCap`, so it cannot be driven
-      from JCasC and needs another route (the global configuration form, or a decision to drop that
-      arm). `ConfigAsCodeIT.floatingPointAttributesAreNotAppliedKnownDefect` pins the current
-      behaviour and will fail loudly when it is fixed.
+- [x] **Resolve or work around the JCasC floating-point defect (D-017).** Resolved on 2026-10-18,
+      at the user's request to find the root cause.
+      - **Cause:** JCasC's YAML loader builds nodes only for the bool, int and str tags, so an
+        unquoted float is dropped from the parsed document. Quoted values apply.
+      - **Fix:** the three `jenkins/casc/` files set all seven fields, quoted, at Appendix D's
+        values. The aging-ablation arm can now be driven from YAML.
+      - **Checks:**
+        - `mvn -Dit.test=ConfigAsCodeIT verify`: 9 passed. Quoted values apply, unquoted ones are
+          dropped (JCasC's behaviour, pinned), and an exported file imports again with its floats.
+        - verify.py's Phase 1 check "JCasC quotes every floating-point optimizer value" passed,
+          failed with one value unquoted, and passed again once it was restored.
 - [x] **Install `gh`, or open pull requests by hand.** Not blocking; each phase still ends on its
       own branch. Done, checked 2026-10-11: `gh` 2.102.0 is logged in as `haiderali-dev`. PRs
       #5 to #9 were opened with it. Open each phase PR against `main`, never against the previous
@@ -1618,9 +1620,7 @@ Details in `docs/decisions.md`.
 - PyYAML is not installed locally and PyPI's download host does not resolve from this machine, so the
   CI-workflow check runs its structural fallback rather than a full YAML parse. CI installs PyYAML and
   runs the full parse.
-- The JCasC floating-point import defect (D-017) blocks configuring the experiment's aging-ablation
-  arm from YAML. Root cause inside JCasC not identified; ruled out the YAML scalar form,
-  integer-valued floats, the `doCheck*` validators, boxing as `Double`, and the JVM locale.
+- ~~The JCasC floating-point import defect (D-017)~~ Resolved 2026-10-18: quote the values.
 - `docs/versions.md` still has `pending` rows for every plugin, backend and frontend dependency. Each
   is filled by the task that pins it, against the official source, per rule 1.4.
 - **Agent DNS on this machine (2026-10-13).** Docker Desktop's resolver intermittently fails to

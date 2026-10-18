@@ -811,14 +811,24 @@ def check_casc_files() -> Result:
     return ok("dev plus two arms differing only in optimizerEnabled")
 
 
-@check(1, "JCasC sets no floating-point optimizer field (D-017)")
-def check_casc_avoids_floats() -> Result:
-    """JCasC silently drops this configuration's double fields, so setting one would lie.
+# The optimizer's floating-point fields and the report's Appendix D values for them.
+APPENDIX_D_FLOATS = {
+    "weightUrgency": 0.5,
+    "weightDependency": 0.3,
+    "weightExecutionTime": 0.2,
+    "agingBonusPerInterval": 0.05,
+    "agingCap": 0.15,
+    "similarityThreshold": 0.35,
+    "recencyLambdaPerDay": 0.1,
+}
 
-    See docs/decisions.md D-017 and D-019. The code defaults are the report's Appendix D values,
-    so omitting them is correct; setting them would produce a file that disagrees with the
-    running system.
-    """
+
+@check(1, "JCasC quotes every floating-point optimizer value, at Appendix D's values (D-017)")
+def check_casc_quotes_floats() -> Result:
+    """JCasC 2121's YAML model builds nodes only for the bool, int and str tags, so an unquoted
+    `0.6` is dropped without a word and the default stays. Quoted, it is a string that JCasC
+    converts like any other scalar (D-017; `ConfigAsCodeIT` pins both). Every file sets all seven,
+    quoted, at the report's values, so the arms state the formula rather than inherit it."""
     problems: list[str] = []
     for name in CASC_FILES:
         path = REPO_ROOT / "jenkins" / "casc" / name
@@ -828,12 +838,22 @@ def check_casc_avoids_floats() -> Result:
         if error:
             return fail(f"{name}: {error}")
         block = doc.get("unclassified", {}).get("dynamicQueueOptimizer", {})
-        floats = sorted(k for k, v in block.items() if isinstance(v, float))
-        if floats:
-            problems.append(f"{name} sets {', '.join(floats)}")
+        unquoted = sorted(k for k, v in block.items() if isinstance(v, float))
+        if unquoted:
+            problems.append(f"{name} has unquoted {', '.join(unquoted)}, which JCasC drops")
+        for field, expected in APPENDIX_D_FLOATS.items():
+            value = block.get(field)
+            if not isinstance(value, str):
+                problems.append(f"{name} does not set {field} as a quoted value")
+                continue
+            try:
+                if not math.isclose(float(value), expected, abs_tol=1e-12):
+                    problems.append(f"{name}: {field} is {value}, not Appendix D's {expected}")
+            except ValueError:
+                problems.append(f"{name}: {field} is {value!r}, not a number")
     if problems:
-        return fail("; ".join(problems) + " -- JCasC drops these silently (D-017)")
-    return ok("no float fields set; the code defaults are the report's values")
+        return fail("; ".join(problems[:3]))
+    return ok(f"all {len(APPENDIX_D_FLOATS)} quoted, at the report's values, in {len(CASC_FILES)} files")
 
 
 @check(1, "the controller image installs the built plugin")
