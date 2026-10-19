@@ -26,6 +26,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -51,6 +53,16 @@ public class DynamicQueueSorter extends QueueSorter {
     /** One heap for the instance, exposed for the API and the tests. */
     private static final PriorityJobHeap HEAP = new PriorityJobHeap();
 
+    /**
+     * The latest score of every item scored since it entered the queue, kept until it leaves.
+     *
+     * <p>The heap holds only the items buildable at the last pass. An item handed to an executor is
+     * no longer buildable, so the next pass drops it from the heap before its QUEUE_LEFT event is
+     * recorded, and the event lost its score. The metrics recorder takes the score from here
+     * instead, so every scored item's exit carries the score it was dispatched on.
+     */
+    private static final ConcurrentMap<Long, ScoredJob> LAST_SCORES = new ConcurrentHashMap<>();
+
     private final Object cacheLock = new Object();
     private Set<Long> cachedItemIds = Collections.emptySet();
     private long cachedMinute = -1;
@@ -72,12 +84,19 @@ public class DynamicQueueSorter extends QueueSorter {
         if (!config.isOptimizerEnabled()) {
             // Observe-only, the experiment's baseline arm. Arrival order is preserved exactly,
             // while the metrics recorders keep working, so both arms are measured by the same
-            // code path rather than by two different Jenkins installations.
+            // code path rather than by two different Jenkins installations. The heap is emptied
+            // too, so the ranking reports these items as unscored instead of showing scores from
+            // before the optimizer was switched off.
+            HEAP.replaceAll(Collections.emptyList());
             return;
         }
-        if (items == null || items.size() < 2) {
+        if (items == null || items.isEmpty()) {
+            // Nothing is buildable, so nothing is ranked: an empty heap, not the last items scored.
+            HEAP.replaceAll(Collections.emptyList());
             return;
         }
+        // A single item is scored too. Returning early below two items left a lone job unscored,
+        // or showing a score and aging bonus from an earlier pass (found in T6.6).
 
         long startedAt = System.nanoTime();
         try {
@@ -88,6 +107,7 @@ public class DynamicQueueSorter extends QueueSorter {
             // as items left the queue, and the plugin silently degraded to arrival order while
             // still reporting itself enabled. CacheEvictionRegressionIT guards this.
             HEAP.replaceAll(scores.values());
+            LAST_SCORES.putAll(scores);
 
             items.sort((a, b) -> {
                 ScoredJob left = scores.get(a.getId());
@@ -199,6 +219,15 @@ public class DynamicQueueSorter extends QueueSorter {
     /** The shared heap, for the ranking API and the tests. */
     public static PriorityJobHeap getHeap() {
         return HEAP;
+    }
+
+    /**
+     * The score an item was last given, removed as it is read: called once, when the item leaves
+     * the queue. Empty for an item never scored (the baseline arm, or a job that could not be
+     * resolved).
+     */
+    public static Optional<ScoredJob> takeLastScore(long itemId) {
+        return Optional.ofNullable(LAST_SCORES.remove(itemId));
     }
 
     /** Nanoseconds taken by the most recent sort, for the health endpoint. */

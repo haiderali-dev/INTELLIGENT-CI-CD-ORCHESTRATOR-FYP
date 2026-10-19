@@ -909,3 +909,31 @@ async def test_a_deactivated_user_loses_access_to_every_endpoint(
         response = await client.get(path, headers=auth(token))
         assert response.status_code == 401, path
         assert response.json()["error"]["code"] == "ACCOUNT_DISABLED"
+
+
+async def test_the_queue_says_which_upstream_holds_a_job(
+    client: AsyncClient, db: AsyncSession, fake_plugin: FakePluginClient
+) -> None:
+    """The recorded live ranking with a held job, through the parser, to the queue's JSON."""
+    token = await token_for(client, db)
+    body = json.loads(
+        (Path(__file__).parent / "data" / "plugin" / "ranking-held.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    fake_plugin.ranking_result = parse_ranking(body)
+
+    response = (await client.get("/api/queue", headers=auth(token))).json()
+
+    assert response["items"] == []
+    assert response["held_items"] == [
+        {
+            "item_id": 1587,
+            "job_name": "it-held-downstream",
+            "level": "HIGH",
+            "reason": "Waiting for upstream job 'it-held-upstream' (building) to finish.",
+            "upstream": "it-held-upstream",
+            "upstream_state": "building",
+            "wait_seconds": 8.169,
+        }
+    ]

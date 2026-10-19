@@ -11,6 +11,37 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 6
 
+### D-066 The heap holds exactly the buildable items, scored; held jobs are listed apart
+**Date:** 2026-10-20 · **Status:** accepted (hardening of Phases 1 to 6; found in T6.6)
+
+**The sorter no longer returns early below two items.** It scores a lone buildable item, and
+empties the heap when nothing is buildable or the optimizer is off. Before, a lone waiting job had
+no score, or kept a score and aging bonus from an earlier pass. The heap also kept items that had
+left the queue. This follows CLAUDE.md's rule that the sorter always rebuilds the heap.
+
+**A leaving item keeps the score it was dispatched on.** The heap holds only the items buildable
+at the last pass. An item handed to an executor is no longer buildable, so the next pass dropped it
+before its QUEUE_LEFT event read its score. That race had always existed, with any queue of two or
+more. The sorter now keeps each item's latest score in a map until the item leaves, and the
+recorder takes it from there, once.
+
+**Held jobs are a list of their own, not rows in the ranking.** The plugin's API gains
+`heldItems`: every blocked item, with Jenkins's reason, plus the upstream job and its state when
+the dependency gate is the reason. `/api/queue` passes it on as `held_items`, and the Queue page
+lists them under "Held back" in DESIGN.md's words ("Waits for fs-payment-service-build").
+- **The deviation from DESIGN.md:** its Queue sketch draws such a job as a ranked row with a score.
+  A held job cannot be dispatched, and the plugin gives it no score until it is buildable. A rank
+  would say it could run next, so it is listed apart.
+
+**Evidence:**
+- `ApiJsonIT.heldItemsNameTheirUpstream`, under JenkinsRule.
+- A live recording from the rebuilt jenkins-dev (`backend/tests/data/plugin/ranking-held.json`).
+- The backend's parser and route tests on that recording, and the Queue page's tests on its capture
+  through the backend.
+- `HeapFreshnessIT`: five tests, all of which fail with the old early returns.
+
+---
+
 ### D-065 The independent security review's fixes, and the choices inside them
 **Date:** 2026-10-18 · **Status:** accepted (hardening of Phases 1 to 6)
 

@@ -6,6 +6,9 @@
  *
  * Typed by what the client returns, so a backend change that alters the shape fails to compile
  * here first.
+ *
+ * `held_items` was added on 2026-10-20, when the backend began sending it: these rankings predate
+ * the plugin's heldItems, so for them the backend sends an empty list, as written here.
  */
 
 import type { Queue } from "@/api/queueApi";
@@ -89,6 +92,7 @@ export const threeWaiting: Queue = {
     }
   ],
   "unscored_items": [],
+  "held_items": [],
   "unavailable_reason": null
 };
 
@@ -231,6 +235,7 @@ export const group: Queue = {
       "reason": "not scored by the optimizer"
     }
   ],
+  "held_items": [],
   "unavailable_reason": null
 };
 
@@ -269,6 +274,7 @@ export const aged: Queue = {
     }
   ],
   "unscored_items": [],
+  "held_items": [],
   "unavailable_reason": null
 };
 
@@ -351,6 +357,7 @@ export const optimizerOff: Queue = {
     }
   ],
   "unscored_items": [],
+  "held_items": [],
   "unavailable_reason": null
 };
 
@@ -366,6 +373,7 @@ export const empty: Queue = {
   },
   "items": [],
   "unscored_items": [],
+  "held_items": [],
   "unavailable_reason": null
 };
 
@@ -377,5 +385,33 @@ export const unavailable: Queue = {
   "weights": {},
   "items": [],
   "unscored_items": [],
+  "held_items": [],
   "unavailable_reason": "the plugin is not installed on this controller"
+};
+
+/** A job held for its upstream: the live recording of 2026-10-20 (ranking-held.json) through the
+ * backend's parser and endpoint, captured the same day. Nothing is ranked; one job is held. */
+export const heldForUpstream: Queue = {
+  "available": true,
+  "optimizer_enabled": true,
+  "queue_length": 0,
+  "weights": {
+    "urgency": 0.5,
+    "dependency": 0.3,
+    "executionTime": 0.2
+  },
+  "items": [],
+  "unscored_items": [],
+  "held_items": [
+    {
+      "item_id": 1587,
+      "job_name": "it-held-downstream",
+      "level": "HIGH",
+      "reason": "Waiting for upstream job 'it-held-upstream' (building) to finish.",
+      "upstream": "it-held-upstream",
+      "upstream_state": "building",
+      "wait_seconds": 8.169
+    }
+  ],
+  "unavailable_reason": null
 };

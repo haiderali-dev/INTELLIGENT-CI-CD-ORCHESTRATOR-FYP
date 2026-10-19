@@ -1302,6 +1302,7 @@ export const queue: Queue = {
     }
   ],
   "unscored_items": [],
+  "held_items": [],
   "unavailable_reason": null
 };
 

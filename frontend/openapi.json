@@ -1583,6 +1583,71 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "HeldItemResponse": {
+        "description": "Queued work held back rather than buildable, with why, and the upstream job holding it when\nthat is the reason (``upstream_state`` is ``queued`` or ``building``).",
+        "properties": {
+          "item_id": {
+            "title": "Item Id",
+            "type": "integer"
+          },
+          "job_name": {
+            "title": "Job Name",
+            "type": "string"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "upstream": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upstream"
+          },
+          "upstream_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upstream State"
+          },
+          "wait_seconds": {
+            "title": "Wait Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "item_id",
+          "job_name",
+          "level",
+          "reason",
+          "upstream",
+          "upstream_state",
+          "wait_seconds"
+        ],
+        "title": "HeldItemResponse",
+        "type": "object"
+      },
       "HelpCardRecord": {
         "description": "What the assistant can do (``HelpCard``, app/ai/clarify.py).",
         "properties": {
@@ -3399,6 +3464,14 @@
             "title": "Available",
             "type": "boolean"
           },
+          "held_items": {
+            "description": "Queued but held back, such as waiting for an upstream job",
+            "items": {
+              "$ref": "#/components/schemas/HeldItemResponse"
+            },
+            "title": "Held Items",
+            "type": "array"
+          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/QueueItemResponse"
@@ -3448,7 +3521,8 @@
           "queue_length",
           "weights",
           "items",
-          "unscored_items"
+          "unscored_items",
+          "held_items"
         ],
         "title": "QueueResponse",
         "type": "object"

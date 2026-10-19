@@ -144,6 +144,21 @@ describe("the queue page", () => {
     expect(status()).toHaveTextContent("8 waiting");
   });
 
+  it("lists a job held for its upstream, naming the job it waits for", async () => {
+    const { backend, session } = await backendServing(captured.heldForUpstream);
+    renderQueue(backend, session);
+
+    const section = await screen.findByRole("region", { name: "Held back" });
+    const entry = within(section).getByRole("listitem");
+    expect(entry).toHaveTextContent("it-held-downstream");
+    expect(entry).toHaveTextContent("HIGH");
+    expect(entry).toHaveTextContent("Waits for it-held-upstream, which is building");
+    expect(screen.getByText("Nothing is ready to run: every queued job is held back.")).toBeInTheDocument();
+    expect(screen.queryByRole("table", { name: RANKING })).toBeNull();
+    expect(status()).toHaveTextContent("0 waiting");
+    expect(status()).toHaveTextContent("1 held back");
+  });
+
   it("puts a HIGH job above lower urgency, in the plugin's rank order", async () => {
     const reversed = { ...captured.threeWaiting, items: [...captured.threeWaiting.items].reverse() };
     const { backend, session } = await backendServing(reversed);

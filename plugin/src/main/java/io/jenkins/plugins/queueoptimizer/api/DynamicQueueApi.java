@@ -121,13 +121,47 @@ public class DynamicQueueApi implements RootAction {
             }
         }
 
+        // Items held back rather than buildable, each with why. A job the dependency gate holds for
+        // its upstream is neither ranked nor unscored, so without this list it was simply absent and
+        // the queue page could not say why it waited (found in T6.6).
+        StringJoiner held = new StringJoiner(",", "[", "]");
+        for (Queue.Item item : jenkins.getQueue().getItems()) {
+            if (item instanceof Queue.BlockedItem blocked) {
+                held.add(renderHeld(blocked));
+            }
+        }
+
         write(
                 response,
                 "{\"configuration\":" + renderConfig(config)
                         + ",\"queueLength\":" + buildable.size()
                         + ",\"items\":" + items
                         + ",\"unscoredItems\":" + unscored
+                        + ",\"heldItems\":" + held
                         + "}");
+    }
+
+    /** A held item: what it is, why it waits, and the upstream job when that is the reason. */
+    private static String renderHeld(Queue.BlockedItem item) {
+        CauseOfBlockage cause = item.getCauseOfBlockage();
+        StringJoiner json = new StringJoiner(",", "{", "}");
+        json.add(pair("itemId", item.getId()));
+        json.add(pairString("jobName", JobResolver.describe(item)));
+        json.add(pairString(
+                "level",
+                JobResolver.resolve(item)
+                        .map(job -> JobPriorityProperty.levelOf(job).name())
+                        .orElse("MEDIUM")));
+        json.add(cause == null ? "\"reason\":null" : pairString("reason", cause.getShortDescription()));
+        if (cause instanceof DependencyGate.UpstreamRunning upstream) {
+            json.add(pairString("upstream", upstream.getUpstreamName()));
+            json.add(pairString("upstreamState", upstream.getUpstreamState()));
+        } else {
+            json.add("\"upstream\":null");
+            json.add("\"upstreamState\":null");
+        }
+        json.add(pair("waitSeconds", round(Math.max(0, System.currentTimeMillis() - item.getInQueueSince()) / 1000.0)));
+        return json.toString();
     }
 
     /** {@code GET /dynamic-queue/metrics/recent?limit=N}: the last N recorded events. */

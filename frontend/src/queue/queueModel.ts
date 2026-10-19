@@ -3,7 +3,7 @@
  * the estimate and the wait as durations, and the upstream jobs a job names that do not exist.
  */
 
-import type { Queue, QueueItem } from "@/api/queueApi";
+import type { HeldItem, Queue, QueueItem } from "@/api/queueApi";
 import { formatDuration } from "@/lib/format";
 
 /** The plugin reports each job's Jenkins class (`DynamicQueueApi.renderItem`), or "unknown". */
@@ -70,4 +70,19 @@ export function optimizerStatus(queue: Queue): string | null {
     return null;
   }
   return queue.optimizer_enabled ? "Optimizer on" : "Optimizer off: Jenkins' own order";
+}
+
+/**
+ * Why a queued item is held, in DESIGN.md's words when the plugin names the upstream job
+ * ("Waits for fs-payment-service-build"), and otherwise in Jenkins's own.
+ */
+export function heldReason(item: Pick<HeldItem, "reason" | "upstream" | "upstream_state">): string {
+  if (item.upstream) {
+    const state = item.upstream_state === "building" ? "building" : "still queued";
+    return `Waits for ${item.upstream}, which is ${state}`;
+  }
+  if (!item.reason) {
+    return "Held by Jenkins";
+  }
+  return item.reason.charAt(0).toUpperCase() + item.reason.slice(1);
 }

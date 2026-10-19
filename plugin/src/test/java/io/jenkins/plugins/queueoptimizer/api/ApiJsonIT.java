@@ -155,7 +155,7 @@ class ApiJsonIT {
         FreeStyleProject project = j.createFreeStyleProject("api-ghost-dep");
         project.addProperty(new JobPriorityProperty("MEDIUM", "no-such-upstream"));
         project.scheduleBuild2(0);
-        // A second item, so the sorter actually runs: it returns early below two items.
+        // A second item, so the dependency has something to be ranked against.
         schedule(j, "api-filler", "MEDIUM");
         waitUntilBuildable(j, 2);
         j.jenkins.getQueue().maintain();
@@ -292,6 +292,64 @@ class ApiJsonIT {
         assertEquals(0, root.getInt("queueLength"));
         assertTrue(root.getJSONArray("items").isEmpty());
         assertTrue(root.getJSONArray("unscoredItems").isEmpty());
+        assertTrue(root.getJSONArray("heldItems").isEmpty());
+    }
+
+    @Test
+    @DisplayName("a job held for its upstream is listed, with the upstream that holds it")
+    void heldItemsNameTheirUpstream(JenkinsRule j) throws Exception {
+        // Found in T6.6: a held job is neither buildable nor unscored, so it was simply absent, and
+        // the queue page could not say "Waits for fs-payment-service-build".
+        j.jenkins.setNumExecutors(0);
+        FreeStyleProject upstream = j.createFreeStyleProject("held-upstream");
+        FreeStyleProject downstream = j.createFreeStyleProject("held-downstream");
+        downstream.addProperty(new JobPriorityProperty("HIGH", "held-upstream"));
+        upstream.scheduleBuild2(0);
+        downstream.scheduleBuild2(0);
+        waitUntilHeld(j, "held-downstream");
+        j.jenkins.getQueue().maintain();
+
+        JSONObject root = getJson(j, "dynamic-queue/api/json");
+        JSONObject held = null;
+        JSONArray heldItems = root.getJSONArray("heldItems");
+        for (int i = 0; i < heldItems.size(); i++) {
+            if ("held-downstream".equals(heldItems.getJSONObject(i).getString("jobName"))) {
+                held = heldItems.getJSONObject(i);
+            }
+        }
+        assertNotNull(held, "the held job must be listed: " + root);
+        assertEquals("held-upstream", held.getString("upstream"));
+        assertEquals("queued", held.getString("upstreamState"));
+        assertEquals("HIGH", held.getString("level"));
+        assertTrue(held.getString("reason").contains("held-upstream"), held.getString("reason"));
+        assertTrue(held.getDouble("waitSeconds") >= 0);
+        for (String field :
+                List.of("itemId", "jobName", "level", "reason", "upstream", "upstreamState", "waitSeconds")) {
+            assertTrue(held.has(field), "the documented field '" + field + "' is missing");
+        }
+        JSONArray ranked = root.getJSONArray("items");
+        for (int i = 0; i < ranked.size(); i++) {
+            assertFalse(
+                    "held-downstream".equals(ranked.getJSONObject(i).getString("jobName")),
+                    "a held job is not ranked: it cannot be dispatched");
+        }
+
+        j.jenkins.setNumExecutors(2);
+        waitUntilAllComplete(j, List.of("held-upstream", "held-downstream"));
+    }
+
+    private static void waitUntilHeld(JenkinsRule j, String name) throws InterruptedException {
+        long deadline = System.currentTimeMillis() + 30_000;
+        while (System.currentTimeMillis() < deadline) {
+            j.jenkins.getQueue().maintain();
+            for (hudson.model.Queue.Item item : j.jenkins.getQueue().getItems()) {
+                if (item instanceof hudson.model.Queue.BlockedItem && name.equals(item.task.getName())) {
+                    return;
+                }
+            }
+            Thread.sleep(100);
+        }
+        throw new AssertionError(name + " was never held");
     }
 
     private static void schedule(JenkinsRule j, String name, String level) throws IOException {

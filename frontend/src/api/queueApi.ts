@@ -19,3 +19,4 @@ export type QueueApi = ReturnType<typeof queueApi>;
 export type Queue = Awaited<ReturnType<QueueApi["queue"]>>;
 export type QueueItem = Queue["items"][number];
 export type UnscoredItem = Queue["unscored_items"][number];
+export type HeldItem = Queue["held_items"][number];

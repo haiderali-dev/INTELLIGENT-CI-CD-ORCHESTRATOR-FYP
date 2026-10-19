@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field
 
 from app.api.deps import ApiRateLimit, CurrentUser
 from app.services.dependencies import get_plugin_client
-from app.services.plugin import PluginClient, RankedItem, UnscoredItem
+from app.services.plugin import HeldItem, PluginClient, RankedItem, UnscoredItem
 
 
 class ScoreComponentsResponse(BaseModel):
@@ -93,6 +93,31 @@ class UnscoredItemResponse(BaseModel):
         return cls(item_id=item.item_id, job_name=item.job_name, reason=item.reason)
 
 
+class HeldItemResponse(BaseModel):
+    """Queued work held back rather than buildable, with why, and the upstream job holding it when
+    that is the reason (``upstream_state`` is ``queued`` or ``building``)."""
+
+    item_id: int
+    job_name: str
+    level: str
+    reason: str | None
+    upstream: str | None
+    upstream_state: str | None
+    wait_seconds: float
+
+    @classmethod
+    def of(cls, item: HeldItem) -> HeldItemResponse:
+        return cls(
+            item_id=item.item_id,
+            job_name=item.job_name,
+            level=item.level,
+            reason=item.reason,
+            upstream=item.upstream,
+            upstream_state=item.upstream_state,
+            wait_seconds=item.wait_seconds,
+        )
+
+
 class QueueResponse(BaseModel):
     available: bool = Field(
         description="False when the plugin could not be read; items is then empty"
@@ -104,6 +129,9 @@ class QueueResponse(BaseModel):
     )
     items: list[QueueItemResponse]
     unscored_items: list[UnscoredItemResponse]
+    held_items: list[HeldItemResponse] = Field(
+        description="Queued but held back, such as waiting for an upstream job"
+    )
     unavailable_reason: str | None = None
 
 
@@ -129,5 +157,6 @@ async def get_queue(
         weights=ranking.weights,
         items=[QueueItemResponse.of(item) for item in ranking.items],
         unscored_items=[UnscoredItemResponse.of(item) for item in ranking.unscored],
+        held_items=[HeldItemResponse.of(item) for item in ranking.held],
         unavailable_reason=ranking.unavailable_reason,
     )

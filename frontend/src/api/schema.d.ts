@@ -1426,6 +1426,27 @@ export interface components {
             version: string;
         };
         /**
+         * HeldItemResponse
+         * @description Queued work held back rather than buildable, with why, and the upstream job holding it when
+         *     that is the reason (``upstream_state`` is ``queued`` or ``building``).
+         */
+        HeldItemResponse: {
+            /** Item Id */
+            item_id: number;
+            /** Job Name */
+            job_name: string;
+            /** Level */
+            level: string;
+            /** Reason */
+            reason: string | null;
+            /** Upstream */
+            upstream: string | null;
+            /** Upstream State */
+            upstream_state: string | null;
+            /** Wait Seconds */
+            wait_seconds: number;
+        };
+        /**
          * HelpCardRecord
          * @description What the assistant can do (``HelpCard``, app/ai/clarify.py).
          */
@@ -2105,6 +2126,11 @@ export interface components {
              * @description False when the plugin could not be read; items is then empty
              */
             available: boolean;
+            /**
+             * Held Items
+             * @description Queued but held back, such as waiting for an upstream job
+             */
+            held_items: components["schemas"]["HeldItemResponse"][];
             /** Items */
             items: components["schemas"]["QueueItemResponse"][];
             /** Optimizer Enabled */

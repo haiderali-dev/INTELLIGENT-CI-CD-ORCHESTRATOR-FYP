@@ -1,6 +1,7 @@
 import { useId } from "react";
 
-import type { Queue, QueueItem, UnscoredItem } from "@/api/queueApi";
+import type { HeldItem, Queue, QueueItem, UnscoredItem } from "@/api/queueApi";
+import { heldReason } from "@/queue/queueModel";
 import { ScoreBar } from "@/components/ScoreBar";
 import { contributions, FACTORS } from "@/components/scoreBarModel";
 import { cn } from "@/lib/cn";
@@ -197,6 +198,41 @@ export function UnscoredItems({ items }: { items: readonly UnscoredItem[] }) {
           >
             <span>{item.job_name}</span>
             <span className="text-graphite">{capitalised(item.reason)}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/**
+ * Queued work held back rather than ready to run, with why. A job the plugin holds for its upstream
+ * says which job it waits for, in DESIGN.md's words ("Waits for fs-payment-service-build"). It has
+ * no rank and no score: it cannot be dispatched until the upstream finishes, and showing it ranked
+ * would say it could (found in T6.6, when such a job was missing from this page altogether).
+ */
+export function HeldItems({ items }: { items: readonly HeldItem[] }) {
+  const headingId = useId();
+  if (items.length === 0) {
+    return null;
+  }
+  return (
+    <section aria-labelledby={headingId} className="flex flex-col gap-2 px-6 py-5">
+      <h2 id={headingId} className="text-lg font-semibold">
+        Held back
+      </h2>
+      <p className="max-w-[68ch] text-graphite">
+        In the queue, but not ready to run. They are ranked once nothing holds them.
+      </p>
+      <ul className="flex flex-col text-sm">
+        {items.map((item) => (
+          <li
+            key={item.item_id}
+            className="flex flex-wrap gap-x-4 gap-y-1 border-b border-rule py-2 last:border-b-0"
+          >
+            <span>{item.job_name}</span>
+            <span>{item.level}</span>
+            <span className="text-graphite">{heldReason(item)}</span>
           </li>
         ))}
       </ul>

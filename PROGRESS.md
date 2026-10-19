@@ -1496,12 +1496,12 @@ Found in T6.7 (D-061), for decisions outside the frontend:
   be shown with its service's name. Jobs and runs reads chains instead.
 
 Found in T6.6 (D-060):
-- **The Queue page cannot show a job held for its upstream.** `DependencyGate` blocks in
+- [x] **The Queue page cannot show a job held for its upstream.** Fixed 2026-10-20 (D-066): the plugin's `heldItems`, `/api/queue`'s `held_items`, and a Held back list. `DependencyGate` blocks in
   `canRun`, so Jenkins keeps the held item among its blocked items. The plugin's ranking lists only
   buildable items, so the held job is neither ranked nor listed as unscored, and the page cannot say
   why it waits. DESIGN.md's Queue sketch has such a row ("Waits for fs-payment-service-build"). To
   show it, the plugin's API would have to list blocked items with their reason, a Phase 2 change.
-- **A lone waiting job can show as unscored, or with an old score.** The sorter scores nothing when
+- [x] **A lone waiting job can show as unscored, or with an old score.** Fixed 2026-10-20 (D-066): the sorter scores a lone item and empties the heap when nothing is buildable. The sorter scores nothing when
   the optimizer is off or fewer than two items are buildable. `DynamicQueueSorter` returns early in
   both cases, and nothing else writes the heap. The ranking's wait is computed when it is asked
   for, but the score and the aging come from the last sort. With one job waiting, the page can show
@@ -1647,6 +1647,23 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
           filter tests rewritten for the server's filters, and 4 provider states on the Overview).
 - **Left for Phase 8:** an endpoint for the chatbot evaluation's results. T8.2 is what produces
   them.
+- [x] **The plugin's queue state (found in T6.6), D-066:**
+      - **The sorter:** it scores a lone buildable item, and empties the heap when nothing is
+        buildable or the optimizer is off.
+      - **Leave events:** a leaving item's QUEUE_LEFT event keeps the score it was dispatched on,
+        even after a later pass rebuilt the heap.
+      - **Held jobs:** they are listed with their reason and upstream, through the plugin's
+        `heldItems`, `/api/queue`'s `held_items` and the Queue page's Held back list.
+      - **Checks:**
+        - `mvn -B verify`: BUILD SUCCESS, 108 unit tests (1 skipped, Jenkins' own InjectedTest)
+          and 73 integration tests, including the new `HeapFreshnessIT` (5) and
+          `ApiJsonIT.heldItemsNameTheirUpstream`.
+        - With the old early returns put back, all five `HeapFreshnessIT` tests failed.
+        - **Recorded live:** jenkins-dev was rebuilt with the new plugin, and a held job was
+          recorded live (`backend/tests/data/plugin/ranking-held.json`).
+        - Backend parser and `/api/queue` tests passed on that recording (91 in the two files).
+        - The Queue page's tests passed on its capture through the backend (22 in the queue
+          files).
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
