@@ -16,6 +16,9 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
 - Frontend: `cd frontend && npm run lint && npm run typecheck && npm run test`
 - Browser flows: `cd frontend && npx playwright test` (Google Chrome; starts its own backend in fake
   mode from `backend/browser_backend.py`, and needs no Docker or credential)
+- System tests on the running stack: `python scripts/stack_system_test.py` (a throwaway account,
+  deactivated afterwards). Lighthouse: `cd frontend && LIGHTHOUSE=1 npx playwright test
+  --project=lighthouse`
 - Stack: `docker compose up -d` · Reset demo: `python scripts/demo_reset.py`
 - Phase check: `python scripts/verify.py --phase N`
 
@@ -56,7 +59,8 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
 - The Bash tool's sandbox blocks DNS. Network-touching commands (mvn, npm, pip, git ls-remote) need
   the sandbox off.
 - Jenkins LTS baseline is pinned to 2.568.3. The report's Appendix E says 2.541.x and must be updated.
-- Build order was Phase 0 → 2 → 1 → 3..8, because JenkinsRule needs no Docker. Phases 0-2 are done.
+- Build order was Phase 0 → 2 → 1 → 3..8, because JenkinsRule needs no Docker. Phases 0-6 are done
+  (Phase 6 merged as PR #11; hardened on `phase-6-hardening`, 2026-10-18 to 2026-10-20).
 
 ## Lessons (add one line whenever a mistake repeats)
 - Pipeline queue items are placeholder tasks; resolve the job with getOwnerTask().

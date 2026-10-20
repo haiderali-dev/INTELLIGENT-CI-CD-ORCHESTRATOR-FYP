@@ -1689,6 +1689,21 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
 - [x] **Mutation checks on the session's security tests (T6.3's open item):** see T6.3 above. All
       three weakened guards were caught, after one missing test vector was added.
 
+- [x] **Screenshots retaken from the final UI (T6.9's set, 40 files; 20 changed).**
+      - **Reviewed:**
+        - the Admin page's Password column and Rate limits table, at 1440 and 390 px;
+        - the Jobs and runs list;
+        - the Queue page's new Held back list, fed the live held-job recording, in both themes
+          and widths.
+      - **Fixed:** the rate limits' labels started in lower case, unlike every other cell. They
+        are now capitalised for display, and the Admin tests passed (14).
+- [ ] **Lighthouse in CI:** a step in the Browser flows job runs the 16 audits on every push.
+      Checked off once a CI run shows it passing.
+- [x] **Records brought up to date:**
+      - `docs/report-updates.md` gains the report changes from this hardening;
+      - the README notes the loopback-only ports and the system tests;
+      - CLAUDE.md lists the new commands and says Phases 0 to 6 are done.
+
 - [x] **The 745 kB main bundle (D-063):** every page, sign in included, is loaded on first
       navigation through React Router's `lazy`.
       - **Size:** the main bundle is 419 kB (132 kB gzipped). The build no longer warns, and no

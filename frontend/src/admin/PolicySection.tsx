@@ -27,7 +27,12 @@ function rateText({ capacity, per_seconds: seconds }: RateLimit): string {
 }
 
 const LIMIT_COLUMNS: readonly Column<RateLimit>[] = [
-  { header: "Counted for", rowHeader: true, cell: ({ applies_to: appliesTo }) => appliesTo },
+  {
+    header: "Counted for",
+    rowHeader: true,
+    // The backend's phrases are sentence fragments; standing alone in a cell, each starts a sentence.
+    cell: ({ applies_to: appliesTo }) => appliesTo.charAt(0).toUpperCase() + appliesTo.slice(1),
+  },
   { header: "Allowed", nowrap: true, cell: (limit) => rateText(limit) },
 ];
 

@@ -185,11 +185,11 @@ describe("the admin page", () => {
     const limits = await within(policy).findByRole("table", { name: "Rate limits" });
     const rows = within(limits).getAllByRole("row").slice(1).map((row) => row.textContent);
     expect(rows).toEqual([
-      "sign-in, per address and account5 a minute",
-      "sign-in, per address across accounts30 a minute",
-      "session renewal, per address30 a minute",
-      "every signed-in request, per user300 a minute",
-      "assistant messages, generation and explanations, per user20 a minute",
+      "Sign-in, per address and account5 a minute",
+      "Sign-in, per address across accounts30 a minute",
+      "Session renewal, per address30 a minute",
+      "Every signed-in request, per user300 a minute",
+      "Assistant messages, generation and explanations, per user20 a minute",
     ]);
   });
 

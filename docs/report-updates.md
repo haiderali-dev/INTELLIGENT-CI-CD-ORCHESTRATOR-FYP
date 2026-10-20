@@ -161,3 +161,25 @@ each one attaches to Jenkins.
       shaping the evaluation design; and the estimator's cold-start path returning UNKNOWN.
 - [ ] **Disclose AI-assisted development**, stating what was generated, what was reviewed by hand,
       and how correctness was checked (the test suites and `scripts/verify.py`).
+
+## New: from the hardening of Phases 1 to 6 (2026-10-18 to 2026-10-20)
+
+- [ ] **Testing chapter: report the independent security review.** It covered Phases 3, 5 and 6 and
+      found 15 issues (2 Medium, 7 Low, 6 Info), all fixed with regression tests. The two Medium:
+      a HIGH-urgency request could be re-approved without a new justification or quota, and
+      Jenkins and the backend were published on every network interface. Source:
+      `docs/security-review-phases-3-5-6.md`, D-065.
+- [ ] **Limitations section: add the review's accepted residual risks** from the same file:
+      in-memory token and rate-limit stores, logs visible to every signed-in user, public API docs,
+      CI actions pinned by tag, and pattern-based redaction.
+- [ ] **Appendix D: floating-point settings must be quoted in JCasC YAML.** JCasC drops an unquoted
+      float without a warning (`weightUrgency: "0.5"`, not `0.5`). D-017 records the root cause in
+      JCasC's YAML loader. The aging-ablation arm depends on this.
+- [ ] **Chapter 4 / deployment: the frontend runs as its own container.** It is nginx serving the
+      build and proxying `/api` and `/ws`, with a Content-Security-Policy, and every port is bound
+      to 127.0.0.1 (D-065). Redraw the deployment view with it.
+- [ ] **Appendix E: add the image versions** from `docs/versions.md` "Images" (Python 3.12.15,
+      PostgreSQL 16.15, Node 24.21.0 for the build, nginx-unprivileged 1.30.4).
+- [ ] **Usability and accessibility: Lighthouse scores 100 for accessibility** on both assistant
+      pages, in all 16 audits (empty and with a chat, light and dark, mobile and desktop). Measured
+      signed in (D-064), and checked in CI on every push since 2026-10-20.
