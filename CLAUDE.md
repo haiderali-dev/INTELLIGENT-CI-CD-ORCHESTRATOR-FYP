@@ -93,5 +93,8 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
 - Git Bash rewrites any command argument that starts with `/` into a Windows path, a regex
   included. It broke a `docker exec` path (2026-10-13) and a `node -e` regex (2026-10-14). Put
   such arguments in a script file, or inside `sh -c '...'`.
+- A frontend page test must never assume a page draws within a second. Pages load lazily, and under
+  the gate's load a cold render took longer: it failed the sign-in tests (2026-10-18) and two page
+  tests (2026-10-20). `src/test/setup.ts` waits 5 s and `vite.config.ts` allows 15 s a test.
 - The backend's pytest `addopts` already has `-q`. A second one prints no summary line at all,
   which reads like no tests ran. It happened twice; never add `-q` to backend pytest commands.

@@ -73,6 +73,9 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
+    // Room for setup.ts's five-second wait inside a test, on a loaded machine; the AssistantPage
+    // tests had already found the default five seconds too short under the gate.
+    testTimeout: 15_000,
     include: ["src/**/*.test.{ts,tsx}"],
     // Vitest empties every CSS import unless told otherwise, ?raw included. The token test reads
     // tokens.css as text to compare it with DESIGN.md.

@@ -1808,6 +1808,27 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
       - **Trial runs (not the reported numbers):** both experiments completed. The simulator's FIFO
         matched Milestone 2's measured baseline within 0.1 s a band. Replaying Milestone 2's real
         dispatch order matched its measured waits within 3%.
+- [x] **The second full gate run (2026-10-20, at `e1127cf`) did not finish.** 77 checks passed,
+      Phases 0 to 5 included (the end-to-end suite and the failing-branch chain among them). Then one
+      failed, and the run was stopped by Claude Code while the machine was critically short of
+      memory, so the rest never ran.
+      - **The failure:** a frontend page test flaked, "opens a new chat only once its first exchange
+        is stored". Its first `findBy` waited Testing Library's default one second for a page whose
+        module loads lazily, and on the loaded machine that took longer.
+      - **A first fix moved the flake.** Preloading every page module in `renderRoutes` made the
+        Analytics tests fail in two of three full runs, because each page test then imported every
+        page while other workers ran their tests. It was reverted.
+      - **The fix:** `src/test/setup.ts` waits up to 5 s for something to appear, and
+        `vite.config.ts` allows 15 s a test. No assertion changed. Lint, typecheck, and three full
+        runs of 296 passed.
+- [x] **A boundary-value gap closed:** a chosen password's length was tested only with "short".
+      `test_a_chosen_password_is_12_to_256_characters` takes 11, 12, 256 and 257 characters, at
+      creation and at reset: 4 passed.
+- [x] **Tools for the testing chapter, written:** `scripts/system_load_test.py` (load and stress
+      through the stack's frontend), `scripts/recovery_test.py` (PostgreSQL, the backend and Jenkins
+      restarted in turn), and the register, figure and annexure builders in `scripts/report/`.
+      `docs/testing/data/defects.csv` lists the 35 defects testing and review found, with evidence.
+      They run after the evidence campaign.
 - [ ] **The full gate again, after D-067 and D-068,** with the stack rebuilt so that jenkins-dev
       runs the new plugin and the backend container the new audit code.
 

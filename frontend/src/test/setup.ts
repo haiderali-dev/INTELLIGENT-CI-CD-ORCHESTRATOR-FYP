@@ -1,7 +1,14 @@
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup } from "@testing-library/react";
+import { cleanup, configure } from "@testing-library/react";
 import { afterEach } from "vitest";
+
+// How long `findBy` and `waitFor` wait for something to appear. Testing Library's default, one
+// second, is an assumption about the machine: a page drawn cold, its lazily loaded module included,
+// takes longer while eight workers share the CPU with the gate's other work, and the Phase 6 gate of
+// 2026-10-20 failed a page test that way (and a second failed in two of three runs after). Waiting
+// longer changes no assertion: what must appear still must, and what is missing still fails.
+configure({ asyncUtilTimeout: 5_000 });
 
 import { setAccessToken, setTokenRefresher } from "@/api/client";
 
