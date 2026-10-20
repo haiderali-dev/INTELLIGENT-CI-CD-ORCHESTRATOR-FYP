@@ -1773,6 +1773,27 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
         without one, and only sign-in, renewal and the two health probes are open;
       - an invalid command is answered and never reaches Jenkins;
       - generated jobs are XML Jenkins loads, running only the catalog's commands.
+- [x] **White-box measurement, and the gaps it found (D-069).** Coverage for all three components,
+      mutation testing for the plugin's algorithm classes.
+      - **Backend coverage:** 92% of statements and branches over the offline suite. It had read 87%
+        until `pyproject.toml` told the tracer about SQLAlchemy's greenlets; the rest of that gap
+        was executed code it lost track of.
+      - **Plugin coverage (JaCoCo, all 185 tests):** 85.8% of lines, 69.5% of branches.
+      - **Frontend coverage (`npm run coverage`):** 92.5% of statements, 83.8% of branches.
+      - **PIT on the plugin's algorithms:** the first run killed 150 of 173 mutants (87%). The
+        final run kills 162 (94%); the 11 survivors are equivalent mutants, each named in D-069.
+      - **Tests added for what they found:**
+        - Backend: 7 tests (orphaned tokens, rehash, denylist expiry, WebSocket auth timeout and
+          heartbeat).
+        - Plugin: 9 unit tests and 4 new or extended JenkinsRule classes
+          (`MetricsPublisherIT`, `OptimizerConfigurationValidationIT`, `SorterConflictIT`, and
+          two more cycle tests in `MissingUpstreamIT`).
+      - **Dead code removed:** three functions nothing called.
+      - **Checks:**
+        - backend offline suite: 1726 passed; ruff, format and mypy clean;
+        - frontend: lint, typecheck, 296 tests and the build pass;
+        - plugin `mvn -B verify`: BUILD SUCCESS, 117 unit (1 skipped) and 91 integration tests,
+          SpotBugs 0; PIT 1.30.0 kills 162 of 173.
 - [ ] **The full gate again, after D-067 and D-068,** with the stack rebuilt so that jenkins-dev
       runs the new plugin and the backend container the new audit code.
 

@@ -8,16 +8,26 @@ deliberate effort, and each of those properties has a test below.
 
 from __future__ import annotations
 
+import time
+
 import pytest
+from argon2 import PasswordHasher
 from fastapi import FastAPI
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import DevOpsUser
-from app.core.security import TokenType, create_token, hash_password
+from app.core.security import (
+    TokenType,
+    create_token,
+    hash_password,
+    needs_rehash,
+    verify_password,
+)
 from app.core.settings import Settings
 from app.db.models import AuditLog, Role, User
+from app.services.auth import RevokedTokens
 
 PASSWORD = "correct-horse-battery-staple"
 
@@ -458,3 +468,70 @@ async def test_the_limit_counts_attempts_not_failures(
         await sign_in(client, email="good@example.com")
 
     assert (await sign_in(client, email="good@example.com")).status_code == 429
+
+
+# ---------------------------------------------------------------------------
+# Paths that coverage showed no test took (white-box review, 2026-10-20)
+# ---------------------------------------------------------------------------
+
+
+async def test_a_refresh_token_whose_account_no_longer_exists_is_refused(
+    client: AsyncClient, settings: Settings
+) -> None:
+    """A token can outlive its account; renewing it must not mint a session for nobody."""
+    orphan = create_token(
+        settings, subject="no-such-user", token_type=TokenType.REFRESH, extra={"fam": "family"}
+    )
+
+    response = await client.post("/api/auth/refresh", json={"refresh_token": orphan})
+
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "TOKEN_INVALID"
+
+
+async def test_an_access_token_whose_account_no_longer_exists_is_refused(
+    client: AsyncClient, settings: Settings
+) -> None:
+    orphan = create_token(
+        settings, subject="no-such-user", token_type=TokenType.ACCESS, role="ADMIN"
+    )
+
+    response = await client.get("/api/me", headers={"Authorization": f"Bearer {orphan}"})
+
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "TOKEN_INVALID"
+
+
+async def test_a_hash_made_with_weaker_parameters_is_upgraded_at_sign_in(
+    client: AsyncClient, db: AsyncSession
+) -> None:
+    """Argon2's parameters only get stronger over time, and signing in is the one moment the
+    plaintext is there to rehash with the current ones."""
+    weak = PasswordHasher(time_cost=1, memory_cost=8192, parallelism=1).hash(PASSWORD)
+    user = User(email="old@example.com", password_hash=weak, role=Role.DEVELOPER.value, active=True)
+    db.add(user)
+    await db.commit()
+
+    response = await sign_in(client, email="old@example.com")
+
+    await db.refresh(user)
+    assert response.status_code == 200
+    assert user.password_hash != weak
+    assert not needs_rehash(user.password_hash)
+    assert verify_password(PASSWORD, user.password_hash)
+
+
+def test_a_stored_hash_argon2_cannot_read_is_never_rehashed() -> None:
+    """Rehashing is an upgrade, not a repair: an unreadable hash is left for sign-in to refuse."""
+    assert needs_rehash("not-an-argon2-hash") is False
+
+
+def test_the_denylist_forgets_tokens_once_they_would_have_expired() -> None:
+    """Held only until a token would expire anyway, so the in-memory list cannot grow without
+    bound (D-021). By then the token's own expiry refuses it."""
+    store = RevokedTokens()
+    store.revoke("spent", expires_at=time.time() - 1)
+    store.revoke_family("signed-out", expires_at=time.time() - 1)
+
+    assert store.claim("spent", expires_at=time.time() + 60), "the stale entry was purged"
+    assert not store.is_family_revoked("signed-out")

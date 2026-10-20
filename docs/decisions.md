@@ -11,6 +11,63 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 6
 
+### D-069 White-box measurement: coverage everywhere, mutation testing on the algorithms
+**Date:** 2026-10-20 · **Status:** accepted (hardening of Phases 1 to 6; the testing chapter's
+white-box testing)
+
+**What is measured, and with what.** Statement and branch coverage for all three components:
+JaCoCo 0.8.15 through the Jenkins parent POM's `enable-jacoco` profile for the plugin, coverage.py
+through `pytest-cov` for the backend, and V8 coverage through `@vitest/coverage-v8` for the frontend
+(`npm run coverage`). Mutation testing with PIT for the plugin's algorithm classes only, through an
+opt-in `mutation` profile. Neither changes the ordinary build.
+
+**The backend's coverage was under-reported until the tracer was told about greenlets.** SQLAlchemy's
+async engine runs on greenlets, and coverage.py's default tracer loses the lines after a greenlet
+switch: over the offline suite it reported 87% where 92% had run, and `app/services/auth.py` 67.6%
+where 92.3% had. `[tool.coverage.run]` now sets `concurrency = ["thread", "greenlet"]`, so any run
+of `--cov` is right without flags.
+
+**Why PIT only targets the algorithms.** Scoring, the heap, union-find, Kahn's sort, the estimator
+and the priority levels have no Jenkins imports (CLAUDE.md) and unit tests that run in
+milliseconds, so every mutant meets the whole suite for its package. The Jenkins-facing classes are
+covered by JenkinsRule tests that take seconds each; mutating them would cost hours for little.
+`SchedulerOverheadTest` is excluded: a timing test is the wrong oracle for a mutant.
+
+**Equivalent mutants are named, not counted as gaps.** Eleven survive the final run, and no test can
+tell them from the original: the boundary of `waitMillis <= 0` (a zero wait earns nothing either
+way), both boundaries in `dependencyFactor` and the two in group inheritance (a singleton group or an
+equal score gives the same result), `anyKnown` in `scoreAll` (redundant whenever an estimate is
+present), and five in union-find's union by rank, which change the tree's height but never which
+elements are joined.
+
+**Infeasible branches are named too.** Coverage cannot reach them because the code's own invariants
+rule them out: `maxGroupSize <= 1` with a group of two or more, `!anyKnown` with an estimate, a heap
+entry missing from its own index, and `current.equals(ownName)` in `JobPriorityProperty`'s cycle
+walk, which an earlier check makes unreachable.
+
+**Dead code found and removed** (no callers anywhere): `RevokedTokens.is_revoked`, which `claim()`
+replaced; `constant_time_equals`, since the metrics route compares tokens with
+`secrets.compare_digest` itself; and `PolicyDecision.allowed`.
+
+**What the measurements found, and the tests now closing it:**
+- **Backend:** a refresh or access token whose account no longer exists, the password rehash at
+  sign-in, an unreadable stored hash, expiry of the token denylist, a WebSocket that never sends its
+  auth frame, and the heartbeat of an idle one.
+- **Plugin, coverage:** `MetricsPublisher` (5% of branches), the configuration form's validation
+  (never run), the startup warning about a competing `QueueSorter` (Part 4.3.7), and the cycle
+  walk past its first hop.
+- **Plugin, PIT:** a zero aging interval; an aged job's own score; five missing `unlock()` calls the
+  heap's single-threaded tests could not see; `isEmpty`; `hasUnknownEstimate`; and the estimator's
+  threshold boundary and two documented tie-breaks.
+
+**Evidence:** PIT's first run, before the new tests, killed 150 of 173 mutants (87%); after them,
+162 (94%), the 11 survivors being the equivalent ones above. Those two runs used pitest-maven
+1.30.1; it was then pinned to 1.30.0 under the seven-day cooldown (docs/versions.md), and 1.30.0
+gave the same 173 and 162. Coverage figures and the per-test results are in the testing chapter's
+annexure, from the evidence run at the commit that carries this decision.
+
+---
+
 ### D-068 Suspicious activity the backend detects is written to the audit log
 **Date:** 2026-10-20 · **Status:** accepted (hardening of Phases 1 to 6; found tracing the report's
 acceptance criteria for the testing chapter)

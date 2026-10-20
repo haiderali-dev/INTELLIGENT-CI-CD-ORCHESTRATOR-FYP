@@ -76,6 +76,17 @@ download mirror (`updates.jenkins.io/download/plugins/<name>/<version>/`); this 
 
 Milestone 2 used parent POM 5.9 and `java.level` 17 against Jenkins 2.479.3. Both move up.
 
+White-box measurement tools for the testing chapter, both opt in, so the ordinary build is unchanged:
+
+| Component | Pinned | Source | Checked |
+| --- | --- | --- | --- |
+| JaCoCo, through the parent POM's `enable-jacoco` profile | 0.8.15 | the parent POM's `jacoco-maven-plugin.version` | 2026-10-20 |
+| `org.pitest:pitest-maven`, in the `mutation` profile | 1.30.0 | Maven Central, published 2026-08-27 | 2026-10-20 |
+| `org.pitest:pitest-junit5-plugin` | 1.2.3 | Maven Central, published 2025-05-20 | 2026-10-20 |
+
+1.30.1 is newer, but was published on 2026-10-14, inside the seven-day cooldown the frontend's pins
+follow, so 1.30.0 is pinned. The JUnit 5 plugin 1.2.3 runs this build's JUnit 6.1 platform.
+
 ## Backend
 
 | Component | Pinned | Source | Checked |
@@ -144,6 +155,7 @@ conflict and no known vulnerability in the production dependencies.
 | `typescript-eslint` | 8.71.1 | 8.71.2 | |
 | `eslint-plugin-react-hooks`, `eslint-plugin-react-refresh`, `globals` | 7.1.1, 0.5.7, 17.13.0 | the same | |
 | `vitest` | 5.0.3 | 5.0.4 | |
+| `@vitest/coverage-v8` | 5.0.3 | 5.0.5 on 2026-10-20 | Added 2026-10-20 for `npm run coverage`. Must equal `vitest`'s version (its peer range is exactly 5.0.3); published 2026-09-30 |
 | `jsdom` | **29.1.1** | 30.1.2 | See below |
 | `@testing-library/react`, `/dom`, `/jest-dom`, `/user-event` | 16.3.3, 10.4.2, 7.0.1, 14.6.7 | 16.3.3, 10.4.2, 7.0.1, 14.6.8 | `/dom` is `/react`'s peer |
 | `@types/react`, `@types/react-dom`, `@types/node` | 19.3.0, 19.3.0, **24.19.1** | 19.3.0, 19.3.0, 26.6.5 | Node types follow the Node in use, 24 |

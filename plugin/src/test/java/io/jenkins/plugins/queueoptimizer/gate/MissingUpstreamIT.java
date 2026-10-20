@@ -131,6 +131,44 @@ class MissingUpstreamIT {
     }
 
     @Test
+    @DisplayName("form validation finds a cycle through three jobs, not only between two")
+    void formValidationFindsALongerCycle(JenkinsRule j) throws Exception {
+        // c depends on b, b on a; proposing that a depend on c closes a three-job cycle, which only
+        // the upstream walk can see. Coverage showed the walk past its first hop never ran in a
+        // test (2026-10-20).
+        FreeStyleProject a = j.createFreeStyleProject("loop-a");
+        FreeStyleProject b = j.createFreeStyleProject("loop-b");
+        FreeStyleProject c = j.createFreeStyleProject("loop-c");
+        b.addProperty(new JobPriorityProperty("MEDIUM", "loop-a"));
+        c.addProperty(new JobPriorityProperty("MEDIUM", "loop-b"));
+
+        JobPriorityProperty.DescriptorImpl descriptor =
+                j.jenkins.getDescriptorByType(JobPriorityProperty.DescriptorImpl.class);
+        hudson.util.FormValidation answer = descriptor.doCheckDependsOn("loop-c", a);
+
+        assertEquals(hudson.util.FormValidation.Kind.ERROR, answer.kind);
+        assertTrue(answer.getMessage().contains("cycle"), answer.getMessage());
+    }
+
+    @Test
+    @DisplayName("form validation accepts real upstream jobs that close no cycle")
+    void formValidationAcceptsAnAcyclicDeclaration(JenkinsRule j) throws Exception {
+        // The walk passes over an upstream with no priority property, and over one whose own
+        // declaration names a job that no longer exists; neither is a cycle.
+        FreeStyleProject build = j.createFreeStyleProject("ok-build");
+        FreeStyleProject test = j.createFreeStyleProject("ok-test");
+        FreeStyleProject deploy = j.createFreeStyleProject("ok-deploy");
+        test.addProperty(new JobPriorityProperty("MEDIUM", "ok-build,since-deleted"));
+
+        JobPriorityProperty.DescriptorImpl descriptor =
+                j.jenkins.getDescriptorByType(JobPriorityProperty.DescriptorImpl.class);
+
+        assertEquals(hudson.util.FormValidation.Kind.OK, descriptor.doCheckDependsOn("ok-test, ok-build", deploy).kind);
+        assertEquals(hudson.util.FormValidation.Kind.OK, descriptor.doCheckDependsOn("ok-build", test).kind);
+        assertTrue(build.getProperty(JobPriorityProperty.class) == null, "the walk met a job without the property");
+    }
+
+    @Test
     @DisplayName("a declared cycle never blocks the queue at runtime")
     void cycleDoesNotBlockAtRuntime(JenkinsRule j) throws Exception {
         // A cycle can still reach config.xml by hand. It is reported, never enforced: two jobs

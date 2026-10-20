@@ -200,6 +200,54 @@ class SimilarityEstimatorTest {
         }
 
         @Test
+        @DisplayName("a build exactly at the threshold counts")
+        void exactlyAtTheThresholdCounts() {
+            // The boundary value. The specification keeps builds with sim >= threshold; one sharing
+            // the label and the (empty) parameters but no name token scores 0.3 + 0.2 = 0.5, so a
+            // threshold of exactly 0.5 must keep it. Mutation testing changed >= to > and no test
+            // noticed (2026-10-20).
+            BuildRecord onTheLine = history("nothing-alike-at-all", "linux", 42 * SECOND, 0);
+
+            assertEquals(
+                    42 * SECOND,
+                    new SimilarityEstimator(5, 0.5, 0.1)
+                            .estimate(target("build-payment-service"), List.of(onTheLine))
+                            .orElseThrow());
+        }
+
+        @Test
+        @DisplayName("among equally similar builds, the most recent are taken first")
+        void equalSimilarityPrefersRecentBuilds() {
+            // k = 1 and two builds with the same similarity: the tie-break decides the estimate, and
+            // it must be stable, or an estimate wanders between passes. The newer build wins even
+            // though the older one's name sorts first.
+            List<BuildRecord> history = List.of(
+                    history("aaa-older-build", "linux", 90 * SECOND, 10),
+                    history("zzz-newer-build", "linux", 10 * SECOND, 0));
+
+            assertEquals(
+                    10 * SECOND,
+                    new SimilarityEstimator(1, 0.35, 0.1)
+                            .estimate(target("build-payment-service"), history)
+                            .orElseThrow());
+        }
+
+        @Test
+        @DisplayName("among equally similar builds of the same age, the name breaks the tie")
+        void equalSimilarityAndAgeBreaksOnTheName() {
+            // The last tie-break, so the choice never depends on the order history arrived in.
+            List<BuildRecord> history = List.of(
+                    history("zzz-listed-first", "linux", 90 * SECOND, 3),
+                    history("aaa-listed-second", "linux", 10 * SECOND, 3));
+
+            assertEquals(
+                    10 * SECOND,
+                    new SimilarityEstimator(1, 0.35, 0.1)
+                            .estimate(target("build-payment-service"), history)
+                            .orElseThrow());
+        }
+
+        @Test
         @DisplayName("only the k most similar builds are used")
         void topKOnly() {
             // k = 2 here. Two exact-name matches at 10s, plus three weaker siblings at 100s. With

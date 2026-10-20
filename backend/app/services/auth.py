@@ -64,11 +64,6 @@ class RevokedTokens:
             self._purge()
             self._revoked[jti] = expires_at
 
-    def is_revoked(self, jti: str) -> bool:
-        with self._lock:
-            self._purge()
-            return jti in self._revoked
-
     def claim(self, jti: str, expires_at: float) -> bool:
         """Revoke ``jti`` and say whether this call was the one that did it.
 

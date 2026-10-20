@@ -77,5 +77,15 @@ export default defineConfig({
     // Vitest empties every CSS import unless told otherwise, ?raw included. The token test reads
     // tokens.css as text to compare it with DESIGN.md.
     css: { include: [/tokens\.css/] },
+    // `npm run coverage`: statement and branch coverage of the app's own code, for the testing
+    // chapter's white-box measurements. The tests, their fixtures and the generated API types are
+    // not the app.
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: ["src/**/*.test.{ts,tsx}", "src/test/**", "src/api/schema.d.ts", "src/vite-env.d.ts"],
+      reporter: ["text-summary", "json-summary", "json"],
+      reportsDirectory: "coverage",
+    },
   },
 });

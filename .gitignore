@@ -38,6 +38,10 @@ htmlcov/
 
 # --- Node ---
 node_modules/
+# `npm run coverage` writes here
+frontend/coverage/
+# Heap dumps: the test JVMs run with -XX:+HeapDumpOnOutOfMemoryError
+*.hprof
 frontend/dist/
 .vite/
 playwright-report/

@@ -1,6 +1,7 @@
 package io.jenkins.plugins.queueoptimizer.scoring;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.jenkins.plugins.queueoptimizer.model.PriorityLevel;
@@ -137,5 +138,33 @@ class AgingTest {
                 .get(0);
 
         assertEquals(0.0, job.agingBonus(), TOLERANCE, "the ablation arm must see no aging at all");
+    }
+
+    @Test
+    @DisplayName("a zero aging interval earns nothing, rather than dividing by zero")
+    void zeroIntervalEarnsNothing() {
+        // The configuration form refuses an interval under one minute, but configuration as code
+        // is not the form, and a 0 there would divide by zero on the queue's own thread. The guard
+        // existed; coverage and mutation testing showed no test ever took it (2026-10-20).
+        PriorityScoreCalculator zeroInterval = new PriorityScoreCalculator(0.5, 0.3, 0.2, 0.05, 0, 0.15);
+        ScoredJob job = zeroInterval
+                .scoreAll(List.of(ScoreInput.independent(1, "job", PriorityLevel.LOW, MINUTE, 60 * MINUTE)))
+                .get(0);
+
+        assertEquals(0.0, job.agingBonus(), TOLERANCE);
+    }
+
+    @Test
+    @DisplayName("an aged job's own score includes its bonus, so it is never shown as inherited")
+    void ownScoreIncludesAging() {
+        // The score bar marks an inherited score by comparing the score with the job's own. A
+        // mutant computing the own score as base minus aging survived every test, although it
+        // would have shown every aged job as inherited (mutation testing, 2026-10-20).
+        ScoredJob aged = PriorityScoreCalculator.withReportDefaults()
+                .scoreAll(List.of(ScoreInput.independent(1, "waited", PriorityLevel.LOW, MINUTE, 15 * MINUTE)))
+                .get(0);
+
+        assertEquals(aged.baseScore() + 0.15, aged.ownScore(), TOLERANCE);
+        assertFalse(aged.inheritedGroupScore(), "an independent job inherits nothing");
     }
 }
