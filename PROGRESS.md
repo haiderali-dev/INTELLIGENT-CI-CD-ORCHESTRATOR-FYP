@@ -1647,6 +1647,23 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
           filter tests rewritten for the server's filters, and 4 provider states on the Overview).
 - **Left for Phase 8:** an endpoint for the chatbot evaluation's results. T8.2 is what produces
   them.
+- [x] **The 745 kB main bundle (D-063):** every page, sign in included, is loaded on first
+      navigation through React Router's `lazy`.
+      - **Size:** the main bundle is 419 kB (132 kB gzipped). The build no longer warns, and no
+        limit was raised. CodeMirror (395 kB) arrives only with a code view.
+      - **How it was decided:** a throwaway build that split every package showed what the main
+        bundle held. React DOM (207 kB) and React Router (93 kB) are needed everywhere. zod
+        (78 kB) and the form libraries were there only because sign in loaded eagerly.
+      - **The first paint:** both top-level routes show "Loading" until the first page arrives.
+        React Router had warned that nothing was drawn meanwhile.
+      - **Tests:** the sign-in tests now wait for the lazily loaded page to be drawn, as a browser
+        does. The restore test delays its renewal answer so "Restoring your session" can still be
+        seen. Sign-in tests passed 16 of 16 three times in a row.
+      - **Checks:**
+        - `npm run test`: 296 passed;
+        - lint and typecheck clean;
+        - `npx playwright test`: 12 flows passed;
+        - Lighthouse: 100 in all 16 audits.
 - [x] **The plugin's queue state (found in T6.6), D-066:**
       - **The sorter:** it scores a lone buildable item, and empties the heap when nothing is
         buildable or the optimizer is off.

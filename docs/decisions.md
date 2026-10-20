@@ -174,7 +174,10 @@ none of the three failures was visual.
 
 **Left as they are, and why.**
 - **The main bundle, 745 kB:** every page is in it. Loading each page lazily from the routes is the
-  fix. That is a performance change, not a visual one, so it is left for a task of its own.
+  fix. That is a performance change, not a visual one, so it is left for a task of its own. Done
+  on 2026-10-20 (hardening of Phases 1 to 6): every page, sign in included, is its own chunk,
+  loaded through React Router's `lazy`; the main bundle is 419 kB (132 kB gzipped), and the build
+  no longer warns. No size limit was raised to get there.
 - **Lighthouse:** not run. The session lives in sessionStorage, which a Lighthouse run starts without,
   so measuring a signed-in assistant page needs a scripted user flow (Lighthouse with Puppeteer), and
   those dependencies are not in the project. Done since, by D-064.
