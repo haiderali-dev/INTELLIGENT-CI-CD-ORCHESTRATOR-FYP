@@ -23,6 +23,8 @@ import re
 import subprocess
 import sys
 import time
+import urllib.error
+import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -631,6 +633,34 @@ def check_scoring_constants() -> Result:
     return ok("U = 1.0/0.6/0.3 and weights 0.5/0.3/0.2 with aging 0.05 per 5 min, cap 0.15")
 
 
+@check(2, "mvn -B verify passes: every unit and integration test")
+def check_mvn_verify() -> Result:
+    """Phase 2's acceptance, first clause. CI's Plugin job runs it on every push; the gate runs it
+    too, so the acceptance check does not rest on CI having run. It also builds the .hpi the
+    controller image installs. Failsafe is bound to the lifecycle (PROGRESS.md, 2026-09-29), so the
+    integration tests run as well."""
+    mvn = "mvn.cmd" if os.name == "nt" else "mvn"
+    if not have(mvn):
+        return fail("mvn is not installed")
+    result = run([mvn, "-B", "-ntp", "verify"], cwd=REPO_ROOT / "plugin", timeout=2400)
+    output = _ANSI_CODES.sub("", result.stdout + result.stderr)
+    totals = re.findall(
+        r"Tests run: (\d+), Failures: (\d+), Errors: (\d+), Skipped: (\d+)\s*$", output, re.M
+    )
+    if result.returncode != 0 or "BUILD SUCCESS" not in output:
+        tail = [line for line in output.splitlines() if "ERROR" in line or "FAIL" in line][-2:]
+        return fail("mvn -B verify failed: " + " / ".join(tail)[:300] + f" ({_keep_output('mvn verify', output)})")
+    if len(totals) < 2:
+        return fail("mvn -B verify reported no unit and integration totals")
+    unit, integration = totals[0], totals[-1]
+    if any(int(count) for count in (*unit[1:3], *integration[1:3])):
+        return fail(f"failures or errors: unit {unit}, integration {integration}")
+    return ok(
+        f"BUILD SUCCESS: {unit[0]} unit tests ({unit[3]} skipped), "
+        f"{integration[0]} integration tests ({integration[3]} skipped)"
+    )
+
+
 @check(2, "plugin artifact was built")
 def check_hpi_built() -> Result:
     hpi = list((REPO_ROOT / "plugin" / "target").glob("*.hpi")) if (REPO_ROOT / "plugin" / "target").is_dir() else []
@@ -1226,6 +1256,54 @@ def check_sample_services() -> Result:
     if problems:
         return fail("missing: " + ", ".join(problems))
     return ok(f"{len(SAMPLE_SERVICES)} services with build, test, deploy and a Dockerfile")
+
+
+@check(1, "both sample services' own tests pass")
+def check_sample_service_tests() -> Result:
+    """Phase 1's acceptance: "both services' own tests pass locally". Checked only for presence
+    until 2026-10-18, when the audit of Phases 1 to 6 ran them by hand.
+
+    payment-service runs pytest from its own `.venv` when there is one, else in a throwaway uv
+    environment built from its requirements-dev.txt; auth-service runs `npm test` (node --test,
+    with no dependencies to install)."""
+    payment = REPO_ROOT / "sample-services" / "payment-service"
+    python = next(
+        (
+            path
+            for path in (payment / ".venv" / "Scripts" / "python.exe", payment / ".venv" / "bin" / "python")
+            if path.is_file()
+        ),
+        None,
+    )
+    if python is not None:
+        command = [str(python), "-m", "pytest", "tests"]
+    else:
+        runner = _uv_runner()
+        if runner is None:
+            return fail("payment-service has no .venv and uv is not installed (D-010)")
+        command = [
+            *runner, "run", "--no-project", "--with-requirements", "requirements-dev.txt",
+            "python", "-m", "pytest", "tests",
+        ]
+    result = run(command, cwd=payment, timeout=900)
+    output = _ANSI_CODES.sub("", result.stdout + result.stderr)
+    passed = re.search(r"(\d+) passed", output)
+    if result.returncode != 0 or not passed or re.search(r"\d+ (failed|error)", output):
+        tail = [line for line in output.splitlines() if line.strip()][-2:]
+        return fail(f"payment-service: {' / '.join(tail)[:200]} ({_keep_output('payment-service tests', output)})")
+
+    npm = _npm()
+    if npm is None:
+        return fail("npm is not installed, so auth-service's tests cannot run")
+    auth = REPO_ROOT / "sample-services" / "auth-service"
+    result = run([*npm, "test"], cwd=auth, timeout=600)
+    output = _ANSI_CODES.sub("", result.stdout + result.stderr)
+    node_pass = re.search(r"\bpass (\d+)", output)
+    node_fail = re.search(r"\bfail (\d+)", output)
+    if result.returncode != 0 or not node_pass or not node_fail or int(node_fail.group(1)):
+        tail = [line for line in output.splitlines() if line.strip()][-2:]
+        return fail(f"auth-service: {' / '.join(tail)[:200]} ({_keep_output('auth-service tests', output)})")
+    return ok(f"payment-service {passed.group(1)} passed; auth-service {node_pass.group(1)} passed")
 
 
 @check(1, "deploy scripts refuse production")
@@ -2063,6 +2141,46 @@ def check_queue_degrades() -> Result:
             "report zero. See docs/decisions.md D-026"
         )
     return ok("reports availability and a reason instead of failing")
+
+
+def _get(url: str, timeout: float = 15.0) -> tuple[int, str, dict[str, str]]:
+    """GET a URL on this machine: status, body and headers, or status 0 when nothing answered."""
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as response:  # noqa: S310 (localhost only)
+            return (
+                response.status,
+                response.read().decode("utf-8", "replace"),
+                {key.lower(): value for key, value in response.headers.items()},
+            )
+    except urllib.error.HTTPError as error:
+        return error.code, error.read().decode("utf-8", "replace"), {}
+    except (urllib.error.URLError, OSError) as error:
+        return 0, str(error), {}
+
+
+@check(3, "GET /api/health on the Compose stack reports database, Jenkins and LLM provider")
+def check_stack_health() -> Result:
+    """Phase 3's acceptance, middle clause. Reported once by hand on 2026-09-29 and confirmed in the
+    audit of 2026-10-18; a check of its own since. The database and Jenkins must be up. The LLM is
+    reported in every mode: "disabled" in fake mode is a report, not a failure."""
+    status, body, _ = _get("http://127.0.0.1:8000/api/health")
+    if status == 0:
+        return fail(f"the backend did not answer on 127.0.0.1:8000 ({body[:120]}). Is the stack up?")
+    try:
+        components = json.loads(body).get("components", {})
+    except ValueError:
+        return fail(f"/api/health answered {status} with no JSON")
+    missing = [name for name in ("database", "jenkins", "llm") if name not in components]
+    if missing:
+        return fail(f"/api/health does not report {', '.join(missing)}")
+    down = [name for name in ("database", "jenkins") if components[name].get("status") != "up"]
+    if down:
+        return fail(f"/api/health reports {', '.join(down)} not up: {body[:200]}")
+    llm = components["llm"]
+    return ok(
+        f"database up, jenkins up ({components['jenkins'].get('detail')}), "
+        f"LLM {llm.get('status')} ({llm.get('detail')})"
+    )
 
 
 @check(3, "integration tests create, trigger and read a freestyle and a Pipeline job")
@@ -3050,6 +3168,54 @@ def _python_enum_values(source: str, name: str) -> list[str]:
 def _ts_const_values(source: str, name: str) -> list[str]:
     match = re.search(rf"export const {name} = \[(.*?)\] as const", source, re.DOTALL)
     return re.findall(r'"([^"]+)"', match.group(1)) if match else []
+
+
+@check(6, "the system tests pass through the running stack's own frontend")
+def check_stack_system_tests() -> Result:
+    """The flows run the backend in fake mode (D-062). These run the real stack end to end: the
+    frontend container, the backend, PostgreSQL, jenkins-dev and its agents, and the live events,
+    with a throwaway Developer account that scripts/stack_system_test.py creates and deactivates."""
+    npm, why = _frontend_ready()
+    if npm is None:
+        return fail(why)
+    result = run(
+        [sys.executable, str(REPO_ROOT / "scripts" / "stack_system_test.py")],
+        timeout=1200,
+    )
+    output = _ANSI_CODES.sub("", result.stdout + result.stderr)
+    passed = re.search(r"(\d+) passed", output)
+    if result.returncode != 0 or not passed:
+        tail = [line for line in output.splitlines() if line.strip()][-3:]
+        return fail(" / ".join(tail)[:300] + f" ({_keep_output('stack system tests', output)})")
+    for outcome in ("skipped", "flaky", "did not run"):
+        found = re.search(rf"(\d+) {outcome}", output)
+        if found and int(found.group(1)):
+            return fail(f"stack system tests: {found.group(1)} {outcome}")
+    if "deactivated" not in output:
+        return fail("the throwaway account was not deactivated afterwards")
+    return ok(f"{passed.group(1)} system tests passed on the real stack; the test account deactivated")
+
+
+@check(6, "the frontend container serves the build with its policy and proxies the API")
+def check_frontend_container() -> Result:
+    """D-018 closed: the Compose stack's own frontend (frontend/Dockerfile, nginx.conf) is the built
+    app on 127.0.0.1:5173. An address the app owns returns index.html with the build's CSP, nginx
+    adds frame-ancestors and nosniff, and /api reaches the backend on the same origin."""
+    status, body, headers = _get("http://127.0.0.1:5173/queue")
+    if status == 0:
+        return fail(f"nothing answered on 127.0.0.1:5173 ({body[:120]}). Is the stack up?")
+    if status != 200 or 'http-equiv="Content-Security-Policy"' not in body:
+        return fail(f"/queue answered {status} without the build's Content-Security-Policy")
+    if "'unsafe-inline'" in body.split("script-src", 1)[1].split(";", 1)[0]:
+        return fail("the policy lets inline scripts run")
+    if "frame-ancestors 'none'" not in headers.get("content-security-policy", ""):
+        return fail("nginx did not send frame-ancestors 'none'")
+    if headers.get("x-content-type-options") != "nosniff":
+        return fail("nginx did not send X-Content-Type-Options: nosniff")
+    status, body, _ = _get("http://127.0.0.1:5173/api/health/live")
+    if status != 200:
+        return fail(f"/api through the frontend answered {status}: {body[:120]}")
+    return ok("the build with its CSP, frame-ancestors and nosniff, and /api proxied to the backend")
 
 
 @check(6, "the frontend's WebSocket event and topic names are the backend's")

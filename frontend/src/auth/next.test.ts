@@ -20,6 +20,8 @@ describe("where to go after signing in", () => {
       "/\\elsewhere.example",
       "/\t/elsewhere.example",
       "javascript:alert(1)",
+      // Another site's page, once the tab is stripped: the overview, not this site's /queue.
+      "/\t/elsewhere.example/queue",
       // Paths that only become protocol-relative once resolved (security review, finding 8).
       "/.//evil.example",
       "/..//evil.example",

@@ -22,6 +22,8 @@ export const BACKEND_PORT = 8799;
 /** The uv to start the backend with: `verify.py` passes its own (D-010), anything else finds one. */
 const UV = process.env.E2E_UV ?? "uv";
 const FRONTEND_PORT = 5174;
+/** The Compose stack's own frontend container (frontend/Dockerfile), for STACK=1. */
+const STACK_URL = "http://127.0.0.1:5173";
 process.env.E2E_BACKEND_URL ??= `http://127.0.0.1:${String(BACKEND_PORT)}`;
 
 export default defineConfig({
@@ -45,13 +47,16 @@ export default defineConfig({
   },
   // The flows always; T6.9's screenshots (docs/screenshots/) only when asked for with SCREENSHOTS=1,
   // since they rewrite committed files; the Lighthouse audits only with LIGHTHOUSE=1, since they
-  // take minutes.
-  projects: [
-    { name: "flows", testIgnore: /(screenshots|lighthouse)\.spec\.ts/ },
-    ...(process.env.SCREENSHOTS ? [{ name: "screenshots", testMatch: /screenshots\.spec\.ts/ }] : []),
-    ...(process.env.LIGHTHOUSE ? [{ name: "lighthouse", testMatch: /lighthouse\.spec\.ts/ }] : []),
-  ],
-  webServer: [
+  // take minutes. STACK=1 runs only the system tests, against the running Compose stack's own
+  // frontend, and starts no server of its own (scripts/stack_system_test.py).
+  projects: process.env.STACK
+    ? [{ name: "stack", testMatch: /stack\.spec\.ts/, use: { baseURL: STACK_URL } }]
+    : [
+        { name: "flows", testIgnore: /(screenshots|lighthouse|stack)\.spec\.ts/ },
+        ...(process.env.SCREENSHOTS ? [{ name: "screenshots", testMatch: /screenshots\.spec\.ts/ }] : []),
+        ...(process.env.LIGHTHOUSE ? [{ name: "lighthouse", testMatch: /lighthouse\.spec\.ts/ }] : []),
+      ],
+  webServer: process.env.STACK ? [] : [
     {
       // --no-sync: the backend is installed already, and a sync here would try to rebuild it (CLAUDE.md).
       command: `"${UV}" run --no-sync python browser_backend.py`,

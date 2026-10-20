@@ -10,10 +10,11 @@ checked.
 
 ---
 
-## Build machine, checked 2026-09-28
+## Build machine, checked 2026-09-28, updated 2026-10-20
 
 Recorded because two of these shaped decisions, and because a reader reproducing the build needs to
-know what it was built on.
+know what it was built on. Docker, `gh` and `uv` were missing on 2026-09-28 and have been installed
+since, as CLAUDE.md's environment facts record.
 
 | Tool | Version | Note |
 | --- | --- | --- |
@@ -22,9 +23,9 @@ know what it was built on.
 | Node.js | 24.12.0 | |
 | Python | 3.14.2 | System interpreter. The backend uses a `uv`-managed 3.12 instead; see D-010 |
 | Git | present | |
-| Docker | **not installed** | Blocks Phase 1 and every acceptance check from Phase 3 on |
-| `gh` | **not installed** | Pull requests go under Needs human |
-| `uv` | **not installed** | Installed project-locally when Phase 3 starts |
+| Docker | 29.8.1 | Installed for Phase 1; Docker Desktop is started by hand (CLAUDE.md) |
+| `gh` | 2.102.0 | Logged in; every phase PR is opened with it |
+| `uv` | 0.12.20 | Project-local, at `.venv-tools/` (D-010) |
 
 ## Jenkins
 
@@ -39,21 +40,29 @@ claims), over 2.479.3 (Milestone 2's baseline), and over 2.580.1, which was sche
 ### Controller plugins
 
 Pinned in `jenkins/controller/plugins.txt` during Phase 1 (task T1.1), each version read from the
-Jenkins update centre for the 2.568.3 baseline. Required set, from `BUILD_PROMPT.md` Part 4.2.1:
+Jenkins update centre for the 2.568.3 baseline: 4.2.1's required set, then the Pipeline plugins
+and the markup formatter they depend on. On 2026-10-20 each was found on the update centre's
+download mirror (`updates.jenkins.io/download/plugins/<name>/<version>/`); this table had said
+*pending* since T1.1 although the file was pinned then.
 
 | Plugin | Version | Checked |
 | --- | --- | --- |
-| `configuration-as-code` | *pending T1.1* | |
-| `workflow-aggregator` | *pending T1.1* | |
-| `pipeline-model-definition` | *pending T1.1* | |
-| `pipeline-stage-view` | *pending T1.1* | |
-| `git` | *pending T1.1* | |
-| `ssh-slaves` | *pending T1.1* | |
-| `matrix-auth` | *pending T1.1* | |
-| `credentials-binding` | *pending T1.1* | |
-| `timestamper` | *pending T1.1* | |
-| `ws-cleanup` | *pending T1.1* | |
-| `structs` | *pending T1.1* | |
+| `configuration-as-code` | 2130.v3ef02f16a_34b_ | 2026-10-20 |
+| `workflow-aggregator` | 608.v67378e9d3db_1 | 2026-10-20 |
+| `pipeline-model-definition` | 2.2293.v6e7193cec599 | 2026-10-20 |
+| `pipeline-stage-view` | 2.41 | 2026-10-20 |
+| `git` | 5.10.1 | 2026-10-20 |
+| `ssh-slaves` | 3.1097.v868116049892 | 2026-10-20 |
+| `matrix-auth` | 3.3 | 2026-10-20 |
+| `credentials-binding` | 728.v902a_273b_8947 | 2026-10-20 |
+| `timestamper` | 1.30 | 2026-10-20 |
+| `ws-cleanup` | 0.49 | 2026-10-20 |
+| `structs` | 362.va_b_695ef4fdf9 | 2026-10-20 |
+| `workflow-job` | 1602.v2a_70b_80a_2396 | 2026-10-20 |
+| `workflow-cps` | 4383.v04fa_a_3d67b_d9 | 2026-10-20 |
+| `workflow-durable-task-step` | 1479.v56e587f413a_7 | 2026-10-20 |
+| `workflow-basic-steps` | 1098.v808b_fd7f8cf4 | 2026-10-20 |
+| `antisamy-markup-formatter` | 173.v680e3a_b_69ff3 | 2026-10-20 |
 
 ## Plugin
 
@@ -61,8 +70,8 @@ Jenkins update centre for the 2.568.3 baseline. Required set, from `BUILD_PROMPT
 | --- | --- | --- | --- |
 | Group and artifact | `io.jenkins.plugins:dynamic-queue-optimizer` | `BUILD_PROMPT.md` 4.3 | 2026-09-28 |
 | Version | 2.0.0-SNAPSHOT | `BUILD_PROMPT.md` 4.3 | 2026-09-28 |
-| Parent POM `org.jenkins-ci.plugins:plugin` | *pending T2.1* | Maven Central | |
-| Jenkins plugin BOM | *pending T2.1* | Maven Central | |
+| Parent POM `org.jenkins-ci.plugins:plugin` | 6.2236.v12dd4c483242 | repo.jenkins-ci.org | 2026-10-20 |
+| Jenkins plugin BOM `io.jenkins.tools.bom:bom-2.568.x` | 7093.v37de7b_4a_8a_4f | repo.jenkins-ci.org | 2026-10-20 |
 | `java.level` | 21 | Jenkins 2.568.3 requires 17+, tested on 21 | 2026-09-28 |
 
 Milestone 2 used parent POM 5.9 and `java.level` 17 against Jenkins 2.479.3. Both move up.
@@ -72,8 +81,34 @@ Milestone 2 used parent POM 5.9 and `java.level` 17 against Jenkins 2.479.3. Bot
 | Component | Pinned | Source | Checked |
 | --- | --- | --- | --- |
 | Python | 3.12 (`uv`-managed) | report Appendix E; `docs/decisions.md` D-010 | 2026-09-28 |
-| FastAPI, SQLAlchemy 2, Alembic, Pydantic v2, httpx, `uv` | *pending T3.1* | PyPI | |
+| `fastapi` | 0.141.1 | PyPI | 2026-10-20 |
+| `uvicorn` | 0.54.0 | PyPI | 2026-10-20 |
+| `pydantic` | 2.13.5 | PyPI | 2026-10-20 |
+| `pydantic-settings` | 2.15.0 | PyPI | 2026-10-20 |
+| `sqlalchemy` | 2.1.1 | PyPI | 2026-10-20 |
+| `asyncpg` | 0.31.0 | PyPI | 2026-10-20 |
+| `alembic` | 1.20.0 | PyPI | 2026-10-20 |
+| `httpx` | 0.28.1 | PyPI | 2026-10-20 |
+| `argon2-cffi` | 25.1.0 | PyPI | 2026-10-20 |
+| `pyjwt` | 2.15.1 | PyPI | 2026-10-20 |
+| `python-multipart` | 0.0.32 | PyPI | 2026-10-20 |
+| `pyyaml` | 6.0.3 | PyPI | 2026-10-20 |
+| `jinja2` | 3.1.6 | PyPI | 2026-10-20 |
+| `jsonschema` | 4.26.0 | PyPI | 2026-10-20 |
+| `structlog` | 26.1.0 | PyPI | 2026-10-20 |
+| `openai` | 3.27.0 | PyPI | 2026-10-20 |
+| `pytest` | 9.1.1 | PyPI | 2026-10-20 |
+| `pytest-asyncio` | 1.4.0 | PyPI | 2026-10-20 |
+| `pytest-cov` | 7.1.0 | PyPI | 2026-10-20 |
+| `ruff` | 0.16.9 | PyPI | 2026-10-20 |
+| `mypy` | 2.3.1 | PyPI | 2026-10-20 |
+| `aiosqlite` | 0.22.1 | PyPI | 2026-10-20 |
+| `types-pyyaml` | 6.0.12.20260906 | PyPI | 2026-10-20 |
+| `types-jsonschema` | 4.26.0.20260518 | PyPI | 2026-10-20 |
 | PostgreSQL | 16 | report Appendix E; `BUILD_PROMPT.md` 4.4.1 | 2026-09-28 |
+
+`pyproject.toml` states lower bounds and `uv.lock` the exact versions; the table gives the
+locked version of every direct dependency, each found on PyPI on 2026-10-20.
 
 ## Frontend
 
@@ -136,17 +171,44 @@ release was already past the seven-day cutoff of 2026-10-08, the most recent bei
 6.20.3 in as its own dependency. `npm audit --omit=dev` found no vulnerabilities.
 
 shadcn/ui is not a package: its components are copied into `src/` and restyled to DESIGN.md's
-tokens (4.7.1). Recharts and Playwright are pinned by the tasks that first use them: T6.7 for
-charts and T6.8 for the browser tests.
+tokens (4.7.1). T6.7 drew no chart: D-061 leaves Analytics' charts for Phase 7's experiment data, so no chart
+library has been added yet. The browser tests' tools:
+
+| Component | Pinned | Source | Checked |
+| --- | --- | --- | --- |
+| `@playwright/test` | 1.63.0 | npm registry | 2026-10-20 |
+| `lighthouse` | 13.5.0 | npm registry | 2026-10-20 |
+| `puppeteer-core` | 25.12.0 | npm registry | 2026-10-20 |
+
+Playwright came with T6.8 (D-062); Lighthouse and puppeteer-core with the accessibility audits
+(D-064), puppeteer-core at the version Lighthouse itself uses, so there is one copy.
+
+## Images
+
+| Image | Source | Checked |
+| --- | --- | --- |
+| `jenkins/jenkins:2.568.3-lts-jdk21` | Docker Hub | 2026-10-20 |
+| `jenkins/ssh-agent:9.0.0-jdk21` | Docker Hub | 2026-10-20 |
+| `python:3.12.15-slim` | Docker Hub | 2026-10-20 |
+| `postgres:16.15-alpine` | Docker Hub | 2026-10-20 |
+| `node:24.21.0-alpine` | Docker Hub | 2026-10-20 |
+| `nginxinc/nginx-unprivileged:1.30.4-alpine` | Docker Hub | 2026-10-20 |
+
+The backend's `python` and Compose's `postgres` were floating tags (`3.12-slim`,
+`16-alpine`), so a rebuild could take a different patch release without a line changing. On
+2026-10-20 they were pinned to the releases the running containers already had: Python
+3.12.15 and PostgreSQL 16.15.
 
 ## LLM provider
 
 | Component | Pinned | Source | Checked |
 | --- | --- | --- | --- |
-| `openai` Python SDK, pointed at Groq's OpenAI-compatible base URL | *pending T4.1* | PyPI | |
+| `openai` Python SDK, pointed at Groq's OpenAI-compatible base URL | 3.27.0 | PyPI | 2026-10-20 |
 | Model chain | `openai/gpt-oss-120b`, then `openai/gpt-oss-20b`, then the rule parser | `BUILD_PROMPT.md` 4.5.1 | 2026-09-28 |
 
 Free-tier limits for `openai/gpt-oss-120b` are stated in `BUILD_PROMPT.md` 4.5.1 as 30 requests per
-minute, 1,000 per day, 8,000 tokens per minute and 200,000 per day, counted per model. **These are
-unverified.** Task T4.1 checks them against Groq's own documentation before the quota logic is built
-on them, and records the result here with its date.
+minute, 1,000 per day, 8,000 tokens per minute and 200,000 per day, counted per model. Two were
+confirmed against the live API in T4.1 on 2026-10-09: every response carries `x-ratelimit-*`
+headers, and they gave 1,000 requests a day and 8,000 tokens a minute. The other two are the
+specification's figures. The quota tracker trusts the server's headers over its own counters, so
+a limit that differs from these is corrected on the first response (PROGRESS.md, T4.1).

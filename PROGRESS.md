@@ -1071,6 +1071,12 @@ gained a check for it: it passed 78 of 78 on `ff70254` (2026-10-17).
           redirect check or the auth-endpoint exemption to watch the tests fail was refused by
           Claude Code's auto mode, and the code was restored at once. The tests assert those
           behaviours directly.
+          - **Done 2026-10-20:** a script weakened each guard in turn, ran its test file, and
+            restored the source byte for byte. The auth-endpoint exemption and `safeNext`'s
+            first-character guard were caught. `safeNext`'s origin check was not: it returns only
+            a path, so every foreign vector came out as "/" either way. A vector with a real
+            foreign path (`/<tab>/elsewhere.example/queue`, which would have led to this site's
+            `/queue`) was added, and then all three were caught.
 - [x] T6.4 Shared assistant workspace components (Part 4.7.4). Evidence, all run on 2026-10-15:
       - **Built, in `src/workspace/` and `src/components/`:**
         - the workspace layout: chats, thread and preview side by side from 1280 px; a drawer
@@ -1647,6 +1653,42 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
           filter tests rewritten for the server's filters, and 4 provider states on the Overview).
 - **Left for Phase 8:** an endpoint for the chatbot evaluation's results. T8.2 is what produces
   them.
+- [x] **The stack rebuilt, as approved (2026-10-18):**
+      - **Rebuilt:** the backend, controller and frontend images, with `docker compose build` then
+        `up -d`. The frontend container started for the first time. No volume was touched.
+      - **Migrations:** `alembic upgrade head` in the backend container applied `5e0b9c3a7d21` and
+        `9d4f2b6e8a10`. Beforehand, a check found no command with two approved plans. `alembic
+        check` then found no difference between the models and the database.
+      - **Seen live:** every published port is on 127.0.0.1 and port 50000 is gone. `/api/health`
+        answers through the backend and through the frontend's nginx.
+      - **Images pinned:** the two floating tags were pinned to what was already running
+        (`python:3.12.15-slim`, `postgres:16.15-alpine`).
+- [x] **System tests through the real stack (the flows had only ever run in fake mode):**
+      `scripts/stack_system_test.py` runs `frontend/e2e/stack.spec.ts`.
+      - **The account:** a throwaway Developer, created in the backend container with a random
+        password that is never printed, and deactivated afterwards with an audit entry.
+      - **Test 1:** every page loads through the frontend container under its CSP, with no page
+        error, no server error, and live events arriving over nginx's `/ws`.
+      - **Test 2:** a freestyle build asked for in plain English runs on the real jenkins-dev, and
+        its run card shows it succeeding live.
+      - **Result:** 2 passed, twice (the second time as the new verify.py check).
+- [x] **Acceptance clauses the gate did not test now have checks of their own:**
+      - Phase 1, "both services' own tests pass": payment-service 12 passed, auth-service 7.
+      - Phase 2, "`mvn -B verify` passes": BUILD SUCCESS, 108 unit (1 skipped) and 73
+        integration tests.
+      - Phase 3, "`/api/health` reports database, Jenkins and LLM provider on the stack".
+      - Phase 6: the frontend container serves the build with its policy and proxies the API.
+      - Phase 6: the system tests above.
+      - Each passed when run on its own. The gate now has 85 checks.
+- [x] **`docs/versions.md`:**
+      - **Checked:** all 51 pins, each against its official source on 2026-10-20 (Jenkins update
+        centre, repo.jenkins-ci.org, PyPI, Docker Hub, npm); all were found.
+      - **Filled in:** the rows *pending* since T1.1, T2.1, T3.1 and T4.1.
+      - **Corrected:** the build machine table and the Groq limits note. T4.1 had confirmed two
+        of the four limits from the live API's headers, but versions.md still said unverified.
+- [x] **Mutation checks on the session's security tests (T6.3's open item):** see T6.3 above. All
+      three weakened guards were caught, after one missing test vector was added.
+
 - [x] **The 745 kB main bundle (D-063):** every page, sign in included, is loaded on first
       navigation through React Router's `lazy`.
       - **Size:** the main bundle is 419 kB (132 kB gzipped). The build no longer warns, and no
@@ -1711,8 +1753,9 @@ Details in `docs/decisions.md`.
   path ran.
 
 ## Known gaps
-- Docker-gated work is untested on this machine: all of Phase 1, T2.14, and every acceptance check
-  from Phase 3 onward that needs a live Jenkins or PostgreSQL. Tracked under Needs human.
+- ~~Docker-gated work is untested on this machine.~~ Resolved: Docker was installed, and every
+  Docker-gated check has since passed in full gate runs; the latest is recorded under the
+  hardening of Phases 1 to 6.
 - `plugin-results-run3.json` is a Milestone 2 outlier whose HIGH-band wait (353.34 s) is worse than
   the baseline (271.5 s). It is evidence of M2 known problem 6, the silent FIFO degradation, and is
   written up in `docs/m2-baseline.md` rather than discarded. `CacheEvictionRegressionIT` is the guard
@@ -1720,12 +1763,11 @@ Details in `docs/decisions.md`.
 - `legacy/experiment/results/baseline-results.json` holds 31 job rows against a 30-job spec, and the
   legacy `analyze.py` silently discards the extra row. Noted in `docs/m2-baseline.md`.
 - The report's Word source was not provided, so report changes are tracked as a checklist.
-- PyYAML is not installed locally and PyPI's download host does not resolve from this machine, so the
-  CI-workflow check runs its structural fallback rather than a full YAML parse. CI installs PyYAML and
-  runs the full parse.
+- ~~PyYAML is not installed locally.~~ Resolved: PyYAML 6.0.3 is installed (checked 2026-10-18),
+  so the local gate parses YAML in full, as CI does.
 - ~~The JCasC floating-point import defect (D-017)~~ Resolved 2026-10-18: quote the values.
-- `docs/versions.md` still has `pending` rows for every plugin, backend and frontend dependency. Each
-  is filled by the task that pins it, against the official source, per rule 1.4.
+- ~~`docs/versions.md` still has `pending` rows.~~ Resolved 2026-10-20: all 51 pins were checked
+  against their official sources and recorded, and the two floating image tags were pinned.
 - **Agent DNS on this machine (2026-10-13).** Docker Desktop's resolver intermittently fails to
   resolve `github.com` from the agents, and the host showed a 2 s lookup in the same period.
   - **Effect:** a build then fails at its Git clone (`Could not resolve host: github.com`). Five
