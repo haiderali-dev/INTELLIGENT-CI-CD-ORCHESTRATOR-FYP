@@ -11,6 +11,49 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 6
 
+### D-067 Dependency groups are formed over the whole queue, not only the buildable items
+**Date:** 2026-10-20 · **Status:** accepted (hardening of Phases 1 to 6; found planning the testing
+chapter's white-box tests)
+
+**The defect.** The sorter grouped and scored only the items Jenkins handed it, which are the
+buildable ones. The dependency gate holds a consumer out of that list while its upstream is queued
+or building (Part 4.3.8). So an upstream and the work waiting on it were never scored together:
+every producer was a group of one, D was always 0, and group inheritance (Part 4.3.6, report
+Appendix C) could not happen in a live queue. A LOW build that a HIGH deployment waited for ran
+behind every MEDIUM job, and the deployment waited for all of them too.
+- **Why nothing caught it:** `AppendixCExampleTest` and `ScoreComponentTest` build their groups by
+  hand. No integration test queued a consumer behind its producer. The live Queue page's score bars
+  never showed a dependency segment, which fits.
+- **Measured before the fix** (`GroupInheritanceIT`, JenkinsRule, one executor): dispatch order
+  `gi-medium-1, gi-medium-2, gi-medium-3, gi-build-api, gi-deploy-api`; the producer's D was 0.0.
+
+**The fix.** The sorter scores the buildable items together with the items the queue is holding back:
+`Queue.getItems()` filtered to `BlockedItem`, the snapshot the gate and the ranking API already
+read. Queue maintenance runs as SYSTEM (`AtmostOneTaskExecutor` and `SafeTimerTask` both impersonate
+`ACL.SYSTEM2`, read from the 2.568.3 bytecode), so no held item is hidden by permissions. Groups, D
+and inheritance are computed over that scope; only the buildable items are ranked, put in the heap
+and reordered. The formula is unchanged.
+- **The cache key gains the held items, as a set of their own.** In the first version of this fix the
+  key was one set of all ids. When the gate released a consumer that set did not change, the cached
+  scores had none for it, and it ranked behind lower work for a pass. `GroupInheritanceIT` caught it.
+- **A wrong turn, recorded so it is not repeated.** That failure was first blamed on the gate reading
+  a stale queue snapshot, and the gate was changed. A diagnostic print showed the snapshot fresh
+  and the gate right, so the gate change was reverted and the cache key fixed instead.
+
+**Scope.** Part 4.3.4 already passes `List<Queue.Item>` to `DependencyGraphService.build`. Read with
+4.3.7 (the sorter scores the list it is handed) and 4.3.8 (the gate) it left D dead. This follows
+the report's intent, Appendix C's "the group's producer is dispatched before its consumer". T's
+normalisation and `maxGroupSize` now span the held items too: they are part of the queue.
+
+**Evidence:** `GroupInheritanceIT`, 4 tests under JenkinsRule, passed three runs in a row.
+- `producerOfAHeldUrgentJobRunsFirst` and `theRankingShowsTheInheritedScore` failed on the code
+  before the fix, as above.
+- Two mutants of the cache key are killed: held items left out (`aLateConsumerLiftsAWaitingProducer`)
+  and one set of all ids (`aReleasedJobIsRankedAtOnce`, `producerOfAHeldUrgentJobRunsFirst`).
+- `mvn -B verify`: 108 unit tests (1 skipped, as before) and 77 integration tests passed; SpotBugs 0.
+
+---
+
 ### D-066 The heap holds exactly the buildable items, scored; held jobs are listed apart
 **Date:** 2026-10-20 · **Status:** accepted (hardening of Phases 1 to 6; found in T6.6)
 

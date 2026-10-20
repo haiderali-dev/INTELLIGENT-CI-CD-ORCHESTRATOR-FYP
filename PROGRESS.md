@@ -1742,6 +1742,16 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
         - The Queue page's tests passed on its capture through the backend (22 in the queue
           files).
 
+- [x] **D-067, the dependency factor was always 0 in a live queue (Phase 2).** Found while planning
+      the testing chapter's white-box tests: the gate holds a consumer out of the buildable list,
+      and the sorter grouped only that list, so no group ever had two members.
+      - **Before the fix:** `GroupInheritanceIT` (new, JenkinsRule) dispatched
+        `gi-medium-1, gi-medium-2, gi-medium-3, gi-build-api, gi-deploy-api`: the LOW producer
+        ran after all MEDIUM work, and its D was 0.0.
+      - **After:** the sorter scores buildable and held items together and ranks only the
+        buildable ones. Its 4 tests passed three runs in a row. Two cache-key mutants are killed.
+      - `mvn -B verify`: BUILD SUCCESS, 108 unit (1 skipped) and 77 integration tests, SpotBugs 0.
+
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
   installed and every Phase 2 test except T2.14 runs on JenkinsRule without it. Approved by the user.

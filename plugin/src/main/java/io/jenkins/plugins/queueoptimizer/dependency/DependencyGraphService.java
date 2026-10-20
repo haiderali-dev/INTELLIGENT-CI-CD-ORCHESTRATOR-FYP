@@ -30,7 +30,8 @@ public final class DependencyGraphService {
     /**
      * Groups and orders the queued items.
      *
-     * @param items the buildable items for this pass
+     * @param items the items to group: the sorter passes the buildable items and those the queue is
+     *     holding back, because a held consumer is what makes its producer's group (D-067)
      * @return the snapshot, never null
      */
     @NonNull

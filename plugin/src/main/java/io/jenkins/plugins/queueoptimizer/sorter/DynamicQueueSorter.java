@@ -20,6 +20,7 @@ import io.jenkins.plugins.queueoptimizer.scoring.ScoredJob;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import jenkins.model.Jenkins;
 
 /**
  * Orders the buildable queue by the report's priority score.
@@ -65,6 +67,7 @@ public class DynamicQueueSorter extends QueueSorter {
 
     private final Object cacheLock = new Object();
     private Set<Long> cachedItemIds = Collections.emptySet();
+    private Set<Long> cachedHeldIds = Collections.emptySet();
     private long cachedMinute = -1;
     private Map<Long, ScoredJob> cachedScores = Collections.emptyMap();
 
@@ -142,32 +145,77 @@ public class DynamicQueueSorter extends QueueSorter {
     /**
      * Scores every item, reusing the previous pass's scores when nothing relevant has changed.
      *
-     * <p>The cache key is the set of item ids plus the current minute. Including the minute is
-     * what refreshes the aging bonus at least once a minute, matching the report's periodic
-     * rescore, without recomputing estimates on every maintenance pass.
+     * <p>The cache key is the set of buildable item ids, the set of held item ids, and the current
+     * minute. Including the minute is what refreshes the aging bonus at least once a minute,
+     * matching the report's periodic rescore, without recomputing estimates on every maintenance
+     * pass. The held items are part of the key, so a job joining or leaving a group rescores its
+     * producer. They are a separate set because an item moving from held to buildable must
+     * rescore too: keyed on one set of all ids, the gate's release left that set unchanged, the
+     * cached scores had none for the released item, and it ranked behind lower work for a pass
+     * (found by GroupInheritanceIT while D-067 was being fixed).
      */
     private Map<Long, ScoredJob> scoreWithCache(List<Queue.BuildableItem> items, OptimizerConfiguration config) {
+        List<Queue.Item> scope = scoringScope(items);
         Set<Long> itemIds = new LinkedHashSet<>();
         for (Queue.BuildableItem item : items) {
             itemIds.add(item.getId());
         }
+        Set<Long> heldIds = new LinkedHashSet<>();
+        for (Queue.Item item : scope) {
+            if (!itemIds.contains(item.getId())) {
+                heldIds.add(item.getId());
+            }
+        }
         long minute = System.currentTimeMillis() / 60_000L;
 
         synchronized (cacheLock) {
-            if (minute == cachedMinute && itemIds.equals(cachedItemIds)) {
+            if (minute == cachedMinute && itemIds.equals(cachedItemIds) && heldIds.equals(cachedHeldIds)) {
                 cacheHits.incrementAndGet();
                 return cachedScores;
             }
-            Map<Long, ScoredJob> fresh = score(items, config);
+            Map<Long, ScoredJob> fresh = score(items, scope, config);
             cachedItemIds = itemIds;
+            cachedHeldIds = heldIds;
             cachedMinute = minute;
             cachedScores = fresh;
             return fresh;
         }
     }
 
-    private Map<Long, ScoredJob> score(List<Queue.BuildableItem> items, OptimizerConfiguration config) {
-        DependencySnapshot dependencies = DependencyGraphService.build(items);
+    /**
+     * The items scored together: the buildable ones, which this pass orders, and the ones the queue
+     * is holding back, which it cannot.
+     *
+     * <p>Grouping the buildable items alone left every producer in a group of one. A job that
+     * {@code DependencyGate} holds is never buildable while its upstream waits, so the upstream
+     * and the work waiting on it were never seen together: D was always 0, and the group
+     * inheritance of report Appendix C could not happen in a live queue. A LOW build ran behind
+     * every MEDIUM job while the HIGH job it unblocks waited too (D-067, GroupInheritanceIT).
+     *
+     * <p>The held items come from the queue's snapshot, at most one maintenance pass old: the same
+     * view the gate and the ranking API read. Maintenance runs as SYSTEM, so none is filtered out.
+     */
+    private static List<Queue.Item> scoringScope(List<Queue.BuildableItem> buildable) {
+        List<Queue.Item> scope = new ArrayList<>(buildable);
+        Jenkins jenkins = Jenkins.getInstanceOrNull();
+        if (jenkins == null) {
+            return scope;
+        }
+        Set<Long> seen = new HashSet<>();
+        for (Queue.BuildableItem item : buildable) {
+            seen.add(item.getId());
+        }
+        for (Queue.Item item : jenkins.getQueue().getItems()) {
+            if (item instanceof Queue.BlockedItem && seen.add(item.getId())) {
+                scope.add(item);
+            }
+        }
+        return scope;
+    }
+
+    private Map<Long, ScoredJob> score(
+            List<Queue.BuildableItem> items, List<Queue.Item> scope, OptimizerConfiguration config) {
+        DependencySnapshot dependencies = DependencyGraphService.build(scope);
         List<BuildRecord> history = BuildHistoryService.recentBuilds(config.getHistoryWindow());
         SimilarityEstimator estimator = new SimilarityEstimator(
                 config.getEstimatorK(), config.getSimilarityThreshold(), config.getRecencyLambdaPerDay());
@@ -177,8 +225,8 @@ public class DynamicQueueSorter extends QueueSorter {
         Map<String, OptionalLong> estimateByJob = new HashMap<>();
 
         long now = System.currentTimeMillis();
-        List<ScoreInput> inputs = new ArrayList<>(items.size());
-        for (Queue.BuildableItem item : items) {
+        List<ScoreInput> inputs = new ArrayList<>(scope.size());
+        for (Queue.Item item : scope) {
             Optional<Job<?, ?>> resolved = JobResolver.resolve(item);
             if (resolved.isEmpty()) {
                 continue;
@@ -209,9 +257,16 @@ public class DynamicQueueSorter extends QueueSorter {
                 config.getAgingIntervalMinutes(),
                 config.getAgingCap());
 
+        // Held items shaped the groups and lent their scores; only buildable work is ranked.
+        Set<Long> buildable = new HashSet<>();
+        for (Queue.BuildableItem item : items) {
+            buildable.add(item.getId());
+        }
         Map<Long, ScoredJob> byItemId = new HashMap<>();
         for (ScoredJob scored : calculator.scoreAll(inputs)) {
-            byItemId.put(scored.itemId(), scored);
+            if (buildable.contains(scored.itemId())) {
+                byItemId.put(scored.itemId(), scored);
+            }
         }
         return byItemId;
     }

@@ -180,6 +180,12 @@ each one attaches to Jenkins.
       to 127.0.0.1 (D-065). Redraw the deployment view with it.
 - [ ] **Appendix E: add the image versions** from `docs/versions.md` "Images" (Python 3.12.15,
       PostgreSQL 16.15, Node 24.21.0 for the build, nginx-unprivileged 1.30.4).
+- [ ] **Chapter 6, Algorithm 3, and Appendix C: dependency groups span the whole queue.** State that
+      groups are formed over every queued item, including those the dependency gate is holding, and
+      that only buildable items are ranked. Until D-067 the plugin grouped the buildable items only.
+      The gate keeps a consumer out of that list, so D was always 0 and Appendix C's inheritance
+      could never happen in a live queue. Say so in the Testing chapter too: it is a defect that
+      unit tests could not find, because they build their groups by hand.
 - [ ] **Usability and accessibility: Lighthouse scores 100 for accessibility** on both assistant
       pages, in all 16 audits (empty and with a chat, light and dark, mobile and desktop). Measured
       signed in (D-064), and checked in CI on every push since 2026-10-20.
