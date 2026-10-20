@@ -1671,7 +1671,10 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
         error, no server error, and live events arriving over nginx's `/ws`.
       - **Test 2:** a freestyle build asked for in plain English runs on the real jenkins-dev, and
         its run card shows it succeeding live.
-      - **Result:** 2 passed, twice (the second time as the new verify.py check).
+      - **Test 3 (added 2026-10-20):** a Pipeline build's Jenkinsfile is linted by jenkins-dev's
+        declarative linter and run by it, and its stages are followed live from the stage view.
+      - **Result:** 2 passed, twice (the second time as the new verify.py check). After test 3 was
+        added, 3 passed in 45.9 s.
 - [x] **Acceptance clauses the gate did not test now have checks of their own:**
       - Phase 1, "both services' own tests pass": payment-service 12 passed, auth-service 7.
       - Phase 2, "`mvn -B verify` passes": BUILD SUCCESS, 108 unit (1 skipped) and 73

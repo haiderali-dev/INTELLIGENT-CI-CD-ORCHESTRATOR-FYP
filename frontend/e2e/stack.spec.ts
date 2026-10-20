@@ -113,3 +113,44 @@ test("a freestyle build runs on the real Jenkins, and its run card follows it li
 
   expect(problems).toEqual([]);
 });
+
+test("a Pipeline build is linted and run by the real Jenkins, its stages followed live", async ({ page }) => {
+  test.setTimeout(8 * 60_000);
+  const problems = watch(page);
+  await signInToStack(page);
+  await page.goto("/assistants/pipeline");
+
+  const composer = page.getByRole("textbox", { name: "Message the Pipeline Assistant" });
+  await composer.fill("Build auth-service from main");
+  await composer.press("Enter");
+
+  const thread = page.getByRole("list", { name: "Conversation with the Pipeline Assistant" });
+  const card = thread.locator(":scope > li").last();
+  await expect(card.getByRole("region", { name: "Intent" })).toContainText("auth-service", {
+    timeout: 60_000,
+  });
+  await card.getByRole("button", { name: "Generate" }).click();
+
+  const preview = page.getByRole("complementary", { name: "Preview" });
+  await preview.getByRole("tab", { name: "Jenkinsfile" }).click();
+  await expect(preview.getByText("pipeline {")).toBeVisible({ timeout: 60_000 });
+  await preview.getByRole("tab", { name: "Checks" }).click();
+  // The Jenkinsfile was linted by jenkins-dev's own declarative linter on the way to Validated.
+  await expect(preview.getByRole("list", { name: "Progress" })).toContainText("Validated", {
+    timeout: 60_000,
+  });
+  await preview.getByRole("button", { name: "Approve and run" }).click();
+  await page
+    .getByRole("alertdialog", { name: "Approve and run" })
+    .getByRole("button", { name: "Approve and run" })
+    .click();
+
+  const run = page.getByRole("region", { name: /^Run of pl-auth-service/ });
+  await expect(run).toBeVisible({ timeout: 30_000 });
+  // The stages come from Jenkins' own stage view, tracked by the backend and pushed over /ws.
+  await expect(run.getByRole("list", { name: "Stages" })).toContainText("Build succeeded", {
+    timeout: 6 * 60_000,
+  });
+
+  expect(problems).toEqual([]);
+});
