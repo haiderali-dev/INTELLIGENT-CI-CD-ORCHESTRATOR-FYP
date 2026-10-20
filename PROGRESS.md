@@ -1794,6 +1794,20 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
         - frontend: lint, typecheck, 296 tests and the build pass;
         - plugin `mvn -B verify`: BUILD SUCCESS, 117 unit (1 skipped) and 91 integration tests,
           SpotBugs 0; PIT 1.30.0 kills 162 of 173.
+- [x] **Experiments for the testing chapter, and the evidence campaign.** Opt in; the ordinary build
+      never runs them.
+      - `SchedulerOverheadExperiment` (E1): `Queue.maintain()` with the optimizer off and on inside
+        a real Jenkins, a scoring pass from an empty cache and from a full one, and the algorithm
+        alone up to 3200 items.
+      - `QueueSimulationExperiment` (E2, E3): a discrete-event simulation that scores with the
+        plugin's own classes and applies the gate's rule. E2 replays Milestone 2's workload,
+        calibrated on its measured FIFO run. E3 is a two-hour sustained load at four utilisations,
+        ten seeds each.
+      - `scripts/test_campaign.py`: runs every suite once at a clean commit, keeps each one's JUnit
+        XML, coverage, PIT report and log under `.tmp/campaign/<commit>/`, and writes a manifest.
+      - **Trial runs (not the reported numbers):** both experiments completed. The simulator's FIFO
+        matched Milestone 2's measured baseline within 0.1 s a band. Replaying Milestone 2's real
+        dispatch order matched its measured waits within 3%.
 - [ ] **The full gate again, after D-067 and D-068,** with the stack rebuilt so that jenkins-dev
       runs the new plugin and the backend container the new audit code.
 
