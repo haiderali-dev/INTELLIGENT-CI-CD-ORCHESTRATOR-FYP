@@ -1700,8 +1700,9 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
           and widths.
       - **Fixed:** the rate limits' labels started in lower case, unlike every other cell. They
         are now capitalised for display, and the Admin tests passed (14).
-- [ ] **Lighthouse in CI:** a step in the Browser flows job runs the 16 audits on every push.
-      Checked off once a CI run shows it passing.
+- [x] **Lighthouse in CI:** a step in the Browser flows job runs the 16 audits on every push.
+      CI run 39348259894 on `08477e5`: the step passed, every one of the 16 audits scored 100, and
+      the 12 flows before it passed.
 - [x] **Records brought up to date:**
       - `docs/report-updates.md` gains the report changes from this hardening;
       - the README notes the loopback-only ports and the system tests;
@@ -1742,6 +1743,13 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
         - The Queue page's tests passed on its capture through the backend (22 in the queue
           files).
 
+- [x] **The full gate, run 2026-10-20 at 05:32 on `08477e5`: 84 of 85 passed (exit 1).**
+      - **The failure:** "the auth endpoints are rate limited" was a stale text match. It looked
+        for the single sign-in limit that D-065 replaced with two.
+      - **Fixed:** the check asserts both sign-in limits and the refresh limit, then runs the five
+        tests that see the 429s. Run on its own it passed. With the per-account limit deleted it
+        failed, and the file was restored byte for byte.
+      - The full gate is run again below, after the two defects that follow.
 - [x] **D-067, the dependency factor was always 0 in a live queue (Phase 2).** Found while planning
       the testing chapter's white-box tests: the gate holds a consumer out of the buildable list,
       and the sorter grouped only that list, so no group ever had two members.
@@ -1751,6 +1759,22 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
       - **After:** the sorter scores buildable and held items together and ranks only the
         buildable ones. Its 4 tests passed three runs in a row. Two cache-key mutants are killed.
       - `mvn -B verify`: BUILD SUCCESS, 108 unit (1 skipped) and 77 integration tests, SpotBugs 0.
+- [x] **D-068, suspicious activity the backend detected was not audited (Phase 3).** Found tracing
+      the report's User Story 5, criterion 3. A role guard's refusal, a replayed refresh token and
+      an engaged sign-in limit now each write an audit entry; a limit writes at most one a minute
+      per caller.
+      - `test_suspicious_activity_audit.py`: 9 passed. Four mutants were each killed.
+      - New gate check (Phase 3): "suspicious activity is written to the audit log". Run on its
+        own, it passed. The gate now has 86 checks.
+      - Backend offline suite: 1704 passed; ruff, format and mypy clean.
+- [x] **Acceptance tests for the report's User Stories 1 and 5** (`test_acceptance_user_stories.py`):
+      one test per criterion, Given-When-Then, through the HTTP API. 15 passed. Among them:
+      - every one of the 38 operations the OpenAPI schema marks as needing a session answers 401
+        without one, and only sign-in, renewal and the two health probes are open;
+      - an invalid command is answered and never reaches Jenkins;
+      - generated jobs are XML Jenkins loads, running only the catalog's commands.
+- [ ] **The full gate again, after D-067 and D-068,** with the stack rebuilt so that jenkins-dev
+      runs the new plugin and the backend container the new audit code.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not

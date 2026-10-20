@@ -11,6 +11,43 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 6
 
+### D-068 Suspicious activity the backend detects is written to the audit log
+**Date:** 2026-10-20 · **Status:** accepted (hardening of Phases 1 to 6; found tracing the report's
+acceptance criteria for the testing chapter)
+
+Report 4.7.4, User Story 5, criterion 3: "Given suspicious activity occurs, when it is detected, then
+the system logs the event for audit purposes." Part 4.4.3 asks for an audit entry for every policy
+denial, and 4.5.5 for every denial. Failed and refused sign-ins and prompt-injection attempts were
+audited already. Three events the backend detected were not:
+- **A role guard refusing a request**, such as a Developer calling the Admin API: no entry and no
+  log line. Now `access.denied`, naming the method and path, the role needed and the role held.
+- **A spent refresh token coming back**, which signs out its whole family: a log line only. Now
+  `auth.session.reused`, with the account and the caller's address.
+- **A sign-in limit engaging**: nothing at all, because a refused attempt never reaches the code that
+  audits sign-ins. Now `auth.login.limited`, naming the account tried, the limit (per account, or per
+  address across accounts) and the address. Both sign-in limits are checked in the login route's
+  body for this; the per-address one used to be a dependency.
+
+**Bounded, so the log cannot be flooded.** A limit records at most one refusal per caller per window
+(a minute, for every limit today): the one that shows it engaged, and one more for each window it
+keeps engaging. Recording every 429 would let anyone hammering the sign-in page write a row per
+request. Role denials are recorded every time, as 4.4.3 asks; they need a valid session, so they are
+attributable, and the API's 300-a-minute limit bounds them.
+
+**Not looked up.** A limited sign-in is recorded without loading the account, so a refusal takes the
+same time whether or not the account exists.
+
+**Evidence:**
+- `test_suspicious_activity_audit.py`, 9 tests. Four mutants (no role audit, no reuse audit, every
+  refusal recorded, no per-address limit) are each killed by them.
+- `test_acceptance_user_stories.py` reads all of them back through `/api/admin/audit`, as an Admin.
+- Gate: the Phase 3 check "suspicious activity is written to the audit log".
+- The gate's "auth endpoints are rate limited" check follows the route's new shape, and now also
+  runs the tests that see the 429s. It had looked for the single limit D-065 replaced, and failed
+  the gate run of 2026-10-20 (84 of 85).
+
+---
+
 ### D-067 Dependency groups are formed over the whole queue, not only the buildable items
 **Date:** 2026-10-20 · **Status:** accepted (hardening of Phases 1 to 6; found planning the testing
 chapter's white-box tests)

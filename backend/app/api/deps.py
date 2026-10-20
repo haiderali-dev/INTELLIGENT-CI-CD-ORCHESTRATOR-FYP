@@ -33,7 +33,7 @@ from app.failures.explainer import FailureExplainer
 from app.failures.factory import build_failure_explainer
 from app.generation.factory import build_planner
 from app.generation.planner import Planner
-from app.services.auth import load_user_from_access_token, role_allows
+from app.services.auth import load_user_from_access_token, record_access_denied, role_allows
 from app.services.catalog import Catalog
 from app.services.dependencies import (
     get_catalog,
@@ -115,8 +115,20 @@ def require_role(minimum: Role) -> Callable[..., Awaitable[User]]:
     tells someone what to ask for and "forbidden" does not.
     """
 
-    async def _guard(user: CurrentUser) -> User:
+    async def _guard(
+        user: CurrentUser,
+        request: Request,
+        session: Annotated[AsyncSession, Depends(get_db)],
+    ) -> User:
         if not role_allows(Role(user.role), minimum):
+            # Audited before the refusal: 4.4.3 asks for every policy denial (D-068).
+            await record_access_denied(
+                session,
+                user=user,
+                required=minimum,
+                method=request.method,
+                path=request.url.path,
+            )
             raise forbidden(
                 ErrorCode.FORBIDDEN,
                 f"This action needs the {minimum.value} role. Yours is {user.role}.",

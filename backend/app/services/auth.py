@@ -139,6 +139,47 @@ async def _audit(
         await session.commit()
 
 
+async def record_sign_in_limited(
+    session: AsyncSession, *, account: str, limit: str, client: str
+) -> None:
+    """Audit a sign-in limit engaging for a caller: the mark of guessing or a password spray.
+
+    The account is not looked up. It may not exist, and a refused attempt answered faster or slower
+    depending on whether it does would tell a guesser which addresses are real. Called at most once
+    a minute per caller and limit (``RateLimitedError.record``), and committed at once because the
+    caller is about to raise (D-068).
+    """
+    await _audit(
+        session,
+        actor_id=None,
+        action="auth.login.limited",
+        target=account,
+        durable=True,
+        limit=limit,
+        client=client,
+    )
+
+
+async def record_access_denied(
+    session: AsyncSession, *, user: User, required: Role, method: str, path: str
+) -> None:
+    """Audit a request a role guard refused.
+
+    4.4.3 asks for an audit entry for every policy denial, and an account trying what its role
+    cannot do is the first sign of one being misused. Committed at once because the guard is about
+    to raise (D-068).
+    """
+    await _audit(
+        session,
+        actor_id=user.id,
+        action="access.denied",
+        target=f"{method} {path}",
+        durable=True,
+        required_role=required.value,
+        actual_role=user.role,
+    )
+
+
 async def authenticate(
     session: AsyncSession, settings: Settings, *, email: str, password: str, client: str
 ) -> User:
@@ -246,7 +287,7 @@ def _family_lifetime(settings: Settings) -> float:
 
 
 async def refresh_tokens(
-    session: AsyncSession, settings: Settings, *, refresh_token: str
+    session: AsyncSession, settings: Settings, *, refresh_token: str, client: str = "unknown"
 ) -> tuple[User, TokenPair]:
     """Exchange a refresh token for a new pair.
 
@@ -267,9 +308,20 @@ async def refresh_tokens(
     if not _revoked.claim(jti, float(claims.get("exp", 0))):
         if family is not None:
             # A spent token came back, so two parties hold this session. Whichever refreshed first
-            # cannot be told apart from the thief, so the whole family is signed out.
+            # cannot be told apart from the thief, so the whole family is signed out, and an Admin
+            # can see it happened and from where (D-068).
             _revoked.revoke_family(family, _family_lifetime(settings))
-            logger.warning("refresh_token_reused", user_id=str(claims.get("sub", "")))
+            user_id = str(claims.get("sub", ""))
+            logger.warning("refresh_token_reused", user_id=user_id)
+            holder = await session.get(User, user_id)
+            await _audit(
+                session,
+                actor_id=holder.id if holder else None,
+                action="auth.session.reused",
+                target=holder.email if holder else user_id,
+                durable=True,
+                client=client,
+            )
         raise signed_out
 
     user = await session.get(User, str(claims.get("sub", "")))

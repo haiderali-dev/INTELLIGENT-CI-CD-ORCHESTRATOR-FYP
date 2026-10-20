@@ -27,6 +27,8 @@ class _Bucket:
 
     tokens: float
     updated_at: float
+    # When this bucket last handed out a refusal to be recorded (``RateLimitedError.record``).
+    reported_at: float | None = None
 
 
 @dataclass
@@ -73,6 +75,27 @@ RATE_LIMITS: tuple[tuple[RateLimit, str], ...] = (
 )
 
 
+class RateLimitedError(ApiError):
+    """A request refused by a limit: 429, with how long to wait.
+
+    ``record`` is true for at most one refusal per caller per limit window, the one worth writing
+    to the audit log (D-068). Recording every refusal would let a caller who keeps hammering a
+    limit fill the log one row per request; one a window still shows that the limit engaged, for
+    whom, and that it kept engaging.
+    """
+
+    def __init__(self, limit: RateLimit, retry_after: int, *, record: bool) -> None:
+        super().__init__(
+            ErrorCode.RATE_LIMITED,
+            f"Too many attempts. Try again in {retry_after} second"
+            f"{'s' if retry_after != 1 else ''}.",
+            status_code=429,
+            details={"retry_after_seconds": retry_after, "limit": limit.name},
+        )
+        self.limit = limit
+        self.record = record
+
+
 class RateLimiter:
     """Thread-safe token buckets keyed by (limit name, identifier)."""
 
@@ -84,22 +107,18 @@ class RateLimiter:
     def check(self, limit: RateLimit, identifier: str) -> None:
         """Consume one token, or raise.
 
-        Raises ``ApiError`` with 429 and a ``retry_after_seconds`` detail so the UI can say when to
-        try again rather than only that something went wrong.
+        Raises ``RateLimitedError``, a 429 with a ``retry_after_seconds`` detail so the UI can say
+        when to try again rather than only that something went wrong.
         """
-        retry_after = self._consume(limit, identifier)
-        if retry_after is None:
+        refused = self._consume(limit, identifier)
+        if refused is None:
             return
-        raise ApiError(
-            ErrorCode.RATE_LIMITED,
-            f"Too many attempts. Try again in {retry_after} second"
-            f"{'s' if retry_after != 1 else ''}.",
-            status_code=429,
-            details={"retry_after_seconds": retry_after, "limit": limit.name},
-        )
+        retry_after, record = refused
+        raise RateLimitedError(limit, retry_after, record=record)
 
-    def _consume(self, limit: RateLimit, identifier: str) -> int | None:
-        """Take a token. Returns None on success, or the seconds to wait."""
+    def _consume(self, limit: RateLimit, identifier: str) -> tuple[int, bool] | None:
+        """Take a token. Returns None on success, or the seconds to wait and whether this refusal
+        is the one of its window to record."""
         now = time.monotonic()
         key = (limit.name, identifier)
 
@@ -122,7 +141,11 @@ class RateLimiter:
             # Round up: telling someone to retry in 0 seconds when they cannot is worse than
             # telling them 1.
             deficit = 1.0 - bucket.tokens
-            return max(1, int(deficit / limit.refill_per_second) + 1)
+            retry_after = max(1, int(deficit / limit.refill_per_second) + 1)
+            record = bucket.reported_at is None or now - bucket.reported_at >= limit.per_seconds
+            if record:
+                bucket.reported_at = now
+            return retry_after, record
 
     def _sweep(self, now: float) -> None:
         """Drop buckets that have fully refilled, so the map cannot grow without bound.

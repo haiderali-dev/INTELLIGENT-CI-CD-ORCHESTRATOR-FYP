@@ -247,6 +247,8 @@ export interface paths {
          *
          *     Rate limited to five attempts a minute per account from one address, enough for a person who
          *     mistypes, and thirty a minute per address across all accounts, which stops a password spray.
+         *     Both are checked here rather than in a dependency so that a limit engaging can be audited, at
+         *     most once a minute per caller (D-068).
          */
         post: operations["login_api_auth_login_post"];
         delete?: never;

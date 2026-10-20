@@ -1635,21 +1635,72 @@ def check_auth_surface() -> Result:
 
 @check(3, "the auth endpoints are rate limited")
 def check_auth_rate_limits() -> Result:
-    """4.4.4 requires rate limits on the auth endpoints."""
+    """4.4.4 requires rate limits on the auth endpoints.
+
+    Since the security review (D-065) sign-in is limited twice: per address and account, so one
+    account's failed attempts cannot lock another out, and per address across accounts, so a
+    password spray stays capped. The code is checked for both, then the tests that see the 429s
+    are run. A text match alone broke on that refactor: this check looked for the old single limit
+    and failed on the stronger pair (2026-10-20).
+    """
     limits = REPO_ROOT / "backend" / "app" / "core" / "ratelimit.py"
     if not limits.is_file():
         return fail("backend/app/core/ratelimit.py does not exist")
     text = limits.read_text(encoding="utf-8")
-    for name in ("LOGIN_LIMIT", "REFRESH_LIMIT", "API_LIMIT"):
+    for name in ("LOGIN_LIMIT", "LOGIN_ADDRESS_LIMIT", "REFRESH_LIMIT", "API_LIMIT"):
         if f"{name} = RateLimit(" not in text:
             return fail(f"{name} is not defined")
 
     api_text = (REPO_ROOT / "backend" / "app" / "api" / "auth.py").read_text(encoding="utf-8")
-    if "rate_limit(LOGIN_LIMIT)" not in api_text:
-        return fail("the login endpoint is not rate limited")
+    # Both sign-in limits are checked in the route's body, so that a limit engaging can be
+    # audited (D-068).
+    if "limiter.check(LOGIN_ADDRESS_LIMIT," not in api_text:
+        return fail("the login endpoint is not rate limited per address")
+    if "limiter.check(LOGIN_LIMIT," not in api_text:
+        return fail("the login endpoint is not rate limited per account")
     if "rate_limit(REFRESH_LIMIT)" not in api_text:
         return fail("the refresh endpoint is not rate limited")
-    return ok("login 5/min, refresh 30/min, general 300/min")
+
+    result, output = _pytest(
+        [
+            "tests/test_auth.py::test_login_is_rate_limited",
+            "tests/test_auth.py::test_rate_limit_says_when_to_retry",
+            "tests/test_auth.py::test_the_limit_counts_attempts_not_failures",
+            "tests/test_security_review_fixes.py::"
+            "test_one_accounts_failed_sign_ins_do_not_lock_out_another_from_the_same_address",
+            "tests/test_security_review_fixes.py::test_one_address_is_capped_across_accounts",
+            "-p",
+            "no:cacheprovider",
+        ],
+        timeout=300,
+    )
+    proved = _all_passed(result, output, "the sign-in limit tests")
+    if not proved.ok:
+        return proved
+    return ok(
+        "login 5/min per address and account and 30/min per address, refresh 30/min, "
+        f"general 300/min; the 429s seen by {proved.message}"
+    )
+
+
+@check(3, "suspicious activity is written to the audit log")
+def check_suspicious_activity_audited() -> Result:
+    """Report User Story 5, acceptance criterion 3: "Given suspicious activity occurs, when it is
+    detected, then the system logs the event for audit purposes."
+
+    A role guard's refusal, a replayed refresh token and a sign-in limit engaging were detected
+    but left no audit entry until D-068. Their tests also prove the limit's entries are bounded.
+    """
+    result, output = _pytest(
+        ["tests/test_suspicious_activity_audit.py", "-p", "no:cacheprovider"], timeout=300
+    )
+    proved = _all_passed(result, output, "the suspicious-activity audit tests")
+    if not proved.ok:
+        return proved
+    return ok(
+        "role denials, replayed refresh tokens and engaged sign-in limits are audited; "
+        + proved.message
+    )
 
 
 @check(3, "the catalog loads through one schema-validated loader")

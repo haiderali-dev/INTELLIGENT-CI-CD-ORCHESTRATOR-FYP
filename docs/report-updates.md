@@ -186,6 +186,9 @@ each one attaches to Jenkins.
       The gate keeps a consumer out of that list, so D was always 0 and Appendix C's inheritance
       could never happen in a live queue. Say so in the Testing chapter too: it is a defect that
       unit tests could not find, because they build their groups by hand.
+- [ ] **Testing chapter: User Story 5, criterion 3 needed a fix to pass.** A role guard's refusal, a
+      replayed refresh token and an engaged sign-in limit were detected but not audited (D-068).
+      They are now audited, at most once a minute per caller for a limit.
 - [ ] **Usability and accessibility: Lighthouse scores 100 for accessibility** on both assistant
       pages, in all 16 audits (empty and with a chat, light and dark, mobile and desktop). Measured
       signed in (D-064), and checked in CI on every push since 2026-10-20.

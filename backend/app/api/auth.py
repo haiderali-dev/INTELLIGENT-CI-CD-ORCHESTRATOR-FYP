@@ -19,13 +19,20 @@ from app.core.ratelimit import (
     LOGIN_ADDRESS_LIMIT,
     LOGIN_LIMIT,
     REFRESH_LIMIT,
+    RateLimitedError,
     RateLimiter,
     get_rate_limiter,
 )
 from app.core.settings import Settings
 from app.db.models import Role, User
 from app.db.session import get_db
-from app.services.auth import authenticate, issue_tokens, refresh_tokens, sign_out
+from app.services.auth import (
+    authenticate,
+    issue_tokens,
+    record_sign_in_limited,
+    refresh_tokens,
+    sign_out,
+)
 from app.services.dependencies import get_settings_dep
 
 router = APIRouter(tags=["auth"])
@@ -86,7 +93,6 @@ class TokenResponse(BaseModel):
     "/auth/login",
     response_model=TokenResponse,
     summary="Sign in",
-    dependencies=[Depends(rate_limit(LOGIN_ADDRESS_LIMIT))],
 )
 async def login(
     payload: LoginRequest,
@@ -99,15 +105,26 @@ async def login(
 
     Rate limited to five attempts a minute per account from one address, enough for a person who
     mistypes, and thirty a minute per address across all accounts, which stops a password spray.
+    Both are checked here rather than in a dependency so that a limit engaging can be audited, at
+    most once a minute per caller (D-068).
     """
     account = str(payload.email).strip().lower()
-    limiter.check(LOGIN_LIMIT, f"{client_identifier(request)}|{account}")
+    address = client_identifier(request)
+    try:
+        limiter.check(LOGIN_ADDRESS_LIMIT, address)
+        limiter.check(LOGIN_LIMIT, f"{address}|{account}")
+    except RateLimitedError as refused:
+        if refused.record:
+            await record_sign_in_limited(
+                session, account=account, limit=refused.limit.name, client=address
+            )
+        raise
     user = await authenticate(
         session,
         settings,
         email=payload.email,
         password=payload.password,
-        client=client_identifier(request),
+        client=address,
     )
     tokens = issue_tokens(settings, user)
     return TokenResponse(
@@ -126,6 +143,7 @@ async def login(
 )
 async def refresh(
     payload: RefreshRequest,
+    request: Request,
     session: Annotated[AsyncSession, Depends(get_db)],
     settings: Annotated[Settings, Depends(get_settings_dep)],
 ) -> TokenResponse:
@@ -134,7 +152,12 @@ async def refresh(
     The supplied refresh token is revoked as part of the exchange, so a leaked one cannot keep
     being used alongside the legitimate holder's.
     """
-    user, tokens = await refresh_tokens(session, settings, refresh_token=payload.refresh_token)
+    user, tokens = await refresh_tokens(
+        session,
+        settings,
+        refresh_token=payload.refresh_token,
+        client=client_identifier(request),
+    )
     return TokenResponse(
         access_token=tokens.access_token,
         refresh_token=tokens.refresh_token,
