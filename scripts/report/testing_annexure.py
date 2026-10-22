@@ -290,6 +290,56 @@ def section_security() -> list[str]:
             "Six findings and one found by a finding's own tests.", ""]
 
 
+def section_dependency_scans(campaign: Path) -> list[str]:
+    """Known vulnerabilities in the dependencies: pip-audit's reports for the backend (D-071) and
+    npm audit's, which the campaign's frontend-audit step keeps as its log."""
+    lines = ["## A.12 Known-vulnerability scans of the dependencies", ""]
+    rows = []
+    for label, name in (("Backend, before D-071", "pip-audit-backend-before.json"),
+                        ("Backend, after D-071", "pip-audit-backend-after.json")):
+        path = DOCS / "evidence" / name
+        if path.is_file():
+            report = json.loads(path.read_text(encoding="utf-8"))
+            found = [f"{dep['name']} {dep['version']}: {vuln['id']}" for dep in report["dependencies"] for vuln in dep.get("vulns", [])]
+            rows.append([label, "pip-audit 2.10.1", len(report["dependencies"]), len(found), "; ".join(found) or "none",
+                         f"`docs/testing/evidence/{name}`"])
+    log = campaign / "logs" / "frontend-audit.log"
+    if log.is_file():
+        text = log.read_text(encoding="utf-8", errors="replace").split("--- stderr ---")[0]
+        try:
+            audit = json.loads(text)
+            meta = audit.get("metadata", {})
+            counts = meta.get("vulnerabilities", {})
+            total = sum(v for k, v in counts.items() if k != "total") if counts else 0
+            packages = meta.get("dependencies", {}).get("total", "")
+            rows.append(["Frontend, production and tools", "npm audit", packages, total,
+                         ", ".join(f"{k} {v}" for k, v in counts.items() if v and k != "total") or "none",
+                         "the campaign's `logs/frontend-audit.log`"])
+        except json.JSONDecodeError:
+            rows.append(["Frontend", "npm audit", "", "", "its report did not parse", "the campaign's log"])
+    lines += table(["Scope", "Tool", "Packages", "Known vulnerabilities", "Which", "Report"], rows)
+    lines += ["", "The plugin bundles no third-party library: its `.hpi` holds only its own jar.", ""]
+    return lines
+
+
+def section_complexity() -> list[str]:
+    summary, top = DATA / "complexity-summary.csv", DATA / "complexity-top.csv"
+    if not summary.is_file() or not top.is_file():
+        return []
+    lines = ["## A.13 Cyclomatic complexity", "",
+             "Measured with lizard 1.24.1 over each component's own code, tests excluded. Branch coverage is "
+             "per function for the backend (coverage.py) and per method for the plugin (JaCoCo); the frontend's is "
+             "per file, as V8 reports it. Sources: `docs/testing/data/complexity-*.csv`.", ""]
+    lines += table(["Component", "Functions", "Mean", "Median", "Highest", "Over 10", "Over 15"],
+                   [[r["component"], r["functions"], r["mean_ccn"], r["median_ccn"], r["max_ccn"], r["over_10"], r["over_15"]]
+                    for r in read_csv(summary)])
+    lines += ["", "The ten most complex functions of each component:", ""]
+    lines += table(["Component", "Function", "Where", "CCN", "Lines", "Branches covered (%)", "Measured per"],
+                   [[r["component"], f"`{r['function']}`", f"`{r['where']}`", r["ccn"], r["nloc"],
+                     r["branch_coverage_pct"], r["coverage_measured_per"]] for r in read_csv(top)])
+    return lines
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("campaign", type=Path)
@@ -305,9 +355,11 @@ def main() -> int:
     for section in (section_environment(manifest), section_campaign(manifest), section_gate(args.gate), section_ci(),
                     section_coverage(args.campaign), section_mutation(args.campaign), section_experiments(),
                     section_system(args.system), section_screenshots(), section_lighthouse(args.campaign),
-                    section_defects(), section_security()):
+                    section_defects(), section_security(), section_dependency_scans(args.campaign),
+                    section_complexity()):
         lines += section
-    (DOCS / "annexure-a-evidence.md").write_text("\n".join(lines), encoding="utf-8")
+    # newline: LF, as the repository stores text; text mode on Windows would write CRLF.
+    (DOCS / "annexure-a-evidence.md").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
     print(f"wrote {DOCS / 'annexure-a-evidence.md'} ({len(lines)} lines)")
     return 0
 

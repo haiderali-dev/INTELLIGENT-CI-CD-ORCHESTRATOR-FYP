@@ -424,7 +424,7 @@ def write(register: Register) -> None:
                 f"| {number} | {title} | `{row.file}` | {row.phase} | {row.result} | {row.seconds:g} |"
             )
         lines.append("")
-    (OUT / "annexure-b-test-register.md").write_text("\n".join(lines), encoding="utf-8")
+    (OUT / "annexure-b-test-register.md").write_text(LF.join(lines) + LF, encoding="utf-8", newline=LF)
 
 
 def ci_links(path: Path | None, commit: str) -> dict[str, str]:

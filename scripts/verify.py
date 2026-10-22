@@ -1609,12 +1609,18 @@ def check_migrations_cover_the_schema() -> Result:
     return ok(f"all {len(REQUIRED_TABLES)} tables")
 
 
-@check(3, "every migration is reversible")
+@check(3, "every migration is reversible, and the migrations build the models' schema")
 def check_migrations_reversible() -> Result:
     """A migration that cannot be rolled back is one nobody can safely apply.
 
     demo_reset.py restores a known state before the demo; an irreversible migration turns that
-    from a rollback into a reinstall.
+    from a rollback into a reinstall. Each downgrade() must act, and two integration tests prove
+    the rest on the stack's PostgreSQL (D-074):
+    - the migrations build exactly the schema the models describe;
+    - they downgrade to nothing and build it again.
+
+    Until 2026-10-22 this check only read the files, and said "all downgrade cleanly" without
+    running one.
     """
     versions = REPO_ROOT / "backend" / "alembic" / "versions"
     if not versions.is_dir():
@@ -1632,7 +1638,25 @@ def check_migrations_reversible() -> Result:
             offenders.append(f"{path.name}: downgrade() does nothing")
     if offenders:
         return fail("; ".join(offenders))
-    return ok("all downgrade cleanly")
+    result, output = _pytest(
+        [
+            "-m",
+            "integration",
+            "tests/test_migrations.py",
+            "-p",
+            "no:cacheprovider",
+            "-k",
+            "alembic_upgrade or downgrades_and_upgrades",
+        ],
+        timeout=600,
+    )
+    verdict = _all_passed(result, output, "the migration round trip on PostgreSQL")
+    if not verdict.ok:
+        return verdict
+    return ok(
+        "every downgrade() acts; on PostgreSQL the migrations match the models, downgrade to "
+        f"base and build them again ({verdict.message})"
+    )
 
 
 @check(3, "seed scripts exist and are idempotent by construction")

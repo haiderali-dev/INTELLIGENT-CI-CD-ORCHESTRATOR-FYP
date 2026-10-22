@@ -8,17 +8,26 @@ a matching migration until the change reached a real PostgreSQL. This closes tha
 
 from __future__ import annotations
 
+import os
 import re
+import subprocess
+import sys
+from collections.abc import AsyncIterator
 from pathlib import Path
 
+import asyncpg
 import pytest
-from sqlalchemy import inspect
-from sqlalchemy.ext.asyncio import AsyncEngine
+from alembic.autogenerate import compare_metadata
+from alembic.migration import MigrationContext
+from sqlalchemy import Connection, inspect
+from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from app.core.settings import Settings
 from app.db.base import Base
 from app.db.models import Role, Service, User
 from app.db.seed import seed_admin, seed_catalog
+from tests.e2e_support import database_url
+from tests.test_integration_jenkins import read_env
 
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
 VERSIONS = BACKEND_ROOT / "alembic" / "versions"
@@ -257,15 +266,124 @@ async def test_seed_catalog_never_grants_production(db, settings: Settings) -> N
         assert "production" not in (service.deploy_commands or {})
 
 
-@pytest.mark.integration
-async def test_alembic_upgrade_matches_the_models() -> None:
-    """Placeholder for the live check.
+# --- The live check, on the Compose stack's PostgreSQL ------------------------------------------
+#
+# Running the migrations on a real PostgreSQL and comparing the result with the models is the only
+# way to prove they agree. Until 2026-10-22 this was a placeholder that always skipped. The database
+# is a throwaway of its own, so nothing the stack or the end-to-end suite stores is touched. The
+# credentials come from .env, as the other integration tests read them, and none is printed.
 
-    Running `alembic upgrade head` against a real PostgreSQL and diffing the result against
-    Base.metadata is the only way to prove the migration and the models agree exactly. It needs a
-    container, so it is marked `integration` and excluded from the default run.
+MIGRATION_DATABASE = "orchestrator_migrations"
+
+
+async def _admin(sql: str) -> None:
+    """One statement on the stack's PostgreSQL, as its owner, outside any database under test."""
+    env = read_env()
+    connection = await asyncpg.connect(
+        host="127.0.0.1",
+        port=5432,
+        user=env.get("POSTGRES_USER", "orchestrator"),
+        password=env["POSTGRES_PASSWORD"],
+        database=env.get("POSTGRES_DB", "orchestrator"),
+    )
+    try:
+        await connection.execute(sql)
+    finally:
+        await connection.close()
+
+
+def _alembic(*arguments: str, database: str) -> None:
+    """Run alembic on one database, as ``recreate_database`` in ``e2e_support`` does."""
+    environment = {
+        **os.environ,
+        "ENVIRONMENT": "test",
+        "DATABASE_URL": database_url(database),
+        # Settings refuse to start without these outside tests; the migrations do not use them.
+        "JWT_SECRET": "migration-test-only-" + "x" * 40,
+        "METRICS_TOKEN": "migration-test-only-metrics-token",
+    }
+    done = subprocess.run(  # noqa: S603 - the arguments are this file's own literals, never input
+        [sys.executable, "-m", "alembic", *arguments],
+        cwd=BACKEND_ROOT,
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert done.returncode == 0, (
+        f"alembic {' '.join(arguments)} failed: {done.stderr.strip()[-600:]}"
+    )
+
+
+async def _inspect(database: str) -> tuple[list[object], set[str]]:
+    """What alembic's autogenerate would change to make the database match the models, and the
+    database's tables."""
+
+    def read(connection: Connection) -> tuple[list[object], set[str]]:
+        context = MigrationContext.configure(connection, opts={"compare_type": True})
+        return list(compare_metadata(context, Base.metadata)), set(
+            inspect(connection).get_table_names()
+        )
+
+    engine = create_async_engine(database_url(database))
+    try:
+        async with engine.connect() as connection:
+            return await connection.run_sync(read)
+    finally:
+        await engine.dispose()
+
+
+@pytest.fixture
+async def fresh_database() -> AsyncIterator[str]:
+    """A new, empty database on the stack's PostgreSQL, dropped afterwards. Skips without a stack,
+    as the other integration tests do; the gate counts that skip as a failure."""
+    if "POSTGRES_PASSWORD" not in read_env():
+        pytest.skip("the Compose stack's credentials are not in .env")
+    try:
+        await _admin(f"DROP DATABASE IF EXISTS {MIGRATION_DATABASE} WITH (FORCE)")
+        await _admin(f"CREATE DATABASE {MIGRATION_DATABASE}")
+    except (OSError, asyncpg.PostgresError) as exc:
+        pytest.skip(f"the stack's PostgreSQL is not reachable: {exc}")
+    try:
+        yield MIGRATION_DATABASE
+    finally:
+        await _admin(f"DROP DATABASE IF EXISTS {MIGRATION_DATABASE} WITH (FORCE)")
+
+
+@pytest.mark.integration
+async def test_alembic_upgrade_matches_the_models(fresh_database: str) -> None:
+    """The migrations build exactly the schema the models describe, on a real PostgreSQL.
+
+    Every other test builds its schema from the models, so a model changed without a matching
+    migration would pass them all. Here a fresh database is migrated with `alembic upgrade head`,
+    and alembic's own autogenerate comparison is asked what it would change to match
+    Base.metadata. The answer must be nothing; otherwise this names each difference.
     """
-    pytest.skip("needs a PostgreSQL container; run with -m integration against the Compose stack")
+    _alembic("upgrade", "head", database=fresh_database)
+
+    differences, tables = await _inspect(fresh_database)
+
+    assert differences == []
+    assert tables >= REQUIRED_TABLES
+
+
+@pytest.mark.integration
+async def test_every_migration_downgrades_and_upgrades_again(fresh_database: str) -> None:
+    """Every migration can be undone, and redone, on a real PostgreSQL.
+
+    Downgrading to base must leave no table but alembic's own, and upgrading again must rebuild a
+    schema that still matches the models. A type or index a downgrade forgot would make the second
+    upgrade fail. The gate's check had only read each downgrade() for an `op.` call.
+    """
+    _alembic("upgrade", "head", database=fresh_database)
+    _alembic("downgrade", "base", database=fresh_database)
+
+    _, tables = await _inspect(fresh_database)
+    assert tables <= {"alembic_version"}
+
+    _alembic("upgrade", "head", database=fresh_database)
+    differences, _ = await _inspect(fresh_database)
+    assert differences == []
 
 
 async def test_seed_admin_stays_deactivated_while_another_admin_is_active(

@@ -1916,6 +1916,28 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
         - Milestone 2's five runs recomputed, with the dependency edges each one broke;
         - the defects by how they were found and by phase.
       - **The defect log has 41 entries;** DF-36 to DF-41 are new.
+- [x] **A rehearsal of the evidence campaign at `ac8305a` found two things.** Its Parts A
+      (plugin) and B (backend) ran to the end. Parts C to E were not run there, since the final
+      campaign runs at the commit after the fix below.
+      - **A network outage.** DNS for `github.com` and the model provider failed on this machine
+        between about 06:41 and 06:56. Three backend steps failed in it: integration (8 failed),
+        end-to-end (10) and live (4). The causes were recorded ("Could not resolve host:
+        github.com"; the provider "unavailable", which in the chain means a connection error, not a
+        rate limit). Their logs are kept under the campaign's `attempt-1-network-outage/`. Run again
+        once DNS answered, all four backend steps passed: offline 1730, integration 31 (and one
+        skipped, below), end-to-end 13, live 4.
+      - **D-074, a placeholder test (Phase 3).** That one skipped test,
+        `test_alembic_upgrade_matches_the_models`, always skipped: it had never been written. The
+        gate's "every migration is reversible" check only read the files.
+        - **Both tests now run on the stack's PostgreSQL.** The migrations must match the models
+          exactly, by alembic's own comparison. Downgrading to base must leave only alembic's
+          table, and upgrading again must match again. The gate's check runs both.
+        - **Checks run:**
+          - 2 passed (6.6 s);
+          - a model column with no migration, and a `drop_table` removed from a downgrade, each
+            failed the test meant for it, and both passed again once restored byte for byte;
+          - the gate's check passes through them;
+          - ruff and ruff format are clean.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not

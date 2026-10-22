@@ -11,6 +11,43 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 6
 
+### D-074 The migrations are proved against the models, and every downgrade is run, on PostgreSQL
+**Date:** 2026-10-22 · **Status:** accepted (hardening of Phases 1 to 6; Phase 3)
+
+**The gap.**
+- **A test that never ran.** `test_migrations.py` begins by saying it closes a gap: every other
+  test builds its schema from the models, so a model changed without a matching migration would
+  pass them all until it reached a real PostgreSQL. The test meant to close it,
+  `test_alembic_upgrade_matches_the_models`, was a placeholder that always skipped. So every
+  integration run reported one skipped test and checked nothing.
+- **A gate check that ran nothing.** "Every migration is reversible" only read each `downgrade()`
+  for an `op.` call, and said "all downgrade cleanly" though no downgrade had ever run.
+- **How it was found:** the evidence campaign's register listed the one skipped integration test,
+  and its reason pointed at the placeholder.
+
+**What the tests now do**, on a throwaway database of their own on the stack's PostgreSQL (dropped
+afterwards, so nothing the stack or the end-to-end suite stores is touched):
+- **`test_alembic_upgrade_matches_the_models`:** runs `alembic upgrade head` on a fresh database,
+  and asks alembic's own autogenerate comparison what it would change to match `Base.metadata`,
+  types included. The answer must be nothing. Every table Part 4.4.3 names must exist.
+- **`test_every_migration_downgrades_and_upgrades_again`:** upgrades, downgrades to base (which must
+  leave no table but alembic's own), upgrades again, and compares again. A type or index a downgrade
+  forgot would make the second upgrade fail.
+
+Like the other integration tests, they skip without a stack. The gate's check now runs both after
+its file scan, and counts a skip as a failure.
+
+**Evidence (2026-10-22):**
+- Both passed on the stack's PostgreSQL 16 in 6.6 s.
+- Each was shown to catch its defect, then restored byte for byte:
+  - a column added to a model with no migration failed the first test, which named it
+    (`add_column`, `services`, `mutation_probe`);
+  - a `drop_table` removed from the first migration's `downgrade()` failed the second, as
+    `alembic downgrade base` itself failed.
+- Then both passed again, and the gate's check passed through them.
+
+---
+
 ### D-072 The optimizer has a settings page, every setting on it does something, and Maven jobs are tested
 **Date:** 2026-10-22 · **Status:** accepted (hardening of Phases 1 to 6; Phase 2)
 
