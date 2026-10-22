@@ -94,13 +94,26 @@ class OptimizerConfigurationValidationIT {
     void weightsAreCheckedSinglyAndTogether(JenkinsRule j) {
         OptimizerConfiguration config = OptimizerConfiguration.get();
 
-        assertEquals(Kind.ERROR, config.doCheckWeightUrgency(-0.1).kind);
-        assertEquals(Kind.OK, config.doCheckWeightDependency(0.3).kind, "the report's weights sum to 1");
+        assertEquals(Kind.ERROR, config.doCheckWeightUrgency(-0.1, 0.3, 0.2).kind);
+        assertEquals(Kind.OK, config.doCheckWeightDependency(0.3, 0.5, 0.2).kind, "the report's weights sum to 1");
 
         // An experiment may set other weights deliberately, so it is a warning, not a refusal.
-        config.setWeightUrgency(0.6);
-        FormValidation summed = config.doCheckWeightExecutionTime(0.2);
+        FormValidation summed = config.doCheckWeightExecutionTime(0.2, 0.6, 0.3);
         assertEquals(Kind.WARNING, summed.kind);
         assertTrue(summed.getMessage().contains("1.100"), summed.getMessage());
+    }
+
+    @Test
+    @DisplayName("the weight warning follows the values on the form, not the last save")
+    void theWeightWarningFollowsTheForm(JenkinsRule j) {
+        OptimizerConfiguration config = OptimizerConfiguration.get();
+
+        // Saved weights summing to 1.1 must not warn about a form that sums to 1, and saved
+        // weights summing to 1 must not hide a form that sums to 1.1. Until D-072 the check summed
+        // the saved weights, so both of these were wrong.
+        config.setWeightUrgency(0.6);
+        assertEquals(Kind.OK, config.doCheckWeightUrgency(0.5, 0.3, 0.2).kind);
+        config.setWeightUrgency(0.5);
+        assertEquals(Kind.WARNING, config.doCheckWeightUrgency(0.6, 0.3, 0.2).kind);
     }
 }

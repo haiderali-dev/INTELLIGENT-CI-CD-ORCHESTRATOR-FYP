@@ -11,6 +11,121 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 6
 
+### D-072 The optimizer has a settings page, every setting on it does something, and Maven jobs are tested
+**Date:** 2026-10-22 · **Status:** accepted (hardening of Phases 1 to 6; Phase 2)
+
+**The defect.** `BUILD_PROMPT.md` Part 2.2 lists Milestone 2's known problems, to be fixed and never
+repeated. Problem 4 includes "the global configuration page", and T2.2 asks for
+`OptimizerConfiguration` "(global configuration and JCasC)".
+- **What existed:** the class, its fields, configuration as code and the form checks.
+- **What was missing:** a view. Its resource folder had been created empty on 28 September and never
+  held a file.
+- **The consequence:** Manage Jenkins showed no optimizer section, so the 15 settings of report
+  Appendix D could be changed only through configuration as code, and no page could reach the form
+  checks that `OptimizerConfigurationValidationIT` tests.
+- **How it slipped through:** T2.2 had been ticked on the class alone.
+
+It was found while checking the testing chapter's statement that the plugin has a global
+configuration form.
+
+**What was added:**
+- **A settings page.** `config.jelly` for `OptimizerConfiguration` adds a Dynamic Queue Optimizer
+  section to Manage Jenkins > System, with all 15 settings in Appendix D's terms. Numbers use
+  Jenkins' number input, and fractional ones pass `step="any"` through to it, so that the browser
+  does not mark 0.05 invalid. The token is a password field. The titles avoid parentheses: in a
+  Jelly `${%...}` text they would be read as message arguments.
+- **The weight warning now follows the form.** The three weight checks summed the *saved* weights.
+  That meant nothing while there was no form, and on a form it would warn about the last save, not
+  the values being typed. Each check now takes the other two weights as query parameters, which the
+  page sends with it.
+
+**A setting that did nothing now does what it says.** `rescoreIntervalSeconds` (Appendix D, 60) was
+reported by the API and set by configuration as code, but nothing read it: the sorter's cache key
+used a fixed minute. Showing it on a page would have offered a control with no effect. The key now
+uses the interval's time bucket, `DynamicQueueSorter.rescoreBucket`. At the default of 60 that is
+the current minute, exactly as `BUILD_PROMPT.md` Part 4.3.7 step 2 states, and all three JCasC files
+set 60, so the stack's behaviour is unchanged.
+
+**Maven jobs had never been queued in a test.** Part 2.3 promises freestyle, Maven and Pipeline
+jobs, T2.4 asks `JobResolver` to handle all three, and the resolver's comment said Maven jobs "only
+ever take branch one". No test had made one.
+- **The new test:** `MavenPriorityIT` queues a LOW Maven job, a MEDIUM freestyle job and a HIGH
+  Maven job, in that order, on one executor, and asserts the order they are dispatched in.
+- **What it needs:** the Maven Integration plugin, as a test dependency at the BOM's version. The
+  builds themselves fail at once, since no Maven installation is configured, but dispatch order is
+  decided first.
+- **Not covered:** a Maven job's modules built in parallel. Maven jobs do that only when told to,
+  and those modules queue as jobs of their own.
+
+**Evidence (2026-10-22):**
+- **Each new test failed on the defect it guards,** with the code changed back on purpose, and
+  passed once restored byte for byte:
+  - with the page removed, `thePageHasEverySetting` failed and `aValueTypedOnThePageIsSaved` errored;
+  - with the weight check summing saved weights, `weightsAreCheckedSinglyAndTogether`,
+    `theWeightWarningFollowsTheForm` and the page's weight check failed;
+  - with the bucket fixed at a minute, `RescoreBucketTest` failed 2 of 3 (the third is the default
+    case, unchanged by design);
+  - with Maven jobs left unresolved, `MavenPriorityIT` failed, dispatching
+    `[fs-medium, mvn-low, mvn-high]`.
+- **`mvn -B clean verify`:** BUILD SUCCESS, 121 unit tests (1 skipped) and 97 integration tests,
+  SpotBugs 0, Spotless clean. Jenkins' own `InjectedTest` now parses three views.
+- **jenkins-dev was rebuilt with this plugin.** The gate's Phase 1 image check, which compares the
+  page as well as the classes, passes. So do its bot-token, executor, agent, ranking, health and
+  metrics checks.
+
+---
+
+### D-071 A known vulnerability in `certifi` is fixed inside the seven-day cooldown
+**Date:** 2026-10-22 · **Status:** accepted (hardening of Phases 1 to 6; the testing chapter's
+security testing)
+
+**Found by:** `pip-audit` 2.10.1, run for the testing chapter on the 49 packages the backend image
+installs (`uv export --frozen --no-dev --no-emit-project`, audited with `--require-hashes
+--disable-pip`). It was the first known-vulnerability scan of the backend's dependencies; the
+frontend's had been scanned with `npm audit` since T6.2.
+
+**The vulnerability:** `certifi` 2026.7.22, which `httpx` brings in, carries PYSEC-2026-4320
+(GHSA-6q48-6c7w-9gw2).
+- **The flaw:** its CA bundle trusts `emSign ECC Root CA - G3`, under which eight intermediate CAs
+  have compromised private keys. Anyone holding one of those keys, and on the network path, could
+  present a valid-looking certificate for any host.
+- **Where the backend is exposed:** it trusts that bundle when it calls the model provider over HTTPS
+  (`httpx`, through the `openai` client), and its API key travels on those calls.
+- **Where it is not:** it reaches Git hosting through the `git` command, which has its own trust
+  store, and Jenkins over plain HTTP inside the stack.
+
+**The conflict:** the fix, `certifi` 2026.10.19, was three days old. Every pin in this project is
+the newest release at least seven days old (`docs/versions.md`), so that problems in a new release
+have time to surface.
+
+**Why it was taken anyway:** the cooldown guards against what a new release might contain, and for
+this package that can be checked directly. The new wheel was downloaded beside the locked one, whose
+hash matches `uv.lock`, and every file was compared:
+- `core.py` is identical;
+- `__init__.py` differs only in its version string;
+- the CA bundle differs only by the removal of `emSign ECC Root CA - G3`: 121 roots before, 120
+  after, nothing added;
+- the rest is packaging metadata (the generator's setuptools version).
+
+A known way to impersonate any host, against a change that can be read in full and removes one
+certificate: the fix wins, and the exception is limited to this package.
+
+**The lock was written by the project's own uv.** `uv lock --upgrade-package certifi` changed only
+certifi's entry, and the locked wheel's hash is the one inspected. It ran with uv 0.12.20 from
+`.venv-tools/`, which the backend image also uses. A first attempt with the uv on the machine's
+PATH, 0.12.24, also raised the lockfile's format revision from 3 to 5. It was discarded, since an
+older uv may not read the newer format.
+
+**Evidence (2026-10-22):**
+- `pip-audit` found 1 known vulnerability in 49 packages before the change and none after
+  (`docs/testing/evidence/pip-audit-backend-before.json`, `-after.json`).
+- The 4 live tests passed against the real model provider over TLS with the new bundle.
+- The offline suite: 1730 passed.
+- The backend image was rebuilt and runs `certifi` 2026.10.19, and the gate's Phase 3 image check
+  passes.
+
+---
+
 ### D-070 The gate checks that the stack runs what the current source builds
 **Date:** 2026-10-22 · **Status:** accepted (hardening of Phases 1 to 6)
 

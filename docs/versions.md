@@ -76,6 +76,11 @@ download mirror (`updates.jenkins.io/download/plugins/<name>/<version>/`); this 
 
 Milestone 2 used parent POM 5.9 and `java.level` 17 against Jenkins 2.479.3. Both move up.
 
+Test-scope dependencies take their versions from the BOM and none is pinned by hand. They are
+configuration as code, the Pipeline plugins, and, since D-072, the Maven Integration plugin
+(`org.jenkins-ci.main:maven-plugin`, 3.27 under this BOM, resolved on 2026-10-22), which
+`MavenPriorityIT` needs to create a Maven job.
+
 White-box measurement tools for the testing chapter, both opt in, so the ordinary build is unchanged:
 
 | Component | Pinned | Source | Checked |
@@ -120,6 +125,16 @@ follow, so 1.30.0 is pinned. The JUnit 5 plugin 1.2.3 runs this build's JUnit 6.
 
 `pyproject.toml` states lower bounds and `uv.lock` the exact versions; the table gives the
 locked version of every direct dependency, each found on PyPI on 2026-10-20.
+
+**One transitive pin breaks the seven-day cooldown, as a security fix (D-071).** `certifi`, which
+`httpx` brings in, is locked at 2026.10.19, published on 2026-10-19, three days before it was taken.
+The version it replaced, 2026.7.22, trusts a CA root under which eight intermediates have compromised
+keys (PYSEC-2026-4320, GHSA-6q48-6c7w-9gw2). `pip-audit` 2.10.1 found that vulnerability among the
+49 packages the backend image installs, and found none after the change. In place of the
+cooldown, the new wheel was compared file by file with the locked one: the code is unchanged but for
+its version string, and the CA bundle differs only by the removal of `emSign ECC Root CA - G3`.
+The lock was written by the project's own uv, 0.12.20 in `.venv-tools/`, the same version the
+backend image uses.
 
 ## Frontend
 

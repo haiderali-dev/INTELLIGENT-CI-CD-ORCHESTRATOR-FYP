@@ -83,6 +83,17 @@
       <artifactId>test-harness</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <!--
+      Maven jobs, test scope only, for the same reason as Pipeline below: the
+      plugin needs no Maven classes, since a Maven job is a Job, but a test has
+      to queue one to prove it is ranked (MavenPriorityIT, D-072).
+    -->
+    <dependency>
+      <groupId>org.jenkins-ci.main</groupId>
+      <artifactId>maven-plugin</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins.workflow</groupId>
       <artifactId>workflow-basic-steps</artifactId>

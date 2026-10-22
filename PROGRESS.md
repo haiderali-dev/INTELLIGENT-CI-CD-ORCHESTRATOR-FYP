@@ -1876,6 +1876,34 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
       - **CI on `0603d4e`:** run 39700898376 passed.
       - **Log:** `docs/testing/evidence/gate-run-4-0603d4e.log`. `.gitignore` now lets that folder's
         logs in; `*.log` had excluded them, the trap DF-20 fell into.
+- [x] **D-072, the optimizer had no settings page (Phase 2, T2.2).** Milestone 2's known problem 4,
+      "the global configuration page", was never fixed. The 15 Appendix D settings could be changed
+      only through configuration as code. Found while checking the chapter.
+      - **The page:** `config.jelly` adds the section to Manage Jenkins > System.
+      - **The weight warning** now follows the values on the form, not the last save.
+      - **`rescoreIntervalSeconds`,** which nothing read, now sets the cache key's time bucket. At
+        its default of 60 that is the current minute, as Part 4.3.7 states.
+      - **Maven jobs are tested** for the first time (`MavenPriorityIT`), with the Maven Integration
+        plugin as a test dependency.
+      - **Checks run:**
+        - each defect was put back on purpose and caught: 7 of the 9 new tests failed, and so did
+          the changed weight test. The other two guard what no defect touched (the default bucket
+          is the minute; saving the page keeps values). All passed once the code was restored;
+        - `mvn -B clean verify`: BUILD SUCCESS, 121 unit tests (1 skipped) and 97 integration tests,
+          SpotBugs 0, Spotless clean;
+        - jenkins-dev was rebuilt with this plugin; the gate's Phase 1 image check and its bot-token,
+          executor, agent, ranking, health and metrics checks pass.
+- [x] **D-071, a known vulnerability in the backend's dependencies (Phase 3).** `pip-audit`, run for
+      the testing chapter, found PYSEC-2026-4320 in `certifi` 2026.7.22: it trusted a CA root with
+      compromised intermediates.
+      - **The fix:** `certifi` 2026.10.19, taken inside the seven-day cooldown. In place of the
+        cooldown, its wheel was compared file by file with the old one: the only change is the
+        removal of the compromised root.
+      - **Checks run:**
+        - `pip-audit`: 1 known vulnerability in 49 packages before, none after;
+        - 4 live tests passed against the real provider with the new bundle;
+        - offline suite: 1730 passed;
+        - the backend image was rebuilt with it, and the Phase 3 image check passes.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not

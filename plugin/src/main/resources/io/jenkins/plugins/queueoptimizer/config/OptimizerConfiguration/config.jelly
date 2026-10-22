@@ -1,0 +1,67 @@
+<?jelly escape-by-default='true'?>
+<!--
+  The optimizer's settings, a section of Manage Jenkins > System. Every default and its meaning is
+  report Appendix D's; Configuration as Code sets the same fields under unclassified >
+  dynamicQueueOptimizer. Each number is checked as it is typed by OptimizerConfiguration's doCheck
+  methods. A fractional setting passes step="any" through to the input: without it the browser's
+  default step of 1 would mark 0.05 invalid.
+-->
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+  <f:section title="${%Dynamic Queue Optimizer}">
+    <f:entry field="optimizerEnabled" title="${%Order the build queue}"
+             description="${%When off, the plugin still records every queue event but leaves the order to Jenkins. The experiment runs its baseline arm this way.}">
+      <f:checkbox/>
+    </f:entry>
+
+    <f:entry field="weightUrgency" title="${%Weight of urgency, U}">
+      <f:number min="0" step="any"/>
+    </f:entry>
+    <f:entry field="weightDependency" title="${%Weight of dependency, D}">
+      <f:number min="0" step="any"/>
+    </f:entry>
+    <f:entry field="weightExecutionTime" title="${%Weight of execution time, T}"
+             description="${%The score is U, D and T in these proportions. The report uses 0.5, 0.3 and 0.2, which sum to 1.}">
+      <f:number min="0" step="any"/>
+    </f:entry>
+
+    <f:entry field="agingBonusPerInterval" title="${%Aging bonus per interval}">
+      <f:number min="0" step="any"/>
+    </f:entry>
+    <f:entry field="agingIntervalMinutes" title="${%Aging interval in minutes}">
+      <f:number min="1" step="1"/>
+    </f:entry>
+    <f:entry field="agingCap" title="${%Aging cap}"
+             description="${%A waiting job gains the bonus once per whole interval, up to the cap.}">
+      <f:number min="0" step="any"/>
+    </f:entry>
+
+    <f:entry field="estimatorK" title="${%Similar builds per estimate, k}">
+      <f:number min="1" step="1"/>
+    </f:entry>
+    <f:entry field="similarityThreshold" title="${%Similarity threshold}">
+      <f:number min="0" max="1" step="any"/>
+    </f:entry>
+    <f:entry field="recencyLambdaPerDay" title="${%Recency decay per day}">
+      <f:number min="0" step="any"/>
+    </f:entry>
+    <f:entry field="historyWindow" title="${%History window, in builds per job}"
+             description="${%How many recent builds of each job the duration estimate may compare.}">
+      <f:number min="1" step="1"/>
+    </f:entry>
+    <f:entry field="rescoreIntervalSeconds" title="${%Rescore interval in seconds}"
+             description="${%Scores are reused while the queue is unchanged, and computed afresh at least this often, so that aging takes effect.}">
+      <f:number min="1" step="1"/>
+    </f:entry>
+
+    <f:entry field="metricsEnabled" title="${%Publish metrics}">
+      <f:checkbox/>
+    </f:entry>
+    <f:entry field="metricsBackendUrl" title="${%Metrics endpoint}"
+             description="${%Where queue events are posted. When empty, nothing is published.}">
+      <f:textbox/>
+    </f:entry>
+    <f:entry field="metricsToken" title="${%Metrics token}">
+      <f:password/>
+    </f:entry>
+  </f:section>
+</j:jelly>

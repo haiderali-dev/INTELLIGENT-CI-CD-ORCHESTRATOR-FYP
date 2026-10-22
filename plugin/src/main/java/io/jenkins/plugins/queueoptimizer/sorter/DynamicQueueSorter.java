@@ -68,7 +68,7 @@ public class DynamicQueueSorter extends QueueSorter {
     private final Object cacheLock = new Object();
     private Set<Long> cachedItemIds = Collections.emptySet();
     private Set<Long> cachedHeldIds = Collections.emptySet();
-    private long cachedMinute = -1;
+    private long cachedBucket = -1;
     private Map<Long, ScoredJob> cachedScores = Collections.emptyMap();
 
     private final AtomicLong sorts = new AtomicLong();
@@ -145,10 +145,12 @@ public class DynamicQueueSorter extends QueueSorter {
     /**
      * Scores every item, reusing the previous pass's scores when nothing relevant has changed.
      *
-     * <p>The cache key is the set of buildable item ids, the set of held item ids, and the current
-     * minute. Including the minute is what refreshes the aging bonus at least once a minute,
-     * matching the report's periodic rescore, without recomputing estimates on every maintenance
-     * pass. The held items are part of the key, so a job joining or leaving a group rescores its
+     * <p>The cache key is the set of buildable item ids, the set of held item ids, and the time
+     * bucket of the rescore interval: the current minute at the default of 60 seconds. Including
+     * the bucket is what refreshes the aging bonus at least once an interval, matching the report's
+     * periodic rescore, without recomputing estimates on every maintenance pass. Until D-072 the
+     * minute was fixed and the rescore interval setting did nothing. The held items are part of
+     * the key, so a job joining or leaving a group rescores its
      * producer. They are a separate set because an item moving from held to buildable must
      * rescore too: keyed on one set of all ids, the gate's release left that set unchanged, the
      * cached scores had none for the released item, and it ranked behind lower work for a pass
@@ -166,20 +168,30 @@ public class DynamicQueueSorter extends QueueSorter {
                 heldIds.add(item.getId());
             }
         }
-        long minute = System.currentTimeMillis() / 60_000L;
+        long bucket = rescoreBucket(System.currentTimeMillis(), config.getRescoreIntervalSeconds());
 
         synchronized (cacheLock) {
-            if (minute == cachedMinute && itemIds.equals(cachedItemIds) && heldIds.equals(cachedHeldIds)) {
+            if (bucket == cachedBucket && itemIds.equals(cachedItemIds) && heldIds.equals(cachedHeldIds)) {
                 cacheHits.incrementAndGet();
                 return cachedScores;
             }
             Map<Long, ScoredJob> fresh = score(items, scope, config);
             cachedItemIds = itemIds;
             cachedHeldIds = heldIds;
-            cachedMinute = minute;
+            cachedBucket = bucket;
             cachedScores = fresh;
             return fresh;
         }
+    }
+
+    /**
+     * Which rescore interval a moment falls in: the time part of the cache key. At the default of
+     * 60 seconds it is the current minute, as {@code BUILD_PROMPT.md} Part 4.3.7 states. An interval
+     * below one second counts as one, so a mistyped 0 cannot divide by zero; form validation
+     * refuses it anyway.
+     */
+    static long rescoreBucket(long nowMillis, int rescoreIntervalSeconds) {
+        return nowMillis / (1000L * Math.max(1, rescoreIntervalSeconds));
     }
 
     /**

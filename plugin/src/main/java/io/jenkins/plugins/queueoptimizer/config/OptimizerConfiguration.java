@@ -11,7 +11,8 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 /**
- * Global configuration for the optimizer, at Manage Jenkins &gt; Dynamic Queue Optimizer.
+ * Global configuration for the optimizer: the Dynamic Queue Optimizer section of Manage Jenkins
+ * &gt; System ({@code config.jelly} beside this class; until D-072 there was no such page).
  *
  * <p>Every default comes from report Appendix D. The {@link Symbol} makes the whole block settable
  * through Configuration as Code:
@@ -196,6 +197,11 @@ public class OptimizerConfiguration extends GlobalConfiguration {
 
     // --- Scheduling and metrics --------------------------------------------------
 
+    /**
+     * How often scores are computed afresh while the queue is unchanged: the length of the time
+     * bucket in {@code DynamicQueueSorter}'s cache key. The default, 60, is the report's periodic
+     * rescore, and what refreshes the aging bonus.
+     */
     public int getRescoreIntervalSeconds() {
         return rescoreIntervalSeconds;
     }
@@ -269,28 +275,40 @@ public class OptimizerConfiguration extends GlobalConfiguration {
      * <p>A warning rather than an error on purpose: the report's ablation study varies the weights,
      * and the formula stays meaningful when they sum to something else, merely no longer normalised
      * to [0, 1]. Blocking it would block a legitimate experiment.
+     *
+     * <p>The sum is of the three values on the form, which the configuration page sends with each
+     * check (the other two {@link QueryParameter}s), so the warning follows what is being typed.
+     * Summing the saved weights instead would warn about the last save.
      */
-    public FormValidation doCheckWeightUrgency(@QueryParameter double value) {
-        return validateWeight(value);
+    public FormValidation doCheckWeightUrgency(
+            @QueryParameter double value,
+            @QueryParameter double weightDependency,
+            @QueryParameter double weightExecutionTime) {
+        return validateWeight(value, value + weightDependency + weightExecutionTime);
     }
 
-    public FormValidation doCheckWeightDependency(@QueryParameter double value) {
-        return validateWeight(value);
+    public FormValidation doCheckWeightDependency(
+            @QueryParameter double value,
+            @QueryParameter double weightUrgency,
+            @QueryParameter double weightExecutionTime) {
+        return validateWeight(value, weightUrgency + value + weightExecutionTime);
     }
 
-    public FormValidation doCheckWeightExecutionTime(@QueryParameter double value) {
-        return validateWeight(value);
+    public FormValidation doCheckWeightExecutionTime(
+            @QueryParameter double value,
+            @QueryParameter double weightUrgency,
+            @QueryParameter double weightDependency) {
+        return validateWeight(value, weightUrgency + weightDependency + value);
     }
 
-    private FormValidation validateWeight(double value) {
+    private static FormValidation validateWeight(double value, double sum) {
         if (value < 0) {
             return FormValidation.error("A weight cannot be negative.");
         }
-        if (!weightsSumToOne()) {
-            double sum = weightUrgency + weightDependency + weightExecutionTime;
+        if (Math.abs(sum - EXPECTED_WEIGHT_SUM) >= WEIGHT_SUM_TOLERANCE) {
             return FormValidation.warning(
-                    "The three weights currently sum to %.3f rather than 1.0, so scores will not "
-                            + "be normalised to [0, 1]. The report's formula uses 0.5, 0.3, 0.2.",
+                    "The three weights sum to %.3f rather than 1.0, so scores will not be "
+                            + "normalised to [0, 1]. The report's formula uses 0.5, 0.3, 0.2.",
                     sum);
         }
         return FormValidation.ok();
