@@ -1938,6 +1938,16 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
             failed the test meant for it, and both passed again once restored byte for byte;
           - the gate's check passes through them;
           - ruff and ruff format are clean.
+- [x] **The full gate, run 5 (2026-10-22, from 08:03, at `8263a7e`): 89 of 89 passed, ALL CHECKS
+      PASSED, exit 0.** This is the gate after every fix of the hardening: D-070, D-071, D-072 and
+      D-074.
+      - **Its new checks passed:** the containers run what the source builds, and the migrations
+        match the models and round-trip on PostgreSQL.
+      - **Its suites:** plugin 121 unit tests (1 skipped) and 97 integration tests; the backend's
+        bars clean; 836 AI tests; 12 end-to-end tests (replay); 296 frontend tests; 12 browser
+        flows; 16 Lighthouse audits, all scoring 100; 3 stack system tests.
+      - **Log:** `docs/testing/evidence/gate-run-5-8263a7e.log`. The commits since `8263a7e` change
+        documentation only.
 - [ ] **The testing chapter (Chapter 8), in progress; stopped at a usage limit on 2026-10-22.**
       - **The draft:** `docs/testing/work-in-progress/chapter-8-draft.md`. All sections are written,
         with the experiment results, defect analysis and limitations from real runs. 45
