@@ -62,6 +62,17 @@ Branch: phase-6-frontend
       design is approved"), with no changes. D-052 is now accepted; T6.3 onward may build screens.
 - [ ] **Label and review the evaluation gold answers** (Phase 8). At most 30 drafted items, each
       marked `needs_review: true` and excluded from scoring until a human clears the flag.
+      - **220 more candidates wait in `eval/datasets/candidates.jsonl`** (2026-10-23), labelled
+        `assistant-authored-candidate`, every one `needs_review: true`. They reached `main` in
+        `sample.jsonl` (`e0e3929`) and broke CI: their `train` and `validation` splits are not the
+        dataset's `dev` and `test` (4.9: 100 and 150), so the loader refused the file, and four
+        tests in `test_eval.py` failed. They were moved out unchanged; `sample.jsonl` holds the 30
+        drafts again. Each candidate needs a person's review and a `dev` or `test` split before it
+        joins `sample.jsonl`, and `test_eval.py`'s 30-draft tests then change with the dataset.
+      - **Checks run:** the two files rejoined equal `e0e3929`'s byte for byte;
+        `pytest tests/test_eval.py`: 43 passed; verify.py's Phase 4 checks "drafted evaluation
+        items stay capped and unreviewed" (30 drafts) and "the evaluation command writes a metrics
+        file" (0 scored, 30 excluded pending review) pass; Phase 0 passes.
 - [ ] **Schedule the long runs:** the full experiment matrix, about 50 runs (Phase 7), and the final
       live chatbot evaluation (Phase 8).
 - [ ] **Supply the report's Word source**, or confirm the PDF is the only copy. Only
