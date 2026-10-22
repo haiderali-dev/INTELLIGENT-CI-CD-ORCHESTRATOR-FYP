@@ -1,6 +1,6 @@
 Excerpts from the evidence campaign's rehearsal at ac8305a, 2026-10-22: the three backend steps
 that failed during a network outage on the development machine (about 06:41 to 06:56).
-Full logs: .tmp/campaign/ac8305a/attempt-1-network-outage/ (kept locally, not committed).
+Full logs and reports: raw/rehearsal-ac8305a-network-outage/ (see raw/README.md).
 
 == backend-integration
 8 failed, 23 passed, 1 skipped, 1747 deselected in 514.12s (0:08:34)

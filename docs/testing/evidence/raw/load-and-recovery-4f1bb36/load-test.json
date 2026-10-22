@@ -1,0 +1,255 @@
+{
+  "base": "http://127.0.0.1:5173",
+  "endpoints": [
+    "/api/queue",
+    "/api/runs",
+    "/api/chains",
+    "/api/services",
+    "/api/analytics/runs"
+  ],
+  "levels": [
+    {
+      "users": 1,
+      "seconds": 30.1,
+      "throughput_rps": 3.0,
+      "all": {
+        "requests": 90,
+        "p50_ms": 26.5,
+        "p95_ms": 37.5,
+        "max_ms": 40.6,
+        "statuses": {
+          "200": 90
+        }
+      },
+      "/api/analytics/runs": {
+        "requests": 18,
+        "p50_ms": 28.3,
+        "p95_ms": 37.2,
+        "max_ms": 37.2,
+        "statuses": {
+          "200": 18
+        }
+      },
+      "/api/chains": {
+        "requests": 18,
+        "p50_ms": 27.1,
+        "p95_ms": 39.5,
+        "max_ms": 39.5,
+        "statuses": {
+          "200": 18
+        }
+      },
+      "/api/queue": {
+        "requests": 18,
+        "p50_ms": 31.5,
+        "p95_ms": 40.6,
+        "max_ms": 40.6,
+        "statuses": {
+          "200": 18
+        }
+      },
+      "/api/runs": {
+        "requests": 18,
+        "p50_ms": 22.6,
+        "p95_ms": 36.7,
+        "max_ms": 36.7,
+        "statuses": {
+          "200": 18
+        }
+      },
+      "/api/services": {
+        "requests": 18,
+        "p50_ms": 25.1,
+        "p95_ms": 37.3,
+        "max_ms": 37.3,
+        "statuses": {
+          "200": 18
+        }
+      }
+    },
+    {
+      "users": 5,
+      "seconds": 30.1,
+      "throughput_rps": 14.9,
+      "all": {
+        "requests": 450,
+        "p50_ms": 33.2,
+        "p95_ms": 52.7,
+        "max_ms": 400.3,
+        "statuses": {
+          "200": 450
+        }
+      },
+      "/api/analytics/runs": {
+        "requests": 90,
+        "p50_ms": 32.7,
+        "p95_ms": 50.9,
+        "max_ms": 389.3,
+        "statuses": {
+          "200": 90
+        }
+      },
+      "/api/chains": {
+        "requests": 90,
+        "p50_ms": 28.8,
+        "p95_ms": 47.3,
+        "max_ms": 399.5,
+        "statuses": {
+          "200": 90
+        }
+      },
+      "/api/queue": {
+        "requests": 90,
+        "p50_ms": 42.7,
+        "p95_ms": 62.1,
+        "max_ms": 400.3,
+        "statuses": {
+          "200": 90
+        }
+      },
+      "/api/runs": {
+        "requests": 90,
+        "p50_ms": 30.1,
+        "p95_ms": 52.3,
+        "max_ms": 378.2,
+        "statuses": {
+          "200": 90
+        }
+      },
+      "/api/services": {
+        "requests": 90,
+        "p50_ms": 33.9,
+        "p95_ms": 52.7,
+        "max_ms": 388.0,
+        "statuses": {
+          "200": 90
+        }
+      }
+    },
+    {
+      "users": 10,
+      "seconds": 30.1,
+      "throughput_rps": 29.9,
+      "all": {
+        "requests": 900,
+        "p50_ms": 63.2,
+        "p95_ms": 115.6,
+        "max_ms": 173.3,
+        "statuses": {
+          "200": 900
+        }
+      },
+      "/api/analytics/runs": {
+        "requests": 180,
+        "p50_ms": 66.3,
+        "p95_ms": 130.1,
+        "max_ms": 170.7,
+        "statuses": {
+          "200": 180
+        }
+      },
+      "/api/chains": {
+        "requests": 180,
+        "p50_ms": 55.3,
+        "p95_ms": 110.4,
+        "max_ms": 154.5,
+        "statuses": {
+          "200": 180
+        }
+      },
+      "/api/queue": {
+        "requests": 180,
+        "p50_ms": 70.1,
+        "p95_ms": 131.8,
+        "max_ms": 173.3,
+        "statuses": {
+          "200": 180
+        }
+      },
+      "/api/runs": {
+        "requests": 180,
+        "p50_ms": 60.7,
+        "p95_ms": 116.8,
+        "max_ms": 143.9,
+        "statuses": {
+          "200": 180
+        }
+      },
+      "/api/services": {
+        "requests": 180,
+        "p50_ms": 58.6,
+        "p95_ms": 115.4,
+        "max_ms": 166.7,
+        "statuses": {
+          "200": 180
+        }
+      }
+    }
+  ],
+  "stress": {
+    "requests": 450,
+    "threads": 30,
+    "seconds": 3.2,
+    "throughput_rps": 139.3,
+    "all": {
+      "requests": 450,
+      "p50_ms": 201.7,
+      "p95_ms": 417.8,
+      "max_ms": 704.6,
+      "statuses": {
+        "200": 315,
+        "429": 135
+      }
+    },
+    "/api/analytics/runs": {
+      "requests": 90,
+      "p50_ms": 207.7,
+      "p95_ms": 425.0,
+      "max_ms": 551.8,
+      "statuses": {
+        "200": 63,
+        "429": 27
+      }
+    },
+    "/api/chains": {
+      "requests": 90,
+      "p50_ms": 183.4,
+      "p95_ms": 347.6,
+      "max_ms": 430.0,
+      "statuses": {
+        "200": 64,
+        "429": 26
+      }
+    },
+    "/api/queue": {
+      "requests": 90,
+      "p50_ms": 229.1,
+      "p95_ms": 496.6,
+      "max_ms": 630.7,
+      "statuses": {
+        "200": 63,
+        "429": 27
+      }
+    },
+    "/api/runs": {
+      "requests": 90,
+      "p50_ms": 189.1,
+      "p95_ms": 399.9,
+      "max_ms": 704.6,
+      "statuses": {
+        "200": 63,
+        "429": 27
+      }
+    },
+    "/api/services": {
+      "requests": 90,
+      "p50_ms": 186.4,
+      "p95_ms": 400.4,
+      "max_ms": 477.0,
+      "statuses": {
+        "200": 62,
+        "429": 28
+      }
+    }
+  }
+}

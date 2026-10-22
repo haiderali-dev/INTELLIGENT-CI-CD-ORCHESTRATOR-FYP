@@ -1,0 +1,31 @@
+{
+  "steps": [
+    {
+      "restarted": "postgres",
+      "restart_command_s": 0.8,
+      "reported_down_after_restart": true,
+      "database_up_again_after_s": 0.6,
+      "signed_in_request_after": 200,
+      "passed": true
+    },
+    {
+      "restarted": "backend",
+      "restart_command_s": 1.5,
+      "live_again_after_s": 3.1,
+      "runs_before": 100,
+      "runs_after": 100,
+      "passed": true
+    },
+    {
+      "restarted": "jenkins-dev",
+      "restart_command_s": 1.0,
+      "jenkins_reported_while_restarting": "down",
+      "queue_api_while_restarting": 200,
+      "queue_said_unavailable": true,
+      "queue_unavailable_reason": "the plugin returned 503",
+      "jenkins_up_again_after_s": 9.4,
+      "agents_online_after_s": 2.1,
+      "passed": true
+    }
+  ]
+}

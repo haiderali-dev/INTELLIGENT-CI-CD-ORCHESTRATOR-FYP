@@ -6,6 +6,10 @@
 # make the working copy differ from the m2-final tag it is checked against.
 legacy/** -text
 
+# Raw test evidence is stored byte for byte too, as the runs wrote it, so that its SHA256SUMS
+# still matches a fresh checkout.
+docs/testing/evidence/raw/** -text
+
 # These are read inside Linux containers or by Jenkins agents. CRLF breaks a
 # shebang line and breaks `sh` parsing, so LF is mandatory, not cosmetic.
 *.sh        text eol=lf

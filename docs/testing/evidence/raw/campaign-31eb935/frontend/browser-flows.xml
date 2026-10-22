@@ -1,0 +1,36 @@
+<testsuites id="" name="" tests="12" failures="0" skipped="0" errors="0" time="96.623109">
+<testsuite name="assistants.spec.ts" timestamp="2026-10-22T06:06:42.490Z" hostname="flows" tests="5" failures="0" skipped="0" time="9.618" errors="0">
+<testcase name="the assistants › a freestyle deploy, with a clarification, through to Run started" classname="assistants.spec.ts" time="2.097">
+</testcase>
+<testcase name="the assistants › a Pipeline deploy, with its Jenkinsfile" classname="assistants.spec.ts" time="2.039">
+</testcase>
+<testcase name="the assistants › refuses a production deploy and says why" classname="assistants.spec.ts" time="1.629">
+</testcase>
+<testcase name="the assistants › says when the rule parser answered instead of the model" classname="assistants.spec.ts" time="1.271">
+</testcase>
+<testcase name="the assistants › approves and runs with the keyboard alone" classname="assistants.spec.ts" time="2.582">
+</testcase>
+</testsuite>
+<testsuite name="csp.spec.ts" timestamp="2026-10-22T06:06:42.490Z" hostname="flows" tests="1" failures="0" skipped="0" time="5.366" errors="0">
+<testcase name="the app runs under its Content-Security-Policy without a single violation" classname="csp.spec.ts" time="5.366">
+</testcase>
+</testsuite>
+<testsuite name="queue.spec.ts" timestamp="2026-10-22T06:06:42.490Z" hostname="flows" tests="2" failures="0" skipped="0" time="23.195" errors="0">
+<testcase name="the queue › shows a HIGH job above a LOW job, in the plugin&apos;s order" classname="queue.spec.ts" time="11.501">
+</testcase>
+<testcase name="the queue › says the ranking is unavailable, and why, when the plugin cannot be read" classname="queue.spec.ts" time="11.694">
+</testcase>
+</testsuite>
+<testsuite name="roles.spec.ts" timestamp="2026-10-22T06:06:42.490Z" hostname="flows" tests="2" failures="0" skipped="0" time="12.769" errors="0">
+<testcase name="what each role is offered › a Developer is not offered Admin, and the page says why it is closed" classname="roles.spec.ts" time="11.647">
+</testcase>
+<testcase name="what each role is offered › an Admin sees every user, and adds one" classname="roles.spec.ts" time="1.122">
+</testcase>
+</testsuite>
+<testsuite name="sign-in.spec.ts" timestamp="2026-10-22T06:06:42.490Z" hostname="flows" tests="2" failures="0" skipped="0" time="34.992" errors="0">
+<testcase name="signing in › says exactly what is wrong, lets the person in, and lets them out" classname="sign-in.spec.ts" time="23.63">
+</testcase>
+<testcase name="signing in › returns to the page that was asked for" classname="sign-in.spec.ts" time="11.362">
+</testcase>
+</testsuite>
+</testsuites>

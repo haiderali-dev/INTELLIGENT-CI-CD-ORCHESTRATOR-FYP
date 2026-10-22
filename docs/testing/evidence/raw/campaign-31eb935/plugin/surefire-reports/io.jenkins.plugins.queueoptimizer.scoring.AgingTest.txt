@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: io.jenkins.plugins.queueoptimizer.scoring.AgingTest
+-------------------------------------------------------------------------------
+Tests run: 19, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.265 s -- in io.jenkins.plugins.queueoptimizer.scoring.AgingTest

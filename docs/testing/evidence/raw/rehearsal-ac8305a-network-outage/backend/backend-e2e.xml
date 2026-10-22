@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="10" skipped="0" tests="13" time="387.050" timestamp="2026-10-22T06:50:03.185046+05:00" hostname="HAIDER-HP"><testcase classname="tests.test_e2e_assistants" name="test_build_payment_service_from_main" time="37.535"><failure message="AssertionError: {'id': '059f5cbfeaf1488da7bdbda6170fda30', 'pipeline_id': 'e641aa731d0e412d95712bd47647adc3', 'service': 'payment-service', 'job_type': 'FREESTYLE', ...}&#10;assert 'FAILURE' == 'SUCCESS'&#10;  &#10;  - SUCCESS&#10;  + FAILURE">stack = Stack(client=&lt;httpx.AsyncClient object at 0x0000027DFCB49B50&gt;, settings=Settings(environment=&lt;Environment.TEST: 'test'...ent object at 0x0000027DFCF83EF0&gt;, tracker=&lt;app.services.tracker.RunTracker object at 0x0000027DFCFA7BC0&gt;, mode='live')
+
+    async def test_build_payment_service_from_main(stack: Stack) -&gt; None:
+        """Generate a build."""
+        headers = await e2e.sign_in(stack)
+        body = await ready(stack, headers, "Build payment-service from main")
+        intent = body["command"]["record"]["intent"]
+        assert (intent["action"], intent["service"], intent["branch"]) == (
+            "BUILD",
+            "payment-service",
+            "main",
+        )
+    
+        pipeline, approval, card = await run_to_end(stack, headers, body["command"]["id"])
+    
+        assert [job["name"] for job in pipeline["jobs"]] == ["fs-payment-service-build"]
+        assert approval["parameters"]["BRANCH"] == "main"
+&gt;       assert card["status"] == "SUCCESS", card
+E       AssertionError: {'id': '059f5cbfeaf1488da7bdbda6170fda30', 'pipeline_id': 'e641aa731d0e412d95712bd47647adc3', 'service': 'payment-service', 'job_type': 'FREESTYLE', ...}
+E       assert 'FAILURE' == 'SUCCESS'
+E         
+E         - SUCCESS
+E         + FAILURE
+
+tests\test_e2e_assistants.py:119: AssertionError</failure></testcase><testcase classname="tests.test_e2e_assistants" name="test_run_the_integration_tests_on_feature_refund" time="35.495"><failure message="AssertionError: {'id': '4e788bc7adcb4ea78dd800e0a251221e', 'pipeline_id': '0da49210fbc34c64ac087f34495872f4', 'service': 'payment-service', 'job_type': 'FREESTYLE', ...}&#10;assert 'FAILURE' == 'SUCCESS'&#10;  &#10;  - SUCCESS&#10;  + FAILURE">stack = Stack(client=&lt;httpx.AsyncClient object at 0x0000027D8032AE10&gt;, settings=Settings(environment=&lt;Environment.TEST: 'test'...ent object at 0x0000027DFD129130&gt;, tracker=&lt;app.services.tracker.RunTracker object at 0x0000027D800834D0&gt;, mode='live')
+
+    async def test_run_the_integration_tests_on_feature_refund(stack: Stack) -&gt; None:
+        """Generate a test run on that branch."""
+        headers = await e2e.sign_in(stack)
+        body = await ready(
+            stack, headers, "Run the integration tests for payment-service on feature/refund"
+        )
+        intent = body["command"]["record"]["intent"]
+        assert (intent["action"], intent["test_suite"], intent["branch"]) == (
+            "TEST",
+            "integration",
+            "feature/refund",
+        )
+    
+        pipeline, approval, card = await run_to_end(stack, headers, body["command"]["id"])
+    
+        assert [job["name"] for job in pipeline["jobs"]] == [
+            "fs-payment-service-build",
+            "fs-payment-service-test-integration",
+        ]
+        assert approval["parameters"] == {
+            "BRANCH": "feature/refund",
+            "COMMIT": "refs/heads/feature/refund",
+        }
+&gt;       assert card["status"] == "SUCCESS", card
+E       AssertionError: {'id': '4e788bc7adcb4ea78dd800e0a251221e', 'pipeline_id': '0da49210fbc34c64ac087f34495872f4', 'service': 'payment-service', 'job_type': 'FREESTYLE', ...}
+E       assert 'FAILURE' == 'SUCCESS'
+E         
+E         - SUCCESS
+E         + FAILURE
+
+tests\test_e2e_assistants.py:146: AssertionError</failure></testcase><testcase classname="tests.test_e2e_assistants" name="test_run_the_tests_asks_which_service_then_which_suite" time="11.046" /><testcase classname="tests.test_e2e_assistants" name="test_a_high_priority_hotfix_deploy_records_its_justification" time="42.124"><failure message="AssertionError: {'id': '8c0e861d5964425380ff946c2d4fb123', 'pipeline_id': '895852afa27a4df2975a4c3d22d1c034', 'service': 'auth-service', 'job_type': 'FREESTYLE', ...}&#10;assert 'FAILURE' == 'SUCCESS'&#10;  &#10;  - SUCCESS&#10;  + FAILURE">stack = Stack(client=&lt;httpx.AsyncClient object at 0x0000027D806210A0&gt;, settings=Settings(environment=&lt;Environment.TEST: 'test'...ent object at 0x0000027D802A2D80&gt;, tracker=&lt;app.services.tracker.RunTracker object at 0x0000027D802A34D0&gt;, mode='live')
+
+    async def test_a_high_priority_hotfix_deploy_records_its_justification(stack: Stack) -&gt; None:
+        """Generate with HIGH urgency and the justification recorded."""
+        headers = await e2e.sign_in(stack)
+        body = await ready(
+            stack, headers, "Deploy auth-service to staging, high priority, hotfix for login bug"
+        )
+        intent = body["command"]["record"]["intent"]
+        assert intent["urgency"] == "HIGH"
+        assert "login bug" in (intent["justification"] or "")
+    
+        pipeline, approval, card = await run_to_end(stack, headers, body["command"]["id"])
+    
+        assert "priority: HIGH" in pipeline["spec_yaml"]
+        assert "login bug" in pipeline["spec_yaml"]
+        assert approval["priority"] == "HIGH"
+&gt;       assert card["status"] == "SUCCESS", card
+E       AssertionError: {'id': '8c0e861d5964425380ff946c2d4fb123', 'pipeline_id': '895852afa27a4df2975a4c3d22d1c034', 'service': 'auth-service', 'job_type': 'FREESTYLE', ...}
+E       assert 'FAILURE' == 'SUCCESS'
+E         
+E         - SUCCESS
+E         + FAILURE
+
+tests\test_e2e_assistants.py:184: AssertionError</failure></testcase><testcase classname="tests.test_e2e_assistants" name="test_build_test_and_deploy_the_latest_commit" time="0.870"><failure message="app.services.git.GitError: git ls-remote https://github.com/haiderali-dev/payment-service.git failed: fatal: unable to access 'https://github.com/haiderali-dev/payment-service.git/': Could not resolve host: github.com">stack = Stack(client=&lt;httpx.AsyncClient object at 0x0000027D80840F50&gt;, settings=Settings(environment=&lt;Environment.TEST: 'test'...ent object at 0x0000027D8054EF60&gt;, tracker=&lt;app.services.tracker.RunTracker object at 0x0000027D80840E90&gt;, mode='live')
+
+    async def test_build_test_and_deploy_the_latest_commit(stack: Stack) -&gt; None:
+        """Three stages, commit resolved to a SHA."""
+        headers = await e2e.sign_in(stack, Role.DEVOPS)
+&gt;       head = await CliGitClient().resolve(PAYMENT_REPO, "main")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_e2e_assistants.py:201: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+app\services\git.py:111: in resolve
+    refs = await self.list_refs(repo_url)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\services\git.py:168: in list_refs
+    refs = await self._ls_remote(repo_url)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;app.services.git.CliGitClient object at 0x0000027D807ABE00&gt;
+repo_url = 'https://github.com/haiderali-dev/payment-service.git'
+
+    async def _ls_remote(self, repo_url: str) -&gt; tuple[Ref, ...]:
+        command = (
+            "git",
+            # Never prompt. Without this a repository that has become private blocks on a
+            # credential prompt until the timeout, turning a 404 into fifteen seconds of latency.
+            "-c",
+            "credential.helper=",
+            "ls-remote",
+            "--heads",
+            "--tags",
+            "--",
+            repo_url,
+        )
+        try:
+            process = await asyncio.create_subprocess_exec(
+                *command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                env=_git_env(),
+            )
+        except OSError as exc:  # git is not installed
+            raise GitError(f"could not run git: {exc}") from exc
+    
+        try:
+            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=self._timeout)
+        except TimeoutError:
+            process.kill()
+            await process.wait()
+            raise GitError(
+                f"git ls-remote {repo_url} timed out after {self._timeout:.0f}s"
+            ) from None
+    
+        if process.returncode != 0:
+            detail = stderr.decode("utf-8", "replace").strip().splitlines()
+&gt;           raise GitError(
+                f"git ls-remote {repo_url} failed: " + (detail[-1] if detail else "no output")
+            )
+E           app.services.git.GitError: git ls-remote https://github.com/haiderali-dev/payment-service.git failed: fatal: unable to access 'https://github.com/haiderali-dev/payment-service.git/': Could not resolve host: github.com
+
+app\services\git.py:206: GitError</failure></testcase><testcase classname="tests.test_e2e_assistants" name="test_deploying_to_production_is_refused" time="4.453" /><testcase classname="tests.test_e2e_assistants" name="test_the_status_of_my_last_deploy_shows_its_run_card" time="42.096"><failure message="AssertionError: assert 'FAILURE' == 'SUCCESS'&#10;  &#10;  - SUCCESS&#10;  + FAILURE">stack = Stack(client=&lt;httpx.AsyncClient object at 0x0000027D80B20CE0&gt;, settings=Settings(environment=&lt;Environment.TEST: 'test'...ent object at 0x0000027D807EABA0&gt;, tracker=&lt;app.services.tracker.RunTracker object at 0x0000027D81B48A70&gt;, mode='live')
+
+    async def test_the_status_of_my_last_deploy_shows_its_run_card(stack: Stack) -&gt; None:
+        """Show the latest run card, no generation."""
+        headers = await e2e.sign_in(stack, Role.DEVOPS)
+        deploy = await ready(stack, headers, "deploy auth-service to staging")
+        _, approval, _ = await run_to_end(stack, headers, deploy["command"]["id"])
+        chat = await e2e.new_chat(stack, headers)
+    
+        body = await e2e.say(stack, headers, chat, "What's the status of my last deploy?")
+    
+        payload = body["assistant_message"]["payload"]
+        assert payload["kind"] == "status"
+        assert payload["chain"]["id"] == approval["chain_id"]
+&gt;       assert payload["chain"]["status"] == "SUCCESS"
+E       AssertionError: assert 'FAILURE' == 'SUCCESS'
+E         
+E         - SUCCESS
+E         + FAILURE
+
+tests\test_e2e_assistants.py:246: AssertionError</failure></testcase><testcase classname="tests.test_e2e_assistants" name="test_the_failing_branch_chain_stops_before_deploy" time="42.307"><failure message="AssertionError: assert 'FAILURE' == 'SUCCESS'&#10;  &#10;  - SUCCESS&#10;  + FAILURE">stack = Stack(client=&lt;httpx.AsyncClient object at 0x0000027D80749A60&gt;, settings=Settings(environment=&lt;Environment.TEST: 'test'...ent object at 0x0000027D80A8FC80&gt;, tracker=&lt;app.services.tracker.RunTracker object at 0x0000027D80749730&gt;, mode='live')
+
+    async def test_the_failing_branch_chain_stops_before_deploy(stack: Stack) -&gt; None:
+        """Phase 5 acceptance: against demo/failing-tests the freestyle deploy job never starts."""
+        headers = await e2e.sign_in(stack, Role.DEVOPS)
+    
+        approval, card, deploy_before = await failing_chain(stack, headers)
+    
+        assert approval["parameters"]["BRANCH"] == "demo/failing-tests"
+        assert card["status"] == "FAILURE", card
+        states = {job["name"]: job for job in card["jobs"]}
+&gt;       assert states["fs-payment-service-build"]["run"]["result"] == "SUCCESS"
+E       AssertionError: assert 'FAILURE' == 'SUCCESS'
+E         
+E         - SUCCESS
+E         + FAILURE
+
+tests\test_e2e_assistants.py:274: AssertionError</failure></testcase><testcase classname="tests.test_e2e_assistants" name="test_rerun_the_failed_tests" time="42.389"><failure message="AssertionError: There is no failed test job to re-run.&#10;assert 'rerun' == 'run'&#10;  &#10;  - run&#10;  + rerun&#10;  ? ++">stack = Stack(client=&lt;httpx.AsyncClient object at 0x0000027D802D1AF0&gt;, settings=Settings(environment=&lt;Environment.TEST: 'test'...ent object at 0x0000027D80749EE0&gt;, tracker=&lt;app.services.tracker.RunTracker object at 0x0000027DFD01B4D0&gt;, mode='live')
+
+    async def test_rerun_the_failed_tests(stack: Stack) -&gt; None:
+        """Re-trigger the last failed test job."""
+        headers = await e2e.sign_in(stack, Role.DEVOPS)
+        approval, card, deploy_before = await failing_chain(stack, headers)
+        assert card["status"] == "FAILURE"
+        chat = await e2e.new_chat(stack, headers)
+    
+        body = await e2e.say(stack, headers, chat, "Rerun the failed payment-service tests")
+    
+        payload = body["assistant_message"]["payload"]
+&gt;       assert payload["kind"] == "run", body["assistant_message"]["content"]
+E       AssertionError: There is no failed test job to re-run.
+E       assert 'rerun' == 'run'
+E         
+E         - run
+E         + rerun
+E         ? ++
+
+tests\test_e2e_assistants.py:293: AssertionError</failure></testcase><testcase classname="tests.test_e2e_assistants" name="test_an_injection_attempt_is_refused_and_logged" time="3.777" /><testcase classname="tests.test_e2e_assistants" name="test_a_pipeline_builds_tests_and_deploys_with_its_stages_tracked" time="39.341"><failure message="AssertionError: {'id': '42062e91de5741058b5dfcd91588f4d3', 'pipeline_id': 'c53742d000b3406ba2da55e51ec9bad4', 'service': 'auth-service', 'job_type': 'PIPELINE', ...}&#10;assert 'FAILURE' == 'SUCCESS'&#10;  &#10;  - SUCCESS&#10;  + FAILURE">stack = Stack(client=&lt;httpx.AsyncClient object at 0x0000027D80775460&gt;, settings=Settings(environment=&lt;Environment.TEST: 'test'...ent object at 0x0000027D8031DF10&gt;, tracker=&lt;app.services.tracker.RunTracker object at 0x0000027D80777650&gt;, mode='live')
+
+    async def test_a_pipeline_builds_tests_and_deploys_with_its_stages_tracked(stack: Stack) -&gt; None:
+        headers = await e2e.sign_in(stack, Role.DEVOPS)
+        body = await ready(
+            stack, headers, "build, test and deploy auth-service to staging", assistant="pipeline"
+        )
+    
+        pipeline, approval, card = await run_to_end(stack, headers, body["command"]["id"])
+    
+        assert [job["name"] for job in pipeline["jobs"]] == [
+            "pl-auth-service-build-test-deploy-staging"
+        ]
+        assert pipeline["validation"]["ok"], "including the live declarative linter"
+&gt;       assert card["status"] == "SUCCESS", card
+E       AssertionError: {'id': '42062e91de5741058b5dfcd91588f4d3', 'pipeline_id': 'c53742d000b3406ba2da55e51ec9bad4', 'service': 'auth-service', 'job_type': 'PIPELINE', ...}
+E       assert 'FAILURE' == 'SUCCESS'
+E         
+E         - SUCCESS
+E         + FAILURE
+
+tests\test_e2e_assistants.py:336: AssertionError</failure></testcase><testcase classname="tests.test_e2e_assistants" name="test_the_failed_tests_are_explained_from_their_real_log" time="42.451"><failure message="AssertionError: assert 'fs-payment-service-build' == 'fs-payment-service-test-unit'&#10;  &#10;  - fs-payment-service-test-unit&#10;  ?                    ^^^^^ - ^&#10;  + fs-payment-service-build&#10;  ?                    ^  ^^">stack = Stack(client=&lt;httpx.AsyncClient object at 0x0000027D80B21AF0&gt;, settings=Settings(environment=&lt;Environment.TEST: 'test'...ent object at 0x0000027D807BAAB0&gt;, tracker=&lt;app.services.tracker.RunTracker object at 0x0000027D802D34D0&gt;, mode='live')
+
+    async def test_the_failed_tests_are_explained_from_their_real_log(stack: Stack) -&gt; None:
+        headers = await e2e.sign_in(stack, Role.DEVOPS)
+        _, card, deploy_before = await failing_chain(stack, headers)
+        jobs = [job["name"] for job in card["jobs"]]
+        stopped = jobs[jobs.index("fs-payment-service-test-unit") + 1 :]
+    
+        body, printed = await explained(stack, headers, card["failed_run_id"])
+    
+&gt;       assert body["job_name"] == "fs-payment-service-test-unit"
+E       AssertionError: assert 'fs-payment-service-build' == 'fs-payment-service-test-unit'
+E         
+E         - fs-payment-service-test-unit
+E         ?                    ^^^^^ - ^
+E         + fs-payment-service-build
+E         ?                    ^  ^^
+
+tests\test_e2e_assistants.py:387: AssertionError</failure></testcase><testcase classname="tests.test_e2e_assistants" name="test_a_failed_pipeline_stage_is_explained_with_the_stages_it_skipped" time="39.125"><failure message="AssertionError: assert 'Checkout' == 'Unit tests'&#10;  &#10;  - Unit tests&#10;  + Checkout">stack = Stack(client=&lt;httpx.AsyncClient object at 0x0000027DFCFA6AE0&gt;, settings=Settings(environment=&lt;Environment.TEST: 'test'...ent object at 0x0000027D80620C50&gt;, tracker=&lt;app.services.tracker.RunTracker object at 0x0000027D81B4B4D0&gt;, mode='live')
+
+    async def test_a_failed_pipeline_stage_is_explained_with_the_stages_it_skipped(
+        stack: Stack,
+    ) -&gt; None:
+        headers = await e2e.sign_in(stack, Role.DEVOPS)
+        body = await ready(
+            stack,
+            headers,
+            "Build, test and deploy payment-service from demo/failing-tests to staging",
+            assistant="pipeline",
+        )
+    
+        _, _, card = await run_to_end(stack, headers, body["command"]["id"])
+    
+        assert card["status"] == "FAILURE", card
+        names = [stage["name"] for stage in card["stages"]]
+        assert {stage["name"]: stage["status"] for stage in card["stages"]}["Unit tests"] == "FAILED"
+        later = names[names.index("Unit tests") + 1 :]
+        assert later[-1] == "Deploy to staging"
+    
+        explanation, printed = await explained(stack, headers, card["failed_run_id"])
+    
+        assert explanation["job_type"] == "PIPELINE"
+        assert explanation["not_started"] == [], "a Pipeline is one job; what it stopped are stages"
+        facts = explanation["facts"]
+&gt;       assert facts["stage"] == "Unit tests"
+E       AssertionError: assert 'Checkout' == 'Unit tests'
+E         
+E         - Unit tests
+E         + Checkout
+
+tests\test_e2e_assistants.py:423: AssertionError</failure></testcase></testsuite></testsuites>

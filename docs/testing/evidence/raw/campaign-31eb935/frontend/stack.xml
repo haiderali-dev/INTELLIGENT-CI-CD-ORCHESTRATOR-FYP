@@ -1,0 +1,22 @@
+<testsuites id="" name="" tests="3" failures="0" skipped="0" errors="0" time="42.462343000000004">
+<testsuite name="stack.spec.ts" timestamp="2026-10-22T06:10:01.018Z" hostname="stack" tests="3" failures="0" skipped="0" time="41.467" errors="0">
+<testcase name="every page loads through the stack&apos;s frontend, under its policy, with no server error" classname="stack.spec.ts" time="1.828">
+<properties>
+<property name="serial" value="">
+</property>
+</properties>
+</testcase>
+<testcase name="a freestyle build runs on the real Jenkins, and its run card follows it live" classname="stack.spec.ts" time="27.553">
+<properties>
+<property name="serial" value="">
+</property>
+</properties>
+</testcase>
+<testcase name="a Pipeline build is linted and run by the real Jenkins, its stages followed live" classname="stack.spec.ts" time="12.086">
+<properties>
+<property name="serial" value="">
+</property>
+</properties>
+</testcase>
+</testsuite>
+</testsuites>

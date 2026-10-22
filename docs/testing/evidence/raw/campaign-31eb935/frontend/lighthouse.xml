@@ -1,0 +1,25 @@
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="105.84960799999999">
+<testsuite name="lighthouse.spec.ts" timestamp="2026-10-22T06:08:19.913Z" hostname="lighthouse" tests="1" failures="0" skipped="0" time="95.415" errors="0">
+<testcase name="both assistant pages score 95 or more for accessibility" classname="lighthouse.spec.ts" time="95.415">
+<system-out>
+<![CDATA[freestyle-new-chat-mobile-light: 100
+freestyle-new-chat-desktop-light: 100
+freestyle-new-chat-mobile-dark: 100
+freestyle-new-chat-desktop-dark: 100
+freestyle-chat-mobile-light: 100
+freestyle-chat-desktop-light: 100
+freestyle-chat-mobile-dark: 100
+freestyle-chat-desktop-dark: 100
+pipeline-new-chat-mobile-light: 100
+pipeline-new-chat-desktop-light: 100
+pipeline-new-chat-mobile-dark: 100
+pipeline-new-chat-desktop-dark: 100
+pipeline-chat-mobile-light: 100
+pipeline-chat-desktop-light: 100
+pipeline-chat-mobile-dark: 100
+pipeline-chat-desktop-dark: 100
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>

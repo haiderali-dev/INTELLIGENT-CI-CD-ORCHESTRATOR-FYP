@@ -1,0 +1,166 @@
+{
+  "lighthouse": "13.5.0",
+  "floor": 0.95,
+  "audited": [
+    {
+      "name": "freestyle-new-chat-mobile-light",
+      "assistant": "freestyle",
+      "path": "/assistants/freestyle",
+      "theme": "light",
+      "formFactor": "mobile",
+      "score": 1,
+      "failing": [],
+      "warnings": []
+    },
+    {
+      "name": "freestyle-new-chat-desktop-light",
+      "assistant": "freestyle",
+      "path": "/assistants/freestyle",
+      "theme": "light",
+      "formFactor": "desktop",
+      "score": 1,
+      "failing": [],
+      "warnings": []
+    },
+    {
+      "name": "freestyle-new-chat-mobile-dark",
+      "assistant": "freestyle",
+      "path": "/assistants/freestyle",
+      "theme": "dark",
+      "formFactor": "mobile",
+      "score": 1,
+      "failing": [],
+      "warnings": []
+    },
+    {
+      "name": "freestyle-new-chat-desktop-dark",
+      "assistant": "freestyle",
+      "path": "/assistants/freestyle",
+      "theme": "dark",
+      "formFactor": "desktop",
+      "score": 1,
+      "failing": [],
+      "warnings": []
+    },
+    {
+      "name": "freestyle-chat-mobile-light",
+      "assistant": "freestyle",
+      "path": "/assistants/freestyle/3554079ced1f4f40b7d81c2aaab50b00",
+      "theme": "light",
+      "formFactor": "mobile",
+      "score": 1,
+      "failing": [],
+      "warnings": []
+    },
+    {
+      "name": "freestyle-chat-desktop-light",
+      "assistant": "freestyle",
+      "path": "/assistants/freestyle/3554079ced1f4f40b7d81c2aaab50b00",
+      "theme": "light",
+      "formFactor": "desktop",
+      "score": 1,
+      "failing": [],
+      "warnings": []
+    },
+    {
+      "name": "freestyle-chat-mobile-dark",
+      "assistant": "freestyle",
+      "path": "/assistants/freestyle/3554079ced1f4f40b7d81c2aaab50b00",
+      "theme": "dark",
+      "formFactor": "mobile",
+      "score": 1,
+      "failing": [],
+      "warnings": []
+    },
+    {
+      "name": "freestyle-chat-desktop-dark",
+      "assistant": "freestyle",
+      "path": "/assistants/freestyle/3554079ced1f4f40b7d81c2aaab50b00",
+      "theme": "dark",
+      "formFactor": "desktop",
+      "score": 1,
+      "failing": [],
+      "warnings": []
+    },
+    {
+      "name": "pipeline-new-chat-mobile-light",
+      "assistant": "pipeline",
+      "path": "/assistants/pipeline",
+      "theme": "light",
+      "formFactor": "mobile",
+      "score": 1,
+      "failing": [],
+      "warnings": []
+    },
+    {
+      "name": "pipeline-new-chat-desktop-light",
+      "assistant": "pipeline",
+      "path": "/assistants/pipeline",
+      "theme": "light",
+      "formFactor": "desktop",
+      "score": 1,
+      "failing": [],
+      "warnings": []
+    },
+    {
+      "name": "pipeline-new-chat-mobile-dark",
+      "assistant": "pipeline",
+      "path": "/assistants/pipeline",
+      "theme": "dark",
+      "formFactor": "mobile",
+      "score": 1,
+      "failing": [],
+      "warnings": []
+    },
+    {
+      "name": "pipeline-new-chat-desktop-dark",
+      "assistant": "pipeline",
+      "path": "/assistants/pipeline",
+      "theme": "dark",
+      "formFactor": "desktop",
+      "score": 1,
+      "failing": [],
+      "warnings": []
+    },
+    {
+      "name": "pipeline-chat-mobile-light",
+      "assistant": "pipeline",
+      "path": "/assistants/pipeline/a6902160894249d1bac3b0ba0e5849b8",
+      "theme": "light",
+      "formFactor": "mobile",
+      "score": 1,
+      "failing": [],
+      "warnings": []
+    },
+    {
+      "name": "pipeline-chat-desktop-light",
+      "assistant": "pipeline",
+      "path": "/assistants/pipeline/a6902160894249d1bac3b0ba0e5849b8",
+      "theme": "light",
+      "formFactor": "desktop",
+      "score": 1,
+      "failing": [],
+      "warnings": []
+    },
+    {
+      "name": "pipeline-chat-mobile-dark",
+      "assistant": "pipeline",
+      "path": "/assistants/pipeline/a6902160894249d1bac3b0ba0e5849b8",
+      "theme": "dark",
+      "formFactor": "mobile",
+      "score": 1,
+      "failing": [],
+      "warnings": []
+    },
+    {
+      "name": "pipeline-chat-desktop-dark",
+      "assistant": "pipeline",
+      "path": "/assistants/pipeline/a6902160894249d1bac3b0ba0e5849b8",
+      "theme": "dark",
+      "formFactor": "desktop",
+      "score": 1,
+      "failing": [],
+      "warnings": []
+    }
+  ]
+}

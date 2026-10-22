@@ -19,7 +19,8 @@ results, and Section 8.10 summarises.
 **The rule for evidence.** Every result in this chapter comes from a run that happened, at a commit
 that is named. One evidence campaign ran every suite once, at commit `31eb935` on
 22 October 2026, and kept each runner's own report: JUnit XML, coverage data, the mutation report and the
-logs (`scripts/test_campaign.py`). The register in Annexure B is built from those reports and the
+logs (`scripts/test_campaign.py`). Those reports are committed, unchanged and with their checksums,
+in `docs/testing/evidence/raw/`. The register in Annexure B is built from them and the
 gate run's log, and lists every test that ran (`scripts/report/test_register.py`). Where a figure comes from an earlier run, it
 says so. Nothing is estimated. Anything not yet run is listed as not yet run in Section 8.9.4.
 
@@ -29,7 +30,7 @@ recorded all the same:
   (DNS for GitHub and the model provider), and passed when run again;
 - its one skipped test led to a defect (DF-42), whose fix moved the campaign to its final commit.
 
-Its logs are kept, and Annexure A.2 describes it.
+Its logs are kept in `docs/testing/evidence/raw/`, and Annexure A.2 describes it.
 
 **The results in brief.**
 - **The register of every test** holds 2,434 tests in 12 suites, from the

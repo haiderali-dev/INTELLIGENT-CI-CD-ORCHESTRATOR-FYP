@@ -1,0 +1,280 @@
+[INFO] Scanning for projects...
+[INFO] Artifact org.jenkins-ci.tools:maven-hpi-plugin:pom:3.1838.va_13472137a_6a_ is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases)]
+[INFO] Artifact org.jenkins-ci.tools:maven-hpi-plugin:pom:3.1838.va_13472137a_6a_ is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases)]
+[WARNING] The POM for org.jenkins-ci.tools:maven-hpi-plugin:jar:3.1838.va_13472137a_6a_ is missing, no dependency information available
+[INFO] Artifact org.jenkins-ci.tools:maven-hpi-plugin:jar:3.1838.va_13472137a_6a_ is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases)]
+[INFO] Artifact org.jenkins-ci.tools:maven-hpi-plugin:jar:3.1838.va_13472137a_6a_ is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases)]
+[WARNING] Failed to build parent project for io.jenkins.plugins:dynamic-queue-optimizer:hpi:2.0.0-SNAPSHOT
+[INFO] 
+[INFO] -------------< io.jenkins.plugins:dynamic-queue-optimizer >-------------
+[INFO] Building Dynamic Queue Optimizer 2.0.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ hpi ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.5.0:clean (default-clean) @ dynamic-queue-optimizer ---
+[INFO] Deleting D:\FYP POC\CICD project - Copy\plugin\target
+[INFO] 
+[INFO] --- hpi:3.1838.va_13472137a_6a_:validate (default-validate) @ dynamic-queue-optimizer ---
+[INFO] Created marker file D:\FYP POC\CICD project - Copy\plugin\target\java-level\21
+[INFO] 
+[INFO] --- hpi:3.1838.va_13472137a_6a_:validate-hpi (default-validate-hpi) @ dynamic-queue-optimizer ---
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (display-info) @ dynamic-queue-optimizer ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] Rule 1: org.apache.maven.enforcer.rules.version.RequireJavaVersion passed
+[INFO] Rule 2: org.apache.maven.enforcer.rules.version.RequireJavaVersion passed
+[INFO] Rule 3: org.apache.maven.enforcer.rules.RequirePluginVersions passed
+[INFO] Rule 4: org.codehaus.mojo.extraenforcer.dependencies.EnforceBytecodeVersion passed
+[INFO] Rule 5: org.apache.maven.enforcer.rules.dependency.BannedDependencies passed
+[INFO] Rule 6: org.apache.maven.enforcer.rules.dependency.BannedDependencies passed
+[INFO] Rule 7: org.apache.maven.enforcer.rules.dependency.RequireUpperBoundDeps passed
+[INFO] banObsoleteDependencyOverrides skipped
+[INFO] Rule 8: io.jenkins.tools.maven.jenkins_enforcer_rules.BanObsoleteDependencyOverrides passed
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (no-snapshots-in-release) @ dynamic-queue-optimizer ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.dependency.RequireReleaseDeps passed
+[INFO] 
+[INFO] --- jacoco:0.8.15:prepare-agent (default) @ dynamic-queue-optimizer ---
+[INFO] argLine set to "-javaagent:C:\\Users\\haide\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.15\\org.jacoco.agent-0.8.15-runtime.jar=destfile=D:\\FYP POC\\CICD project - Copy\\plugin\\target\\jacoco.exec,excludes=**/Messages.class:org/htmlunit/**" -Xms768M -Xmx768M -XX:+HeapDumpOnOutOfMemoryError -XX:+TieredCompilation -XX:TieredStopAtLevel=1 @{jenkins.addOpens} @{jenkins.insaneHook} @{jenkins.javaAgent}
+[INFO] 
+[INFO] --- localizer:1.31:generate (default) @ dynamic-queue-optimizer ---
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (check-junit-imports) @ dynamic-queue-optimizer ---
+[INFO] Skipping Rule Enforcement.
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (check-commons-lang-imports) @ dynamic-queue-optimizer ---
+[INFO] Skipping Rule Enforcement.
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (check-deprecated-stapler-imports) @ dynamic-queue-optimizer ---
+[INFO] Skipping Rule Enforcement.
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ dynamic-queue-optimizer ---
+[INFO] Copying 3 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.16.0:compile (default-compile) @ dynamic-queue-optimizer ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 23 source files with javac [debug parameters release 21] to target\classes
+[WARNING] unknown enum constant javax.annotation.meta.When.MAYBE
+  reason: class file for javax.annotation.meta.When not found
+[WARNING] unknown enum constant javax.annotation.meta.When.ALWAYS
+[INFO] io.jenkins.plugins.queueoptimizer.api.DynamicQueueApi indexed under hudson.Extension
+[INFO] io.jenkins.plugins.queueoptimizer.config.OptimizerConfiguration indexed under hudson.Extension
+[INFO] io.jenkins.plugins.queueoptimizer.estimation.RecordedLabelAction.Recorder indexed under hudson.Extension
+[INFO] io.jenkins.plugins.queueoptimizer.gate.DependencyGate indexed under hudson.Extension
+[INFO] io.jenkins.plugins.queueoptimizer.metrics.MetricsPublisher indexed under hudson.Extension
+[INFO] io.jenkins.plugins.queueoptimizer.metrics.QueueMetricsRecorder indexed under hudson.Extension
+[INFO] io.jenkins.plugins.queueoptimizer.metrics.RunMetricsRecorder indexed under hudson.Extension
+[INFO] io.jenkins.plugins.queueoptimizer.property.JobPriorityProperty.DescriptorImpl indexed under hudson.Extension
+[INFO] io.jenkins.plugins.queueoptimizer.sorter.DynamicQueueSorter indexed under hudson.Extension
+[INFO] io.jenkins.plugins.queueoptimizer.sorter.DynamicQueueSorter.SorterConflictWarning indexed under hudson.Extension
+[INFO] /D:/FYP POC/CICD project - Copy/plugin/src/main/java/io/jenkins/plugins/queueoptimizer/property/JobPriorityProperty.java:[64,12] Generating io/jenkins/plugins/queueoptimizer/property/JobPriorityProperty.stapler
+[INFO] /D:/FYP POC/CICD project - Copy/plugin/src/main/java/io/jenkins/plugins/queueoptimizer/config/OptimizerConfiguration.java:[297,27] Generating io/jenkins/plugins/queueoptimizer/config/OptimizerConfiguration/doCheckWeightExecutionTime.stapler
+[INFO] /D:/FYP POC/CICD project - Copy/plugin/src/main/java/io/jenkins/plugins/queueoptimizer/config/OptimizerConfiguration.java:[321,27] Generating io/jenkins/plugins/queueoptimizer/config/OptimizerConfiguration/doCheckAgingCap.stapler
+[INFO] /D:/FYP POC/CICD project - Copy/plugin/src/main/java/io/jenkins/plugins/queueoptimizer/config/OptimizerConfiguration.java:[340,27] Generating io/jenkins/plugins/queueoptimizer/config/OptimizerConfiguration/doCheckEstimatorK.stapler
+[INFO] /D:/FYP POC/CICD project - Copy/plugin/src/main/java/io/jenkins/plugins/queueoptimizer/config/OptimizerConfiguration.java:[325,27] Generating io/jenkins/plugins/queueoptimizer/config/OptimizerConfiguration/doCheckSimilarityThreshold.stapler
+[INFO] /D:/FYP POC/CICD project - Copy/plugin/src/main/java/io/jenkins/plugins/queueoptimizer/config/OptimizerConfiguration.java:[283,27] Generating io/jenkins/plugins/queueoptimizer/config/OptimizerConfiguration/doCheckWeightUrgency.stapler
+[INFO] /D:/FYP POC/CICD project - Copy/plugin/src/main/java/io/jenkins/plugins/queueoptimizer/config/OptimizerConfiguration.java:[344,27] Generating io/jenkins/plugins/queueoptimizer/config/OptimizerConfiguration/doCheckHistoryWindow.stapler
+[INFO] /D:/FYP POC/CICD project - Copy/plugin/src/main/java/io/jenkins/plugins/queueoptimizer/config/OptimizerConfiguration.java:[290,27] Generating io/jenkins/plugins/queueoptimizer/config/OptimizerConfiguration/doCheckWeightDependency.stapler
+[INFO] /D:/FYP POC/CICD project - Copy/plugin/src/main/java/io/jenkins/plugins/queueoptimizer/config/OptimizerConfiguration.java:[348,27] Generating io/jenkins/plugins/queueoptimizer/config/OptimizerConfiguration/doCheckRescoreIntervalSeconds.stapler
+[INFO] /D:/FYP POC/CICD project - Copy/plugin/src/main/java/io/jenkins/plugins/queueoptimizer/config/OptimizerConfiguration.java:[332,27] Generating io/jenkins/plugins/queueoptimizer/config/OptimizerConfiguration/doCheckRecencyLambdaPerDay.stapler
+[INFO] /D:/FYP POC/CICD project - Copy/plugin/src/main/java/io/jenkins/plugins/queueoptimizer/config/OptimizerConfiguration.java:[336,27] Generating io/jenkins/plugins/queueoptimizer/config/OptimizerConfiguration/doCheckAgingIntervalMinutes.stapler
+[INFO] /D:/FYP POC/CICD project - Copy/plugin/src/main/java/io/jenkins/plugins/queueoptimizer/property/JobPriorityProperty.java:[175,31] Generating io/jenkins/plugins/queueoptimizer/property/JobPriorityProperty/DescriptorImpl/doCheckDependsOn.stapler
+[INFO] /D:/FYP POC/CICD project - Copy/plugin/src/main/java/io/jenkins/plugins/queueoptimizer/config/OptimizerConfiguration.java:[317,27] Generating io/jenkins/plugins/queueoptimizer/config/OptimizerConfiguration/doCheckAgingBonusPerInterval.stapler
+[WARNING] unknown enum constant javax.annotation.meta.When.MAYBE
+  reason: class file for javax.annotation.meta.When not found
+[WARNING] unknown enum constant javax.annotation.meta.When.ALWAYS
+[WARNING] unknown enum constant javax.annotation.meta.When.MAYBE
+  reason: class file for javax.annotation.meta.When not found
+[WARNING] unknown enum constant javax.annotation.meta.When.ALWAYS
+[INFO] /D:/FYP POC/CICD project - Copy/plugin/src/main/java/io/jenkins/plugins/queueoptimizer/api/DynamicQueueApi.java: D:\FYP POC\CICD project - Copy\plugin\src\main\java\io\jenkins\plugins\queueoptimizer\api\DynamicQueueApi.java uses or overrides a deprecated API.
+[INFO] /D:/FYP POC/CICD project - Copy/plugin/src/main/java/io/jenkins/plugins/queueoptimizer/api/DynamicQueueApi.java: Recompile with -Xlint:deprecation for details.
+[INFO] 
+[INFO] --- access-modifier-checker:1.35:enforce (default-enforce) @ dynamic-queue-optimizer ---
+[INFO] 
+[INFO] --- bridge-method-injector:1.32:process (default) @ dynamic-queue-optimizer ---
+[INFO] 
+[INFO] --- hpi:3.1838.va_13472137a_6a_:insert-test (default-insert-test) @ dynamic-queue-optimizer ---
+[INFO] 
+[INFO] --- antrun:3.2.0:run (createTempDir) @ dynamic-queue-optimizer ---
+[INFO] Executing tasks
+[INFO]     [mkdir] Created dir: D:\FYP POC\CICD project - Copy\plugin\target\tmp
+[INFO] Executed tasks
+[INFO] 
+[INFO] --- resources:3.5.0:testResources (default-testResources) @ dynamic-queue-optimizer ---
+[INFO] Copying 3 resources from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.16.0:testCompile (default-testCompile) @ dynamic-queue-optimizer ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 34 source files with javac [debug parameters release 21] to target\test-classes
+[INFO] io.jenkins.plugins.queueoptimizer.sorter.SorterConflictIT.CompetingSorter indexed under org.jvnet.hudson.test.TestExtension
+[INFO] 
+[INFO] --- hpi:3.1838.va_13472137a_6a_:test-hpl (default-test-hpl) @ dynamic-queue-optimizer ---
+[INFO] Generating D:\FYP POC\CICD project - Copy\plugin\target\test-classes\the.hpl
+[INFO] 
+[INFO] --- hpi:3.1838.va_13472137a_6a_:resolve-test-dependencies (default-resolve-test-dependencies) @ dynamic-queue-optimizer ---
+[INFO] 
+[INFO] --- hpi:3.1838.va_13472137a_6a_:test-runtime (default-test-runtime) @ dynamic-queue-optimizer ---
+[INFO] Setting jenkins.addOpens to --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED
+[INFO] Setting jenkins.insaneHook to --patch-module='java.base=D:\FYP POC\CICD project - Copy\plugin\target\patch-modules\org-netbeans-insane-hook.jar' --add-exports=java.base/org.netbeans.insane.hook=ALL-UNNAMED
+[INFO] 
+[INFO] --- surefire:3.6.0:test (default-test) @ dynamic-queue-optimizer ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running io.jenkins.plugins.dynamic_queue_optimizer.InjectedTest
+[WARNING] Tests run: 6, Failures: 0, Errors: 0, Skipped: 1, Time elapsed: 17.81 s -- in io.jenkins.plugins.dynamic_queue_optimizer.InjectedTest
+[INFO] Running io.jenkins.plugins.queueoptimizer.dependency.UnionFindKahnTest
+[INFO] Running cycle detection
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.075 s -- in cycle detection
+[INFO] Running union-find grouping
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.120 s -- in union-find grouping
+[INFO] Running Kahn ordering
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.015 s -- in Kahn ordering
+[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.235 s -- in io.jenkins.plugins.queueoptimizer.dependency.UnionFindKahnTest
+[INFO] Running io.jenkins.plugins.queueoptimizer.estimation.SimilarityEstimatorTest
+[INFO] Running recency decay
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.015 s -- in recency decay
+[INFO] Running the similarity formula
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s -- in the similarity formula
+[INFO] Running Jaccard index
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 s -- in Jaccard index
+[INFO] Running threshold and top-k
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.018 s -- in threshold and top-k
+[INFO] Running name tokenisation
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s -- in name tokenisation
+[INFO] Running UNKNOWN
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 s -- in UNKNOWN
+[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.140 s -- in io.jenkins.plugins.queueoptimizer.estimation.SimilarityEstimatorTest
+[INFO] Running io.jenkins.plugins.queueoptimizer.heap.PriorityJobHeapTest
+[INFO] Tests run: 17, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.391 s -- in io.jenkins.plugins.queueoptimizer.heap.PriorityJobHeapTest
+[INFO] Running io.jenkins.plugins.queueoptimizer.metrics.MetricsPublisherHttpVersionTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.330 s -- in io.jenkins.plugins.queueoptimizer.metrics.MetricsPublisherHttpVersionTest
+[INFO] Running io.jenkins.plugins.queueoptimizer.scoring.AgingTest
+[INFO] Tests run: 19, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.265 s -- in io.jenkins.plugins.queueoptimizer.scoring.AgingTest
+[INFO] Running io.jenkins.plugins.queueoptimizer.scoring.AppendixCExampleTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.088 s -- in io.jenkins.plugins.queueoptimizer.scoring.AppendixCExampleTest
+[INFO] Running io.jenkins.plugins.queueoptimizer.scoring.SchedulerOverheadTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.172 s -- in io.jenkins.plugins.queueoptimizer.scoring.SchedulerOverheadTest
+[INFO] Running io.jenkins.plugins.queueoptimizer.scoring.ScoreComponentTest
+[INFO] Running D, the dependency factor
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.018 s -- in D, the dependency factor
+[INFO] Running T, the execution-time factor
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.017 s -- in T, the execution-time factor
+[INFO] Running group inheritance
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s -- in group inheritance
+[INFO] Running dispatch ordering
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.007 s -- in dispatch ordering
+[INFO] Running U, the urgency factor
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.013 s -- in U, the urgency factor
+[INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.160 s -- in io.jenkins.plugins.queueoptimizer.scoring.ScoreComponentTest
+[INFO] Running io.jenkins.plugins.queueoptimizer.sorter.RescoreBucketTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.085 s -- in io.jenkins.plugins.queueoptimizer.sorter.RescoreBucketTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 121, Failures: 0, Errors: 0, Skipped: 1
+[INFO] 
+[INFO] 
+[INFO] --- license:210.v568d0b_a_2b_e44:process (default) @ dynamic-queue-optimizer ---
+[INFO] Generated D:\FYP POC\CICD project - Copy\plugin\target\dynamic-queue-optimizer\WEB-INF\licenses.xml
+[INFO] 
+[INFO] --- hpi:3.1838.va_13472137a_6a_:hpi (default-hpi) @ dynamic-queue-optimizer ---
+[INFO] Generating D:\FYP POC\CICD project - Copy\plugin\target\dynamic-queue-optimizer\META-INF\MANIFEST.MF
+[INFO] Checking for attached .jar artifact ...
+[INFO] Generating jar D:\FYP POC\CICD project - Copy\plugin\target\dynamic-queue-optimizer.jar
+[INFO] Building jar: D:\FYP POC\CICD project - Copy\plugin\target\dynamic-queue-optimizer.jar
+[INFO] Exploding webapp...
+[INFO] Copy webapp webResources to D:\FYP POC\CICD project - Copy\plugin\target\dynamic-queue-optimizer
+[INFO] Assembling webapp dynamic-queue-optimizer in D:\FYP POC\CICD project - Copy\plugin\target\dynamic-queue-optimizer
+[INFO] Generating hpi D:\FYP POC\CICD project - Copy\plugin\target\dynamic-queue-optimizer.hpi
+[INFO] Building jar: D:\FYP POC\CICD project - Copy\plugin\target\dynamic-queue-optimizer.hpi
+[INFO] 
+[INFO] --- jar:3.5.1:test-jar (maybe-test-jar) @ dynamic-queue-optimizer ---
+[INFO] Skipping packaging of the test-jar
+[INFO] 
+[INFO] --- failsafe:3.6.0:integration-test (integration-tests) @ dynamic-queue-optimizer ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running io.jenkins.plugins.queueoptimizer.QueueShapeProbeIT
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 40.26 s -- in io.jenkins.plugins.queueoptimizer.QueueShapeProbeIT
+[INFO] Running io.jenkins.plugins.queueoptimizer.api.ApiJsonIT
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 34.57 s -- in io.jenkins.plugins.queueoptimizer.api.ApiJsonIT
+[INFO] Running io.jenkins.plugins.queueoptimizer.config.ConfigAsCodeIT
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 29.12 s -- in io.jenkins.plugins.queueoptimizer.config.ConfigAsCodeIT
+[INFO] Running io.jenkins.plugins.queueoptimizer.config.OptimizerConfigurationPageIT
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 48.16 s -- in io.jenkins.plugins.queueoptimizer.config.OptimizerConfigurationPageIT
+[INFO] Running io.jenkins.plugins.queueoptimizer.config.OptimizerConfigurationValidationIT
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 17.03 s -- in io.jenkins.plugins.queueoptimizer.config.OptimizerConfigurationValidationIT
+[INFO] Running io.jenkins.plugins.queueoptimizer.gate.DependencyGateIT
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 32.47 s -- in io.jenkins.plugins.queueoptimizer.gate.DependencyGateIT
+[INFO] Running io.jenkins.plugins.queueoptimizer.gate.MissingUpstreamIT
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 25.54 s -- in io.jenkins.plugins.queueoptimizer.gate.MissingUpstreamIT
+[INFO] Running io.jenkins.plugins.queueoptimizer.metrics.MetricsPublisherIT
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 21.01 s -- in io.jenkins.plugins.queueoptimizer.metrics.MetricsPublisherIT
+[INFO] Running io.jenkins.plugins.queueoptimizer.property.DeclarativeOptionsIT
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 27.69 s -- in io.jenkins.plugins.queueoptimizer.property.DeclarativeOptionsIT
+[INFO] Running io.jenkins.plugins.queueoptimizer.property.Milestone2CompatibilityIT
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 16.17 s -- in io.jenkins.plugins.queueoptimizer.property.Milestone2CompatibilityIT
+[INFO] Running io.jenkins.plugins.queueoptimizer.sorter.CacheEvictionRegressionIT
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 18.17 s -- in io.jenkins.plugins.queueoptimizer.sorter.CacheEvictionRegressionIT
+[INFO] Running io.jenkins.plugins.queueoptimizer.sorter.FreestylePriorityIT
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 21.65 s -- in io.jenkins.plugins.queueoptimizer.sorter.FreestylePriorityIT
+[INFO] Running io.jenkins.plugins.queueoptimizer.sorter.GroupInheritanceIT
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 18.61 s -- in io.jenkins.plugins.queueoptimizer.sorter.GroupInheritanceIT
+[INFO] Running io.jenkins.plugins.queueoptimizer.sorter.HeapFreshnessIT
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 21.86 s -- in io.jenkins.plugins.queueoptimizer.sorter.HeapFreshnessIT
+[INFO] Running io.jenkins.plugins.queueoptimizer.sorter.MavenPriorityIT
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 13.10 s -- in io.jenkins.plugins.queueoptimizer.sorter.MavenPriorityIT
+[INFO] Running io.jenkins.plugins.queueoptimizer.sorter.MultiExecutorIT
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 14.80 s -- in io.jenkins.plugins.queueoptimizer.sorter.MultiExecutorIT
+[INFO] Running io.jenkins.plugins.queueoptimizer.sorter.ObserveOnlyIT
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 25.36 s -- in io.jenkins.plugins.queueoptimizer.sorter.ObserveOnlyIT
+[INFO] Running io.jenkins.plugins.queueoptimizer.sorter.PipelinePriorityIT
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 17.30 s -- in io.jenkins.plugins.queueoptimizer.sorter.PipelinePriorityIT
+[INFO] Running io.jenkins.plugins.queueoptimizer.sorter.SorterConflictIT
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 13.82 s -- in io.jenkins.plugins.queueoptimizer.sorter.SorterConflictIT
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 97, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] >>> spotbugs:4.10.4.1:check (spotbugs) > :spotbugs @ dynamic-queue-optimizer >>>
+[INFO] 
+[INFO] --- spotbugs:4.10.4.1:spotbugs (spotbugs) @ dynamic-queue-optimizer ---
+[INFO] Done SpotBugs Analysis....
+[INFO] Skipping com.github.spotbugs:spotbugs-maven-plugin:4.10.4.1:spotbugs report goal
+[INFO] 
+[INFO] <<< spotbugs:4.10.4.1:check (spotbugs) < :spotbugs @ dynamic-queue-optimizer <<<
+[INFO] 
+[INFO] 
+[INFO] --- spotbugs:4.10.4.1:check (spotbugs) @ dynamic-queue-optimizer ---
+[INFO] BugInstance size is 0
+[INFO] Error size is 0
+[INFO] No errors/warnings found
+[INFO] 
+[INFO] --- spotless:3.10.2:check (default) @ dynamic-queue-optimizer ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] Spotless.Java is keeping 56 files clean - 0 needs changes to be clean, 56 were already clean, 0 were skipped because caching determined they were already clean
+[INFO] Sorting file C:\Users\haide\AppData\Local\Temp\pom12456926361267446640.xml
+[INFO] Saved sorted pom file to C:\Users\haide\AppData\Local\Temp\pom12456926361267446640.xml
+[INFO] Spotless.Pom is keeping 1 files clean - 0 needs changes to be clean, 1 were already clean, 0 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] --- failsafe:3.6.0:verify (integration-tests) @ dynamic-queue-optimizer ---
+[INFO] 
+[INFO] --- jacoco:0.8.15:report (report) @ dynamic-queue-optimizer ---
+[INFO] Loading execution data file D:\FYP POC\CICD project - Copy\plugin\target\jacoco.exec
+[INFO] Analyzed bundle 'Dynamic Queue Optimizer' with 34 classes
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  09:38 min
+[INFO] Finished at: 2026-10-22T10:41:12+05:00
+[INFO] ------------------------------------------------------------------------
+
+--- stderr ---

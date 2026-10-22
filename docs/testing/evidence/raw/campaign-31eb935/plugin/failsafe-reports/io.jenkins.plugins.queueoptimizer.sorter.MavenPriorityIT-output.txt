@@ -1,0 +1,17 @@
+   0.251 [id=1]	INFO	o.jvnet.hudson.test.WarExploder#explode: Picking up existing exploded jenkins.war at D:\FYP POC\CICD project - Copy\plugin\target\jenkins-for-test
+   1.161 [id=1]	INFO	o.jvnet.hudson.test.JenkinsRule#createWebServer2: Running on http://localhost:55970/jenkins/
+   1.363 [id=1]	INFO	jenkins.model.Jenkins#<init>: Starting version 2.568.3
+   1.604 [id=49]	INFO	jenkins.InitReactorRunner$1#onAttained: Started initialization
+   6.999 [id=54]	INFO	jenkins.InitReactorRunner$1#onAttained: Listed all plugins
+   7.007 [id=54]	INFO	j.b.api.BouncyCastlePlugin#start: D:\FYP POC\CICD project - Copy\plugin\target\tmp\j h6688715292902586501\plugins\bouncycastle-api\WEB-INF\optional-lib not found; for non RealJenkinsRule this is fine and can be ignored.
+   9.521 [id=56]	INFO	jenkins.InitReactorRunner$1#onAttained: Prepared all plugins
+   9.541 [id=52]	INFO	jenkins.InitReactorRunner$1#onAttained: Started all plugins
+   9.543 [id=58]	INFO	jenkins.InitReactorRunner$1#onAttained: Augmented all extensions
+  11.299 [id=60]	INFO	jenkins.InitReactorRunner$1#onAttained: System config loaded
+  11.376 [id=48]	INFO	jenkins.InitReactorRunner$1#onAttained: System config adapted
+  11.377 [id=48]	INFO	jenkins.InitReactorRunner$1#onAttained: Loaded all jobs
+  11.388 [id=62]	INFO	jenkins.InitReactorRunner$1#onAttained: Configuration for all jobs updated
+  11.407 [id=53]	INFO	jenkins.InitReactorRunner$1#onAttained: Completed initialization
+  12.354 [id=1]	INFO	hudson.lifecycle.Lifecycle#onStatusUpdate: Stopping Jenkins
+  12.395 [id=1]	INFO	hudson.lifecycle.Lifecycle#onStatusUpdate: Jenkins stopped
+  12.439 [id=1]	INFO	o.j.h.t.TemporaryDirectoryAllocator#dispose: deleting D:\FYP POC\CICD project - Copy\plugin\target\tmp\j h6688715292902586501

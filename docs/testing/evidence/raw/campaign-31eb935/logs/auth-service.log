@@ -1,0 +1,17 @@
+✔ health reports ok (863.9153ms)
+✔ version exposes the commit (860.9851ms)
+✔ login issues a token (858.2061ms)
+✔ login without a username is rejected (864.0406ms)
+✔ a valid token verifies (862.4625ms)
+✔ an unknown token does not verify (864.8551ms)
+✔ an unknown path is a 404 (852.2556ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6110.0322
+
+--- stderr ---
