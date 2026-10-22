@@ -2080,10 +2080,62 @@ runs, is a Needs human item.
         `mvn -B verify` BUILD SUCCESS: 125 unit tests (1 skipped, as before), 97 JenkinsRule tests,
         SpotBugs 0, Spotless clean.
 - [ ] T7.2 `python -m experiment` with `setup`, `warmup`, `run`, `analyze` and `report` commands,
-      using only the REST API and `/dynamic-queue/metrics`.
-- [ ] T7.3 KPI calculations with unit tests built on hand-made event logs.
-- [ ] T7.4 Chart and table generation, including `table_12_1.md` and CSV.
-- [ ] T7.5 Import the M2 results as the series "M2 dispatcher v1".
+      using only the REST API and `/dynamic-queue/metrics`. Built and tested on 2026-10-23, not
+      yet run against a real controller (T7.6 does that):
+      - **The package** (`experiment/`, standard library only, `experiment/README.md`):
+        - `jenkins.py`, the REST client: CSRF crumb, Basic auth from the environment or `.env`,
+          never printed;
+        - `templates.py`, jobs rendered from the reference exports;
+        - `harness.py`: `setup`, `warmup` and `run`;
+        - `records.py` and `kpis.py`: the figures, from raw events;
+        - `analyze.py`, `report.py` and `m2.py`;
+        - `__main__.py`: the five commands, and `smoke` for T7.6.
+      - **Part 4.8.3's rules are code:**
+        - jobs are created once, and `setup --recreate`, which needs the admin account, warns that
+          it wipes history;
+        - `run` always analyses, writes `results/<time>-.../` and updates `results/latest.json`
+          last;
+        - every run records the plugin version and build, Jenkins version, executors, the
+          workload itself and its digest, and the configuration in force.
+      - **A run refuses the wrong conditions:** the executor count, the arm, jobs not made from
+        this version of the workload, a busy controller. An unfinished run keeps its raw files and
+        is not analysed.
+      - **No script console anywhere:** the Phase 0 guard and
+        `test_experiment_harness_never_calls_the_script_console` both pass on `experiment/`.
+      - **Checks:** `python -m pytest experiment/tests`, 116 passed on Python 3.14 and the backend's
+        3.12. Among them, `setup`, `warmup` and `run` end to end against an in-memory controller
+        (`tests/fake_jenkins.py`), both arms, `mixed-30` with node blocks, and a stock-Jenkins run
+        from REST alone. `ruff check`, `ruff format --check` and `mypy --strict` are clean.
+- [x] T7.3 KPI calculations with unit tests built on hand-made event logs. Evidence, run on
+      2026-10-23:
+      - **Every KPI, from records:** Appendix F's waits (mean and maximum, overall and per band),
+        completion, makespan, throughput and utilisation, plus 4.8.4's dependency violations, the
+        longest LOW wait, the scheduler's overhead per cycle (from sampled health) and, for
+        Pipelines, the first node block's wait and their sum.
+      - **`experiment/tests/test_kpis.py`, 13 tests on a hand-made log:** three jobs, freestyle and
+        Pipeline, whose every figure was worked out by hand. The log also carries an earlier build's
+        events, which must not leak in, as the plugin's ring does.
+      - **The tests also cover:** a downstream started too early counts as a violation; a 95th
+        percentile stays within its data; a job, node block or completion that is missing is an
+        error, not a guess.
+- [x] T7.4 Chart and table generation, including `table_12_1.md` and CSV. Evidence, run on
+      2026-10-23:
+      - **`python -m experiment report`** writes `table_12_1.md`, `runs.csv` (one row per run) and
+        SVG charts (waits by band per condition, makespan, the longest LOW wait, dependency
+        violations, and Milestone 2's runs).
+      - **The table** gives one section per condition, the mean and standard deviation of each
+        figure with n beside it, and scheduling efficiency against observe-only, as Appendix F
+        defines it.
+      - **`experiment/tests/test_report.py`, 13 passed:** the aggregation, the efficiency formula,
+        the table, the CSV, the SVG, and a report built only from completed runs.
+- [x] T7.5 Import the M2 results as the series "M2 dispatcher v1". Evidence, run on 2026-10-23:
+      - **`experiment/m2.py`** recomputes Milestone 2's five result files (`legacy/`, read only)
+        with the v2 KPI code: its four plugin runs as "M2 dispatcher v1", and its stock-Jenkins
+        control apart as "M2 stock Jenkins".
+      - **`experiment/tests/test_m2.py`, 5 passed:** on all five runs, makespan, mean wait, each
+        band's wait and the dependency violations agree with the testing chapter's independent
+        recomputation (`docs/testing/data/m2-runs.csv`). The M2 runs appear only in a section of
+        their own, never in a v2 figure.
 - [ ] T7.6 Smoke run: `freestyle-6` on 1 executor, 1 repetition, on both experiment instances.
 
 ## Decisions taken while building

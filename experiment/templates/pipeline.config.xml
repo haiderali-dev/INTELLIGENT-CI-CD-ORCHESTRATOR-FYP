@@ -1,0 +1,31 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<!--
+  The experiment's Pipeline job: jenkins/reference-configs/pipeline-build-test-deploy.config.xml,
+  which Jenkins itself exported (rule 1.4), with the same elements in the same order, and three
+  changes:
+  - the description, the band (level) and the upstream jobs (dependsOn) are placeholders;
+  - its BRANCH and COMMIT parameters are dropped: the job checks nothing out;
+  - its script is the reference's declarative form cut to one stage, one node block on a Linux
+    agent that sleeps for the job's duration. The options block repeats the band and upstreams,
+    as the reference does, so the property stays the same on every run.
+
+  experiment/templates.py fills the placeholders, escaped for XML, and drops this comment.
+  experiment/tests/test_templates.py checks the rendered job against the reference, element by
+  element.
+-->
+<flow-definition plugin="workflow-job@1602.v2a_70b_80a_2396">
+  <description>${description}</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <io.jenkins.plugins.queueoptimizer.property.JobPriorityProperty plugin="dynamic-queue-optimizer@2.0.0-SNAPSHOT">
+      <level>${level}</level>
+      <dependsOn>${depends_on}</dependsOn>
+    </io.jenkins.plugins.queueoptimizer.property.JobPriorityProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@4383.v04fa_a_3d67b_d9">
+    <script>${script}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

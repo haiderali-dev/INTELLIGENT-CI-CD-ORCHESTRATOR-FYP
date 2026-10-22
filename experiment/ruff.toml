@@ -6,8 +6,9 @@ extend = "../backend/pyproject.toml"
 # The command-line entry point: its printed progress and summary are its user interface, the same
 # exception the backend makes for app/db/seed.py.
 "__main__.py" = ["T201"]
-# Tests build hand-made event logs and fixtures with long literals.
-"tests/**" = ["E501"]
+# Tests build hand-made event logs and fixtures with long literals, and use made-up credentials,
+# as the backend's tests may.
+"tests/**" = ["E501", "S105", "S106", "S107"]
 
 [lint.isort]
 known-first-party = ["experiment"]

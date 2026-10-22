@@ -11,7 +11,7 @@ import hashlib
 import json
 import random
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Final
 
@@ -44,13 +44,18 @@ class JobSpec:
 
 @dataclass(frozen=True)
 class Workload:
-    """A validated workload: its jobs in file order, and a digest of the file's content."""
+    """A validated workload: its jobs in file order, and a digest of the file's content.
+
+    ``source`` is that content as canonical JSON. A run records it, so the run can be analysed
+    again later from what it actually ran, whatever the workload file says by then.
+    """
 
     name: str
     description: str
     prefix: str
     jobs: tuple[JobSpec, ...]
     digest: str
+    source: str = field(default="", compare=False, repr=False)
 
     def jenkins_name(self, name: str) -> str:
         """The job's name on the controller: the workload's prefix, then the job's own name."""
@@ -126,7 +131,14 @@ def parse(data: dict[str, Any]) -> Workload:
     canonical = json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
     digest = hashlib.sha256(canonical.encode("ascii")).hexdigest()
     description = str(data["description"])
-    return Workload(name=name, description=description, prefix=prefix, jobs=jobs, digest=digest)
+    return Workload(
+        name=name,
+        description=description,
+        prefix=prefix,
+        jobs=jobs,
+        digest=digest,
+        source=canonical,
+    )
 
 
 def _job(workload: str, raw: dict[str, Any]) -> JobSpec:
