@@ -83,6 +83,17 @@
       <artifactId>test-harness</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <!--
+      Maven jobs, test scope only, for the same reason as Pipeline below: the
+      plugin needs no Maven classes, since a Maven job is a Job, but a test has
+      to queue one to prove it is ranked (MavenPriorityIT, D-072).
+    -->
+    <dependency>
+      <groupId>org.jenkins-ci.main</groupId>
+      <artifactId>maven-plugin</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins.workflow</groupId>
       <artifactId>workflow-basic-steps</artifactId>
@@ -165,4 +176,67 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <!--
+      Mutation testing of the algorithm packages, for the testing chapter's white-box section:
+
+        mvn -B -P mutation test-compile org.pitest:pitest-maven:mutationCoverage
+
+      Opt in only; the ordinary build never runs it. The targets are the classes with no Jenkins
+      imports (CLAUDE.md), whose unit tests run in milliseconds, so every mutant meets the whole
+      unit suite for its package. SchedulerOverheadTest is left out: a timing test is the wrong
+      oracle for a mutant, and it would run once for every one of them.
+    -->
+    <profile>
+      <id>mutation</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.pitest</groupId>
+            <artifactId>pitest-maven</artifactId>
+            <version>1.30.0</version>
+            <configuration>
+              <targetClasses>
+                <param>io.jenkins.plugins.queueoptimizer.scoring.*</param>
+                <param>io.jenkins.plugins.queueoptimizer.heap.*</param>
+                <param>io.jenkins.plugins.queueoptimizer.dependency.UnionFind</param>
+                <param>io.jenkins.plugins.queueoptimizer.dependency.KahnTopologicalSort*</param>
+                <param>io.jenkins.plugins.queueoptimizer.estimation.SimilarityEstimator</param>
+                <param>io.jenkins.plugins.queueoptimizer.model.PriorityLevel</param>
+              </targetClasses>
+              <targetTests>
+                <param>io.jenkins.plugins.queueoptimizer.scoring.*Test</param>
+                <param>io.jenkins.plugins.queueoptimizer.heap.*Test</param>
+                <param>io.jenkins.plugins.queueoptimizer.dependency.*Test</param>
+                <param>io.jenkins.plugins.queueoptimizer.estimation.*Test</param>
+              </targetTests>
+              <excludedTestClasses>
+                <param>io.jenkins.plugins.queueoptimizer.scoring.SchedulerOverheadTest</param>
+              </excludedTestClasses>
+              <outputFormats>
+                <param>XML</param>
+                <param>HTML</param>
+              </outputFormats>
+              <timestampedReports>false</timestampedReports>
+              <threads>4</threads>
+              <!--
+                PIT's own JVMs, not the build's argLine: that one dumps the heap on an
+                OutOfMemoryError, and a mutant looping while it allocates is expected to hit one.
+                Three runs left three 715 MB dumps in plugin/ (2026-10-20).
+              -->
+              <argLine>-Xmx768m</argLine>
+            </configuration>
+            <dependencies>
+              <dependency>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-junit5-plugin</artifactId>
+                <version>1.2.3</version>
+              </dependency>
+            </dependencies>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

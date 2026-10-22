@@ -157,6 +157,9 @@ class ScoreComponentTest {
             ScoredJob unknown = scored.get("brand-new");
             assertEquals(0.5, unknown.executionTimeFactor(), TOLERANCE);
             assertTrue(unknown.hasUnknownEstimate());
+            // The other half, which mutation testing found unasserted: a measured job is not
+            // reported as unknown, or the UI would label every estimate "no history".
+            assertFalse(scored.get("known-fast").hasUnknownEstimate());
         }
 
         @Test

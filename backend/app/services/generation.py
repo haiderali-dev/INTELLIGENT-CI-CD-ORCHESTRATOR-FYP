@@ -25,6 +25,7 @@ exist yet (D-044), so the chain is saved from its end back to its start.
 from __future__ import annotations
 
 import json
+import re
 import time
 from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass
@@ -69,7 +70,7 @@ from app.generation.validate import (
 )
 from app.services import chains
 from app.services.catalog import Catalog
-from app.services.conversations import get_command, intent_summary
+from app.services.conversations import get_command, intent_summary, refuse_once_run
 from app.services.git import GitClient
 from app.services.jenkins import JenkinsClient, JenkinsError, JobAlreadyExistsError
 from app.services.tracker import RunTracker
@@ -173,6 +174,7 @@ async def generate(
 ) -> GeneratedPipeline:
     """Plan, render, validate and store (4.6.2 steps 1 to 3)."""
     intent, branch, commit = ready_intent(command)
+    await refuse_once_run(session, command.id)
     # Choosing Generate is the user confirming the intent card: 4.4.3's CONFIRMED status.
     command.status = CommandStatus.CONFIRMED.value
     assistant = _ASSISTANTS[conversation.assistant]
@@ -217,6 +219,7 @@ async def regenerate(
             "This plan was already approved and run. Send a new message to change it.",
             pipeline_id=pipeline.id,
         )
+    await refuse_once_run(session, pipeline.command_id)
     if spec_yaml is None:
         fresh = await generate(
             session,
@@ -556,6 +559,7 @@ async def approve(
             "This plan was already approved; its chain is running or has run.",
             pipeline_id=pipeline.id,
         )
+    await refuse_once_run(session, pipeline.command_id, besides=pipeline.id)
     other = await session.scalar(
         select(GeneratedPipeline.id).where(
             GeneratedPipeline.idempotency_key == key, GeneratedPipeline.id != pipeline.id
@@ -795,6 +799,55 @@ def plain_explanation(spec: GenerationSpec, artifact: RenderedArtifact) -> str:
 ExplainRecorder = Callable[[str, str, int, str], Awaitable[None]]
 
 
+# What a plan's explanation may not say, sentence by sentence (independent security review, finding
+# 14). Its input includes stage names a user can edit, so its output gets T5.9's treatment:
+# nothing about production, and nothing shaped like a command. Backticks are allowed here, unlike
+# in T5.9's suggestions: an explanation quotes job names in them.
+_PRODUCTION_WORD = re.compile(r"(?i)\bprod(?:uction)?\b")
+_SHELL_LIKE = re.compile(
+    r"&&|\|\||\s\|\s|^\s*\$ |(?:^|\s)(?:sudo|rm|curl|wget|bash|sh|chmod|kubectl)\s+-?\w"
+)
+_SENTENCE_BREAK = re.compile(r"(?<=[.!?])\s+|\n")
+LEFT_OUT: Final = "[A sentence about production or a command was left out.]"
+
+
+def _screen_sentence(sentence: str) -> str:
+    if _PRODUCTION_WORD.search(sentence) or _SHELL_LIKE.search(sentence):
+        return LEFT_OUT
+    return sentence
+
+
+async def screened(chunks: AsyncIterator[str]) -> AsyncIterator[str]:
+    """Pass a model's stream on a sentence at a time, each one screened.
+
+    Held back until a sentence ends, since a word that decides the screen can arrive split across
+    two chunks. What remains when the stream ends is screened and sent too.
+    """
+    pending = ""
+    try:
+        async for chunk in chunks:
+            pending += chunk
+            breaks = list(_SENTENCE_BREAK.finditer(pending))
+            if not breaks:
+                continue
+            cut = breaks[-1].end()
+            ready, pending = pending[:cut], pending[cut:]
+            out: list[str] = []
+            start = 0
+            for found in _SENTENCE_BREAK.finditer(ready):
+                out.append(_screen_sentence(ready[start : found.start()]) + found.group())
+                start = found.end()
+            yield "".join(out)
+    except Exception:
+        # A model that fails partway keeps what it said (explain_stream marks it cut short), so
+        # what was held back goes out, screened, before the failure does.
+        if pending:
+            yield _screen_sentence(pending)
+        raise
+    if pending:
+        yield _screen_sentence(pending)
+
+
 async def explain_stream(
     spec: GenerationSpec,
     artifact: RenderedArtifact,
@@ -820,8 +873,8 @@ async def explain_stream(
         started = time.monotonic()
         said = False
         try:
-            async for chunk in provider.stream_text(
-                system=rendered.system, messages=[message], model=model
+            async for chunk in screened(
+                provider.stream_text(system=rendered.system, messages=[message], model=model)
             ):
                 said = True
                 yield chunk

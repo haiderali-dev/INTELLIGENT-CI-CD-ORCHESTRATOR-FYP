@@ -1,0 +1,6 @@
+run,file,jobs,makespan_s,mean_wait_s,high_mean_s,medium_mean_s,low_mean_s,dependency_violations,dependency_edges
+"Baseline (stock Jenkins, FIFO)",baseline-results.json,30,322.07,156.88,271.5,144.49,15.89,1,20
+"Plugin, run 1",plugin-results.json,30,322.43,140.88,44.88,163.5,228.31,10,20
+"Plugin, run 2",plugin-results-run2.json,30,344.35,158.92,51.27,188.57,246.3,18,20
+"Plugin, run 3",plugin-results-run3.json,30,407.49,212.31,353.34,201.37,28.12,1,20
+"Plugin, run 4 (the report's)",plugin-results-run4.json,30,328.21,143.02,39.08,169.42,232.94,19,20

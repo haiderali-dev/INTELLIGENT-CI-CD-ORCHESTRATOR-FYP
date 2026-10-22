@@ -157,6 +157,13 @@ jobs:
         working-directory: frontend
       - run: npx playwright test
         working-directory: frontend
+      # Phase 6's accessibility acceptance, 95 or more on both assistant pages (D-064), on every
+      # push rather than only in the local gate: sixteen audits, signed in, in the runner's Chrome.
+      - name: Lighthouse accessibility, both assistant pages
+        run: npx playwright test --project=lighthouse
+        working-directory: frontend
+        env:
+          LIGHTHOUSE: "1"
       # The accounts in these traces are made up for the run and die with it.
       - name: Keep the traces of a failed flow
         if: failure()

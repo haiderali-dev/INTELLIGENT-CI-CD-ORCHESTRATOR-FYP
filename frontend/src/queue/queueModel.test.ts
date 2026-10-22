@@ -5,6 +5,7 @@ import * as captured from "@/test/fixtures/queue";
 import {
   formatEstimate,
   formatWait,
+  heldReason,
   jobTypeLabel,
   missingUpstreamNote,
   optimizerStatus,
@@ -64,6 +65,21 @@ describe("the queue model", () => {
     const shuffled = { ...captured.group, items: [...captured.group.items].reverse() };
 
     expect(ranked(shuffled).map(({ rank }) => rank)).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it("says why a job is held, naming its upstream when the plugin does", () => {
+    const held = captured.heldForUpstream.held_items[0];
+    if (!held) {
+      throw new Error("the fixture has no held item");
+    }
+    expect(heldReason(held)).toBe("Waits for it-held-upstream, which is building");
+    expect(heldReason({ ...held, upstream_state: "queued" })).toBe(
+      "Waits for it-held-upstream, which is still queued",
+    );
+    expect(heldReason({ reason: "build #4 is already in progress", upstream: null, upstream_state: null })).toBe(
+      "Build #4 is already in progress",
+    );
+    expect(heldReason({ reason: null, upstream: null, upstream_state: null })).toBe("Held by Jenkins");
   });
 
   it("says whether the optimizer is ordering the queue", () => {

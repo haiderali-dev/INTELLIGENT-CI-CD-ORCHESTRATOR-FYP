@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
@@ -68,7 +69,12 @@ test("makes the data the screens show", async ({ request }) => {
   if (first) {
     first.jobName = card.jobs[0]?.name ?? first.jobName;
   }
-  await setRanking(request, ranking);
+  // And a job held for its upstream, from the live recording of 2026-10-20 (ranking-held.json), so
+  // the Queue page's Held back list is on the screenshots too (D-066).
+  const held = JSON.parse(
+    readFileSync(new URL("../../backend/tests/data/plugin/ranking-held.json", import.meta.url), "utf8"),
+  ) as { heldItems: unknown[] };
+  await setRanking(request, { ...ranking, heldItems: held.heldItems });
 });
 
 /** Each screen at both widths in both schemes, from one page load: the viewport and colour scheme

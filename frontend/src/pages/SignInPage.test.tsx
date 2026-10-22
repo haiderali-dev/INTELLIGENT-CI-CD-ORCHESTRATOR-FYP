@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -7,6 +7,7 @@ import {
   apiError,
   authBackend,
   DEVELOPER,
+  json,
   makeSession,
   noAnswer,
   PASSWORD,
@@ -28,9 +29,22 @@ afterEach(() => {
   }
 });
 
-function signInAt(path: string, backend: FakeBackend = authBackend()) {
+/**
+ * The route tree at `path`, once the router has loaded the page it lands on. Pages are loaded
+ * lazily (src/app/routes.tsx), as a browser loads them, so nothing draws until the matched page's
+ * module has arrived and any redirect it starts has settled.
+ */
+async function signInAt(path: string, backend: FakeBackend = authBackend()) {
   const session = track(makeSession(backend));
-  return { backend, session, ...renderRoutes(path, session) };
+  const view = renderRoutes(path, session);
+  await waitFor(() => {
+    expect(view.router.state.initialized).toBe(true);
+    expect(view.router.state.navigation.state).toBe("idle");
+    // Drawn, not only routed: a page heading, or the status shown while a session is restored.
+    expect(document.querySelector("h1, [role=status]")).not.toBeNull();
+    expect(screen.queryByText("Loading", { exact: true })).toBeNull();
+  });
+  return { backend, session, ...view };
 }
 
 const email = () => screen.getByLabelText("Email");
@@ -48,8 +62,8 @@ async function fillAndSubmit(user: ReturnType<typeof userEvent.setup>, address: 
 }
 
 describe("sign in", () => {
-  it("asks for the email and password in plain words, with the cursor in the email field", () => {
-    signInAt("/sign-in");
+  it("asks for the email and password in plain words, with the cursor in the email field", async () => {
+    await signInAt("/sign-in");
 
     expect(screen.getByRole("heading", { level: 1, name: "Sign in" })).toBeInTheDocument();
     expect(email()).toHaveFocus();
@@ -61,7 +75,7 @@ describe("sign in", () => {
 
   it("names each missing field, and sends nothing", async () => {
     const user = userEvent.setup();
-    const { backend } = signInAt("/sign-in");
+    const { backend } = await signInAt("/sign-in");
 
     await user.click(signInButton());
 
@@ -75,7 +89,7 @@ describe("sign in", () => {
 
   it("says what an email address should look like", async () => {
     const user = userEvent.setup();
-    signInAt("/sign-in");
+    await signInAt("/sign-in");
 
     await fillAndSubmit(user, "dev", PASSWORD);
 
@@ -86,7 +100,7 @@ describe("sign in", () => {
 
   it("names a password longer than the backend accepts", async () => {
     const user = userEvent.setup();
-    const { backend } = signInAt("/sign-in");
+    const { backend } = await signInAt("/sign-in");
     await user.type(email(), DEVELOPER.email);
     await user.click(password());
     await user.paste("x".repeat(257));
@@ -101,7 +115,7 @@ describe("sign in", () => {
 
   it("points at the email field when the backend refuses its format", async () => {
     const user = userEvent.setup();
-    signInAt(
+    await signInAt(
       "/sign-in",
       authBackend().on("POST /api/auth/login", () =>
         apiError(422, "VALIDATION_FAILED", "Some fields need attention.", {
@@ -121,7 +135,7 @@ describe("sign in", () => {
 
   it("says the email or password is wrong, keeps the email and clears the password", async () => {
     const user = userEvent.setup();
-    signInAt(
+    await signInAt(
       "/sign-in",
       authBackend().on("POST /api/auth/login", () =>
         apiError(401, "INVALID_CREDENTIALS", "That email or password is not correct."),
@@ -142,7 +156,7 @@ describe("sign in", () => {
 
   it("says when the account is disabled, and who can fix it", async () => {
     const user = userEvent.setup();
-    signInAt(
+    await signInAt(
       "/sign-in",
       authBackend().on("POST /api/auth/login", () =>
         apiError(
@@ -162,7 +176,7 @@ describe("sign in", () => {
 
   it("says how long to wait after too many attempts", async () => {
     const user = userEvent.setup();
-    signInAt(
+    await signInAt(
       "/sign-in",
       authBackend().on("POST /api/auth/login", () =>
         apiError(429, "RATE_LIMITED", "Too many requests.", {
@@ -181,7 +195,7 @@ describe("sign in", () => {
 
   it("says when the server did not answer, and what to check", async () => {
     const user = userEvent.setup();
-    signInAt("/sign-in", authBackend().on("POST /api/auth/login", noAnswer));
+    await signInAt("/sign-in", authBackend().on("POST /api/auth/login", noAnswer));
 
     await fillAndSubmit(user, DEVELOPER.email, PASSWORD);
 
@@ -194,7 +208,7 @@ describe("sign in", () => {
 
   it("shows and hides the password on request", async () => {
     const user = userEvent.setup();
-    signInAt("/sign-in");
+    await signInAt("/sign-in");
     await user.type(password(), PASSWORD);
 
     await user.click(screen.getByRole("button", { name: "Show password" }));
@@ -213,7 +227,7 @@ describe("sign in", () => {
 describe("arriving at and leaving sign in", () => {
   it("sends a visitor with no session to sign in, then on to the page they asked for", async () => {
     const user = userEvent.setup();
-    const { router } = signInAt("/queue?view=all");
+    const { router } = await signInAt("/queue?view=all");
 
     expect(currentPath(router)).toBe("/sign-in?next=%2Fqueue%3Fview%3Dall");
 
@@ -225,7 +239,7 @@ describe("arriving at and leaving sign in", () => {
 
   it("never follows a next address off this site", async () => {
     const user = userEvent.setup();
-    const { router } = signInAt("/sign-in?next=%2F%2Felsewhere.example%2Fqueue");
+    const { router } = await signInAt("/sign-in?next=%2F%2Felsewhere.example%2Fqueue");
 
     await fillAndSubmit(user, DEVELOPER.email, PASSWORD);
 
@@ -245,7 +259,14 @@ describe("arriving at and leaving sign in", () => {
 
   it("restores the session after a reload without showing the form", async () => {
     window.sessionStorage.setItem(REFRESH_TOKEN_KEY, "refresh-from-before");
-    const { router } = signInAt("/runs");
+    // The renewal answers after the page's own code has loaded, as on a slow connection, so the
+    // moment in between is there to be seen.
+    const backend = authBackend();
+    backend.on("POST /api/auth/refresh", async () => {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      return json(200, backend.tokens(DEVELOPER));
+    });
+    const { router } = await signInAt("/runs", backend);
 
     expect(screen.getByRole("status")).toHaveTextContent("Restoring your session");
     expect(
@@ -260,7 +281,7 @@ describe("arriving at and leaving sign in", () => {
     const backend = authBackend().on("POST /api/auth/refresh", () =>
       apiError(401, "TOKEN_INVALID", "This session has been signed out. Please sign in again."),
     );
-    const { router } = signInAt("/catalog", backend);
+    const { router } = await signInAt("/catalog", backend);
 
     const notice = await screen.findByText(
       "Your session ended. Sign in again to carry on where you were.",
@@ -276,7 +297,7 @@ describe("arriving at and leaving sign in", () => {
 
   it("says when the server could not be reached to restore the session", async () => {
     window.sessionStorage.setItem(REFRESH_TOKEN_KEY, "still-good");
-    signInAt("/", authBackend().on("POST /api/auth/refresh", noAnswer));
+    await signInAt("/", authBackend().on("POST /api/auth/refresh", noAnswer));
 
     expect(
       await screen.findByText(/The server did not answer, so your session could not be restored/),

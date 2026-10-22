@@ -4,15 +4,15 @@
 unclassified:
   dynamicQueueOptimizer:
     optimizerEnabled: false
-    weightUrgency: 0.6
-    weightDependency: 0.25
-    weightExecutionTime: 0.15
-    agingBonusPerInterval: 0.08
+    weightUrgency: "0.6"
+    weightDependency: "0.25"
+    weightExecutionTime: "0.15"
+    agingBonusPerInterval: "0.08"
     agingIntervalMinutes: 3
-    agingCap: 0.24
+    agingCap: "0.24"
     estimatorK: 7
-    similarityThreshold: 0.4
-    recencyLambdaPerDay: 0.2
+    similarityThreshold: "0.4"
+    recencyLambdaPerDay: "0.2"
     historyWindow: 25
     rescoreIntervalSeconds: 30
     metricsEnabled: true

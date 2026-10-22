@@ -157,6 +157,32 @@ async def list_messages(session: AsyncSession, conversation: Conversation) -> li
 # ---------------------------------------------------------------------------
 
 
+async def refuse_once_run(
+    session: AsyncSession, command_id: str, *, besides: str | None = None
+) -> None:
+    """409 once any plan for this command was approved: one request runs once.
+
+    Editing, generating, regenerating and approving all check it, so an approved HIGH-urgency
+    request cannot be generated and approved again to start more HIGH chains without a new
+    justification or quota (independent security review, finding 1). A partial unique index on
+    ``generated_pipelines`` holds the same rule against two approvals racing. ``besides`` leaves
+    out the plan being approved, which ``approve`` checks itself.
+    """
+    query = select(GeneratedPipeline.id).where(
+        GeneratedPipeline.command_id == command_id,
+        GeneratedPipeline.status == PipelineStatus.APPROVED.value,
+    )
+    if besides is not None:
+        query = query.where(GeneratedPipeline.id != besides)
+    approved = await session.scalar(query)
+    if approved is not None:
+        raise conflict(
+            ErrorCode.ALREADY_APPROVED,
+            "This request was already approved and run. Send a new message to run it again.",
+            pipeline_id=approved,
+        )
+
+
 async def get_command(
     session: AsyncSession, *, user: User, command_id: str
 ) -> tuple[NlCommand, Conversation]:
@@ -620,18 +646,7 @@ async def edit_intent(
             f"These fields cannot be edited: {', '.join(sorted(unknown))}.",
             fields=sorted(unknown),
         )
-    approved = await session.scalar(
-        select(GeneratedPipeline.id).where(
-            GeneratedPipeline.command_id == command.id,
-            GeneratedPipeline.status == PipelineStatus.APPROVED.value,
-        )
-    )
-    if approved is not None:
-        raise conflict(
-            ErrorCode.ALREADY_APPROVED,
-            "This request was already approved and run. Send a new message to change it.",
-            pipeline_id=approved,
-        )
+    await refuse_once_run(session, command.id)
 
     record = command.parsed_intent or {}
     current = Intent.model_validate(record.get("intent") or {})

@@ -9,16 +9,20 @@ from __future__ import annotations
 
 import asyncio
 import time
+from datetime import datetime
 from enum import StrEnum
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Response, status
 from pydantic import BaseModel
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import rate_limit
 from app.core.logging import get_logger
+from app.core.ratelimit import API_LIMIT
 from app.core.settings import LlmMode, Settings
+from app.db.models import LlmCall
 from app.db.session import get_db
 from app.services.dependencies import get_jenkins_client, get_settings_dep
 from app.services.jenkins import JenkinsClient
@@ -44,6 +48,11 @@ class ComponentHealth(BaseModel):
     status: ComponentStatus
     detail: str
     latency_ms: int | None = None
+    # For the LLM only: how the latest model call ended ("ok", "error", "rate_limited", ...) and
+    # when. The probe never calls the model, so this is the one signal that it answers (found in
+    # T6.7: the Overview could not say "Groq, answering").
+    last_outcome: str | None = None
+    last_call_at: datetime | None = None
 
 
 class HealthResponse(BaseModel):
@@ -51,6 +60,10 @@ class HealthResponse(BaseModel):
     version: str
     environment: str
     components: dict[str, ComponentHealth]
+
+
+class ProbeError(Exception):
+    """A probe failure whose message was written to be shown: it names no host, path or secret."""
 
 
 async def _probe(name: str, coro: Any) -> tuple[str, ComponentHealth]:
@@ -67,14 +80,21 @@ async def _probe(name: str, coro: Any) -> tuple[str, ComponentHealth]:
             detail=f"did not respond within {PROBE_TIMEOUT_SECONDS:.0f}s",
             latency_ms=elapsed,
         )
+    except ProbeError as exc:
+        elapsed = int((time.perf_counter() - started) * 1000)
+        return name, ComponentHealth(
+            status=ComponentStatus.DOWN, detail=str(exc)[:200], latency_ms=elapsed
+        )
     except Exception as exc:
         elapsed = int((time.perf_counter() - started) * 1000)
-        logger.warning("health_probe_failed", component=name, error=type(exc).__name__)
-        # The type and message, not a traceback: this response is world-readable to anyone who can
-        # reach the endpoint.
+        # The message goes to the log only. This response is world-readable, and an exception's
+        # text can name internal hosts or connection details (security review, finding 10).
+        logger.warning(
+            "health_probe_failed", component=name, error=type(exc).__name__, detail=str(exc)[:200]
+        )
         return name, ComponentHealth(
             status=ComponentStatus.DOWN,
-            detail=f"{type(exc).__name__}: {exc}"[:200],
+            detail=f"unreachable ({type(exc).__name__})",
             latency_ms=elapsed,
         )
 
@@ -101,7 +121,7 @@ async def _check_llm(settings: Settings) -> str:
     if settings.llm_mode is LlmMode.REPLAY:
         return "replay provider; serving recorded fixtures"
     if not settings.groq_api_key:
-        raise RuntimeError("LLM_MODE=live but GROQ_API_KEY is empty")
+        raise ProbeError("LLM_MODE=live but GROQ_API_KEY is empty")
     return f"live; chain {' -> '.join(settings.model_chain)}"
 
 
@@ -115,7 +135,25 @@ async def liveness() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@router.get("/health", response_model=HealthResponse, summary="Dependency health")
+async def _latest_call(session: AsyncSession) -> LlmCall | None:
+    """The latest model call that reached a provider: cached answers and skipped models say
+    nothing about whether it answers."""
+    result: LlmCall | None = await session.scalar(
+        select(LlmCall)
+        .where(LlmCall.outcome.not_in(("cached", "skipped")))
+        .order_by(LlmCall.created_at.desc())
+        .limit(1)
+    )
+    return result
+
+
+@router.get(
+    "/health",
+    response_model=HealthResponse,
+    summary="Dependency health",
+    # Unauthenticated, and each call reaches Jenkins, so it is limited per address (finding 10).
+    dependencies=[Depends(rate_limit(API_LIMIT))],
+)
 async def health(
     response: Response,
     session: Annotated[AsyncSession, Depends(get_db)],
@@ -136,6 +174,14 @@ async def health(
 
     if settings.llm_mode is not LlmMode.LIVE:
         components["llm"].status = ComponentStatus.DISABLED
+    elif components["database"].status is ComponentStatus.UP:
+        latest = await _latest_call(session)
+        if latest is not None:
+            components["llm"].last_outcome = latest.outcome
+            components["llm"].last_call_at = latest.created_at
+            if latest.outcome != "ok" and components["llm"].status is ComponentStatus.UP:
+                # Configured, but the last time it was asked it did not answer.
+                components["llm"].status = ComponentStatus.DEGRADED
 
     # The database is required. Jenkins being down degrades the system rather than killing it: the
     # assistants cannot create jobs, but sign-in, history and analytics all still work.

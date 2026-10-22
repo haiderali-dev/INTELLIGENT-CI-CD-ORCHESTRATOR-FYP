@@ -27,6 +27,11 @@ x-jenkins-common: &jenkins-common
     # jenkins/controller/.
     context: .
     dockerfile: jenkins/controller/Dockerfile
+    # No provenance attestation on any image here. They are local and never pushed, and the
+    # attestation's timestamp gives every build a new image ID, even one served wholly from cache.
+    # With it off, the same source builds the same ID, which is how the gate tells a stale container
+    # from a current one (verify.py, "...run what the current source builds").
+    provenance: false
   restart: unless-stopped
   environment: &jenkins-env
     JENKINS_ADMIN_PASSWORD: ${JENKINS_ADMIN_PASSWORD:?set JENKINS_ADMIN_PASSWORD in .env}
@@ -40,7 +45,6 @@ x-jenkins-common: &jenkins-common
     JAVA_OPTS: >-
       -Djenkins.install.runSetupWizard=false
       -Djava.awt.headless=true
-      -Dhudson.model.DownloadService.noSignatureCheck=true
   healthcheck:
     # /login is served before authentication and before JCasC finishes, so it answers as soon as the
     # web tier is up. Probing an authenticated endpoint here would report unhealthy until the bot
@@ -56,6 +60,7 @@ x-agent-common: &agent-common
   build:
     context: jenkins/agent
     dockerfile: Dockerfile
+    provenance: false
   restart: unless-stopped
   environment: &agent-env
     # The controller authenticates with the private half of this pair; bootstrap.py writes both.
@@ -78,7 +83,7 @@ services:
   # PostgreSQL
   # -------------------------------------------------------------------------
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16.15-alpine
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-orchestrator}
@@ -116,8 +121,9 @@ services:
       - ./.secrets:/run/secrets/casc:ro
       - ./jenkins/reference-configs:/var/jenkins_conf/reference-configs
     ports:
-      - "8087:8080"
-      - "50000:50000"
+      # Loopback only: the controller is for this machine, not the network it is on (security
+      # review, finding 2). Agents connect over SSH, so no inbound agent port is published.
+      - "127.0.0.1:8087:8080"
     depends_on:
       agent-1:
         condition: service_started
@@ -145,6 +151,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      provenance: false
     container_name: orchestrator-backend
     restart: unless-stopped
     environment:
@@ -169,7 +176,7 @@ services:
       # The catalog is the source of truth for service definitions and is read at runtime.
       - ./catalog:/app/catalog:ro
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     healthcheck:
       # Declared here as well as in backend/Dockerfile. The image's HEALTHCHECK covers a plain
       # `docker run`; this one is what `docker compose ps` and any future `depends_on:
@@ -189,23 +196,27 @@ services:
         condition: service_healthy
 
   # -------------------------------------------------------------------------
-  # Frontend. Behind a profile until Phase 6 creates frontend/Dockerfile, so that
-  # `docker compose up -d` works today instead of failing on a missing build
-  # context. Recorded as a deviation in docs/decisions.md D-018.
+  # Frontend: the built app on nginx, which proxies /api and /ws to the backend so
+  # the app talks to one origin (frontend/Dockerfile, frontend/nginx.conf). A
+  # default service again now that the image exists (D-018, closed).
   # -------------------------------------------------------------------------
   frontend:
-    profiles: ["frontend"]
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      provenance: false
     container_name: orchestrator-frontend
     restart: unless-stopped
-    environment:
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
     ports:
-      - "5173:5173"
+      - "127.0.0.1:5173:5173"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:5173/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
   # -------------------------------------------------------------------------
   # Experiment profile: two isolated controllers, one agent each.
@@ -227,7 +238,7 @@ services:
       - ./jenkins/casc/experiment-baseline.yaml:/var/jenkins_conf/jenkins.yaml:ro
       - ./.secrets:/run/secrets/casc:ro
     ports:
-      - "8085:8080"
+      - "127.0.0.1:8085:8080"
     depends_on:
       baseline-agent:
         condition: service_started
@@ -253,7 +264,7 @@ services:
       - ./jenkins/casc/experiment-plugin.yaml:/var/jenkins_conf/jenkins.yaml:ro
       - ./.secrets:/run/secrets/casc:ro
     ports:
-      - "8086:8080"
+      - "127.0.0.1:8086:8080"
     depends_on:
       plugin-agent:
         condition: service_started

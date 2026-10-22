@@ -529,6 +529,18 @@
         "title": "ChainPage",
         "type": "object"
       },
+      "ChainStatus": {
+        "description": "A chain's outcome. EXPIRED: its 30-minute lock ran out before it finished (4.6.4).",
+        "enum": [
+          "RUNNING",
+          "SUCCESS",
+          "FAILURE",
+          "ABORTED",
+          "EXPIRED"
+        ],
+        "title": "ChainStatus",
+        "type": "string"
+      },
       "ChainSummary": {
         "properties": {
           "finished_at": {
@@ -749,6 +761,29 @@
           "detail": {
             "title": "Detail",
             "type": "string"
+          },
+          "last_call_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Call At"
+          },
+          "last_outcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Outcome"
           },
           "latency_ms": {
             "anyOf": [
@@ -1548,6 +1583,71 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "HeldItemResponse": {
+        "description": "Queued work held back rather than buildable, with why, and the upstream job holding it when\nthat is the reason (``upstream_state`` is ``queued`` or ``building``).",
+        "properties": {
+          "item_id": {
+            "title": "Item Id",
+            "type": "integer"
+          },
+          "job_name": {
+            "title": "Job Name",
+            "type": "string"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "upstream": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upstream"
+          },
+          "upstream_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upstream State"
+          },
+          "wait_seconds": {
+            "title": "Wait Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "item_id",
+          "job_name",
+          "level",
+          "reason",
+          "upstream",
+          "upstream_state",
+          "wait_seconds"
+        ],
+        "title": "HeldItemResponse",
+        "type": "object"
+      },
       "HelpCardRecord": {
         "description": "What the assistant can do (``HelpCard``, app/ai/clarify.py).",
         "properties": {
@@ -2194,6 +2294,17 @@
             "title": "Priority Level",
             "type": "string"
           },
+          "service": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service"
+          },
           "service_id": {
             "anyOf": [
               {
@@ -2211,6 +2322,7 @@
           "jenkins_name",
           "job_type",
           "service_id",
+          "service",
           "priority_level",
           "depends_on",
           "chain_position",
@@ -2218,6 +2330,15 @@
         ],
         "title": "JobResponse",
         "type": "object"
+      },
+      "JobType": {
+        "enum": [
+          "FREESTYLE",
+          "MAVEN",
+          "PIPELINE"
+        ],
+        "title": "JobType",
+        "type": "string"
       },
       "LogResponse": {
         "properties": {
@@ -3343,6 +3464,14 @@
             "title": "Available",
             "type": "boolean"
           },
+          "held_items": {
+            "description": "Queued but held back, such as waiting for an upstream job",
+            "items": {
+              "$ref": "#/components/schemas/HeldItemResponse"
+            },
+            "title": "Held Items",
+            "type": "array"
+          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/QueueItemResponse"
@@ -3392,9 +3521,39 @@
           "queue_length",
           "weights",
           "items",
-          "unscored_items"
+          "unscored_items",
+          "held_items"
         ],
         "title": "QueueResponse",
+        "type": "object"
+      },
+      "RateLimitResponse": {
+        "description": "One of the backend's rate limits, as `app/core/ratelimit.py` defines it.",
+        "properties": {
+          "applies_to": {
+            "title": "Applies To",
+            "type": "string"
+          },
+          "capacity": {
+            "title": "Capacity",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "per_seconds": {
+            "title": "Per Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "capacity",
+          "per_seconds",
+          "applies_to"
+        ],
+        "title": "RateLimitResponse",
         "type": "object"
       },
       "RefreshRequest": {
@@ -3711,6 +3870,21 @@
           "jobs"
         ],
         "title": "RerunStartedReply",
+        "type": "object"
+      },
+      "ResetPasswordRequest": {
+        "properties": {
+          "password": {
+            "maxLength": 256,
+            "minLength": 12,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "password"
+        ],
+        "title": "ResetPasswordRequest",
         "type": "object"
       },
       "ResolvedRecord": {
@@ -5100,6 +5274,57 @@
         ]
       }
     },
+    "/api/admin/limits": {
+      "get": {
+        "description": "4.7.3 lists the rate limits on the Admin page. Read from the limits themselves, so the page\ncannot show numbers the backend does not enforce (found in T6.7).",
+        "operationId": "get_rate_limits_api_admin_limits_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RateLimitResponse"
+                  },
+                  "title": "Response Get Rate Limits Api Admin Limits Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Refused. The error code says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Failed on the server or upstream of it."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "The rate limits in force",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/api/admin/policy": {
       "get": {
         "description": "4.5.5's rules and the configured quota.\n\nReported rather than editable: see this module's docstring and D-032.",
@@ -5398,6 +5623,74 @@
           }
         ],
         "summary": "Change a role or deactivate",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/users/{user_id}/password": {
+      "post": {
+        "description": "The way back for someone who forgot their password: the sign-in page tells them to ask an\nadministrator (found in T6.3, when no endpoint let one help).\n\nEvery session the old password opened ends: tokens issued before now are refused, and the\nuser's live connections are dropped. Resetting your own password signs you out too. The audit\nentry records who reset whose password, never the password.",
+        "operationId": "reset_password_api_admin_users__user_id__password_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Refused. The error code says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Failed on the server or upstream of it."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Set a new password for a user",
         "tags": [
           "admin"
         ]
@@ -5704,7 +5997,7 @@
     },
     "/api/auth/login": {
       "post": {
-        "description": "Exchange an email and password for an access and refresh token pair.\n\nRate limited to five attempts a minute per client address: enough for a person who mistypes,\nuseless for a password spray.",
+        "description": "Exchange an email and password for an access and refresh token pair.\n\nRate limited to five attempts a minute per account from one address, enough for a person who\nmistypes, and thirty a minute per address across all accounts, which stops a password spray.\nBoth are checked here rather than in a dependency so that a limit engaging can be audited, at\nmost once a minute per caller (D-068).",
         "operationId": "login_api_auth_login_post",
         "requestBody": {
           "content": {
@@ -5858,6 +6151,7 @@
     },
     "/api/chains": {
       "get": {
+        "description": "Chains, newest first. Filtered here rather than on the page, so a filter covers every chain\nand not only the newest page of them (found in T6.7).",
         "operationId": "list_chains_api_chains_get",
         "parameters": [
           {
@@ -5884,6 +6178,42 @@
               "default": false,
               "title": "Active",
               "type": "boolean"
+            }
+          },
+          {
+            "description": "FREESTYLE (the Freestyle Assistant) or PIPELINE",
+            "in": "query",
+            "name": "job_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/JobType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "FREESTYLE (the Freestyle Assistant) or PIPELINE",
+              "title": "Job Type"
+            }
+          },
+          {
+            "description": "One chain status",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ChainStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "One chain status",
+              "title": "Status"
             }
           },
           {
@@ -7416,7 +7746,7 @@
     },
     "/api/runs/{run_id}/log": {
       "get": {
-        "description": "A window of the log, with the offset to ask for next.\n\nWindowed rather than whole: the UI tails a running build, and returning the entire log on each\npoll would move the same megabyte over and over.",
+        "description": "A window of the log, with the offset to ask for next, redacted.\n\nWindowed rather than whole: the UI tails a running build, and returning the entire log on each\npoll would move the same megabyte over and over.",
         "operationId": "get_run_log_api_runs__run_id__log_get",
         "parameters": [
           {

@@ -472,3 +472,32 @@ async def test_the_fake_starts_available_and_enabled() -> None:
 
     assert await fake.ranking() == Ranking(available=True, optimizer_enabled=True)
     assert await fake.health() == PluginHealth(available=True, optimizer_enabled=True)
+
+
+# ---------------------------------------------------------------------------
+# Held items (found in T6.6): recorded from the live jenkins-dev on 2026-10-20
+# ---------------------------------------------------------------------------
+
+HELD = "ranking-held.json"
+
+
+def test_a_job_held_for_its_upstream_is_parsed_with_the_upstream() -> None:
+    """The plugin lists a job the dependency gate holds under ``heldItems``. Before, such a job was
+    neither ranked nor unscored, so the queue page could not say why it waited."""
+    ranking = parse_ranking(recorded(HELD))
+
+    assert ranking.items == ()
+    assert len(ranking.held) == 1
+    held = ranking.held[0]
+    assert held.job_name == "it-held-downstream"
+    assert held.level == "HIGH"
+    assert held.upstream == "it-held-upstream"
+    assert held.upstream_state == "building"
+    assert held.reason == "Waiting for upstream job 'it-held-upstream' (building) to finish."
+    assert held.wait_seconds == pytest.approx(8.169)
+
+
+def test_a_ranking_from_before_held_items_parses_with_none_held() -> None:
+    """An older plugin sends no ``heldItems``: nothing is held, rather than an error."""
+    for name in (THREE_WAITING, AGED, GROUP):
+        assert parse_ranking(recorded(name)).held == ()

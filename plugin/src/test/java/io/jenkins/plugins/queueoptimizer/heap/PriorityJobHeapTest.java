@@ -293,4 +293,42 @@ class PriorityJobHeapTest {
         assertTrue(heap.isEmpty());
         assertTrue(heap.get(1).isEmpty(), "the index must be cleared too, or memory leaks");
     }
+
+    @Test
+    @DisplayName("a heap with an entry is not empty, and an empty heap has no highest item")
+    void emptinessIsReportedBothWays() {
+        PriorityJobHeap heap = new PriorityJobHeap();
+        assertFalse(heap.isHighestPriority(1), "nothing is highest in an empty heap");
+
+        heap.insertOrUpdate(job(1, "a", 0.5));
+
+        assertFalse(heap.isEmpty());
+    }
+
+    @Test
+    @DisplayName("every operation releases its lock, so another thread can use the heap after it")
+    void everyOperationReleasesItsLock() throws Exception {
+        // Mutation testing removed each unlock() in turn and no test noticed: a thread re-entering
+        // its own lock sees nothing wrong. The sorter writes this heap on the queue maintenance
+        // thread while the ranking API reads it on a request thread, so a lock left held would
+        // hang the next caller on another thread (2026-10-20).
+        PriorityJobHeap heap = new PriorityJobHeap();
+        heap.replaceAll(List.of(job(1, "a", 0.5), job(2, "b", 0.4)));
+        heap.get(1);
+        heap.isHighestPriority(1);
+        heap.extractMax();
+        heap.clear();
+
+        ExecutorService other = Executors.newSingleThreadExecutor();
+        try {
+            int size = other.submit(() -> {
+                        heap.insertOrUpdate(job(3, "c", 0.3));
+                        return heap.size();
+                    })
+                    .get(5, TimeUnit.SECONDS);
+            assertEquals(1, size, "another thread wrote to the heap after every operation");
+        } finally {
+            other.shutdownNow();
+        }
+    }
 }

@@ -291,9 +291,18 @@ const PROVIDER_WORDS: Record<ComponentHealth["status"], { icon: typeof Bot; word
   down: { icon: CloudOff, word: "Down", quiet: true },
 };
 
+/** How the latest model call ended, in words: "answered", "was rate limited". */
+const CALL_OUTCOMES: Readonly<Record<string, string>> = {
+  ok: "answered",
+  error: "failed",
+  rate_limited: "was rate limited",
+  timeout: "timed out",
+};
+
 /**
- * The AI provider as the backend reports it. That report is its configuration, not a call to the
- * model, so it never claims the model is answering (backend app/api/health.py).
+ * The AI provider as the backend reports it: its configuration, and how the latest recorded model
+ * call ended. The probe never calls the model, so whether it answers comes only from that call
+ * (backend app/api/health.py; found in T6.7). With no call recorded yet, nothing is claimed.
  */
 function ProviderStatus() {
   const api = useApi(systemApi);
@@ -307,6 +316,11 @@ function ProviderStatus() {
         <>
           <StatusWord {...PROVIDER_WORDS[llm.status]} />
           <span className="text-graphite">{llm.detail}</span>
+          {llm.last_outcome && llm.last_call_at ? (
+            <span>
+              {`The latest call ${CALL_OUTCOMES[llm.last_outcome] ?? `ended: ${llm.last_outcome}`}, ${formatWhen(parseApiTime(llm.last_call_at))}.`}
+            </span>
+          ) : null}
         </>
       ) : health.isError ? (
         <>

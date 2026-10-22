@@ -112,10 +112,6 @@ class PolicyDecision:
     #: An Admin may cancel the running chain and go ahead (4.5.5); the UI offers it when true.
     can_cancel_running: bool = False
 
-    @property
-    def allowed(self) -> bool:
-        return self.outcome in (PolicyOutcome.ALLOW, PolicyOutcome.ALLOW_WITH_CHANGES)
-
 
 class PolicyService:
     def evaluate(self, intent: Intent, context: PolicyContext) -> PolicyDecision:

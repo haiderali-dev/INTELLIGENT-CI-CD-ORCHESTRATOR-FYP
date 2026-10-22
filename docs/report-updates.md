@@ -23,8 +23,9 @@ differ.
       it is a claim about delivered work rather than a detail.*
 - [ ] **Section 12.1.3, p. 82 [81]: the experiment is described as 25 jobs.** It was 30. See
       Appendix B below.
-- [ ] **Section 12.1.3, p. 82 [81]: "three dependency chains".** The workload declares 17 dependency
-      edges across seven `build → test → deploy` chains plus two fan-in jobs.
+- [ ] **Section 12.1.3, p. 82 [81]: "three dependency chains".** The workload declares 20 dependency
+      edges, on 17 dependent jobs: seven `build → test → deploy` chains (14 edges), two fan-in jobs
+      (5 edges) and a release-notes job after the smoke test (1 edge).
 
 ## Blocking: the formula the report publishes was not the formula that ran
 
@@ -108,6 +109,41 @@ each one attaches to Jenkins.
       satisfied.** Milestone 2 counted a missing upstream as satisfied, which is the opposite of safe.
       State also that a declared cycle never blocks at runtime; it is rejected by form validation and
       by the backend, and reported through the API.
+- [ ] **Sections 6.5 and 6.6: the estimator's history and the plugin's cost, as built and as
+      measured (D-073; Chapter 8, experiment E1).** Three sentences disagree with the
+      implementation or with each other:
+      - **Section 6.5 says history is "at most the last 50 builds per candidate job",** and the code
+        agrees: `BuildHistoryService` reads up to `historyWindow` (50) builds from every job on the
+        controller. So *h*, the builds one estimate examines, is up to 50 × the number of jobs: 1,500
+        for the POC's 30 jobs.
+      - **Section 6.6 says "h up to 50".** Replace it with "h up to 50 per job, so up to 1,500 for
+        the POC's 30 jobs".
+      - **Section 6.5 says estimates "are cached per job and refreshed only when a new build of a
+        similar job completes".** The implementation caches a whole scoring pass instead
+        (`BUILD_PROMPT.md` Part 4.3.7 step 2). The pass is keyed on the queued items and the rescore
+        interval, and on a miss it estimates every queued job against the whole history.
+      - **Section 6.6's "adds no measurable overhead ..., which we verify experimentally in the
+        testing chapter".** Replace it with E1's measurement:
+        - with 30 items queued, a queue-maintenance pass took 0.20 ms with the optimizer off and
+          0.25 ms with it on (medians);
+        - a full rescore took 2.1 ms at 30 items and 82 ms at 200 (with 340 history records);
+        - it runs when the queue changes, and at most once a minute otherwise;
+        - the algorithm alone took 83 µs at 200 items.
+- [ ] **Section 6.2: aging does not prevent starvation under sustained load, with Appendix D's
+      parameters (D-073; Chapter 8, experiment E3, a simulation).**
+      - **What was measured:** over two hours of random arrivals at 95% utilisation on one
+        executor, the LOW band's longest wait was 1,253 s with aging and the same without it, and
+        every mean wait agreed within 2%.
+      - **Why:**
+        - the bonus is the same for every band and reaches its cap of 0.15 after 15 minutes, so
+          under load the long-waiting jobs of every band sit at the cap together;
+        - the cap equals the LOW–MEDIUM urgency gap (0.15) and is below the LOW–HIGH gap (0.35).
+      - **What to write:** do not change the formula (Appendix C and the code agree on it). State
+        this limitation in Section 6.2, and name band-aware aging, or a cap above 0.35, as future
+        work.
+      - **Note for the experiment:** in a 30-job burst of about five minutes, aging never acts at
+        all (E2). An aging-ablation arm on `freestyle-30` should be expected to show no
+        difference, and the report should say why.
 
 ## Chapter 12 and Table 12.1
 
@@ -127,6 +163,16 @@ each one attaches to Jenkins.
       rose from 16 s to 233 s. On a single executor, reordering moves waiting around rather than
       removing it. Saying so strengthens the report; omitting it invites the obvious question in a
       viva.
+- [ ] **Say what Milestone 2's HIGH-band improvement cost in dependency order (D-073; Chapter 8,
+      Section 8.8.4).** The figure is 271.5 s down to 39.1 s.
+      - **The broken edges:** recomputed from its result files, the run that produced it started a
+        job before a job it depends on had finished on 19 of the workload's 20 dependency edges.
+        Runs 1 and 2 broke 10 and 18; FIFO broke 1.
+      - **Why:** Milestone 2's dependency factor was a score, not a hold, and "met" meant the
+        upstream's last build ever had succeeded.
+      - **The comparison with version 2:** its gate breaks none. In simulation on the same
+        workload, no policy that respects dependencies got the HIGH band below 155.9 s. Compare
+        version 2 with "M2 dispatcher v1" only with that column beside it.
 - [ ] **Add a chatbot evaluation section** from `python -m eval report`.
 
 ## Appendices
@@ -161,3 +207,34 @@ each one attaches to Jenkins.
       shaping the evaluation design; and the estimator's cold-start path returning UNKNOWN.
 - [ ] **Disclose AI-assisted development**, stating what was generated, what was reviewed by hand,
       and how correctness was checked (the test suites and `scripts/verify.py`).
+
+## New: from the hardening of Phases 1 to 6 (2026-10-18 to 2026-10-20)
+
+- [ ] **Testing chapter: report the independent security review.** It covered Phases 3, 5 and 6 and
+      found 15 issues (2 Medium, 7 Low, 6 Info), all fixed with regression tests. The two Medium:
+      a HIGH-urgency request could be re-approved without a new justification or quota, and
+      Jenkins and the backend were published on every network interface. Source:
+      `docs/security-review-phases-3-5-6.md`, D-065.
+- [ ] **Limitations section: add the review's accepted residual risks** from the same file:
+      in-memory token and rate-limit stores, logs visible to every signed-in user, public API docs,
+      CI actions pinned by tag, and pattern-based redaction.
+- [ ] **Appendix D: floating-point settings must be quoted in JCasC YAML.** JCasC drops an unquoted
+      float without a warning (`weightUrgency: "0.5"`, not `0.5`). D-017 records the root cause in
+      JCasC's YAML loader. The aging-ablation arm depends on this.
+- [ ] **Chapter 4 / deployment: the frontend runs as its own container.** It is nginx serving the
+      build and proxying `/api` and `/ws`, with a Content-Security-Policy, and every port is bound
+      to 127.0.0.1 (D-065). Redraw the deployment view with it.
+- [ ] **Appendix E: add the image versions** from `docs/versions.md` "Images" (Python 3.12.15,
+      PostgreSQL 16.15, Node 24.21.0 for the build, nginx-unprivileged 1.30.4).
+- [ ] **Chapter 6, Algorithm 3, and Appendix C: dependency groups span the whole queue.** State that
+      groups are formed over every queued item, including those the dependency gate is holding, and
+      that only buildable items are ranked. Until D-067 the plugin grouped the buildable items only.
+      The gate keeps a consumer out of that list, so D was always 0 and Appendix C's inheritance
+      could never happen in a live queue. Say so in the Testing chapter too: it is a defect that
+      unit tests could not find, because they build their groups by hand.
+- [ ] **Testing chapter: User Story 5, criterion 3 needed a fix to pass.** A role guard's refusal, a
+      replayed refresh token and an engaged sign-in limit were detected but not audited (D-068).
+      They are now audited, at most once a minute per caller for a limit.
+- [ ] **Usability and accessibility: Lighthouse scores 100 for accessibility** on both assistant
+      pages, in all 16 audits (empty and with a chat, light and dark, mobile and desktop). Measured
+      signed in (D-064), and checked in CI on every push since 2026-10-20.

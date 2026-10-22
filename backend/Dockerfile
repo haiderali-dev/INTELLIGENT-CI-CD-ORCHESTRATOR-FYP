@@ -4,7 +4,7 @@
 # pyproject.toml's requires-python and the report's Appendix E (docs/decisions.md D-010).
 
 # --- Stage 1: dependencies ----------------------------------------------------
-FROM python:3.12-slim AS deps
+FROM python:3.12.15-slim AS deps
 
 # uv resolves and installs from the committed lock file, so the image is reproducible: the same
 # uv.lock produces the same versions regardless of when it is built.
@@ -22,7 +22,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --no-install-project
 
 # --- Stage 2: runtime ---------------------------------------------------------
-FROM python:3.12-slim AS runtime
+FROM python:3.12.15-slim AS runtime
 
 # curl for the container healthcheck. No build tools.
 RUN apt-get update \

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import threading
 import time
+import uuid
 from dataclasses import dataclass
 from typing import Any
 
@@ -55,6 +56,7 @@ class RevokedTokens:
 
     def __init__(self) -> None:
         self._revoked: dict[str, float] = {}
+        self._families: dict[str, float] = {}
         self._lock = threading.Lock()
 
     def revoke(self, jti: str, expires_at: float) -> None:
@@ -62,20 +64,42 @@ class RevokedTokens:
             self._purge()
             self._revoked[jti] = expires_at
 
-    def is_revoked(self, jti: str) -> bool:
+    def claim(self, jti: str, expires_at: float) -> bool:
+        """Revoke ``jti`` and say whether this call was the one that did it.
+
+        Checking and revoking in one locked step is what makes rotation single-use: three refreshes
+        sent at once with one token used to all succeed, forking one session into three
+        (independent security review, finding 3).
+        """
         with self._lock:
             self._purge()
-            return jti in self._revoked
+            if jti in self._revoked:
+                return False
+            self._revoked[jti] = expires_at
+            return True
+
+    def revoke_family(self, family: str, expires_at: float) -> None:
+        """Every refresh token descended from one sign-in."""
+        with self._lock:
+            self._purge()
+            self._families[family] = max(expires_at, self._families.get(family, 0.0))
+
+    def is_family_revoked(self, family: str) -> bool:
+        with self._lock:
+            self._purge()
+            return family in self._families
 
     def _purge(self) -> None:
         """Drop entries whose token has expired; the JWT check rejects those anyway."""
         now = time.time()
-        for jti in [jti for jti, expiry in self._revoked.items() if expiry < now]:
-            del self._revoked[jti]
+        for store in (self._revoked, self._families):
+            for key in [key for key, expiry in store.items() if expiry < now]:
+                del store[key]
 
     def clear(self) -> None:
         with self._lock:
             self._revoked.clear()
+            self._families.clear()
 
 
 _revoked = RevokedTokens()
@@ -108,6 +132,47 @@ async def _audit(
     session.add(AuditLog(actor_id=actor_id, action=action, target=target, details=details))
     if durable:
         await session.commit()
+
+
+async def record_sign_in_limited(
+    session: AsyncSession, *, account: str, limit: str, client: str
+) -> None:
+    """Audit a sign-in limit engaging for a caller: the mark of guessing or a password spray.
+
+    The account is not looked up. It may not exist, and a refused attempt answered faster or slower
+    depending on whether it does would tell a guesser which addresses are real. Called at most once
+    a minute per caller and limit (``RateLimitedError.record``), and committed at once because the
+    caller is about to raise (D-068).
+    """
+    await _audit(
+        session,
+        actor_id=None,
+        action="auth.login.limited",
+        target=account,
+        durable=True,
+        limit=limit,
+        client=client,
+    )
+
+
+async def record_access_denied(
+    session: AsyncSession, *, user: User, required: Role, method: str, path: str
+) -> None:
+    """Audit a request a role guard refused.
+
+    4.4.3 asks for an audit entry for every policy denial, and an account trying what its role
+    cannot do is the first sign of one being misused. Committed at once because the guard is about
+    to raise (D-068).
+    """
+    await _audit(
+        session,
+        actor_id=user.id,
+        action="access.denied",
+        target=f"{method} {path}",
+        durable=True,
+        required_role=required.value,
+        actual_role=user.role,
+    )
 
 
 async def authenticate(
@@ -182,23 +247,42 @@ async def authenticate(
     return user
 
 
-def issue_tokens(settings: Settings, user: User) -> TokenPair:
+def issue_tokens(settings: Settings, user: User, *, family: str | None = None) -> TokenPair:
     """Mint an access and a refresh token for a user.
 
     The role is carried in the access token so a role check needs no database round trip. It is
     deliberately absent from the refresh token: a refresh re-reads the user, so a role change takes
     effect at the next refresh rather than lasting for the refresh token's whole seven days.
+
+    The refresh token carries its ``fam``ily: one per sign-in, kept by every rotation, so the reuse
+    of a spent token can sign out every token descended from it. Both carry the user's ``ep``och,
+    which a password reset moves on (``issued_before_reset``).
     """
+    epoch = user.token_epoch or 0
     return TokenPair(
         access_token=create_token(
-            settings, subject=user.id, token_type=TokenType.ACCESS, role=user.role
+            settings,
+            subject=user.id,
+            token_type=TokenType.ACCESS,
+            role=user.role,
+            extra={"ep": epoch},
         ),
-        refresh_token=create_token(settings, subject=user.id, token_type=TokenType.REFRESH),
+        refresh_token=create_token(
+            settings,
+            subject=user.id,
+            token_type=TokenType.REFRESH,
+            extra={"fam": family or uuid.uuid4().hex, "ep": epoch},
+        ),
     )
 
 
+def _family_lifetime(settings: Settings) -> float:
+    """Long enough to outlive any refresh token still in the family."""
+    return time.time() + settings.refresh_token_days * 86_400
+
+
 async def refresh_tokens(
-    session: AsyncSession, settings: Settings, *, refresh_token: str
+    session: AsyncSession, settings: Settings, *, refresh_token: str, client: str = "unknown"
 ) -> tuple[User, TokenPair]:
     """Exchange a refresh token for a new pair.
 
@@ -208,11 +292,32 @@ async def refresh_tokens(
     """
     claims = decode_token(settings, refresh_token, expected=TokenType.REFRESH)
     jti = str(claims.get("jti", ""))
+    family = str(claims.get("fam") or "") or None
+    signed_out = unauthorized(
+        ErrorCode.TOKEN_INVALID, "This session has been signed out. Please sign in again."
+    )
 
-    if _revoked.is_revoked(jti):
-        raise unauthorized(
-            ErrorCode.TOKEN_INVALID, "This session has been signed out. Please sign in again."
-        )
+    if family is not None and _revoked.is_family_revoked(family):
+        raise signed_out
+    # Checked and spent in one step, before anything awaits: a token works exactly once.
+    if not _revoked.claim(jti, float(claims.get("exp", 0))):
+        if family is not None:
+            # A spent token came back, so two parties hold this session. Whichever refreshed first
+            # cannot be told apart from the thief, so the whole family is signed out, and an Admin
+            # can see it happened and from where (D-068).
+            _revoked.revoke_family(family, _family_lifetime(settings))
+            user_id = str(claims.get("sub", ""))
+            logger.warning("refresh_token_reused", user_id=user_id)
+            holder = await session.get(User, user_id)
+            await _audit(
+                session,
+                actor_id=holder.id if holder else None,
+                action="auth.session.reused",
+                target=holder.email if holder else user_id,
+                durable=True,
+                client=client,
+            )
+        raise signed_out
 
     user = await session.get(User, str(claims.get("sub", "")))
     if user is None:
@@ -222,10 +327,11 @@ async def refresh_tokens(
             ErrorCode.ACCOUNT_DISABLED,
             "This account is disabled. Ask an administrator to re-enable it.",
         )
+    if issued_before_reset(user, claims):
+        raise signed_out
 
-    _revoked.revoke(jti, float(claims.get("exp", 0)))
     logger.info("token_refreshed", user_id=user.id)
-    return user, issue_tokens(settings, user)
+    return user, issue_tokens(settings, user, family=family)
 
 
 async def sign_out(
@@ -240,6 +346,8 @@ async def sign_out(
         try:
             claims = decode_token(settings, refresh_token, expected=TokenType.REFRESH)
             _revoked.revoke(str(claims.get("jti", "")), float(claims.get("exp", 0)))
+            if claims.get("fam"):
+                _revoked.revoke_family(str(claims["fam"]), _family_lifetime(settings))
         except Exception:  # any unusable token is already harmless
             logger.info("signout_token_unusable", user_id=user.id)
 
@@ -265,7 +373,20 @@ async def load_user_from_access_token(
             ErrorCode.ACCOUNT_DISABLED,
             "This account is disabled. Ask an administrator to re-enable it.",
         )
+    if issued_before_reset(user, claims):
+        raise unauthorized(
+            ErrorCode.TOKEN_INVALID, "This password was reset. Sign in with the new one."
+        )
     return user
+
+
+def issued_before_reset(user: User, claims: dict[str, Any]) -> bool:
+    """True when the token was issued before the user's last password reset by an Admin.
+
+    Tokens carry ``ep``, the user's epoch when they were issued; a reset moves the epoch on. A
+    token from before epochs existed has none and reads as 0, the epoch every user starts in.
+    """
+    return int(claims.get("ep", 0)) != user.token_epoch
 
 
 def role_allows(actual: Role, required: Role) -> bool:

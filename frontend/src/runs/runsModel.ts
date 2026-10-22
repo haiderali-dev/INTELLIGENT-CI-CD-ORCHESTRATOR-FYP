@@ -4,7 +4,7 @@
  * doing now.
  */
 
-import type { ChainCard, ChainSummary, Run } from "@/api/runsApi";
+import type { ChainCard, ChainQuery, ChainSummary, Run } from "@/api/runsApi";
 import { stateFromResult, type BuildState } from "@/components/buildState";
 import { parseApiTime } from "@/lib/format";
 
@@ -41,7 +41,10 @@ export function assistantOf(jobType: string): string {
   }
 }
 
-const JOB_TYPES: Record<AssistantFilter, string> = { freestyle: "FREESTYLE", pipeline: "PIPELINE" };
+const JOB_TYPES = { freestyle: "FREESTYLE", pipeline: "PIPELINE" } as const satisfies Record<
+  AssistantFilter,
+  string
+>;
 
 export const RESULT_FILTERS = {
   running: { label: "Running", status: "RUNNING" },
@@ -62,18 +65,23 @@ export function isResultFilter(value: string | null): value is ResultFilter {
 }
 
 /**
- * The chains that match the two filters the API does not take. The service filter is the API's
- * own; these two narrow the page the API returned, so the page says how many that page holds.
+ * The page's filters as the API's own query: the backend applies all three to every chain, so a
+ * filter never looks at only the newest page of them (found in T6.7).
  */
-export function filterChains(
-  chains: readonly ChainSummary[],
-  { assistant, result }: { assistant: AssistantFilter | null; result: ResultFilter | null },
-): ChainSummary[] {
-  return chains.filter(
-    (chain) =>
-      (assistant === null || chain.job_type === JOB_TYPES[assistant]) &&
-      (result === null || chain.status === RESULT_FILTERS[result].status),
-  );
+export function chainQuery({
+  service,
+  assistant,
+  result,
+}: {
+  service: string | null;
+  assistant: AssistantFilter | null;
+  result: ResultFilter | null;
+}): ChainQuery {
+  return {
+    ...(service ? { service } : {}),
+    ...(assistant ? { jobType: JOB_TYPES[assistant] } : {}),
+    ...(result ? { status: RESULT_FILTERS[result].status } : {}),
+  };
 }
 
 /** How long a finished chain took, or null while it runs. */

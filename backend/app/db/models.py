@@ -8,7 +8,7 @@ plugin, because a persisted grouping can disagree with the scheduler that derive
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from typing import Any
 
@@ -21,9 +21,13 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    event,
+    func,
+    select,
     text,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.engine import Connection
+from sqlalchemy.orm import Mapped, Mapper, mapped_column, relationship
 from sqlalchemy.types import JSON
 
 from app.db.base import Base, TimestampedCreation, UuidPrimaryKey, utcnow
@@ -116,6 +120,11 @@ class User(UuidPrimaryKey, TimestampedCreation, Base):
     password_hash: Mapped[str] = mapped_column(String(255))
     role: Mapped[str] = mapped_column(String(16), default=Role.DEVELOPER.value)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Every token carries the epoch it was issued in, and one from another epoch is refused. An
+    # Admin's password reset moves it on, so whoever was using the old password is signed out
+    # everywhere (found in T6.3: there was no reset). A counter rather than a time: a token's
+    # ``iat`` has whole seconds, which cannot order a reset and a sign-in in the same second.
+    token_epoch: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
     conversations: Mapped[list[Conversation]] = relationship(back_populates="user")
 
@@ -181,6 +190,32 @@ class Message(UuidPrimaryKey, TimestampedCreation, Base):
     conversation: Mapped[Conversation] = relationship(back_populates="messages")
 
 
+_AFTER = timedelta(microseconds=1)
+
+
+@event.listens_for(Message, "before_insert")
+def _stamp_after_the_last_message(
+    _mapper: Mapper[Message], connection: Connection, target: Message
+) -> None:
+    """Each message is stamped strictly after the last one in its conversation.
+
+    A message and its reply are written in one request, and on Windows both were stamped with the
+    same time; ordered by time and then by a random id, the reply could come back first (found in
+    T6.5). Stamping each one after the latest makes ``created_at`` alone a total order.
+    """
+    latest = connection.scalar(
+        select(func.max(Message.created_at)).where(
+            Message.conversation_id == target.conversation_id
+        )
+    )
+    now = target.created_at or utcnow()
+    if latest is not None:
+        if latest.tzinfo is None:  # SQLite hands timestamps back without their zone
+            latest = latest.replace(tzinfo=UTC)
+        now = max(now, latest + _AFTER)
+    target.created_at = now
+
+
 class NlCommand(UuidPrimaryKey, TimestampedCreation, Base):
     """One natural-language command and the intent parsed from it."""
 
@@ -227,6 +262,17 @@ class GeneratedPipeline(UuidPrimaryKey, TimestampedCreation, Base):
     """A rendered artifact awaiting approval, or already approved."""
 
     __tablename__ = "generated_pipelines"
+    # One approved plan per command: a request runs once, and two approvals of two plans for one
+    # command cannot both win (independent security review, finding 1).
+    __table_args__ = (
+        Index(
+            "uq_generated_pipelines_one_approved_per_command",
+            "command_id",
+            unique=True,
+            postgresql_where=text("status = 'APPROVED'"),
+            sqlite_where=text("status = 'APPROVED'"),
+        ),
+    )
 
     command_id: Mapped[str] = mapped_column(
         ForeignKey("nl_commands.id", ondelete="CASCADE"), index=True

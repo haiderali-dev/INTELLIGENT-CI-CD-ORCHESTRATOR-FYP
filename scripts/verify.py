@@ -16,6 +16,7 @@ is ordered by phase then by registration order.
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import math
 import os
@@ -23,6 +24,9 @@ import re
 import subprocess
 import sys
 import time
+import urllib.error
+import urllib.request
+import zipfile
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -631,6 +635,34 @@ def check_scoring_constants() -> Result:
     return ok("U = 1.0/0.6/0.3 and weights 0.5/0.3/0.2 with aging 0.05 per 5 min, cap 0.15")
 
 
+@check(2, "mvn -B verify passes: every unit and integration test")
+def check_mvn_verify() -> Result:
+    """Phase 2's acceptance, first clause. CI's Plugin job runs it on every push; the gate runs it
+    too, so the acceptance check does not rest on CI having run. It also builds the .hpi the
+    controller image installs. Failsafe is bound to the lifecycle (PROGRESS.md, 2026-09-29), so the
+    integration tests run as well."""
+    mvn = "mvn.cmd" if os.name == "nt" else "mvn"
+    if not have(mvn):
+        return fail("mvn is not installed")
+    result = run([mvn, "-B", "-ntp", "verify"], cwd=REPO_ROOT / "plugin", timeout=2400)
+    output = _ANSI_CODES.sub("", result.stdout + result.stderr)
+    totals = re.findall(
+        r"Tests run: (\d+), Failures: (\d+), Errors: (\d+), Skipped: (\d+)\s*$", output, re.M
+    )
+    if result.returncode != 0 or "BUILD SUCCESS" not in output:
+        tail = [line for line in output.splitlines() if "ERROR" in line or "FAIL" in line][-2:]
+        return fail("mvn -B verify failed: " + " / ".join(tail)[:300] + f" ({_keep_output('mvn verify', output)})")
+    if len(totals) < 2:
+        return fail("mvn -B verify reported no unit and integration totals")
+    unit, integration = totals[0], totals[-1]
+    if any(int(count) for count in (*unit[1:3], *integration[1:3])):
+        return fail(f"failures or errors: unit {unit}, integration {integration}")
+    return ok(
+        f"BUILD SUCCESS: {unit[0]} unit tests ({unit[3]} skipped), "
+        f"{integration[0]} integration tests ({integration[3]} skipped)"
+    )
+
+
 @check(2, "plugin artifact was built")
 def check_hpi_built() -> Result:
     hpi = list((REPO_ROOT / "plugin" / "target").glob("*.hpi")) if (REPO_ROOT / "plugin" / "target").is_dir() else []
@@ -659,6 +691,8 @@ DOCKER_FILES = [
     "jenkins/casc/experiment-baseline.yaml",
     "jenkins/casc/experiment-plugin.yaml",
     "backend/Dockerfile",
+    "frontend/Dockerfile",
+    "frontend/nginx.conf",
 ]
 
 # Secrets that must never be silently defaulted by Compose.
@@ -749,6 +783,35 @@ def check_compose_shape() -> Result:
     return ok(f"{len(services)} services, {len(default)} default, {len(profiled)} profiled")
 
 
+@check(1, "every published port is bound to loopback, and Jenkins keeps its safety checks")
+def check_ports_on_loopback() -> Result:
+    """Security review (docs/security-review-phases-3-5-6.md), findings 2 and 13.
+
+    A port published as "8087:8080" listens on every interface, so anyone on the same network
+    reaches the Jenkins login, and the agents hold the Docker socket. Every published port must be
+    "127.0.0.1:...". The inbound agent port (50000) stays unpublished, since agents use SSH, and no
+    Jenkins option may switch off update-site signature checks."""
+    doc, error = _load_yaml(REPO_ROOT / "docker-compose.yml")
+    if error:
+        return fail(f"docker-compose.yml: {error}")
+    open_ports: list[str] = []
+    count = 0
+    for name, service in (doc.get("services") or {}).items():
+        for port in service.get("ports") or []:
+            count += 1
+            text = str(port.get("published", port) if isinstance(port, dict) else port)
+            if not text.startswith("127.0.0.1:"):
+                open_ports.append(f"{name} {text}")
+            if text.endswith(":50000"):
+                open_ports.append(f"{name} publishes the inbound agent port")
+    if open_ports:
+        return fail("published beyond loopback: " + ", ".join(open_ports))
+    for path in (REPO_ROOT / "docker-compose.yml", REPO_ROOT / "jenkins" / "controller" / "Dockerfile"):
+        if "noSignatureCheck" in path.read_text(encoding="utf-8"):
+            return fail(f"{path.relative_to(REPO_ROOT)} switches off update-site signature checks")
+    return ok(f"{count} published ports, all on 127.0.0.1; no agent port; signatures checked")
+
+
 @check(1, "Compose refuses to start rather than defaulting a secret")
 def check_compose_secret_guards() -> Result:
     """A defaulted password is worse than a failed start: it starts, and it is insecure."""
@@ -811,14 +874,24 @@ def check_casc_files() -> Result:
     return ok("dev plus two arms differing only in optimizerEnabled")
 
 
-@check(1, "JCasC sets no floating-point optimizer field (D-017)")
-def check_casc_avoids_floats() -> Result:
-    """JCasC silently drops this configuration's double fields, so setting one would lie.
+# The optimizer's floating-point fields and the report's Appendix D values for them.
+APPENDIX_D_FLOATS = {
+    "weightUrgency": 0.5,
+    "weightDependency": 0.3,
+    "weightExecutionTime": 0.2,
+    "agingBonusPerInterval": 0.05,
+    "agingCap": 0.15,
+    "similarityThreshold": 0.35,
+    "recencyLambdaPerDay": 0.1,
+}
 
-    See docs/decisions.md D-017 and D-019. The code defaults are the report's Appendix D values,
-    so omitting them is correct; setting them would produce a file that disagrees with the
-    running system.
-    """
+
+@check(1, "JCasC quotes every floating-point optimizer value, at Appendix D's values (D-017)")
+def check_casc_quotes_floats() -> Result:
+    """JCasC 2121's YAML model builds nodes only for the bool, int and str tags, so an unquoted
+    `0.6` is dropped without a word and the default stays. Quoted, it is a string that JCasC
+    converts like any other scalar (D-017; `ConfigAsCodeIT` pins both). Every file sets all seven,
+    quoted, at the report's values, so the arms state the formula rather than inherit it."""
     problems: list[str] = []
     for name in CASC_FILES:
         path = REPO_ROOT / "jenkins" / "casc" / name
@@ -828,12 +901,22 @@ def check_casc_avoids_floats() -> Result:
         if error:
             return fail(f"{name}: {error}")
         block = doc.get("unclassified", {}).get("dynamicQueueOptimizer", {})
-        floats = sorted(k for k, v in block.items() if isinstance(v, float))
-        if floats:
-            problems.append(f"{name} sets {', '.join(floats)}")
+        unquoted = sorted(k for k, v in block.items() if isinstance(v, float))
+        if unquoted:
+            problems.append(f"{name} has unquoted {', '.join(unquoted)}, which JCasC drops")
+        for field, expected in APPENDIX_D_FLOATS.items():
+            value = block.get(field)
+            if not isinstance(value, str):
+                problems.append(f"{name} does not set {field} as a quoted value")
+                continue
+            try:
+                if not math.isclose(float(value), expected, abs_tol=1e-12):
+                    problems.append(f"{name}: {field} is {value}, not Appendix D's {expected}")
+            except ValueError:
+                problems.append(f"{name}: {field} is {value!r}, not a number")
     if problems:
-        return fail("; ".join(problems) + " -- JCasC drops these silently (D-017)")
-    return ok("no float fields set; the code defaults are the report's values")
+        return fail("; ".join(problems[:3]))
+    return ok(f"all {len(APPENDIX_D_FLOATS)} quoted, at the report's values, in {len(CASC_FILES)} files")
 
 
 @check(1, "the controller image installs the built plugin")
@@ -923,6 +1006,136 @@ def check_compose_config() -> Result:
     if result.returncode != 0:
         return fail(result.stderr.strip()[:300] or "docker compose config failed")
     return ok("the merged configuration is valid")
+
+
+# A check that tests the running stack says nothing about this commit if a container runs an image
+# built from older source. On 2026-10-21 the frontend container was three frontend commits behind,
+# the Queue page's held-jobs list among them, and the stack system tests passed against it.
+#
+# The test is content, not time: Docker's build cache is asked. Building a service from the current
+# source returns the very image the container runs when nothing it is built from has changed, and a
+# new image otherwise. (Comparing build and commit times fails both ways: an image built from the
+# working tree just before its commit reads as stale, and a cached rebuild keeps the old time.)
+
+
+def _compose_image(service: str) -> str:
+    """The image Compose builds for a service with no `image:` key: <project>-<service>."""
+    config = run(["docker", "compose", "config", "--format", "json"], timeout=120)
+    project = json.loads(config.stdout).get("name", "") if config.returncode == 0 else ""
+    return f"{project or REPO_ROOT.name}-{service}"
+
+
+def _runs_current_build(service: str, container: str) -> str | None:
+    """None when building the service now gives the image its container runs; otherwise why not.
+
+    The container's side is the image digest Compose records on it when it creates it (the label
+    com.docker.compose.image), the same identity Compose compares when deciding to recreate. The
+    container's own Image field cannot be used: on Docker's containerd store it names the index the
+    image arrived in, which an attestation made unique per build (docker-compose.yml). The build is
+    left in place, so a stale container needs only `docker compose up -d`."""
+    label = '{{index .Config.Labels "com.docker.compose.image"}}'
+    running = run(["docker", "inspect", "--format", label, container], timeout=60)
+    if running.returncode != 0:
+        return f"{container} is not running"
+    if not running.stdout.strip().startswith("sha256:"):
+        return f"{container} has no image digest from Compose; recreate it with `docker compose up -d`"
+    build = run(["docker", "compose", "build", "--quiet", service], timeout=1800)
+    if build.returncode != 0:
+        detail = (build.stderr or build.stdout).strip().splitlines()
+        return f"`docker compose build {service}` failed: {' / '.join(detail[-2:])[:200]}"
+    image = _compose_image(service)
+    built = run(["docker", "image", "inspect", "--format", "{{.Id}}", image], timeout=60)
+    if built.stdout.strip() != running.stdout.strip():
+        return (
+            f"{container} runs an image other than the one the current source builds; that build "
+            f"is now ready, so `docker compose up -d {service}` replaces it"
+        )
+    return None
+
+
+def _jar_entries(data: bytes) -> dict[str, int]:
+    """Each file in a jar and its CRC, leaving out META-INF (the manifest records the build time)."""
+    with zipfile.ZipFile(io.BytesIO(data)) as jar:
+        return {
+            entry.filename: entry.CRC
+            for entry in jar.infolist()
+            if not entry.is_dir() and not entry.filename.startswith("META-INF/")
+        }
+
+
+def _jenkins_dev_runs_built_plugin() -> str | None:
+    """None when jenkins-dev runs the plugin classes plugin/target's .hpi holds, built from the
+    current source; otherwise why not.
+
+    Docker's cache cannot answer for this image: every Maven build writes a new build time into the
+    .hpi, so its bytes, and the image, change even when no class does. The classes are compared
+    instead, in the plugin Jenkins expanded and is running, and so are the two files the image
+    copies from jenkins/controller."""
+    rebuild = "Rebuild: `docker compose build jenkins-dev`, then `docker compose up -d jenkins-dev`"
+    hpi = REPO_ROOT / "plugin" / "target" / "dynamic-queue-optimizer.hpi"
+    if not hpi.is_file():
+        return "plugin/target has no .hpi; run `cd plugin && mvn -B verify`"
+    sources = [p for p in (REPO_ROOT / "plugin" / "src" / "main").rglob("*") if p.is_file()]
+    newest = max([*sources, REPO_ROOT / "plugin" / "pom.xml"], key=lambda p: p.stat().st_mtime)
+    if newest.stat().st_mtime > hpi.stat().st_mtime:
+        changed = newest.relative_to(REPO_ROOT).as_posix()
+        return f"{changed} changed after the .hpi was built; run `cd plugin && mvn -B verify`"
+
+    def container_file(path: str) -> bytes | None:
+        result = subprocess.run(
+            ["docker", "exec", "orchestrator-jenkins-dev", "cat", path],
+            capture_output=True,
+            timeout=60,
+            check=False,
+        )
+        return result.stdout if result.returncode == 0 else None
+
+    for name, path in (
+        ("plugins.txt", "/usr/share/jenkins/ref/plugins.txt"),
+        ("install-plugin-under-test.sh", "/usr/local/bin/install-plugin-under-test.sh"),
+    ):
+        if container_file(path) != (REPO_ROOT / "jenkins" / "controller" / name).read_bytes():
+            return f"jenkins-dev's image holds another jenkins/controller/{name}. {rebuild}"
+
+    with zipfile.ZipFile(hpi) as outer:
+        bundled = {
+            name.removeprefix("WEB-INF/lib/")
+            for name in outer.namelist()
+            if re.fullmatch(r"WEB-INF/lib/[^/]+\.jar", name)
+        }
+        built = _jar_entries(outer.read("WEB-INF/lib/dynamic-queue-optimizer.jar"))
+    lib = "/var/jenkins_home/plugins/dynamic-queue-optimizer/WEB-INF/lib"
+    listing = run(["docker", "exec", "orchestrator-jenkins-dev", "ls", lib], timeout=60)
+    if listing.returncode != 0:
+        return f"jenkins-dev has no expanded plugin to compare: {listing.stderr.strip()[:120]}"
+    jar = container_file(f"{lib}/dynamic-queue-optimizer.jar")
+    if not jar:
+        return "could not read the plugin jenkins-dev runs"
+    running = _jar_entries(jar)
+    differ = sorted(n for n in built.keys() | running.keys() if built.get(n) != running.get(n))
+    if differ or bundled != set(listing.stdout.split()):
+        files = "1 file differs" if len(differ) == 1 else f"{len(differ)} files differ"
+        what = f"{files} ({', '.join(differ[:3])})" if differ else "bundled jars differ"
+        return f"jenkins-dev runs a plugin unlike plugin/target's .hpi: {what}. {rebuild}"
+    return None
+
+
+@check(1, "jenkins-dev and its agents run what the current source builds")
+def check_jenkins_images_current() -> Result:
+    if not have("docker"):
+        return fail("blocked: Docker is not installed (see the check above)")
+    problems = [
+        problem
+        for problem in (
+            _jenkins_dev_runs_built_plugin(),
+            _runs_current_build("agent-1", "orchestrator-agent-1"),
+            _runs_current_build("agent-2", "orchestrator-agent-2"),
+        )
+        if problem
+    ]
+    if problems:
+        return fail("; ".join(problems))
+    return ok("jenkins-dev runs plugin/target's classes and files; both agents match their build")
 
 
 # ---------------------------------------------------------------------------
@@ -1177,6 +1390,54 @@ def check_sample_services() -> Result:
     return ok(f"{len(SAMPLE_SERVICES)} services with build, test, deploy and a Dockerfile")
 
 
+@check(1, "both sample services' own tests pass")
+def check_sample_service_tests() -> Result:
+    """Phase 1's acceptance: "both services' own tests pass locally". Checked only for presence
+    until 2026-10-18, when the audit of Phases 1 to 6 ran them by hand.
+
+    payment-service runs pytest from its own `.venv` when there is one, else in a throwaway uv
+    environment built from its requirements-dev.txt; auth-service runs `npm test` (node --test,
+    with no dependencies to install)."""
+    payment = REPO_ROOT / "sample-services" / "payment-service"
+    python = next(
+        (
+            path
+            for path in (payment / ".venv" / "Scripts" / "python.exe", payment / ".venv" / "bin" / "python")
+            if path.is_file()
+        ),
+        None,
+    )
+    if python is not None:
+        command = [str(python), "-m", "pytest", "tests"]
+    else:
+        runner = _uv_runner()
+        if runner is None:
+            return fail("payment-service has no .venv and uv is not installed (D-010)")
+        command = [
+            *runner, "run", "--no-project", "--with-requirements", "requirements-dev.txt",
+            "python", "-m", "pytest", "tests",
+        ]
+    result = run(command, cwd=payment, timeout=900)
+    output = _ANSI_CODES.sub("", result.stdout + result.stderr)
+    passed = re.search(r"(\d+) passed", output)
+    if result.returncode != 0 or not passed or re.search(r"\d+ (failed|error)", output):
+        tail = [line for line in output.splitlines() if line.strip()][-2:]
+        return fail(f"payment-service: {' / '.join(tail)[:200]} ({_keep_output('payment-service tests', output)})")
+
+    npm = _npm()
+    if npm is None:
+        return fail("npm is not installed, so auth-service's tests cannot run")
+    auth = REPO_ROOT / "sample-services" / "auth-service"
+    result = run([*npm, "test"], cwd=auth, timeout=600)
+    output = _ANSI_CODES.sub("", result.stdout + result.stderr)
+    node_pass = re.search(r"\bpass (\d+)", output)
+    node_fail = re.search(r"\bfail (\d+)", output)
+    if result.returncode != 0 or not node_pass or not node_fail or int(node_fail.group(1)):
+        tail = [line for line in output.splitlines() if line.strip()][-2:]
+        return fail(f"auth-service: {' / '.join(tail)[:200]} ({_keep_output('auth-service tests', output)})")
+    return ok(f"payment-service {passed.group(1)} passed; auth-service {node_pass.group(1)} passed")
+
+
 @check(1, "deploy scripts refuse production")
 def check_deploy_refuses_production() -> Result:
     """Rule 1.5 enforced at the one place that could actually reach a production host.
@@ -1348,12 +1609,18 @@ def check_migrations_cover_the_schema() -> Result:
     return ok(f"all {len(REQUIRED_TABLES)} tables")
 
 
-@check(3, "every migration is reversible")
+@check(3, "every migration is reversible, and the migrations build the models' schema")
 def check_migrations_reversible() -> Result:
     """A migration that cannot be rolled back is one nobody can safely apply.
 
     demo_reset.py restores a known state before the demo; an irreversible migration turns that
-    from a rollback into a reinstall.
+    from a rollback into a reinstall. Each downgrade() must act, and two integration tests prove
+    the rest on the stack's PostgreSQL (D-074):
+    - the migrations build exactly the schema the models describe;
+    - they downgrade to nothing and build it again.
+
+    Until 2026-10-22 this check only read the files, and said "all downgrade cleanly" without
+    running one.
     """
     versions = REPO_ROOT / "backend" / "alembic" / "versions"
     if not versions.is_dir():
@@ -1371,7 +1638,25 @@ def check_migrations_reversible() -> Result:
             offenders.append(f"{path.name}: downgrade() does nothing")
     if offenders:
         return fail("; ".join(offenders))
-    return ok("all downgrade cleanly")
+    result, output = _pytest(
+        [
+            "-m",
+            "integration",
+            "tests/test_migrations.py",
+            "-p",
+            "no:cacheprovider",
+            "-k",
+            "alembic_upgrade or downgrades_and_upgrades",
+        ],
+        timeout=600,
+    )
+    verdict = _all_passed(result, output, "the migration round trip on PostgreSQL")
+    if not verdict.ok:
+        return verdict
+    return ok(
+        "every downgrade() acts; on PostgreSQL the migrations match the models, downgrade to "
+        f"base and build them again ({verdict.message})"
+    )
 
 
 @check(3, "seed scripts exist and are idempotent by construction")
@@ -1409,6 +1694,14 @@ def check_backend_image_has_migrations() -> Result:
     if missing:
         return fail("the image does not copy: " + ", ".join(missing))
     return ok("alembic.ini, alembic/ and app/ all copied")
+
+
+@check(3, "the backend container runs what the current source builds")
+def check_backend_image_current() -> Result:
+    if not have("docker"):
+        return fail("blocked: Docker is not installed (see Phase 1)")
+    problem = _runs_current_build("backend", "orchestrator-backend")
+    return fail(problem) if problem else ok("building the backend now gives the image it runs")
 
 
 @check(3, "backend quality bars pass")
@@ -1506,21 +1799,72 @@ def check_auth_surface() -> Result:
 
 @check(3, "the auth endpoints are rate limited")
 def check_auth_rate_limits() -> Result:
-    """4.4.4 requires rate limits on the auth endpoints."""
+    """4.4.4 requires rate limits on the auth endpoints.
+
+    Since the security review (D-065) sign-in is limited twice: per address and account, so one
+    account's failed attempts cannot lock another out, and per address across accounts, so a
+    password spray stays capped. The code is checked for both, then the tests that see the 429s
+    are run. A text match alone broke on that refactor: this check looked for the old single limit
+    and failed on the stronger pair (2026-10-20).
+    """
     limits = REPO_ROOT / "backend" / "app" / "core" / "ratelimit.py"
     if not limits.is_file():
         return fail("backend/app/core/ratelimit.py does not exist")
     text = limits.read_text(encoding="utf-8")
-    for name in ("LOGIN_LIMIT", "REFRESH_LIMIT", "API_LIMIT"):
+    for name in ("LOGIN_LIMIT", "LOGIN_ADDRESS_LIMIT", "REFRESH_LIMIT", "API_LIMIT"):
         if f"{name} = RateLimit(" not in text:
             return fail(f"{name} is not defined")
 
     api_text = (REPO_ROOT / "backend" / "app" / "api" / "auth.py").read_text(encoding="utf-8")
-    if "rate_limit(LOGIN_LIMIT)" not in api_text:
-        return fail("the login endpoint is not rate limited")
+    # Both sign-in limits are checked in the route's body, so that a limit engaging can be
+    # audited (D-068).
+    if "limiter.check(LOGIN_ADDRESS_LIMIT," not in api_text:
+        return fail("the login endpoint is not rate limited per address")
+    if "limiter.check(LOGIN_LIMIT," not in api_text:
+        return fail("the login endpoint is not rate limited per account")
     if "rate_limit(REFRESH_LIMIT)" not in api_text:
         return fail("the refresh endpoint is not rate limited")
-    return ok("login 5/min, refresh 30/min, general 300/min")
+
+    result, output = _pytest(
+        [
+            "tests/test_auth.py::test_login_is_rate_limited",
+            "tests/test_auth.py::test_rate_limit_says_when_to_retry",
+            "tests/test_auth.py::test_the_limit_counts_attempts_not_failures",
+            "tests/test_security_review_fixes.py::"
+            "test_one_accounts_failed_sign_ins_do_not_lock_out_another_from_the_same_address",
+            "tests/test_security_review_fixes.py::test_one_address_is_capped_across_accounts",
+            "-p",
+            "no:cacheprovider",
+        ],
+        timeout=300,
+    )
+    proved = _all_passed(result, output, "the sign-in limit tests")
+    if not proved.ok:
+        return proved
+    return ok(
+        "login 5/min per address and account and 30/min per address, refresh 30/min, "
+        f"general 300/min; the 429s seen by {proved.message}"
+    )
+
+
+@check(3, "suspicious activity is written to the audit log")
+def check_suspicious_activity_audited() -> Result:
+    """Report User Story 5, acceptance criterion 3: "Given suspicious activity occurs, when it is
+    detected, then the system logs the event for audit purposes."
+
+    A role guard's refusal, a replayed refresh token and a sign-in limit engaging were detected
+    but left no audit entry until D-068. Their tests also prove the limit's entries are bounded.
+    """
+    result, output = _pytest(
+        ["tests/test_suspicious_activity_audit.py", "-p", "no:cacheprovider"], timeout=300
+    )
+    proved = _all_passed(result, output, "the suspicious-activity audit tests")
+    if not proved.ok:
+        return proved
+    return ok(
+        "role denials, replayed refresh tokens and engaged sign-in limits are audited; "
+        + proved.message
+    )
 
 
 @check(3, "the catalog loads through one schema-validated loader")
@@ -2012,6 +2356,46 @@ def check_queue_degrades() -> Result:
             "report zero. See docs/decisions.md D-026"
         )
     return ok("reports availability and a reason instead of failing")
+
+
+def _get(url: str, timeout: float = 15.0) -> tuple[int, str, dict[str, str]]:
+    """GET a URL on this machine: status, body and headers, or status 0 when nothing answered."""
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as response:  # noqa: S310 (localhost only)
+            return (
+                response.status,
+                response.read().decode("utf-8", "replace"),
+                {key.lower(): value for key, value in response.headers.items()},
+            )
+    except urllib.error.HTTPError as error:
+        return error.code, error.read().decode("utf-8", "replace"), {}
+    except (urllib.error.URLError, OSError) as error:
+        return 0, str(error), {}
+
+
+@check(3, "GET /api/health on the Compose stack reports database, Jenkins and LLM provider")
+def check_stack_health() -> Result:
+    """Phase 3's acceptance, middle clause. Reported once by hand on 2026-09-29 and confirmed in the
+    audit of 2026-10-18; a check of its own since. The database and Jenkins must be up. The LLM is
+    reported in every mode: "disabled" in fake mode is a report, not a failure."""
+    status, body, _ = _get("http://127.0.0.1:8000/api/health")
+    if status == 0:
+        return fail(f"the backend did not answer on 127.0.0.1:8000 ({body[:120]}). Is the stack up?")
+    try:
+        components = json.loads(body).get("components", {})
+    except ValueError:
+        return fail(f"/api/health answered {status} with no JSON")
+    missing = [name for name in ("database", "jenkins", "llm") if name not in components]
+    if missing:
+        return fail(f"/api/health does not report {', '.join(missing)}")
+    down = [name for name in ("database", "jenkins") if components[name].get("status") != "up"]
+    if down:
+        return fail(f"/api/health reports {', '.join(down)} not up: {body[:200]}")
+    llm = components["llm"]
+    return ok(
+        f"database up, jenkins up ({components['jenkins'].get('detail')}), "
+        f"LLM {llm.get('status')} ({llm.get('detail')})"
+    )
 
 
 @check(3, "integration tests create, trigger and read a freestyle and a Pipeline job")
@@ -2860,6 +3244,32 @@ def check_screenshots() -> Result:
     return ok(f"{count} screenshots: {len(SCREENSHOT_SCREENS)} screens, 1440 and 390 px, light and dark")
 
 
+SECURITY_REVIEW = REPO_ROOT / "docs" / "security-review-phases-3-5-6.md"
+
+
+@check(6, "an independent security review covers Phases 3, 5 and 6, each finding with its fix")
+def check_security_review() -> Result:
+    """BUILD_PROMPT asks for an independent security review at the end of Phases 3, 5 and 6. The
+    document must say it was independent, and every row of its findings table must name a fix and a
+    regression test, so a finding cannot be listed and left."""
+    if not SECURITY_REVIEW.is_file():
+        return fail(f"{SECURITY_REVIEW.relative_to(REPO_ROOT)} does not exist")
+    text = SECURITY_REVIEW.read_text(encoding="utf-8")
+    if "independent" not in text.lower() or "Phases 3, 5 and 6" not in text:
+        return fail("the review does not say it is an independent review of Phases 3, 5 and 6")
+    rows = [line for line in text.splitlines() if re.match(r"^\| \d+ \|", line)]
+    if not rows:
+        return fail("the review has no numbered findings table")
+    open_rows = []
+    for row in rows:
+        cells = [cell.strip() for cell in row.strip("|").split("|")]
+        if len(cells) < 5 or not cells[3] or not cells[4]:
+            open_rows.append(cells[0])
+    if open_rows:
+        return fail(f"findings without a fix and a test: {', '.join(open_rows)}")
+    return ok(f"{len(rows)} findings, each with its fix and regression test")
+
+
 LIGHTHOUSE_FLOOR = 0.95
 # Each assistant page empty and with a chat, in light and dark, at mobile and desktop settings.
 LIGHTHOUSE_AUDITS = 16
@@ -2973,6 +3383,62 @@ def _python_enum_values(source: str, name: str) -> list[str]:
 def _ts_const_values(source: str, name: str) -> list[str]:
     match = re.search(rf"export const {name} = \[(.*?)\] as const", source, re.DOTALL)
     return re.findall(r'"([^"]+)"', match.group(1)) if match else []
+
+
+@check(6, "the frontend container runs what the current source builds")
+def check_frontend_image_current() -> Result:
+    if not have("docker"):
+        return fail("blocked: Docker is not installed (see Phase 1)")
+    problem = _runs_current_build("frontend", "orchestrator-frontend")
+    return fail(problem) if problem else ok("building the frontend now gives the image it serves")
+
+
+@check(6, "the system tests pass through the running stack's own frontend")
+def check_stack_system_tests() -> Result:
+    """The flows run the backend in fake mode (D-062). These run the real stack end to end: the
+    frontend container, the backend, PostgreSQL, jenkins-dev and its agents, and the live events,
+    with a throwaway Developer account that scripts/stack_system_test.py creates and deactivates."""
+    npm, why = _frontend_ready()
+    if npm is None:
+        return fail(why)
+    result = run(
+        [sys.executable, str(REPO_ROOT / "scripts" / "stack_system_test.py")],
+        timeout=1200,
+    )
+    output = _ANSI_CODES.sub("", result.stdout + result.stderr)
+    passed = re.search(r"(\d+) passed", output)
+    if result.returncode != 0 or not passed:
+        tail = [line for line in output.splitlines() if line.strip()][-3:]
+        return fail(" / ".join(tail)[:300] + f" ({_keep_output('stack system tests', output)})")
+    for outcome in ("skipped", "flaky", "did not run"):
+        found = re.search(rf"(\d+) {outcome}", output)
+        if found and int(found.group(1)):
+            return fail(f"stack system tests: {found.group(1)} {outcome}")
+    if "deactivated" not in output:
+        return fail("the throwaway account was not deactivated afterwards")
+    return ok(f"{passed.group(1)} system tests passed on the real stack; the test account deactivated")
+
+
+@check(6, "the frontend container serves the build with its policy and proxies the API")
+def check_frontend_container() -> Result:
+    """D-018 closed: the Compose stack's own frontend (frontend/Dockerfile, nginx.conf) is the built
+    app on 127.0.0.1:5173. An address the app owns returns index.html with the build's CSP, nginx
+    adds frame-ancestors and nosniff, and /api reaches the backend on the same origin."""
+    status, body, headers = _get("http://127.0.0.1:5173/queue")
+    if status == 0:
+        return fail(f"nothing answered on 127.0.0.1:5173 ({body[:120]}). Is the stack up?")
+    if status != 200 or 'http-equiv="Content-Security-Policy"' not in body:
+        return fail(f"/queue answered {status} without the build's Content-Security-Policy")
+    if "'unsafe-inline'" in body.split("script-src", 1)[1].split(";", 1)[0]:
+        return fail("the policy lets inline scripts run")
+    if "frame-ancestors 'none'" not in headers.get("content-security-policy", ""):
+        return fail("nginx did not send frame-ancestors 'none'")
+    if headers.get("x-content-type-options") != "nosniff":
+        return fail("nginx did not send X-Content-Type-Options: nosniff")
+    status, body, _ = _get("http://127.0.0.1:5173/api/health/live")
+    if status != 200:
+        return fail(f"/api through the frontend answered {status}: {body[:120]}")
+    return ok("the build with its CSP, frame-ancestors and nosniff, and /api proxied to the backend")
 
 
 @check(6, "the frontend's WebSocket event and topic names are the backend's")

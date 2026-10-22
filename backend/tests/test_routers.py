@@ -744,6 +744,32 @@ async def test_a_short_password_is_refused_at_creation(
     assert response.status_code == 422
 
 
+@pytest.mark.parametrize(
+    ("length", "accepted"), [(11, False), (12, True), (256, True), (257, False)]
+)
+async def test_a_chosen_password_is_12_to_256_characters(
+    client: AsyncClient, db: AsyncSession, length: int, accepted: bool
+) -> None:
+    """Boundary values for both ends of the allowed length, where a password is chosen: creating a
+    user and an Admin resetting one. "short" above is far from either edge; these are one under,
+    on, and one over each end (added for the testing chapter's black-box tables, 2026-10-20)."""
+    admin = await token_for(client, db, role=Role.ADMIN)
+    password = "p" * length
+
+    created = await client.post(
+        "/api/admin/users",
+        json={"email": f"len-{length}@example.com", "password": password},
+        headers=auth(admin),
+    )
+    someone = await make_user(db, email=f"reset-{length}@example.com")
+    reset = await client.post(
+        f"/api/admin/users/{someone.id}/password", json={"password": password}, headers=auth(admin)
+    )
+
+    assert created.status_code == (201 if accepted else 422), created.text
+    assert reset.status_code == (200 if accepted else 422), reset.text
+
+
 async def test_a_duplicate_email_is_a_conflict(client: AsyncClient, db: AsyncSession) -> None:
     token = await token_for(client, db, role=Role.ADMIN, email="admin@example.com")
 
@@ -909,3 +935,31 @@ async def test_a_deactivated_user_loses_access_to_every_endpoint(
         response = await client.get(path, headers=auth(token))
         assert response.status_code == 401, path
         assert response.json()["error"]["code"] == "ACCOUNT_DISABLED"
+
+
+async def test_the_queue_says_which_upstream_holds_a_job(
+    client: AsyncClient, db: AsyncSession, fake_plugin: FakePluginClient
+) -> None:
+    """The recorded live ranking with a held job, through the parser, to the queue's JSON."""
+    token = await token_for(client, db)
+    body = json.loads(
+        (Path(__file__).parent / "data" / "plugin" / "ranking-held.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    fake_plugin.ranking_result = parse_ranking(body)
+
+    response = (await client.get("/api/queue", headers=auth(token))).json()
+
+    assert response["items"] == []
+    assert response["held_items"] == [
+        {
+            "item_id": 1587,
+            "job_name": "it-held-downstream",
+            "level": "HIGH",
+            "reason": "Waiting for upstream job 'it-held-upstream' (building) to finish.",
+            "upstream": "it-held-upstream",
+            "upstream_state": "building",
+            "wait_seconds": 8.169,
+        }
+    ]

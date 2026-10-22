@@ -575,13 +575,20 @@ def _excerpt(
     return tuple(excerpt)
 
 
+# A test's name is printed by code the commit controls, and it is shown to the model among the
+# facts code found, outside the log's fence. So it may not carry the fence, markup or control
+# characters (independent security review, finding 4).
+_UNSAFE_IN_NAME = re.compile(r"[<>`\x00-\x1f\x7f]")
+
+
 def _failed_tests(lines: Sequence[str], section: range) -> tuple[str, ...]:
     names: dict[str, None] = {}
     for i in section:
         for pattern in _FAILED_TEST_NAMES:
             match = pattern.match(lines[i])
             if match:
-                names[_clip(match.group("name").strip(), 200)] = None
+                name = _UNSAFE_IN_NAME.sub("?", normalise(match.group("name").strip()))
+                names[_clip(name, 200)] = None
                 break
     return tuple(names)[:MAX_FAILED_TESTS]
 

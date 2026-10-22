@@ -24,6 +24,7 @@ from starlette.websockets import WebSocketDisconnect
 from app.core.security import hash_password
 from app.core.settings import Settings, get_settings
 from app.db.models import Role, User
+from app.ws import routes
 from app.ws.hub import (
     TOPIC_FOR_EVENT,
     Event,
@@ -451,3 +452,95 @@ def test_setting_the_hub_to_none_restores_a_fresh_one() -> None:
     set_hub(None)
 
     assert get_hub() is not replacement
+
+
+# ---------------------------------------------------------------------------
+# Security review, finding 11: a socket does not outlive its token or its account
+# ---------------------------------------------------------------------------
+
+
+def test_the_socket_closes_when_its_token_expires(ws_app: FastAPI, ws_client: TestClient) -> None:
+    """The token is checked once, at the auth frame, so the socket ends with it. 1008 makes the
+    client renew its session and reconnect (SessionProvider)."""
+    import jwt
+
+    from app.services.dependencies import get_settings_dep
+
+    settings = ws_app.dependency_overrides[get_settings_dep]()
+    me = ws_client.get("/api/me", headers={"Authorization": f"Bearer {sign_in(ws_client)}"})
+    now = int(time.time())
+    short_lived = jwt.encode(
+        {
+            "sub": me.json()["id"],
+            "type": "access",
+            "role": "DEVELOPER",
+            "iat": now,
+            "exp": now + 2,
+            "jti": "short-lived",
+        },
+        settings.jwt_secret,
+        algorithm="HS256",
+    )
+
+    with ws_client.websocket_connect("/ws") as socket:
+        socket.send_text(json.dumps({"type": "auth", "token": short_lived}))
+        assert json.loads(socket.receive_text())["type"] == "hello"
+        started = time.monotonic()
+        with pytest.raises(WebSocketDisconnect) as exc:
+            while True:
+                socket.receive_text()
+
+    assert exc.value.code == 1008
+    assert time.monotonic() - started < 10, "closed at expiry, not at some later heartbeat"
+
+
+async def test_deactivating_a_user_ends_their_sockets_and_only_theirs() -> None:
+    hub = Hub()
+    theirs = await hub.subscribe("a", "user-1", {Topic.RUNS})
+    mine = await hub.subscribe("b", "user-2", {Topic.RUNS})
+    for _ in range(hub._capacity):  # a full queue must not swallow the stop signal
+        hub.publish(Event(type=EventType.RUN_STARTED, data={}))
+
+    assert await hub.drop_user("user-1") == 1
+
+    drained = [theirs.queue.get_nowait() for _ in range(theirs.queue.qsize())]
+    assert drained[-1] is None
+    assert hub.subscriber_count == 1
+    assert None not in [mine.queue.get_nowait() for _ in range(mine.queue.qsize())]
+
+
+# ---------------------------------------------------------------------------
+# Paths that coverage showed no test took (white-box review, 2026-10-20)
+# ---------------------------------------------------------------------------
+
+
+def test_a_socket_that_never_sends_its_auth_frame_is_closed(
+    ws_client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An open socket that never authenticates is a connection anyone can hold for free: it gets
+    one frame's grace, then 1008."""
+    monkeypatch.setattr(routes, "AUTH_TIMEOUT_SECONDS", 0.2)
+
+    with ws_client.websocket_connect("/ws") as socket:
+        started = time.monotonic()
+        with pytest.raises(WebSocketDisconnect) as exc:
+            socket.receive_text()
+
+    assert exc.value.code == 1008
+    assert time.monotonic() - started < 10
+
+
+def test_an_idle_socket_is_kept_alive_with_heartbeats(
+    ws_client: TestClient, ws_hub: Hub, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With nothing to send, the server still speaks, so a proxy or the client's own check for a
+    quiet connection (LiveEventsClient) does not take an idle socket for a dead one."""
+    monkeypatch.setattr(routes, "HEARTBEAT_SECONDS", 0.2)
+    token = sign_in(ws_client)
+
+    with ws_client.websocket_connect("/ws") as socket:
+        socket.send_text(json.dumps({"type": "auth", "token": token}))
+        assert json.loads(socket.receive_text())["type"] == "hello"
+        beat = json.loads(socket.receive_text())
+
+    assert beat["type"] == EventType.HEARTBEAT.value

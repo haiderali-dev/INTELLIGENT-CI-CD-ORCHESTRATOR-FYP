@@ -14,7 +14,7 @@ import { formatTimeOfDay } from "@/lib/format";
 import { MEDIUM_QUERY, useMediaQuery } from "@/lib/useMediaQuery";
 import { queueKeys, useQueueApi } from "@/queue/queueApiContext";
 import { optimizerStatus, ranked } from "@/queue/queueModel";
-import { QueueRanking, UnscoredItems } from "@/queue/QueueRanking";
+import { HeldItems, QueueRanking, UnscoredItems } from "@/queue/QueueRanking";
 import { NumbersSwitch, ScoreKey } from "@/queue/ScoreKey";
 import { ASSISTANTS } from "@/workspace/assistants";
 import type { LiveStatus } from "@/ws/LiveEventsClient";
@@ -110,10 +110,13 @@ export function QueuePage({ item }: { item: Pick<NavItem, "label" | "description
           </>
         ) : data.unscored_items.length > 0 ? (
           <p className="px-6 pt-6">No waiting job has a score yet.</p>
+        ) : data.held_items.length > 0 ? (
+          <p className="px-6 pt-6">Nothing is ready to run: every queued job is held back.</p>
         ) : (
           <NothingWaiting />
         )}
         <UnscoredItems items={data.unscored_items} />
+        <HeldItems items={data.held_items} />
       </>
     );
   }
@@ -161,6 +164,11 @@ function QueueStatus({ queue }: { queue: Queue | undefined }) {
       {queue?.available ? (
         <li>
           <span className="font-semibold tabular-nums">{queue.queue_length}</span> waiting
+        </li>
+      ) : null}
+      {queue?.available && queue.held_items.length > 0 ? (
+        <li>
+          <span className="font-semibold tabular-nums">{queue.held_items.length}</span> held back
         </li>
       ) : null}
       {optimizer ? <li>{optimizer}</li> : null}

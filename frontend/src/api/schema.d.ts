@@ -27,6 +27,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/limits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The rate limits in force
+         * @description 4.7.3 lists the rate limits on the Admin page. Read from the limits themselves, so the page
+         *     cannot show numbers the backend does not enforce (found in T6.7).
+         */
+        get: operations["get_rate_limits_api_admin_limits_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/policy": {
         parameters: {
             query?: never;
@@ -109,6 +130,31 @@ export interface paths {
          *     that means editing the database by hand.
          */
         patch: operations["update_user_api_admin_users__user_id__patch"];
+        trace?: never;
+    };
+    "/api/admin/users/{user_id}/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set a new password for a user
+         * @description The way back for someone who forgot their password: the sign-in page tells them to ask an
+         *     administrator (found in T6.3, when no endpoint let one help).
+         *
+         *     Every session the old password opened ends: tokens issued before now are refused, and the
+         *     user's live connections are dropped. Resetting your own password signs you out too. The audit
+         *     entry records who reset whose password, never the password.
+         */
+        post: operations["reset_password_api_admin_users__user_id__password_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/analytics/experiments": {
@@ -199,8 +245,10 @@ export interface paths {
          * Sign in
          * @description Exchange an email and password for an access and refresh token pair.
          *
-         *     Rate limited to five attempts a minute per client address: enough for a person who mistypes,
-         *     useless for a password spray.
+         *     Rate limited to five attempts a minute per account from one address, enough for a person who
+         *     mistypes, and thirty a minute per address across all accounts, which stops a password spray.
+         *     Both are checked here rather than in a dependency so that a limit engaging can be audited, at
+         *     most once a minute per caller (D-068).
          */
         post: operations["login_api_auth_login_post"];
         delete?: never;
@@ -262,7 +310,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Chains */
+        /**
+         * List Chains
+         * @description Chains, newest first. Filtered here rather than on the page, so a filter covers every chain
+         *     and not only the newest page of them (found in T6.7).
+         */
         get: operations["list_chains_api_chains_get"];
         put?: never;
         post?: never;
@@ -702,7 +754,7 @@ export interface paths {
         };
         /**
          * Console output
-         * @description A window of the log, with the offset to ask for next.
+         * @description A window of the log, with the offset to ask for next, redacted.
          *
          *     Windowed rather than whole: the UI tails a running build, and returning the entire log on each
          *     poll would move the same megabyte over and over.
@@ -987,6 +1039,12 @@ export interface components {
             /** Total */
             total: number;
         };
+        /**
+         * ChainStatus
+         * @description A chain's outcome. EXPIRED: its 30-minute lock ran out before it finished (4.6.4).
+         * @enum {string}
+         */
+        ChainStatus: "RUNNING" | "SUCCESS" | "FAILURE" | "ABORTED" | "EXPIRED";
         /** ChainSummary */
         ChainSummary: {
             /** Finished At */
@@ -1069,6 +1127,10 @@ export interface components {
         ComponentHealth: {
             /** Detail */
             detail: string;
+            /** Last Call At */
+            last_call_at?: string | null;
+            /** Last Outcome */
+            last_outcome?: string | null;
             /** Latency Ms */
             latency_ms?: number | null;
             status: components["schemas"]["ComponentStatus"];
@@ -1366,6 +1428,27 @@ export interface components {
             version: string;
         };
         /**
+         * HeldItemResponse
+         * @description Queued work held back rather than buildable, with why, and the upstream job holding it when
+         *     that is the reason (``upstream_state`` is ``queued`` or ``building``).
+         */
+        HeldItemResponse: {
+            /** Item Id */
+            item_id: number;
+            /** Job Name */
+            job_name: string;
+            /** Level */
+            level: string;
+            /** Reason */
+            reason: string | null;
+            /** Upstream */
+            upstream: string | null;
+            /** Upstream State */
+            upstream_state: string | null;
+            /** Wait Seconds */
+            wait_seconds: number;
+        };
+        /**
          * HelpCardRecord
          * @description What the assistant can do (``HelpCard``, app/ai/clarify.py).
          */
@@ -1599,9 +1682,16 @@ export interface components {
             job_type: string;
             /** Priority Level */
             priority_level: string;
+            /** Service */
+            service: string | null;
             /** Service Id */
             service_id: string | null;
         };
+        /**
+         * JobType
+         * @enum {string}
+         */
+        JobType: "FREESTYLE" | "MAVEN" | "PIPELINE";
         /** LogResponse */
         LogResponse: {
             /** More Data */
@@ -2038,6 +2128,11 @@ export interface components {
              * @description False when the plugin could not be read; items is then empty
              */
             available: boolean;
+            /**
+             * Held Items
+             * @description Queued but held back, such as waiting for an upstream job
+             */
+            held_items: components["schemas"]["HeldItemResponse"][];
             /** Items */
             items: components["schemas"]["QueueItemResponse"][];
             /** Optimizer Enabled */
@@ -2058,6 +2153,20 @@ export interface components {
             weights: {
                 [key: string]: number;
             };
+        };
+        /**
+         * RateLimitResponse
+         * @description One of the backend's rate limits, as `app/core/ratelimit.py` defines it.
+         */
+        RateLimitResponse: {
+            /** Applies To */
+            applies_to: string;
+            /** Capacity */
+            capacity: number;
+            /** Name */
+            name: string;
+            /** Per Seconds */
+            per_seconds: number;
         };
         /** RefreshRequest */
         RefreshRequest: {
@@ -2165,6 +2274,11 @@ export interface components {
             resolved: components["schemas"]["ResolvedRecord"];
             /** Warnings */
             warnings: string[];
+        };
+        /** ResetPasswordRequest */
+        ResetPasswordRequest: {
+            /** Password */
+            password: string;
         };
         /**
          * ResolvedRecord
@@ -2679,6 +2793,44 @@ export interface operations {
             };
         };
     };
+    get_rate_limits_api_admin_limits_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RateLimitResponse"][];
+                };
+            };
+            /** @description Refused. The error code says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     get_policy_api_admin_policy_get: {
         parameters: {
             query?: never;
@@ -2850,6 +3002,50 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["UpdateUserRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUserResponse"];
+                };
+            };
+            /** @description Refused. The error code says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    reset_password_api_admin_users__user_id__password_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetPasswordRequest"];
             };
         };
         responses: {
@@ -3176,6 +3372,10 @@ export interface operations {
             query?: {
                 service?: string | null;
                 active?: boolean;
+                /** @description FREESTYLE (the Freestyle Assistant) or PIPELINE */
+                job_type?: components["schemas"]["JobType"] | null;
+                /** @description One chain status */
+                status?: components["schemas"]["ChainStatus"] | null;
                 limit?: number | null;
                 offset?: number | null;
             };

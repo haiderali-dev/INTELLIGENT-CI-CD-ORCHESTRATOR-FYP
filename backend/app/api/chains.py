@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import ApiRateLimit, CurrentUser
 from app.api.payloads import CancelResult, RunCard
-from app.db.models import Chain, ChainStatus
+from app.db.models import Chain, ChainStatus, JobType
 from app.db.session import get_db
 from app.services import chains as service
 from app.services.dependencies import get_jenkins_client, get_plugin_client
@@ -74,15 +74,25 @@ async def list_chains(
     session: Annotated[AsyncSession, Depends(get_db)],
     service: str | None = None,
     active: bool = False,
+    job_type: Annotated[
+        JobType | None, Query(description="FREESTYLE (the Freestyle Assistant) or PIPELINE")
+    ] = None,
+    status: Annotated[ChainStatus | None, Query(description="One chain status")] = None,
     limit: Annotated[int | None, Query(ge=1, le=200)] = None,
     offset: Annotated[int | None, Query(ge=0)] = None,
 ) -> ChainPage:
+    """Chains, newest first. Filtered here rather than on the page, so a filter covers every chain
+    and not only the newest page of them (found in T6.7)."""
     resolved_limit, resolved_offset = clamp_page(limit, offset)
     statement = select(Chain)
     if service:
         statement = statement.where(Chain.service == service)
     if active:
         statement = statement.where(Chain.status == ChainStatus.RUNNING.value)
+    if job_type is not None:
+        statement = statement.where(Chain.job_type == job_type.value)
+    if status is not None:
+        statement = statement.where(Chain.status == status.value)
     total = await count_rows(session, statement)
     rows = (
         await session.scalars(

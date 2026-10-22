@@ -59,7 +59,12 @@ Then open:
 | Backend API docs | <http://localhost:8000/docs> |
 | Jenkins | <http://localhost:8087> |
 
+Every port listens on 127.0.0.1 only: the stack is for the machine it runs on.
+
 Sign in with the `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` from your `.env`.
+
+To test the running stack end to end through its own frontend, with a throwaway account that is
+deactivated afterwards: `python scripts/stack_system_test.py`.
 
 > **No Groq API key?** Set `LLM_MODE=fake` for deterministic canned answers, or `LLM_MODE=replay` to
 > serve recorded fixtures. Both run the whole flow with no network access and no key.

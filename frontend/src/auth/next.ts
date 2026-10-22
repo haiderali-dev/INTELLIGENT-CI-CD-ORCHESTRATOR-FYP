@@ -23,6 +23,12 @@ export function safeNext(raw: string | null): string {
   if (url.origin !== base || url.pathname === SIGN_IN_PATH) {
     return HOME;
   }
+  // Resolving can itself make a protocol-relative path: "/.//evil.example" resolves to
+  // "//evil.example", which a browser reads as another site. The router collapses "//" today, but
+  // this function must not lean on that (independent security review, finding 8).
+  if (url.pathname.startsWith("//") || url.pathname.startsWith("/\\")) {
+    return HOME;
+  }
   return `${url.pathname}${url.search}${url.hash}`;
 }
 

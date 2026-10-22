@@ -6,7 +6,6 @@ lifetimes (4.4.2).
 
 from __future__ import annotations
 
-import hmac
 import uuid
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
@@ -60,14 +59,6 @@ def needs_rehash(hashed: str) -> bool:
         return _hasher.check_needs_rehash(hashed)
     except (InvalidHashError, ValueError):
         return False
-
-
-def constant_time_equals(left: str, right: str) -> bool:
-    """Compare two secrets without leaking their common prefix through timing.
-
-    Used for the metrics bearer token, which the plugin sends on every event.
-    """
-    return hmac.compare_digest(left.encode("utf-8"), right.encode("utf-8"))
 
 
 def create_token(

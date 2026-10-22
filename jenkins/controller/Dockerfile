@@ -52,15 +52,19 @@ USER jenkins
 #   runSetupWizard=false      the wizard would block JCasC from applying anything
 #   AWTHeadless               no display in a container
 #   csrf proxy compatibility  left at the default; the backend fetches a crumb (4.4.5)
-ENV JAVA_OPTS="-Djenkins.install.runSetupWizard=false -Djava.awt.headless=true -Dhudson.model.DownloadService.noSignatureCheck=true" \
+#   update-site signatures    checked, the default: plugins come pinned from plugins.txt, and
+#                             nothing should accept unsigned update metadata (security review, 13)
+# JENKINS_SLAVE_AGENT_PORT=-1 turns the inbound agent port off: both agents connect over SSH
+# (security review, finding 2).
+ENV JAVA_OPTS="-Djenkins.install.runSetupWizard=false -Djava.awt.headless=true" \
     CASC_JENKINS_CONFIG=/var/jenkins_conf/jenkins.yaml \
-    JENKINS_SLAVE_AGENT_PORT=50000
+    JENKINS_SLAVE_AGENT_PORT=-1
 
 # The controller runs zero builds (4.2.2), so it needs no executors of its own. JCasC sets this
 # too; declaring it here means a controller started without JCasC still does not run builds.
 ENV JENKINS_OPTS=""
 
-EXPOSE 8080 50000
+EXPOSE 8080
 
 # Wraps the stock entrypoint rather than replacing it: the wrapper reinstalls the plugin under
 # test and then execs /usr/local/bin/jenkins.sh, so every other startup behaviour is unchanged.

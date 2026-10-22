@@ -79,11 +79,14 @@ _ASSIGNMENT = re.compile(
 )
 _ASSIGNMENT_HINTS: Final = ("pass", "secret", "token", "key", "credential")
 
-# A command line's credentials: `curl -u user:secret`, `--user=user:secret`, and a secret flag
-# followed by its value, `--password secret`. A pair is required after -u, so `git push -u origin`
-# and `sort -u` are left alone; a value starting with "-" is the next flag, not a secret.
+# A command line's credentials: `curl -u user:secret`, curl's attached `-uuser:secret`,
+# `--user=user:secret`, and a secret flag followed by its value, `--password secret`. A pair is
+# required after -u, so `git push -u origin` and `sort -u` are left alone; a value starting with "-"
+# is the next flag, not a secret. The attached form was found missing by the independent security
+# review (Phase 5 fix 3).
 _USER_FLAG = re.compile(
-    r"(?P<flag>(?<!\S)(?:-u|--user)(?:[ \t]+|=))(?P<user>[^\s:'\"]{1,128}):(?P<secret>[^\s'\"]+)"
+    r"(?P<flag>(?<!\S)(?:-u(?:[ \t]+|=)?|--user(?:[ \t]+|=)))"
+    r"(?P<user>[^\s:'\"-][^\s:'\"]{0,127}):(?P<secret>[^\s'\"]+)"
 )
 _SECRET_FLAG = re.compile(
     r"(?P<flag>--(?:password|passwd|token|secret|api-key|access-key)[ \t]+)"

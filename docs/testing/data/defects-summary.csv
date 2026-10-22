@@ -1,0 +1,16 @@
+by,group,defects
+technique,Unit testing,4
+technique,Integration testing,8
+technique,System testing,11
+technique,Acceptance testing,2
+technique,Regression (CI and gates),4
+technique,Coverage analysis,2
+technique,Review and inspection,13
+phase,0,4
+phase,1,7
+phase,2,7
+phase,3,10
+phase,4,0
+phase,5,10
+phase,6,5
+phase,3-6,1

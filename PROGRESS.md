@@ -11,15 +11,17 @@ Branch: phase-6-frontend
       Done, checked 2026-10-11 with `git ls-remote`. `haiderali-dev/payment-service` has `main`
       998844b and `demo/failing-tests` da997c8. `haiderali-dev/auth-service` has `main` 6413c6f
       and `demo/failing-tests` d4c4560. `catalog/services.yaml` points at both.
-- [ ] **Resolve or work around the JCasC floating-point defect (D-017).** Importing a YAML file
-      silently ignores `weightUrgency`, `weightDependency`, `weightExecutionTime`,
-      `agingBonusPerInterval`, `agingCap`, `similarityThreshold` and `recencyLambdaPerDay`, while
-      every other field applies. `optimizerEnabled` works, so the main baseline-versus-optimized
-      comparison is unaffected and Table 12.1 stays reproducible from YAML. The **aging-ablation arm**
-      of the Part 4.8.2 matrix varies `agingBonusPerInterval` and `agingCap`, so it cannot be driven
-      from JCasC and needs another route (the global configuration form, or a decision to drop that
-      arm). `ConfigAsCodeIT.floatingPointAttributesAreNotAppliedKnownDefect` pins the current
-      behaviour and will fail loudly when it is fixed.
+- [x] **Resolve or work around the JCasC floating-point defect (D-017).** Resolved on 2026-10-18,
+      at the user's request to find the root cause.
+      - **Cause:** JCasC's YAML loader builds nodes only for the bool, int and str tags, so an
+        unquoted float is dropped from the parsed document. Quoted values apply.
+      - **Fix:** the three `jenkins/casc/` files set all seven fields, quoted, at Appendix D's
+        values. The aging-ablation arm can now be driven from YAML.
+      - **Checks:**
+        - `mvn -Dit.test=ConfigAsCodeIT verify`: 9 passed. Quoted values apply, unquoted ones are
+          dropped (JCasC's behaviour, pinned), and an exported file imports again with its floats.
+        - verify.py's Phase 1 check "JCasC quotes every floating-point optimizer value" passed,
+          failed with one value unquoted, and passed again once it was restored.
 - [x] **Install `gh`, or open pull requests by hand.** Not blocking; each phase still ends on its
       own branch. Done, checked 2026-10-11: `gh` 2.102.0 is logged in as `haiderali-dev`. PRs
       #5 to #9 were opened with it. Open each phase PR against `main`, never against the previous
@@ -49,9 +51,10 @@ Branch: phase-6-frontend
         `fs-payment-service-test-unit` #60 could not resolve `github.com`. The retry got past it
         10 seconds later, and the build went on to its intended test failure. The error the
         retry left in the log then broke Explain failure's replay, which D-053 fixed.
-- [ ] **Re-run the Phase 5 security review independently.** The reviewer agent stopped on an
-      account usage limit, so `docs/security-review-phase-5.md` was written by the agent that
-      wrote the code.
+- [x] **Re-run the Phase 5 security review independently.** Done on 2026-10-18, at the user's
+      request, widened to Phases 3, 5 and 6 as BUILD_PROMPT asks. An independent subagent reviewed
+      `main` at `31a725f` read-only, in its own worktree. It found 15 issues (2 Medium, 7 Low,
+      6 Info), and all 15 are fixed with regression tests: `docs/security-review-phases-3-5-6.md`.
 - [x] **Approve `frontend/DESIGN.md`.** T6.1 wrote it on 2026-10-13. Its section 10 lists the
       choices most worth questioning, and D-052 records how its palette reads 4.7.2's "4 to 6
       named hex values". No screen (T6.3 onward) is built before approval. T6.2's plumbing does
@@ -1068,6 +1071,12 @@ gained a check for it: it passed 78 of 78 on `ff70254` (2026-10-17).
           redirect check or the auth-endpoint exemption to watch the tests fail was refused by
           Claude Code's auto mode, and the code was restored at once. The tests assert those
           behaviours directly.
+          - **Done 2026-10-20:** a script weakened each guard in turn, ran its test file, and
+            restored the source byte for byte. The auth-endpoint exemption and `safeNext`'s
+            first-character guard were caught. `safeNext`'s origin check was not: it returns only
+            a path, so every foreign vector came out as "/" either way. A vector with a real
+            foreign path (`/<tab>/elsewhere.example/queue`, which would have led to this site's
+            `/queue`) was added, and then all three were caught.
 - [x] T6.4 Shared assistant workspace components (Part 4.7.4). Evidence, all run on 2026-10-15:
       - **Built, in `src/workspace/` and `src/components/`:**
         - the workspace layout: chats, thread and preview side by side from 1280 px; a drawer
@@ -1457,12 +1466,11 @@ Acceptance evidence, all run on 2026-10-17:
   "16 audits; lowest accessibility score 100 (Freestyle), 100 (Pipeline)". CI run 39030064897
   passed all six jobs on the same commit.
 
-Open in Phase 6, outside any one task: `frontend/Dockerfile`, and removing the `frontend` service's
-Compose profile, which D-018 left for "once Phase 6 builds the image". Best done once the
-screens exist, before T6.8's Playwright flows run against the stack.
+~~Open in Phase 6, outside any one task: `frontend/Dockerfile`, and removing the `frontend`
+service's Compose profile (D-018).~~ Done on 2026-10-18 in the hardening pass below.
 
 Found in T6.3, for T6.7's Admin page:
-- **There is no way to reset a password.** The sign-in page says "Forgotten your password? Ask an
+- [x] **There is no way to reset a password.** Fixed 2026-10-18: `POST /api/admin/users/{id}/password` and a Reset password dialog; every older session ends. The sign-in page says "Forgotten your password? Ask an
   administrator", but no endpoint lets an administrator set a new password: `PATCH
   /api/admin/users/{id}` changes only the role and whether the account is active. An admin
   password reset needs a backend endpoint.
@@ -1471,45 +1479,45 @@ Found in T6.3, for T6.7's Admin page:
       only an Admin sees the entry, and anyone else who opens `/admin` is told why it is closed.
 
 Found in T6.8 (D-062):
-- **The backend uses a constant Starlette 1.7 deprecates.** `app/core/errors.py` line 197 sends
+- [x] **The backend uses a constant Starlette 1.7 deprecates.** Fixed 2026-10-18. `app/core/errors.py` line 197 sends
   validation errors with `status.HTTP_422_UNPROCESSABLE_ENTITY`, and every 422 logs a
   `StarletteDeprecationWarning` naming `HTTP_422_UNPROCESSABLE_CONTENT` instead. The status is still
   422, so nothing breaks yet. A one-line change, left for a backend task.
 
 Found in T6.7 (D-061), for decisions outside the frontend:
-- **No endpoint serves the chatbot evaluation's results,** though 4.4.4 lists "evaluation results"
+- **No endpoint serves the chatbot evaluation's results,** Phase 8 (T8.2 produces them): left there. though 4.4.4 lists "evaluation results"
   under analytics. T8.2 writes them; the Analytics page needs an endpoint (or a published file) to
   read them from.
-- **No endpoint reports the rate limits** that 4.7.3 lists for the Admin page. They are constants
+- [x] **No endpoint reports the rate limits** Fixed 2026-10-18: `GET /api/admin/limits`, shown in the Admin page's Policy section. that 4.7.3 lists for the Admin page. They are constants
   in `app/core/ratelimit.py`. Reporting them, as the policy endpoint reports the HIGH quota, would
   let the page show them without copying them.
-- **The health check cannot say whether the AI provider answers.** By design it reads the
+- [x] **The health check cannot say whether the AI provider answers.** Fixed 2026-10-18: the latest call's outcome, shown on the Overview. By design it reads the
   configuration and never calls the model, to save quota. DESIGN.md's Overview sketch ("Groq,
   answering") needs a signal the backend does not have, such as the outcome of the latest model
   call.
-- **The API filters chains by service only, and runs by one job only.** Jobs and runs filters the
+- [x] **The API filters chains by service only, and runs by one job only.** Fixed 2026-10-18 for chains: `job_type` and `status` filters, which Jobs and runs now uses. Jobs and runs filters the
   newest 200 chains by assistant and result on the page, and says so when there are more. Filters
   on `GET /api/chains` would make them exact.
-- **`JobResponse.service_id` names a service by an id the catalog never returns,** so a job cannot
+- [x] **`JobResponse.service_id` names a service by an id the catalog never returns,** Fixed 2026-10-18: `JobResponse.service` gives the name. so a job cannot
   be shown with its service's name. Jobs and runs reads chains instead.
 
 Found in T6.6 (D-060):
-- **The Queue page cannot show a job held for its upstream.** `DependencyGate` blocks in
+- [x] **The Queue page cannot show a job held for its upstream.** Fixed 2026-10-20 (D-066): the plugin's `heldItems`, `/api/queue`'s `held_items`, and a Held back list. `DependencyGate` blocks in
   `canRun`, so Jenkins keeps the held item among its blocked items. The plugin's ranking lists only
   buildable items, so the held job is neither ranked nor listed as unscored, and the page cannot say
   why it waits. DESIGN.md's Queue sketch has such a row ("Waits for fs-payment-service-build"). To
   show it, the plugin's API would have to list blocked items with their reason, a Phase 2 change.
-- **A lone waiting job can show as unscored, or with an old score.** The sorter scores nothing when
+- [x] **A lone waiting job can show as unscored, or with an old score.** Fixed 2026-10-20 (D-066): the sorter scores a lone item and empties the heap when nothing is buildable. The sorter scores nothing when
   the optimizer is off or fewer than two items are buildable. `DynamicQueueSorter` returns early in
   both cases, and nothing else writes the heap. The ranking's wait is computed when it is asked
   for, but the score and the aging come from the last sort. With one job waiting, the page can show
   it as "Not scored by the optimizer", or show an aging bonus older than its wait. The run card's
   score comes from the same heap.
-- **The sidebar's System theme button runs 13 px past the 240 px sidebar,** seen in Chrome at
+- [x] **The sidebar's System theme button runs 13 px past the 240 px sidebar,** Fixed in T6.9. seen in Chrome at
   1440 px. This is T6.2's shell, for T6.9's review.
 
 Found in T6.5:
-- **The backend can return a reply before the message it answers.** `list_messages` orders by
+- [x] **The backend can return a reply before the message it answers.** Fixed 2026-10-18 in the backend too: each message is stamped after the last. `list_messages` orders by
   `created_at`, then by message id. The id is a random UUID. A message and its reply are written in
   one request, and on Windows both were stamped with the same time: the captured `/help` pair came
   back reply first. The thread now sorts user-before-reply on a tie (D-059). The backend fix is
@@ -1577,6 +1585,439 @@ Found in T6.4, to settle before T6.5 and T6.6 show real scores:
       - **Not proven:** the stack's database held no messages, commands or pipelines (0 rows),
         so no older stored row could be checked.
 
+## Hardening of Phases 1 to 6 (2026-10-18, branch `phase-6-hardening`)
+
+The user asked for every remaining issue from Phases 1 to 6 to be fixed and verified before Phase 7.
+The audit of 2026-10-18 listed them. Each item below ends with the check that ran.
+
+- [x] **D-017, the JCasC floating-point defect: root cause found and fixed** (`c7c15c1`). See Needs
+      human above.
+- [x] **Independent security review of Phases 3, 5 and 6, with all 15 findings fixed**
+      (`docs/security-review-phases-3-5-6.md`). Evidence, all run on 2026-10-18:
+      - **Backend:**
+        - one approval per request, enforced in the services and by a partial unique index
+          (migration `5e0b9c3a7d21`);
+        - single-use refresh tokens with families;
+        - a bounded, redacted run log;
+        - per-user and per-account rate limits;
+        - a `JWT_SECRET` floor;
+        - health details that name no host, and a limited health endpoint;
+        - WebSockets that close at token expiry and on deactivation;
+        - a screened plan explanation;
+        - a seed that no longer undoes a deactivation;
+        - curl's attached `-u` form redacted.
+      - **Stack:**
+        - every published port bound to 127.0.0.1;
+        - the inbound agent port off;
+        - update-site signatures checked.
+      - **Frontend:**
+        - `safeNext` refuses resolved `//` paths;
+        - a build-time Content-Security-Policy, with the theme script by hash;
+        - `frontend/Dockerfile` and `nginx.conf`, with the `frontend` service a Compose default
+          again (D-018 closed).
+      - **Checks:**
+        - backend: ruff, ruff format and mypy clean; offline suite 1687 passed;
+          `test_security_review_fixes.py` 25 passed;
+        - each fix was removed in turn, and its test failed;
+        - frontend: lint and typecheck clean; `npm run test` 291 passed; `npx playwright test`
+          12 flows passed, including a new one that runs six pages under the CSP and fails on any
+          violation;
+        - `docker build ./frontend` succeeded. The image served a client-side route with the CSP
+          and security headers, and started without a backend (502 on `/api`, not a crash);
+        - new verify.py checks, run on their own: Phase 1 "every published port is bound to
+          loopback" (fails on the old Compose file with seven exposures) and Phase 6 "an
+          independent security review covers Phases 3, 5 and 6" (15 findings, each with its fix).
+- [x] **The Starlette 422 deprecation (found in T6.8):** `HTTP_422_UNPROCESSABLE_CONTENT`. The auth
+      and router tests pass with deprecation warnings as errors.
+- [x] **Message order (found in T6.5):** each message is stamped strictly after the last one in its
+      conversation, so `created_at` alone orders a thread. The test freezes the clock and reads
+      four messages back in order.
+- [x] **The AI provider's health (found in T6.7):** `/api/health` reports the latest model call's
+      outcome and time, and a failed one marks the LLM degraded. Covered by `test_health.py`.
+- [x] **The API gaps the pages ran into (found in T6.3 and T6.7):**
+      - **Password reset:** `POST /api/admin/users/{id}/password` and the Admin page's Reset
+        password dialog. Every token carries the user's epoch and a reset moves it on, so every
+        older session ends (migration `9d4f2b6e8a10`).
+      - **Rate limits:** `GET /api/admin/limits`, read from the limits themselves, shown in the
+        Admin page's Policy section.
+      - **Chain filters:** `job_type` and `status` on `GET /api/chains`. Jobs and runs now filters on
+        the server, not within the newest 200.
+      - **Job service:** `JobResponse.service` gives the service's name.
+      - **The Overview** says how the model's latest call ended.
+      - **Fixtures:** the frontend's new fixtures were captured from the app in its test
+        configuration, and the stale live-without-key health fixture was recaptured.
+      - **Checks:**
+        - `tests/test_api_gaps.py` 5 passed;
+        - the backend's offline suite passed, 1692;
+        - frontend lint and typecheck clean, 294 tests passed (3 new Admin tests, the Jobs and runs
+          filter tests rewritten for the server's filters, and 4 provider states on the Overview).
+- **Left for Phase 8:** an endpoint for the chatbot evaluation's results. T8.2 is what produces
+  them.
+- [x] **The stack rebuilt, as approved (2026-10-18):**
+      - **Rebuilt:** the backend, controller and frontend images, with `docker compose build` then
+        `up -d`. The frontend container started for the first time. No volume was touched.
+      - **Migrations:** `alembic upgrade head` in the backend container applied `5e0b9c3a7d21` and
+        `9d4f2b6e8a10`. Beforehand, a check found no command with two approved plans. `alembic
+        check` then found no difference between the models and the database.
+      - **Seen live:** every published port is on 127.0.0.1 and port 50000 is gone. `/api/health`
+        answers through the backend and through the frontend's nginx.
+      - **Images pinned:** the two floating tags were pinned to what was already running
+        (`python:3.12.15-slim`, `postgres:16.15-alpine`).
+- [x] **System tests through the real stack (the flows had only ever run in fake mode):**
+      `scripts/stack_system_test.py` runs `frontend/e2e/stack.spec.ts`.
+      - **The account:** a throwaway Developer, created in the backend container with a random
+        password that is never printed, and deactivated afterwards with an audit entry.
+      - **Test 1:** every page loads through the frontend container under its CSP, with no page
+        error, no server error, and live events arriving over nginx's `/ws`.
+      - **Test 2:** a freestyle build asked for in plain English runs on the real jenkins-dev, and
+        its run card shows it succeeding live.
+      - **Test 3 (added 2026-10-20):** a Pipeline build's Jenkinsfile is linted by jenkins-dev's
+        declarative linter and run by it, and its stages are followed live from the stage view.
+      - **Result:** 2 passed, twice (the second time as the new verify.py check). After test 3 was
+        added, 3 passed in 45.9 s.
+- [x] **Acceptance clauses the gate did not test now have checks of their own:**
+      - Phase 1, "both services' own tests pass": payment-service 12 passed, auth-service 7.
+      - Phase 2, "`mvn -B verify` passes": BUILD SUCCESS, 108 unit (1 skipped) and 73
+        integration tests.
+      - Phase 3, "`/api/health` reports database, Jenkins and LLM provider on the stack".
+      - Phase 6: the frontend container serves the build with its policy and proxies the API.
+      - Phase 6: the system tests above.
+      - Each passed when run on its own. The gate now has 85 checks.
+- [x] **`docs/versions.md`:**
+      - **Checked:** all 51 pins, each against its official source on 2026-10-20 (Jenkins update
+        centre, repo.jenkins-ci.org, PyPI, Docker Hub, npm); all were found.
+      - **Filled in:** the rows *pending* since T1.1, T2.1, T3.1 and T4.1.
+      - **Corrected:** the build machine table and the Groq limits note. T4.1 had confirmed two
+        of the four limits from the live API's headers, but versions.md still said unverified.
+- [x] **Mutation checks on the session's security tests (T6.3's open item):** see T6.3 above. All
+      three weakened guards were caught, after one missing test vector was added.
+
+- [x] **Screenshots retaken from the final UI (T6.9's set, 40 files; 20 changed).**
+      - **Reviewed:**
+        - the Admin page's Password column and Rate limits table, at 1440 and 390 px;
+        - the Jobs and runs list;
+        - the Queue page's new Held back list, fed the live held-job recording, in both themes
+          and widths.
+      - **Fixed:** the rate limits' labels started in lower case, unlike every other cell. They
+        are now capitalised for display, and the Admin tests passed (14).
+- [x] **Lighthouse in CI:** a step in the Browser flows job runs the 16 audits on every push.
+      CI run 39348259894 on `08477e5`: the step passed, every one of the 16 audits scored 100, and
+      the 12 flows before it passed.
+- [x] **Records brought up to date:**
+      - `docs/report-updates.md` gains the report changes from this hardening;
+      - the README notes the loopback-only ports and the system tests;
+      - CLAUDE.md lists the new commands and says Phases 0 to 6 are done.
+
+- [x] **The 745 kB main bundle (D-063):** every page, sign in included, is loaded on first
+      navigation through React Router's `lazy`.
+      - **Size:** the main bundle is 419 kB (132 kB gzipped). The build no longer warns, and no
+        limit was raised. CodeMirror (395 kB) arrives only with a code view.
+      - **How it was decided:** a throwaway build that split every package showed what the main
+        bundle held. React DOM (207 kB) and React Router (93 kB) are needed everywhere. zod
+        (78 kB) and the form libraries were there only because sign in loaded eagerly.
+      - **The first paint:** both top-level routes show "Loading" until the first page arrives.
+        React Router had warned that nothing was drawn meanwhile.
+      - **Tests:** the sign-in tests now wait for the lazily loaded page to be drawn, as a browser
+        does. The restore test delays its renewal answer so "Restoring your session" can still be
+        seen. Sign-in tests passed 16 of 16 three times in a row.
+      - **Checks:**
+        - `npm run test`: 296 passed;
+        - lint and typecheck clean;
+        - `npx playwright test`: 12 flows passed;
+        - Lighthouse: 100 in all 16 audits.
+- [x] **The plugin's queue state (found in T6.6), D-066:**
+      - **The sorter:** it scores a lone buildable item, and empties the heap when nothing is
+        buildable or the optimizer is off.
+      - **Leave events:** a leaving item's QUEUE_LEFT event keeps the score it was dispatched on,
+        even after a later pass rebuilt the heap.
+      - **Held jobs:** they are listed with their reason and upstream, through the plugin's
+        `heldItems`, `/api/queue`'s `held_items` and the Queue page's Held back list.
+      - **Checks:**
+        - `mvn -B verify`: BUILD SUCCESS, 108 unit tests (1 skipped, Jenkins' own InjectedTest)
+          and 73 integration tests, including the new `HeapFreshnessIT` (5) and
+          `ApiJsonIT.heldItemsNameTheirUpstream`.
+        - With the old early returns put back, all five `HeapFreshnessIT` tests failed.
+        - **Recorded live:** jenkins-dev was rebuilt with the new plugin, and a held job was
+          recorded live (`backend/tests/data/plugin/ranking-held.json`).
+        - Backend parser and `/api/queue` tests passed on that recording (91 in the two files).
+        - The Queue page's tests passed on its capture through the backend (22 in the queue
+          files).
+
+- [x] **The full gate, run 2026-10-20 at 05:32 on `08477e5`: 84 of 85 passed (exit 1).**
+      - **The failure:** "the auth endpoints are rate limited" was a stale text match. It looked
+        for the single sign-in limit that D-065 replaced with two.
+      - **Fixed:** the check asserts both sign-in limits and the refresh limit, then runs the five
+        tests that see the 429s. Run on its own it passed. With the per-account limit deleted it
+        failed, and the file was restored byte for byte.
+      - The full gate is run again below, after the two defects that follow.
+- [x] **D-067, the dependency factor was always 0 in a live queue (Phase 2).** Found while planning
+      the testing chapter's white-box tests: the gate holds a consumer out of the buildable list,
+      and the sorter grouped only that list, so no group ever had two members.
+      - **Before the fix:** `GroupInheritanceIT` (new, JenkinsRule) dispatched
+        `gi-medium-1, gi-medium-2, gi-medium-3, gi-build-api, gi-deploy-api`: the LOW producer
+        ran after all MEDIUM work, and its D was 0.0.
+      - **After:** the sorter scores buildable and held items together and ranks only the
+        buildable ones. Its 4 tests passed three runs in a row. Two cache-key mutants are killed.
+      - `mvn -B verify`: BUILD SUCCESS, 108 unit (1 skipped) and 77 integration tests, SpotBugs 0.
+- [x] **D-068, suspicious activity the backend detected was not audited (Phase 3).** Found tracing
+      the report's User Story 5, criterion 3. A role guard's refusal, a replayed refresh token and
+      an engaged sign-in limit now each write an audit entry; a limit writes at most one a minute
+      per caller.
+      - `test_suspicious_activity_audit.py`: 9 passed. Four mutants were each killed.
+      - New gate check (Phase 3): "suspicious activity is written to the audit log". Run on its
+        own, it passed. The gate now has 86 checks.
+      - Backend offline suite: 1704 passed; ruff, format and mypy clean.
+- [x] **Acceptance tests for the report's User Stories 1 and 5** (`test_acceptance_user_stories.py`):
+      one test per criterion, Given-When-Then, through the HTTP API. 15 passed. Among them:
+      - every one of the 38 operations the OpenAPI schema marks as needing a session answers 401
+        without one, and only sign-in, renewal and the two health probes are open;
+      - an invalid command is answered and never reaches Jenkins;
+      - generated jobs are XML Jenkins loads, running only the catalog's commands.
+- [x] **White-box measurement, and the gaps it found (D-069).** Coverage for all three components,
+      mutation testing for the plugin's algorithm classes.
+      - **Backend coverage:** 92% of statements and branches over the offline suite. It had read 87%
+        until `pyproject.toml` told the tracer about SQLAlchemy's greenlets; the rest of that gap
+        was executed code it lost track of.
+      - **Plugin coverage (JaCoCo, all 185 tests):** 85.8% of lines, 69.5% of branches.
+      - **Frontend coverage (`npm run coverage`):** 92.5% of statements, 83.8% of branches.
+      - **PIT on the plugin's algorithms:** the first run killed 150 of 173 mutants (87%). The
+        final run kills 162 (94%); the 11 survivors are equivalent mutants, each named in D-069.
+      - **Tests added for what they found:**
+        - Backend: 7 tests (orphaned tokens, rehash, denylist expiry, WebSocket auth timeout and
+          heartbeat).
+        - Plugin: 9 unit tests and 4 new or extended JenkinsRule classes
+          (`MetricsPublisherIT`, `OptimizerConfigurationValidationIT`, `SorterConflictIT`, and
+          two more cycle tests in `MissingUpstreamIT`).
+      - **Dead code removed:** three functions nothing called.
+      - **Checks:**
+        - backend offline suite: 1726 passed; ruff, format and mypy clean;
+        - frontend: lint, typecheck, 296 tests and the build pass;
+        - plugin `mvn -B verify`: BUILD SUCCESS, 117 unit (1 skipped) and 91 integration tests,
+          SpotBugs 0; PIT 1.30.0 kills 162 of 173.
+- [x] **Experiments for the testing chapter, and the evidence campaign.** Opt in; the ordinary build
+      never runs them.
+      - `SchedulerOverheadExperiment` (E1): `Queue.maintain()` with the optimizer off and on inside
+        a real Jenkins, a scoring pass from an empty cache and from a full one, and the algorithm
+        alone up to 3200 items.
+      - `QueueSimulationExperiment` (E2, E3): a discrete-event simulation that scores with the
+        plugin's own classes and applies the gate's rule. E2 replays Milestone 2's workload,
+        calibrated on its measured FIFO run. E3 is a two-hour sustained load at four utilisations,
+        ten seeds each.
+      - `scripts/test_campaign.py`: runs every suite once at a clean commit, keeps each one's JUnit
+        XML, coverage, PIT report and log under `.tmp/campaign/<commit>/`, and writes a manifest.
+      - **Trial runs (not the reported numbers):** both experiments completed. The simulator's FIFO
+        matched Milestone 2's measured baseline within 0.1 s a band. Replaying Milestone 2's real
+        dispatch order matched its measured waits within 3%.
+- [x] **The second full gate run (2026-10-20, at `e1127cf`) did not finish.** 77 checks passed,
+      Phases 0 to 5 included (the end-to-end suite and the failing-branch chain among them). Then one
+      failed, and the run was stopped by Claude Code while the machine was critically short of
+      memory, so the rest never ran.
+      - **The failure:** a frontend page test flaked, "opens a new chat only once its first exchange
+        is stored". Its first `findBy` waited Testing Library's default one second for a page whose
+        module loads lazily, and on the loaded machine that took longer.
+      - **A first fix moved the flake.** Preloading every page module in `renderRoutes` made the
+        Analytics tests fail in two of three full runs, because each page test then imported every
+        page while other workers ran their tests. It was reverted.
+      - **The fix:** `src/test/setup.ts` waits up to 5 s for something to appear, and
+        `vite.config.ts` allows 15 s a test. No assertion changed. Lint, typecheck, and three full
+        runs of 296 passed.
+- [x] **A boundary-value gap closed:** a chosen password's length was tested only with "short".
+      `test_a_chosen_password_is_12_to_256_characters` takes 11, 12, 256 and 257 characters, at
+      creation and at reset: 4 passed.
+- [x] **Tools for the testing chapter, written:** `scripts/system_load_test.py` (load and stress
+      through the stack's frontend), `scripts/recovery_test.py` (PostgreSQL, the backend and Jenkins
+      restarted in turn), and the register, figure and annexure builders in `scripts/report/`.
+      `docs/testing/data/defects.csv` lists the 35 defects testing and review found, with evidence.
+      They run after the evidence campaign.
+- [x] **The third full gate run (2026-10-21, at `b16eb17`) did not finish either.** 81 checks
+      passed and none failed: Phases 0 to 5, then Phase 6's frontend bars, browser flows,
+      screenshots and security-review checks. During the next browser check, Claude Code stopped it
+      for low memory while the session was idle, as it had the second run. The machine was restarted
+      before the next session.
+- [x] **D-070: the stack could run stale images and the gate would not notice (Phases 1, 3, 6).**
+      Found while preparing the chapter's evidence:
+      - **The defect:** the frontend container served a build from before three frontend commits.
+        The Queue page's held-jobs list was missing from it, and the stack system tests had passed
+        against it.
+      - **Three checks, one per phase:** jenkins-dev and its agents (Phase 1), the backend (Phase 3)
+        and the frontend (Phase 6). They compare content, not build times:
+        - the backend, the frontend and the agents through Docker's build cache;
+        - jenkins-dev by the classes its running plugin holds, against `plugin/target`'s `.hpi`.
+      - **`provenance: false` on every built image:** two cached builds of unchanged source had
+        given two image IDs.
+      - **`backend/.dockerignore`, new:** the 147 MB virtualenv and 76 local `.pyc` files no longer
+        reach the build.
+      - **Checks run:**
+        - before the rebuild, the backend, frontend and agents checks failed; after it, all three
+          passed in two consecutive runs;
+        - each failure path was made to fail (a changed backend file, a plugin source newer than the
+          `.hpi`, an `.hpi` with one altered class) and passed again once restored byte for byte;
+        - a fresh backend container holds 0 `.pyc` files, and the frontend's Queue page bundle has
+          the held-jobs list;
+        - Phase 1's five Compose checks still pass. The gate now has 89 checks.
+- [x] **Corrections found while preparing the testing chapter:**
+      - **Dependency edges:** `docs/m2-baseline.md` and `docs/report-updates.md` said Milestone 2's
+        workload declares 17 dependency edges. It declares 20, on 17 dependent jobs (recounted from
+        `jobs.json`).
+      - **A rounding slip:** `m2-baseline.md` printed run 3's MEDIUM wait as 201.36 s; it is
+        201.3653, so 201.37.
+      - **Line endings:** the report builders now write LF. A heredoc patch had turned `"\n"` into a
+        real newline (CLAUDE.md lesson).
+      - **Check:** `scripts/report/testing_figures.py` recomputed Milestone 2's five runs from its
+        result files. All 25 waits and makespans match `m2-baseline.md` to the hundredth, after the
+        correction.
+- [x] **The full gate, run 4 (2026-10-22, 05:20 to 05:56, at `0603d4e`): 89 of 89 passed, ALL
+      CHECKS PASSED, exit 0.** It ran after D-067, D-068 and D-070, on the rebuilt stack.
+      - **The three new image checks passed in Phases 1, 3 and 6.**
+      - **What differed from the commit:** only files no check reads (the report tools, the defect
+        log), and plugin files edited after Phase 2's build had finished.
+      - **Memory:** before Phase 6, the Docker VM's page cache was dropped to give Lighthouse room.
+        Free memory fell to 2.9 GB during the audits and recovered.
+      - **CI on `0603d4e`:** run 39700898376 passed.
+      - **Log:** `docs/testing/evidence/gate-run-4-0603d4e.log`. `.gitignore` now lets that folder's
+        logs in; `*.log` had excluded them, the trap DF-20 fell into.
+- [x] **D-072, the optimizer had no settings page (Phase 2, T2.2).** Milestone 2's known problem 4,
+      "the global configuration page", was never fixed. The 15 Appendix D settings could be changed
+      only through configuration as code. Found while checking the chapter.
+      - **The page:** `config.jelly` adds the section to Manage Jenkins > System.
+      - **The weight warning** now follows the values on the form, not the last save.
+      - **`rescoreIntervalSeconds`,** which nothing read, now sets the cache key's time bucket. At
+        its default of 60 that is the current minute, as Part 4.3.7 states.
+      - **Maven jobs are tested** for the first time (`MavenPriorityIT`), with the Maven Integration
+        plugin as a test dependency.
+      - **Checks run:**
+        - each defect was put back on purpose and caught: 7 of the 9 new tests failed, and so did
+          the changed weight test. The other two guard what no defect touched (the default bucket
+          is the minute; saving the page keeps values). All passed once the code was restored;
+        - `mvn -B clean verify`: BUILD SUCCESS, 121 unit tests (1 skipped) and 97 integration tests,
+          SpotBugs 0, Spotless clean;
+        - jenkins-dev was rebuilt with this plugin; the gate's Phase 1 image check and its bot-token,
+          executor, agent, ranking, health and metrics checks pass.
+- [x] **D-071, a known vulnerability in the backend's dependencies (Phase 3).** `pip-audit`, run for
+      the testing chapter, found PYSEC-2026-4320 in `certifi` 2026.7.22: it trusted a CA root with
+      compromised intermediates.
+      - **The fix:** `certifi` 2026.10.19, taken inside the seven-day cooldown. In place of the
+        cooldown, its wheel was compared file by file with the old one: the only change is the
+        removal of the compromised root.
+      - **Checks run:**
+        - `pip-audit`: 1 known vulnerability in 49 packages before, none after;
+        - 4 live tests passed against the real provider with the new bundle;
+        - offline suite: 1730 passed;
+        - the backend image was rebuilt with it, and the Phase 3 image check passes.
+- [x] **Chapter tooling.**
+      - **The campaign can run in parts** (`scripts/test_campaign.py --only`). Its manifest keeps
+        every step's latest run at the commit, so the machine can be given memory back between the
+        browser steps.
+        - Tested on a scratch folder: two parts and a re-run merged as intended, and another commit
+          started a fresh manifest.
+      - **Three more figures and their data** (`scripts/report/testing_figures.py`), run on today's
+        data:
+        - complexity against branch coverage, per function;
+        - Milestone 2's five runs recomputed, with the dependency edges each one broke;
+        - the defects by how they were found and by phase.
+      - **The defect log has 41 entries;** DF-36 to DF-41 are new.
+- [x] **A rehearsal of the evidence campaign at `ac8305a` found two things.** Its Parts A
+      (plugin) and B (backend) ran to the end. Parts C to E were not run there, since the final
+      campaign runs at the commit after the fix below.
+      - **A network outage.** DNS for `github.com` and the model provider failed on this machine
+        between about 06:41 and 06:56. Three backend steps failed in it: integration (8 failed),
+        end-to-end (10) and live (4). The causes were recorded ("Could not resolve host:
+        github.com"; the provider "unavailable", which in the chain means a connection error, not a
+        rate limit). Their logs are kept under the campaign's `attempt-1-network-outage/`. Run again
+        once DNS answered, all four backend steps passed: offline 1730, integration 31 (and one
+        skipped, below), end-to-end 13, live 4.
+      - **D-074, a placeholder test (Phase 3).** That one skipped test,
+        `test_alembic_upgrade_matches_the_models`, always skipped: it had never been written. The
+        gate's "every migration is reversible" check only read the files.
+        - **Both tests now run on the stack's PostgreSQL.** The migrations must match the models
+          exactly, by alembic's own comparison. Downgrading to base must leave only alembic's
+          table, and upgrading again must match again. The gate's check runs both.
+        - **Checks run:**
+          - 2 passed (6.6 s);
+          - a model column with no migration, and a `drop_table` removed from a downgrade, each
+            failed the test meant for it, and both passed again once restored byte for byte;
+          - the gate's check passes through them;
+          - ruff and ruff format are clean.
+- [x] **The full gate, run 5 (2026-10-22, from 08:03, at `8263a7e`): 89 of 89 passed, ALL CHECKS
+      PASSED, exit 0.** This is the gate after every fix of the hardening: D-070, D-071, D-072 and
+      D-074.
+      - **Its new checks passed:** the containers run what the source builds, and the migrations
+        match the models and round-trip on PostgreSQL.
+      - **Its suites:** plugin 121 unit tests (1 skipped) and 97 integration tests; the backend's
+        bars clean; 836 AI tests; 12 end-to-end tests (replay); 296 frontend tests; 12 browser
+        flows; 16 Lighthouse audits, all scoring 100; 3 stack system tests.
+      - **Log:** `docs/testing/evidence/gate-run-5-8263a7e.log`. The commits since `8263a7e` change
+        documentation only.
+- [x] **CI went red on two commits (`00c433b`, `e0c0c69`), and is fixed.**
+      - **The cause:** the Phase 0 script-console guard flagged
+        `docs/testing/work-in-progress/write_defects.py`, a copy of the defect log's generator that
+        quotes `/scriptText` in DF-02's description. It was committed at a usage limit without Phase
+        0 being run first.
+      - **The fix:** the copy is removed. The log itself is data, and the guard rightly does not
+        scan CSV.
+      - **Check:** `verify.py --phase 0` passes locally, 11 of 11.
+      - **The evidence campaign,** started at `e0c0c69`, was stopped and is run again at the fixed
+        commit, so that the commit it cites has a green CI.
+- [x] **The evidence campaign ran in full at `31eb935`** (code identical to gate run 5's).
+      - **Every test step passed:**
+        - plugin: 121 unit tests (1 skipped) and 97 integration tests, JaCoCo, PIT 162 of 173;
+        - experiments E1 to E3; E2 and E3 byte-identical to the rehearsal;
+        - backend: offline 1730, integration 33 with none skipped, end-to-end 13 on the live
+          model, live 4;
+        - frontend: 296 tests with coverage; 12 browser flows; 16 Lighthouse audits; 3 stack
+          system tests;
+        - sample services: 12 and 7.
+      - **One finding:** `npm audit` reported Vite's development-server advisories (D-075, below).
+      - **What the experiments found about the report is recorded in D-073**, with three items in
+        `docs/report-updates.md`: Section 6.6's overhead claim and its *h*, aging under sustained
+        load (Section 6.2), and the dependency edges behind Milestone 2's headline figure
+        (Chapter 12).
+      - **The defect log has 44 entries:** DF-43 (CI's catch) and DF-44 (Vite) are new.
+- [x] **D-075, Vite 8.3.2's development-server advisories (Phase 6).** Six advisories, one high,
+      among them command execution through the editor launcher on Windows. The production build
+      served by nginx was not exposed.
+      - **The fix:** `vite` 8.3.4, the newest release the seven-day cooldown allows, and outside the
+        vulnerable range. 8.3.5 was one day old.
+      - **Checks run:**
+        - `npm audit`: 0 vulnerabilities;
+        - lint and typecheck clean; 296 tests pass; the build passes;
+        - the frontend image was rebuilt, and the Phase 6 image and nginx checks pass.
+- [x] **The sixth full gate run (2026-10-22, at `0285f30`) failed one check and was stopped.** 68
+      checks passed. In the backend quality bar, the offline suite ran past its 600-second limit.
+      - **The machine was the cause, not the code.** Windows' battery report shows the laptop went
+        onto battery at 11:29 and was suspended from 11:34 to 11:56, during Phase 3. On battery its
+        CPU runs at about half speed: run alone afterwards, the offline suite passed all 1,730 tests
+        in 437 s, against 245 s in the evidence campaign, which ran on mains power.
+      - **Its log is kept** (`docs/testing/evidence/gate-run-6-0285f30-stopped.log`). CLAUDE.md now
+        says to start a gate or a measurement only on mains power. The gate runs again in full.
+- [x] **The seventh full gate run (2026-10-22, at `4f1bb36`): 89 of 89, ALL CHECKS PASSED.** It ran
+      from 22:52 to 23:23 on mains power: Windows read mains as it started, and its battery report
+      records AC from 22:52:50 on. Its log is `docs/testing/evidence/gate-run-7-4f1bb36.log`.
+      - **Since the evidence campaign's commit,** the product's code changed only in the frontend's
+        Vite version (D-075); the rest is documentation and the report scripts.
+- [x] **The load and recovery tests ran on the stack** (23:23 to 23:26, on mains power; reports in
+      `.tmp/system`, tables in Annexure A.8).
+      - `scripts/system_load_test.py`: all 1,440 paced requests (1, 5 and 10 users) returned 200,
+        with medians of 26.5, 33.2 and 63.2 ms. Of 450 requests at once, 315 were answered and 135
+        refused with 429; none failed with a server error or a broken connection. 11 throwaway
+        accounts were made and deactivated.
+      - `scripts/recovery_test.py`: PostgreSQL, the backend and jenkins-dev, each restarted in turn,
+        all recovered by themselves. The backend kept all 100 runs, and while Jenkins restarted the
+        Queue API answered 200 with the ranking marked unavailable. 0 of 3 steps failed.
+- [x] **The testing chapter (Chapter 8)** is `docs/testing/chapter-8-software-testing.md`, with
+      Annexure A (`annexure-a-evidence.md`), Annexure B (`annexure-b-test-register.md`, every one of
+      the 2,434 tests) and their data and figures under `docs/testing/`.
+      - **Every number in it comes from a file a run wrote.** The draft was filled from the campaign
+        at `31eb935`, gate run 7's log, the load and recovery reports and the CI history (103 runs),
+        then assembled: 28 tables, 9 figures, no placeholder left. The draft and its fill tools are
+        in git history at `4f1bb36` (`docs/testing/work-in-progress/`), now removed.
+      - **Checks run:** `python scripts/report/check_citations.py`: 76 of the 76 tests the chapter
+        cites ran and passed, and 3 of 3 stated counts are right. Section references, figures and
+        image paths were checked, and Phase 0 passes.
+      - **Corrections made in review:** the independent security reviewer is disclosed as an AI
+        agent; the check that each fix's test fails without it is credited to the main session, as
+        the review's record says; two section references; and the aging finding's wording.
+
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
   installed and every Phase 2 test except T2.14 runs on JenkinsRule without it. Approved by the user.
@@ -1606,8 +2047,9 @@ Details in `docs/decisions.md`.
   path ran.
 
 ## Known gaps
-- Docker-gated work is untested on this machine: all of Phase 1, T2.14, and every acceptance check
-  from Phase 3 onward that needs a live Jenkins or PostgreSQL. Tracked under Needs human.
+- ~~Docker-gated work is untested on this machine.~~ Resolved: Docker was installed, and every
+  Docker-gated check has since passed in full gate runs; the latest is recorded under the
+  hardening of Phases 1 to 6.
 - `plugin-results-run3.json` is a Milestone 2 outlier whose HIGH-band wait (353.34 s) is worse than
   the baseline (271.5 s). It is evidence of M2 known problem 6, the silent FIFO degradation, and is
   written up in `docs/m2-baseline.md` rather than discarded. `CacheEvictionRegressionIT` is the guard
@@ -1615,14 +2057,11 @@ Details in `docs/decisions.md`.
 - `legacy/experiment/results/baseline-results.json` holds 31 job rows against a 30-job spec, and the
   legacy `analyze.py` silently discards the extra row. Noted in `docs/m2-baseline.md`.
 - The report's Word source was not provided, so report changes are tracked as a checklist.
-- PyYAML is not installed locally and PyPI's download host does not resolve from this machine, so the
-  CI-workflow check runs its structural fallback rather than a full YAML parse. CI installs PyYAML and
-  runs the full parse.
-- The JCasC floating-point import defect (D-017) blocks configuring the experiment's aging-ablation
-  arm from YAML. Root cause inside JCasC not identified; ruled out the YAML scalar form,
-  integer-valued floats, the `doCheck*` validators, boxing as `Double`, and the JVM locale.
-- `docs/versions.md` still has `pending` rows for every plugin, backend and frontend dependency. Each
-  is filled by the task that pins it, against the official source, per rule 1.4.
+- ~~PyYAML is not installed locally.~~ Resolved: PyYAML 6.0.3 is installed (checked 2026-10-18),
+  so the local gate parses YAML in full, as CI does.
+- ~~The JCasC floating-point import defect (D-017)~~ Resolved 2026-10-18: quote the values.
+- ~~`docs/versions.md` still has `pending` rows.~~ Resolved 2026-10-20: all 51 pins were checked
+  against their official sources and recorded, and the two floating image tags were pinned.
 - **Agent DNS on this machine (2026-10-13).** Docker Desktop's resolver intermittently fails to
   resolve `github.com` from the agents, and the host showed a 2 s lookup in the same period.
   - **Effect:** a build then fails at its Git clone (`Could not resolve host: github.com`). Five

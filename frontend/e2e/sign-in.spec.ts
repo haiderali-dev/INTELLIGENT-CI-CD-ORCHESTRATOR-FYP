@@ -7,8 +7,9 @@ test.describe("signing in", () => {
     await page.goto("/");
     await expect(page).toHaveURL(/\/sign-in$/);
 
-    // Through the real limit of five sign-ins a minute that every flow shares: a 429 is waited out
-    // for as long as the backend asks, so what is judged here is the answer to the wrong password.
+    // Through the real limit of five sign-ins a minute per account, which every flow signing in as
+    // the Developer shares: a 429 is waited out for as long as the backend asks, so what is judged
+    // here is the answer to the wrong password.
     await submitCredentials(page, ACCOUNTS.developer.email, "not the password");
     await expect(page.getByRole("alert")).toContainText("That email or password is not correct.");
     await expect(page.getByRole("alert")).toContainText("Check both and try again.");

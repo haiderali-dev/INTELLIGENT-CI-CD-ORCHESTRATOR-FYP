@@ -16,13 +16,14 @@ import asyncio
 import random
 import re
 from abc import ABC, abstractmethod
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any, Final
 from xml.etree import ElementTree
 
 import httpx
 
-from app.core.errors import ErrorCode, unavailable
+from app.core.errors import ApiError, ErrorCode, unavailable
 from app.core.logging import get_logger
 from app.core.settings import Settings
 
@@ -88,6 +89,39 @@ class ConsoleTail:
     text: str
     more_data: bool
     lines_before: int
+
+
+@dataclass(frozen=True)
+class ConsoleHead:
+    """At most ``max_bytes`` of a log from an offset, cut on a character boundary.
+
+    ``raw`` is the bytes as Jenkins sent them, so the next offset is counted in bytes, which is what
+    ``progressiveText``'s ``start`` means. ``truncated`` says the log went on past the cut.
+    """
+
+    raw: bytes
+    more_data: bool
+    truncated: bool
+
+    @property
+    def text(self) -> str:
+        return self.raw.decode("utf-8", "replace")
+
+
+def head_of(buffer: bytes | bytearray, max_bytes: int, *, more_data: bool) -> ConsoleHead:
+    """The first ``max_bytes`` of ``buffer``, never ending inside a UTF-8 character."""
+    if len(buffer) <= max_bytes:
+        return ConsoleHead(raw=bytes(buffer), more_data=more_data, truncated=False)
+    cut = max_bytes
+    # Step back off continuation bytes (10xxxxxx), so a multi-byte character is never halved.
+    while cut > 0 and buffer[cut] & 0xC0 == 0x80:
+        cut -= 1
+    return ConsoleHead(raw=bytes(buffer[:cut]), more_data=True, truncated=True)
+
+
+def _more_data(response: httpx.Response) -> bool:
+    header: str = response.headers.get("X-More-Data", "")
+    return header.strip().lower() == "true"
 
 
 def keep_tail(buffer: bytearray, max_bytes: int) -> int:
@@ -212,6 +246,15 @@ class JenkinsClient(ABC):
             lines_before=dropped,
         )
 
+    async def console_head(self, name: str, number: int, start: int, max_bytes: int) -> ConsoleHead:
+        """At most ``max_bytes`` of the log from byte ``start``, with ``X-More-Data``.
+
+        The default reads the window and cuts it, which suits the fake's small logs. The HTTP
+        client overrides it to stop reading once it has enough.
+        """
+        chunk = await self.console_window(name, number, 0)
+        return head_of(chunk.text.encode("utf-8")[start:], max_bytes, more_data=chunk.more_data)
+
     @abstractmethod
     async def downstream_build(
         self, name: str, *, upstream: str, upstream_number: int
@@ -327,11 +370,21 @@ class HttpJenkinsClient(JenkinsClient):
                 self._raise_for_status(method, path, response)
             return response
 
-        raise unavailable(
-            ErrorCode.JENKINS_UNAVAILABLE,
-            f"Jenkins at {self._base} did not respond after {MAX_ATTEMPTS} attempts.",
+        raise self._gave_up(path, last_error)
+
+    def _gave_up(self, path: str, last_error: Exception | None) -> ApiError:
+        """The 503 a client sees after the last retry. Where Jenkins lives and how it failed go to
+        the log, not into the response (independent security review, finding 10)."""
+        logger.warning(
+            "jenkins_gave_up",
+            base_url=self._base,
             path=path,
-            last_error=str(last_error),
+            attempts=MAX_ATTEMPTS,
+            last_error=str(last_error)[:300],
+        )
+        return unavailable(
+            ErrorCode.JENKINS_UNAVAILABLE,
+            f"Jenkins did not respond after {MAX_ATTEMPTS} attempts. Try again in a minute.",
         )
 
     @staticmethod
@@ -515,12 +568,55 @@ class HttpJenkinsClient(JenkinsClient):
         let one commit exhaust the backend. Retries and errors follow ``_request``, except that an
         error body is never read: it could be as large as the log.
         """
+
+        async def keep_end(response: httpx.Response) -> ConsoleTail:
+            buffer = bytearray()
+            dropped = 0
+            async for piece in response.aiter_bytes():
+                buffer += piece
+                if len(buffer) > 2 * max_bytes:
+                    dropped += keep_tail(buffer, max_bytes)
+            dropped += keep_tail(buffer, max_bytes)
+            return ConsoleTail(
+                text=buffer.decode("utf-8", "replace"),
+                more_data=_more_data(response),
+                lines_before=dropped,
+            )
+
+        return await self._stream_log(name, number, 0, keep_end)
+
+    async def console_head(self, name: str, number: int, start: int, max_bytes: int) -> ConsoleHead:
+        """Stream the log from ``start`` and stop after ``max_bytes``: memory stays near
+        ``max_bytes`` however long the log is (independent security review, finding 5)."""
+
+        async def keep_start(response: httpx.Response) -> ConsoleHead:
+            buffer = bytearray()
+            async for piece in response.aiter_bytes():
+                buffer += piece
+                if len(buffer) > max_bytes:
+                    break
+            return head_of(buffer, max_bytes, more_data=_more_data(response))
+
+        return await self._stream_log(name, number, start, keep_start)
+
+    async def _stream_log[T](
+        self,
+        name: str,
+        number: int,
+        start: int,
+        read: Callable[[httpx.Response], Awaitable[T]],
+    ) -> T:
+        """``progressiveText`` from ``start``, handed to ``read`` as a stream.
+
+        Retries and errors follow ``_request``, except that an error body is never read: it could
+        be as large as the log.
+        """
         validate_job_name(name)
         path = f"/job/{name}/{number}/logText/progressiveText"
         last_error: Exception | None = None
         for attempt in range(1, MAX_ATTEMPTS + 1):
             try:
-                async with self._client.stream("GET", path, params={"start": 0}) as response:
+                async with self._client.stream("GET", path, params={"start": start}) as response:
                     if response.status_code == 404:
                         raise JobNotFoundError(f"not found: {path}", status_code=404)
                     if response.status_code >= 500:
@@ -534,19 +630,7 @@ class HttpJenkinsClient(JenkinsClient):
                             status_code=response.status_code,
                         )
                     else:
-                        buffer = bytearray()
-                        dropped = 0
-                        async for piece in response.aiter_bytes():
-                            buffer += piece
-                            if len(buffer) > 2 * max_bytes:
-                                dropped += keep_tail(buffer, max_bytes)
-                        dropped += keep_tail(buffer, max_bytes)
-                        more = response.headers.get("X-More-Data", "").strip().lower() == "true"
-                        return ConsoleTail(
-                            text=buffer.decode("utf-8", "replace"),
-                            more_data=more,
-                            lines_before=dropped,
-                        )
+                        return await read(response)
             except (
                 httpx.ConnectError,
                 httpx.ReadError,
@@ -557,12 +641,7 @@ class HttpJenkinsClient(JenkinsClient):
                 last_error = exc
             await self._backoff(attempt, path, type(last_error).__name__)
 
-        raise unavailable(
-            ErrorCode.JENKINS_UNAVAILABLE,
-            f"Jenkins at {self._base} did not respond after {MAX_ATTEMPTS} attempts.",
-            path=path,
-            last_error=str(last_error),
-        )
+        raise self._gave_up(path, last_error)
 
     async def downstream_build(
         self, name: str, *, upstream: str, upstream_number: int

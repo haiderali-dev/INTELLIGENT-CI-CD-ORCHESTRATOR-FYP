@@ -1,0 +1,1470 @@
+component,function,where,ccn,nloc,branch_coverage_pct,coverage_measured_per
+Plugin,DependencyGraphService::build,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/dependency/DependencyGraphService.java:38,17,77,90,method
+Plugin,Result::sort,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/dependency/KahnTopologicalSort.java:74,12,39,100,method
+Plugin,MetricsPublisher::post,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/MetricsPublisher.java:179,11,35,56,method
+Plugin,DependencyGate::blockageFor,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/gate/DependencyGate.java:65,10,33,94,method
+Plugin,Kind::jsonEscape,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/MetricEvent.java:91,10,23,33,method
+Plugin,DynamicQueueSorter::sortBuildableItems,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/sorter/DynamicQueueSorter.java:85,10,39,75,method
+Plugin,BuildHistoryService::recentBuilds,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/estimation/BuildHistoryService.java:35,8,22,71,method
+Plugin,RunMetricsRecorder::nodeBlockWaits,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/RunMetricsRecorder.java:76,8,28,86,method
+Plugin,DynamicQueueApi::writeRanking,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/api/DynamicQueueApi.java:92,7,38,92,method
+Plugin,Recorder::currentLabel,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/estimation/RecordedLabelAction.java:53,7,16,50,method
+Plugin,DynamicQueueSorter::scoreWithCache,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/sorter/DynamicQueueSorter.java:159,7,26,100,method
+Plugin,SimilarityEstimator::estimate,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/estimation/SimilarityEstimator.java:61,6,28,100,method
+Plugin,MetricsPublisher::record,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/MetricsPublisher.java:73,6,22,100,method
+Plugin,DynamicQueueSorter::scoringScope,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/sorter/DynamicQueueSorter.java:210,6,17,80,method
+Plugin,DynamicQueueSorter::score,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/sorter/DynamicQueueSorter.java:228,6,48,90,method
+Plugin,DynamicQueueApi::writeRecentMetrics,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/api/DynamicQueueApi.java:168,5,19,67,method
+Plugin,DependencyGraphService::declaredUpstream,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/dependency/DependencyGraphService.java:137,5,19,75,method
+Plugin,SimilarityEstimator::jaccard,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/estimation/SimilarityEstimator.java:116,5,13,100,method
+Plugin,MetricsPublisher::ensureWorkerRunning,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/MetricsPublisher.java:125,5,14,50,method
+Plugin,MetricsPublisher::drainForever,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/MetricsPublisher.java:160,5,17,50,method
+Plugin,JobResolver::resolveTask,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/resolve/JobResolver.java:54,5,14,62,method
+Plugin,PriorityScoreCalculator::scoreAll,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/scoring/PriorityScoreCalculator.java:79,5,20,100,method
+Plugin,PriorityScoreCalculator::applyGroupInheritance,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/scoring/PriorityScoreCalculator.java:188,5,15,100,method
+Plugin,UnionFind::union,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/dependency/UnionFind.java:55,4,17,100,method
+Plugin,BuildHistoryService::parametersOf,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/estimation/BuildHistoryService.java:93,4,12,17,method
+Plugin,DependencyGate::isQueued,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/gate/DependencyGate.java:125,4,16,83,method
+Plugin,UpstreamRunning::unresolvedUpstream,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/gate/DependencyGate.java:184,4,13,100,method
+Plugin,PriorityLevel::fromString,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/model/PriorityLevel.java:50,4,10,100,method
+Plugin,PriorityScoreCalculator::executionTimeFactor,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/scoring/PriorityScoreCalculator.java:153,4,7,83,method
+Plugin,DynamicQueueApi::renderHeld,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/api/DynamicQueueApi.java:145,3,21,50,method
+Plugin,DynamicQueueApi::renderItem,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/api/DynamicQueueApi.java:221,3,44,50,method
+Plugin,UnionFind::find,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/dependency/UnionFind.java:38,3,14,100,method
+Plugin,BuildRecord::tokenize,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/estimation/BuildRecord.java:32,3,9,100,method
+Plugin,BuildRecord::signatures,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/estimation/BuildRecord.java:43,3,8,100,method
+Plugin,DependencyGate::isBuilding,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/gate/DependencyGate.java:111,3,7,83,method
+Plugin,Kind::render,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/MetricEvent.java:76,3,6,100,method
+Plugin,JobPriorityProperty::readResolve,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/property/JobPriorityProperty.java:75,3,6,75,method
+Plugin,JobPriorityProperty::levelOf,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/property/JobPriorityProperty.java:101,3,7,75,method
+Plugin,JobPriorityProperty::getDependsOnList,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/property/JobPriorityProperty.java:125,3,9,75,method
+Plugin,PriorityScoreCalculator::dependencyFactor,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/scoring/PriorityScoreCalculator.java:138,3,6,75,method
+Plugin,PriorityScoreCalculator::agingBonus,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/scoring/PriorityScoreCalculator.java:168,3,8,100,method
+Plugin,DynamicQueueApi::queuedJobNames,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/api/DynamicQueueApi.java:314,2,10,0,method
+Plugin,DependencyGraphService::jobExists,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/dependency/DependencyGraphService.java:158,2,4,75,method
+Plugin,Edge::findCycle,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/dependency/KahnTopologicalSort.java:135,2,4,100,method
+Plugin,UnionFind::groups,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/dependency/UnionFind.java:84,2,7,100,method
+Plugin,BuildHistoryService::featuresOf,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/estimation/BuildHistoryService.java:68,2,5,100,method
+Plugin,BuildHistoryService::agentLabelOf,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/estimation/BuildHistoryService.java:87,2,4,50,method
+Plugin,BuildHistoryService::lastParameters,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/estimation/BuildHistoryService.java:107,2,4,100,method
+Plugin,RecordedLabelAction::RecordedLabelAction,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/estimation/RecordedLabelAction.java:25,2,3,not measured,-
+Plugin,RecordedLabelAction::getLabel,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/estimation/RecordedLabelAction.java:31,2,3,50,method
+Plugin,Recorder::onStarted,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/estimation/RecordedLabelAction.java:40,2,6,50,method
+Plugin,SimilarityEstimator::similarity,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/estimation/SimilarityEstimator.java:102,2,6,100,method
+Plugin,DependencyGate::canRun,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/gate/DependencyGate.java:53,2,8,no branches,method
+Plugin,DependencyGate::findJob,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/gate/DependencyGate.java:106,2,4,50,method
+Plugin,PriorityJobHeap::insertOrUpdate,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/heap/PriorityJobHeap.java:40,2,12,100,method
+Plugin,PriorityJobHeap::replaceAll,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/heap/PriorityJobHeap.java:62,2,13,100,method
+Plugin,PriorityJobHeap::extractMax,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/heap/PriorityJobHeap.java:87,2,12,100,method
+Plugin,PriorityJobHeap::remove,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/heap/PriorityJobHeap.java:101,2,9,75,method
+Plugin,PriorityJobHeap::isHighestPriority,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/heap/PriorityJobHeap.java:122,2,9,100,method
+Plugin,PriorityJobHeap::getAllOrdered,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/heap/PriorityJobHeap.java:138,2,13,100,method
+Plugin,Kind::with,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/MetricEvent.java:43,2,6,50,method
+Plugin,Kind::toJson,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/MetricEvent.java:66,2,9,100,method
+Plugin,QueueMetricsRecorder::onLeft,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/QueueMetricsRecorder.java:40,2,18,50,method
+Plugin,RunMetricsRecorder::onCompleted,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/RunMetricsRecorder.java:41,2,20,50,method
+Plugin,RunMetricsRecorder::labelOf,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/RunMetricsRecorder.java:64,2,4,50,method
+Plugin,JobPriorityProperty::JobPriorityProperty,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/property/JobPriorityProperty.java:64,2,4,not measured,-
+Plugin,JobPriorityProperty::getDependsOn,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/property/JobPriorityProperty.java:111,2,3,0,method
+Plugin,DynamicQueueSorter::getCacheHitRate,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/sorter/DynamicQueueSorter.java:306,2,4,50,method
+Plugin,SorterConflictWarning::warnAboutCompetingSorters,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/sorter/DynamicQueueSorter.java:327,2,13,100,method
+Plugin,DynamicQueueApi::getIconFileName,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/api/DynamicQueueApi.java:57,1,3,no branches,method
+Plugin,DynamicQueueApi::getDisplayName,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/api/DynamicQueueApi.java:64,1,3,no branches,method
+Plugin,DynamicQueueApi::getUrlName,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/api/DynamicQueueApi.java:70,1,3,no branches,method
+Plugin,DynamicQueueApi::getApi,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/api/DynamicQueueApi.java:82,1,3,no branches,method
+Plugin,DynamicQueueApi::getMetrics,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/api/DynamicQueueApi.java:87,1,3,no branches,method
+Plugin,DynamicQueueApi::doHealth,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/api/DynamicQueueApi.java:197,1,21,no branches,method
+Plugin,DynamicQueueApi::renderConfig,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/api/DynamicQueueApi.java:270,1,20,50,method
+Plugin,DynamicQueueApi::pair,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/api/DynamicQueueApi.java:294,1,3,no branches,method
+Plugin,DynamicQueueApi::pairString,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/api/DynamicQueueApi.java:298,1,3,no branches,method
+Plugin,DynamicQueueApi::round,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/api/DynamicQueueApi.java:302,1,3,no branches,method
+Plugin,DynamicQueueApi::write,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/api/DynamicQueueApi.java:306,1,5,no branches,method
+Plugin,DynamicQueueApi::levelNameOf,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/api/DynamicQueueApi.java:326,1,3,no branches,method
+Plugin,ApiEndpoint::ApiEndpoint,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/api/DynamicQueueApi.java:335,1,3,not measured,-
+Plugin,ApiEndpoint::doJson,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/api/DynamicQueueApi.java:340,1,3,no branches,method
+Plugin,MetricsEndpoint::MetricsEndpoint,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/api/DynamicQueueApi.java:350,1,3,not measured,-
+Plugin,MetricsEndpoint::doRecent,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/api/DynamicQueueApi.java:355,1,3,no branches,method
+Plugin,DependencyGraphService::DependencyGraphService,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/dependency/DependencyGraphService.java:28,1,1,not measured,-
+Plugin,KahnTopologicalSort::KahnTopologicalSort,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/dependency/KahnTopologicalSort.java:26,1,1,not measured,-
+Plugin,Result::Result,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/dependency/KahnTopologicalSort.java:34,1,4,not measured,-
+Plugin,Result::isAcyclic,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/dependency/KahnTopologicalSort.java:40,1,3,no branches,method
+Plugin,Result::getOrder,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/dependency/KahnTopologicalSort.java:50,1,3,no branches,method
+Plugin,Result::getCycleMembers,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/dependency/KahnTopologicalSort.java:55,1,3,no branches,method
+Plugin,UnionFind::add,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/dependency/UnionFind.java:27,1,4,no branches,method
+Plugin,UnionFind::connected,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/dependency/UnionFind.java:74,1,3,no branches,method
+Plugin,UnionFind::size,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/dependency/UnionFind.java:93,1,3,no branches,method
+Plugin,BuildHistoryService::BuildHistoryService,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/estimation/BuildHistoryService.java:26,1,1,not measured,-
+Plugin,BuildHistoryService::toRecord,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/estimation/BuildHistoryService.java:74,1,4,no branches,method
+Plugin,SimilarityEstimator::SimilarityEstimator,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/estimation/SimilarityEstimator.java:43,1,5,not measured,-
+Plugin,SimilarityEstimator::withReportDefaults,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/estimation/SimilarityEstimator.java:50,1,3,no branches,method
+Plugin,UpstreamRunning::UpstreamRunning,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/gate/DependencyGate.java:149,1,5,not measured,-
+Plugin,UpstreamRunning::getShortDescription,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/gate/DependencyGate.java:157,1,3,no branches,method
+Plugin,UpstreamRunning::getJobName,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/gate/DependencyGate.java:162,1,3,no branches,method
+Plugin,UpstreamRunning::getUpstreamName,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/gate/DependencyGate.java:167,1,3,no branches,method
+Plugin,UpstreamRunning::getUpstreamState,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/gate/DependencyGate.java:172,1,3,no branches,method
+Plugin,PriorityJobHeap::peek,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/heap/PriorityJobHeap.java:77,1,8,no branches,method
+Plugin,PriorityJobHeap::get,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/heap/PriorityJobHeap.java:112,1,8,no branches,method
+Plugin,PriorityJobHeap::size,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/heap/PriorityJobHeap.java:152,1,8,no branches,method
+Plugin,PriorityJobHeap::isEmpty,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/heap/PriorityJobHeap.java:161,1,3,100,method
+Plugin,PriorityJobHeap::clear,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/heap/PriorityJobHeap.java:165,1,9,no branches,method
+Plugin,Kind::MetricEvent,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/MetricEvent.java:33,1,4,not measured,-
+Plugin,Kind::of,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/MetricEvent.java:38,1,3,no branches,method
+Plugin,Kind::getKind,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/MetricEvent.java:51,1,3,no branches,method
+Plugin,Kind::getTimestampMillis,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/MetricEvent.java:55,1,3,no branches,method
+Plugin,Kind::getFields,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/MetricEvent.java:60,1,3,no branches,method
+Plugin,Kind::toString,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/MetricEvent.java:116,1,3,no branches,method
+Plugin,MetricsPublisher::get,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/MetricsPublisher.java:63,1,3,no branches,method
+Plugin,MetricsPublisher::getRecent,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/MetricsPublisher.java:100,1,8,no branches,method
+Plugin,MetricsPublisher::getDroppedCount,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/MetricsPublisher.java:109,1,3,no branches,method
+Plugin,MetricsPublisher::getPublishedCount,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/MetricsPublisher.java:113,1,3,no branches,method
+Plugin,MetricsPublisher::getFailedCount,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/MetricsPublisher.java:117,1,3,no branches,method
+Plugin,MetricsPublisher::getPendingCount,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/MetricsPublisher.java:121,1,3,no branches,method
+Plugin,MetricsPublisher::newHttpClient,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/MetricsPublisher.java:153,1,6,no branches,method
+Plugin,QueueMetricsRecorder::onEnterWaiting,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/QueueMetricsRecorder.java:34,1,4,no branches,method
+Plugin,QueueMetricsRecorder::baseEvent,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/QueueMetricsRecorder.java:66,1,14,no branches,method
+Plugin,QueueMetricsRecorder::round,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/QueueMetricsRecorder.java:82,1,3,no branches,method
+Plugin,QueueMetricsRecorder::publisher,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/QueueMetricsRecorder.java:86,1,3,no branches,method
+Plugin,RunMetricsRecorder::onStarted,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/metrics/RunMetricsRecorder.java:26,1,13,no branches,method
+Plugin,PriorityLevel::PriorityLevel,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/model/PriorityLevel.java:26,1,3,not measured,-
+Plugin,PriorityLevel::getUrgency,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/model/PriorityLevel.java:35,1,3,no branches,method
+Plugin,JobPriorityProperty::getLevel,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/property/JobPriorityProperty.java:84,1,3,no branches,method
+Plugin,JobPriorityProperty::getPriorityLevel,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/property/JobPriorityProperty.java:90,1,3,no branches,method
+Plugin,JobResolver::JobResolver,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/resolve/JobResolver.java:38,1,1,not measured,-
+Plugin,JobResolver::resolve,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/resolve/JobResolver.java:48,1,3,no branches,method
+Plugin,JobResolver::isNodeBlock,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/resolve/JobResolver.java:77,1,3,100,method
+Plugin,JobResolver::consumesExecutor,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/resolve/JobResolver.java:87,1,3,100,method
+Plugin,JobResolver::describe,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/resolve/JobResolver.java:93,1,3,no branches,method
+Plugin,PriorityScoreCalculator::PriorityScoreCalculator,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/scoring/PriorityScoreCalculator.java:48,1,14,not measured,-
+Plugin,PriorityScoreCalculator::withReportDefaults,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/scoring/PriorityScoreCalculator.java:64,1,3,no branches,method
+Plugin,PriorityScoreCalculator::scoreOne,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/scoring/PriorityScoreCalculator.java:105,1,23,no branches,method
+Plugin,PriorityScoreCalculator::compareForDispatch,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/scoring/PriorityScoreCalculator.java:218,1,7,no branches,method
+Plugin,ScoredJob::inheritedGroupScore,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/scoring/ScoredJob.java:49,1,3,100,method
+Plugin,ScoredJob::hasUnknownEstimate,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/scoring/ScoredJob.java:54,1,3,no branches,method
+Plugin,DynamicQueueSorter::rescoreBucket,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/sorter/DynamicQueueSorter.java:193,1,3,no branches,method
+Plugin,DynamicQueueSorter::getHeap,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/sorter/DynamicQueueSorter.java:287,1,3,no branches,method
+Plugin,DynamicQueueSorter::takeLastScore,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/sorter/DynamicQueueSorter.java:296,1,3,no branches,method
+Plugin,DynamicQueueSorter::getLastSortDurationNanos,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/sorter/DynamicQueueSorter.java:301,1,3,no branches,method
+Plugin,DynamicQueueSorter::getInstance,plugin/src/main/java/io/jenkins/plugins/queueoptimizer/sorter/DynamicQueueSorter.java:312,1,3,no branches,method
+Backend,run_card,backend/app/services/chains.py:386,28,86,95,function
+Backend,required_stages,backend/app/generation/planner.py:140,27,43,97,function
+Backend,parse_ranking,backend/app/services/plugin.py:276,25,76,100,function
+Backend,intent_summary,backend/app/services/conversations.py:565,22,34,91,function
+Backend,_store,backend/app/services/generation.py:358,21,77,100,function
+Backend,approve,backend/app/services/generation.py:529,21,137,78,function
+Backend,check_plan,backend/app/generation/planner.py:207,20,39,100,function
+Backend,_classify,backend/app/failures/analysis.py:468,19,26,100,function
+Backend,_failed_stage,backend/app/services/failures.py:169,19,31,62,function
+Backend,evaluate,backend/app/ai/policy.py:117,18,132,100,function
+Backend,_try_model,backend/app/ai/chain.py:216,16,95,100,function
+Backend,redact,backend/app/failures/redact.py:112,15,33,100,function
+Backend,_question,backend/app/ai/clarify.py:111,14,50,100,function
+Backend,from_untrusted,backend/app/ai/intent.py:125,14,41,93,function
+Backend,complete_json,backend/app/ai/providers/groq.py:118,14,62,88,function
+Backend,missing_fields,backend/app/ai/clarify.py:66,13,18,100,function
+Backend,cancel,backend/app/services/chains.py:502,13,57,93,function
+Backend,_request,backend/app/services/jenkins.py:316,13,51,60,function
+Backend,_apply_build,backend/app/services/tracker.py:356,13,25,93,function
+Backend,_check_refs,backend/app/ai/validator.py:191,12,60,92,function
+Backend,update_user,backend/app/api/admin.py:233,12,36,83,function
+Backend,_excerpt,backend/app/failures/analysis.py:545,12,28,88,function
+Backend,verify_quotes,backend/app/failures/explainer.py:162,12,17,75,function
+Backend,_check_stage_order,backend/app/generation/validate.py:259,12,23,100,function
+Backend,refresh_tokens,backend/app/services/auth.py:284,12,38,92,function
+Backend,explain_run,backend/app/services/failures.py:71,12,89,100,function
+Backend,_progress,backend/app/services/generation.py:439,12,33,100,function
+Backend,_ingest_run_event,backend/app/services/metrics.py:287,12,36,83,function
+Backend,_service,backend/app/ai/rules.py:221,11,18,100,function
+Backend,_require_secrets_outside_tests,backend/app/core/settings.py:101,11,28,67,function
+Backend,render_input,backend/app/failures/explainer.py:119,11,27,92,function
+Backend,check_answer,backend/app/failures/explainer.py:203,11,28,100,function
+Backend,edit_intent,backend/app/services/conversations.py:632,11,64,75,function
+Backend,downstream_build,backend/app/services/jenkins.py:646,11,23,100,function
+Backend,_authenticate,backend/app/ws/routes.py:75,11,39,100,function
+Backend,complete,backend/app/ai/chain.py:136,10,72,100,function
+Backend,check,backend/app/ai/quota.py:110,10,45,75,function
+Backend,_section,backend/app/failures/analysis.py:425,10,17,92,function
+Backend,_count,backend/app/failures/analysis.py:596,10,14,100,function
+Backend,select_revision,backend/app/generation/revision.py:96,10,22,100,function
+Backend,_check_no_production,backend/app/generation/validate.py:340,10,14,100,function
+Backend,load_document,backend/app/services/catalog.py:158,10,20,88,function
+Backend,describe,backend/app/services/conversations.py:602,10,22,100,function
+Backend,stream_text,backend/app/ai/providers/groq.py:186,9,27,0,function
+Backend,of,backend/app/api/generation.py:86,9,28,no branches,function
+Backend,health,backend/app/api/health.py:157,9,35,71,function
+Backend,_payload_tag,backend/app/api/payloads.py:309,9,13,90,function
+Backend,seed_catalog,backend/app/db/seed.py:112,9,38,62,function
+Backend,clean_suggestions,backend/app/failures/explainer.py:186,9,14,100,function
+Backend,plan,backend/app/generation/planner.py:468,9,84,83,function
+Backend,stage_command,backend/app/generation/render.py:194,9,17,100,function
+Backend,advance,backend/app/services/chains.py:274,9,38,86,function
+Backend,explain_stream,backend/app/services/generation.py:851,9,38,79,function
+Backend,_ingest_queue_event,backend/app/services/metrics.py:222,9,32,90,function
+Backend,_resolve_queue_items,backend/app/services/tracker.py:217,9,50,92,function
+Backend,websocket_endpoint,backend/app/ws/routes.py:161,9,45,100,function
+Backend,_rescue,backend/app/ai/parser.py:443,8,22,100,function
+Backend,observe,backend/app/ai/quota.py:171,8,22,100,function
+Backend,_justification,backend/app/ai/rules.py:312,8,13,100,function
+Backend,analyse,backend/app/failures/analysis.py:336,8,45,100,function
+Backend,_tests_sentence,backend/app/failures/explainer.py:280,8,14,88,function
+Backend,_build_spec,backend/app/generation/planner.py:570,8,28,100,function
+Backend,_check_catalog_and_git,backend/app/generation/validate.py:171,8,27,100,function
+Backend,_check_metacharacters,backend/app/generation/validate.py:286,8,16,83,function
+Backend,last_failed_test,backend/app/services/chains.py:589,8,21,67,function
+Backend,pending_question,backend/app/services/conversations.py:222,8,15,83,function
+Backend,_apply_timing,backend/app/services/metrics.py:267,8,12,67,function
+Backend,tick,backend/app/services/tracker.py:187,8,27,100,function
+Backend,_advance_runs,backend/app/services/tracker.py:301,8,42,88,function
+Backend,build_intent_parser,backend/app/ai/factory.py:69,7,36,83,function
+Backend,interpret,backend/app/ai/parser.py:228,7,87,83,function
+Backend,_branch,backend/app/ai/rules.py:268,7,14,100,function
+Backend,_suite,backend/app/ai/rules.py:283,7,15,100,function
+Backend,build_intent_schema,backend/app/ai/schema.py:44,7,46,no branches,function
+Backend,list_audit,backend/app/api/admin.py:289,7,43,75,function
+Backend,run_statistics,backend/app/api/analytics.py:202,7,38,no branches,function
+Backend,rules_explanation,backend/app/failures/explainer.py:296,7,27,100,function
+Backend,fake_failure_responder,backend/app/failures/explainer.py:432,7,13,no branches,function
+Backend,build_failure_explainer,backend/app/failures/factory.py:31,7,21,83,function
+Backend,build_planner,backend/app/generation/factory.py:30,7,21,100,function
+Backend,default_plan_responder.respond,backend/app/generation/planner.py:317,7,15,not measured,-
+Backend,render_freestyle,backend/app/generation/render.py:228,7,39,100,function
+Backend,_fields_match_template,backend/app/generation/spec.py:88,7,12,100,function
+Backend,_check_refs,backend/app/generation/validate.py:202,7,33,100,function
+Backend,_resolve_input,backend/app/services/conversations.py:485,7,13,100,function
+Backend,_render_and_validate,backend/app/services/generation.py:305,7,48,50,function
+Backend,screened,backend/app/services/generation.py:820,7,22,90,function
+Backend,record,backend/app/services/metrics.py:99,7,17,100,function
+Backend,parse_health,backend/app/services/plugin.py:387,7,12,no branches,function
+Backend,drop_user,backend/app/ws/hub.py:214,7,14,88,function
+Backend,_coerce_enum,backend/app/ai/intent.py:182,6,12,100,function
+Backend,_ground_run_service,backend/app/ai/parser.py:473,6,14,100,function
+Backend,parse_prompt,backend/app/ai/prompting.py:139,6,32,88,function
+Backend,_confidence,backend/app/ai/rules.py:344,6,16,100,function
+Backend,catalog_context,backend/app/ai/schema.py:121,6,11,100,function
+Backend,_check_stages,backend/app/ai/validator.py:166,6,15,100,function
+Backend,list_chains,backend/app/api/chains.py:72,6,36,75,function
+Backend,require_metrics_token,backend/app/api/metrics.py:80,6,13,100,function
+Backend,from_json,backend/app/generation/render.py:148,6,19,no branches,function
+Backend,parse_spec,backend/app/generation/validate.py:108,6,13,no branches,function
+Backend,_check_environment,backend/app/generation/validate.py:241,6,14,100,function
+Backend,rerun,backend/app/services/chains.py:627,6,47,50,function
+Backend,post_message,backend/app/services/conversations.py:308,6,56,88,function
+Backend,act_on_run_request,backend/app/services/conversations.py:389,6,14,100,function
+Backend,_rerun,backend/app/services/conversations.py:435,6,33,83,function
+Backend,_read_and_analyse,backend/app/services/failures.py:208,6,36,83,function
+Backend,ready_intent,backend/app/services/generation.py:131,6,18,100,function
+Backend,_locked_fields,backend/app/services/generation.py:277,6,20,100,function
+Backend,approval_summary,backend/app/services/generation.py:495,6,16,75,function
+Backend,plain_explanation,backend/app/services/generation.py:773,6,23,100,function
+Backend,commit_exists,backend/app/services/git.py:117,6,8,100,function
+Backend,list_refs,backend/app/services/git.py:151,6,16,100,function
+Backend,_stream_log,backend/app/services/jenkins.py:602,6,37,75,function
+Backend,attach_pending_timings,backend/app/services/metrics.py:346,6,12,67,function
+Backend,_get,backend/app/services/plugin.py:185,6,21,83,function
+Backend,_poll_stages,backend/app/services/tracker.py:391,6,36,100,function
+Backend,publish,backend/app/ws/hub.py:181,6,23,100,function
+Backend,_parse_topics,backend/app/ws/routes.py:62,6,6,100,function
+Backend,to_record,backend/app/ai/parser.py:139,5,41,no branches,function
+Backend,_decide,backend/app/ai/parser.py:383,5,51,100,function
+Backend,_apply_answers,backend/app/ai/parser.py:499,5,8,100,function
+Backend,render_history,backend/app/ai/prompting.py:120,5,11,100,function
+Backend,parse_duration,backend/app/ai/providers/groq.py:66,5,15,100,function
+Backend,_rate_limited,backend/app/ai/providers/groq.py:258,5,17,100,function
+Backend,_commit,backend/app/ai/rules.py:256,5,10,100,function
+Backend,_check_suite,backend/app/ai/validator.py:128,5,17,100,function
+Backend,_actor_emails,backend/app/api/admin.py:342,5,6,50,function
+Backend,list_experiments,backend/app/api/analytics.py:120,5,31,50,function
+Backend,explain,backend/app/api/generation.py:210,5,19,50,function
+Backend,post_metrics,backend/app/api/metrics.py:107,5,15,100,function
+Backend,_complete_an_older_snapshot,backend/app/api/payloads.py:166,5,9,83,function
+Backend,dispatch,backend/app/core/logging.py:111,5,23,100,function
+Backend,_consume,backend/app/core/ratelimit.py:119,5,21,100,function
+Backend,_sweep,backend/app/core/ratelimit.py:150,5,11,75,function
+Backend,seed_admin,backend/app/db/seed.py:48,5,32,88,function
+Backend,run,backend/app/db/seed.py:168,5,16,0,function
+Backend,_signals,backend/app/failures/analysis.py:519,5,9,no branches,function
+Backend,explain,backend/app/failures/explainer.py:355,5,39,100,function
+Backend,default_name,backend/app/generation/planner.py:112,5,6,100,function
+Backend,pipeline_job_name,backend/app/generation/render.py:185,5,6,50,function
+Backend,_check_artifact,backend/app/generation/validate.py:373,5,21,67,function
+Backend,_purge,backend/app/services/auth.py:92,5,5,100,function
+Backend,authenticate,backend/app/services/auth.py:178,5,51,100,function
+Backend,extra_stage_names,backend/app/services/catalog.py:285,5,3,no branches,function
+Backend,_find_first_build,backend/app/services/chains.py:318,5,25,75,function
+Backend,build_url,backend/app/services/chains.py:376,5,7,50,function
+Backend,_service_of,backend/app/services/conversations.py:378,5,8,0,function
+Backend,_cancel,backend/app/services/conversations.py:470,5,13,50,function
+Backend,_jsonable,backend/app/services/conversations.py:702,5,4,100,function
+Backend,get_llm_provider,backend/app/services/dependencies.py:31,5,12,62,function
+Backend,close_clients,backend/app/services/dependencies.py:128,5,14,50,function
+Backend,regenerate,backend/app/services/generation.py:202,5,71,100,function
+Backend,_existing_jobs,backend/app/services/generation.py:482,5,11,83,function
+Backend,explanation_input,backend/app/services/generation.py:751,5,19,no branches,function
+Backend,resolve,backend/app/services/git.py:107,5,8,100,function
+Backend,_ls_remote,backend/app/services/git.py:172,5,36,50,function
+Backend,_parse_ls_remote,backend/app/services/git.py:240,5,9,100,function
+Backend,pipeline_stages,backend/app/services/jenkins.py:675,5,12,no branches,function
+Backend,list_labels,backend/app/services/jenkins.py:715,5,15,75,function
+Backend,_expire,backend/app/services/metrics.py:134,5,8,100,function
+Backend,ingest_event,backend/app/services/metrics.py:197,5,11,100,function
+Backend,recent_metrics,backend/app/services/plugin.py:230,5,7,100,function
+Backend,service_names,backend/app/services/runs.py:88,5,6,100,function
+Backend,cancel_run,backend/app/services/runs.py:194,5,41,100,function
+Backend,run_log,backend/app/services/runs.py:255,5,27,100,function
+Backend,_describe,backend/app/ai/chain.py:341,4,8,33,function
+Backend,build_provider,backend/app/ai/factory.py:47,4,13,100,function
+Backend,strip_controls,backend/app/ai/guard.py:61,4,7,no branches,function
+Backend,_blank_is_null,backend/app/ai/intent.py:98,4,4,100,function
+Backend,high_urgency_used_today,backend/app/ai/parser.py:597,4,12,no branches,function
+Backend,render,backend/app/ai/prompting.py:85,4,24,100,function
+Backend,complete_json,backend/app/ai/providers/fake.py:61,4,29,100,function
+Backend,rate_headers,backend/app/ai/providers/groq.py:87,4,9,83,function
+Backend,__init__,backend/app/ai/providers/groq.py:102,4,15,100,function
+Backend,read_fixture,backend/app/ai/providers/replay.py:86,4,8,100,function
+Backend,complete_json,backend/app/ai/providers/replay.py:119,4,26,83,function
+Backend,_state,backend/app/ai/quota.py:96,4,10,100,function
+Backend,_urgency,backend/app/ai/rules.py:300,4,11,100,function
+Backend,_extra_stages,backend/app/ai/rules.py:333,4,9,100,function
+Backend,_check_environment,backend/app/ai/validator.py:148,4,15,75,function
+Backend,caller_identifier,backend/app/api/deps.py:61,4,11,100,function
+Backend,_probe,backend/app/api/health.py:69,4,28,no branches,function
+Backend,_check_llm,backend/app/api/health.py:112,4,8,67,function
+Backend,of,backend/app/api/jobs.py:196,4,42,no branches,function
+Backend,get_queue,backend/app/api/queue.py:143,4,15,no branches,function
+Backend,register_exception_handlers._validation_error,backend/app/core/errors.py:187,4,13,not measured,-
+Backend,create_token,backend/app/core/security.py:64,4,26,100,function
+Backend,decode_token,backend/app/core/security.py:97,4,14,100,function
+Backend,_chain_not_empty,backend/app/core/settings.py:88,4,4,50,function
+Backend,_stamp_after_the_last_message,backend/app/db/models.py:197,4,14,100,function
+Backend,main,backend/app/db/seed.py:187,4,8,no branches,function
+Backend,_superseded,backend/app/failures/analysis.py:449,4,10,100,function
+Backend,_without_deep_frames,backend/app/failures/analysis.py:534,4,8,100,function
+Backend,_failed_tests,backend/app/failures/analysis.py:584,4,10,100,function
+Backend,planner_request,backend/app/generation/planner.py:272,4,11,no branches,function
+Backend,intent_from_request,backend/app/generation/planner.py:286,4,9,no branches,function
+Backend,to_check,backend/app/generation/validate.py:134,4,9,100,function
+Backend,_check_job_names,backend/app/generation/validate.py:324,4,12,100,function
+Backend,lifespan,backend/app/main.py:50,4,27,50,function
+Backend,sign_out,backend/app/services/auth.py:337,4,13,75,function
+Backend,load_user_from_access_token,backend/app/services/auth.py:358,4,17,100,function
+Backend,catalog_path,backend/app/services/catalog.py:127,4,9,67,function
+Backend,_refresh_if_changed,backend/app/services/catalog.py:222,4,12,100,function
+Backend,claim,backend/app/services/chains.py:119,4,52,100,function
+Backend,not_started_after,backend/app/services/chains.py:239,4,6,50,function
+Backend,advance_all,backend/app/services/chains.py:252,4,19,100,function
+Backend,_defaults_from_config,backend/app/services/chains.py:618,4,6,no branches,function
+Backend,is_answer,backend/app/services/conversations.py:240,4,7,100,function
+Backend,status_sentence,backend/app/services/conversations.py:420,4,12,100,function
+Backend,_with_running_chain,backend/app/services/conversations.py:502,4,41,100,function
+Backend,_save_jobs,backend/app/services/generation.py:708,4,9,100,function
+Backend,list_refs,backend/app/services/git.py:269,4,9,100,function
+Backend,head_of,backend/app/services/jenkins.py:111,4,7,100,function
+Backend,keep_tail,backend/app/services/jenkins.py:127,4,10,100,function
+Backend,_raise_for_status,backend/app/services/jenkins.py:391,4,9,75,function
+Backend,trigger,backend/app/services/jenkins.py:484,4,11,50,function
+Backend,queued_items,backend/app/services/jenkins.py:688,4,17,no branches,function
+Backend,finish_build,backend/app/services/jenkins.py:905,4,14,no branches,function
+Backend,downstream_build,backend/app/services/jenkins.py:921,4,10,67,function
+Backend,queued_items,backend/app/services/jenkins.py:938,4,4,no branches,function
+Backend,build,backend/app/services/jenkins.py:948,4,9,67,function
+Backend,_as_int,backend/app/services/metrics.py:179,4,7,100,function
+Backend,_attach_pending,backend/app/services/metrics.py:334,4,9,83,function
+Backend,_number,backend/app/services/plugin.py:249,4,7,100,function
+Backend,list_runs,backend/app/services/runs.py:137,4,26,67,function
+Backend,job_names_for,backend/app/services/runs.py:180,4,6,50,function
+Backend,_result_of,backend/app/services/tracker.py:68,4,5,100,function
+Backend,_run_forever,backend/app/services/tracker.py:142,4,11,50,function
+Backend,_attach_timings,backend/app/services/tracker.py:429,4,12,67,function
+Backend,_send_events,backend/app/ws/routes.py:147,4,10,50,function
+Backend,cache_key,backend/app/ai/cache.py:53,3,22,no branches,function
+Backend,get,backend/app/ai/cache.py:104,3,14,100,function
+Backend,__init__,backend/app/ai/chain.py:107,3,20,no branches,function
+Backend,next_question,backend/app/ai/clarify.py:93,3,16,100,function
+Backend,model_chain_names,backend/app/ai/factory.py:43,3,2,no branches,function
+Backend,guard_message,backend/app/ai/guard.py:71,3,12,100,function
+Backend,record,backend/app/ai/parser.py:542,3,51,100,function
+Backend,calls_to,backend/app/ai/providers/fake.py:104,3,2,no branches,function
+Backend,_messages,backend/app/ai/providers/groq.py:219,3,8,100,function
+Backend,_int,backend/app/ai/quota.py:228,3,7,100,function
+Backend,parse,backend/app/ai/rules.py:173,3,28,100,function
+Backend,_action,backend/app/ai/rules.py:213,3,7,100,function
+Backend,_environment,backend/app/ai/rules.py:244,3,8,100,function
+Backend,catalog_fingerprint,backend/app/ai/schema.py:100,3,13,no branches,function
+Backend,_check_service,backend/app/ai/validator.py:109,3,14,100,function
+Backend,list_users,backend/app/api/admin.py:171,3,19,no branches,function
+Backend,reset_password,backend/app/api/admin.py:380,3,23,100,function
+Backend,get_experiment,backend/app/api/analytics.py:160,3,32,50,function
+Backend,of,backend/app/api/assistants.py:138,3,14,no branches,function
+Backend,list_conversations,backend/app/api/assistants.py:207,3,20,no branches,function
+Backend,login,backend/app/api/auth.py:97,3,32,100,function
+Backend,get_current_user,backend/app/api/deps.py:97,3,8,100,function
+Backend,of,backend/app/api/jobs.py:63,3,12,no branches,function
+Backend,list_jobs,backend/app/api/jobs.py:246,3,18,no branches,function
+Backend,list_branches,backend/app/api/services.py:114,3,26,100,function
+Backend,model_chain,backend/app/core/settings.py:140,3,2,no branches,function
+Backend,quoted,backend/app/failures/analysis.py:115,3,5,75,function
+Backend,_tail,backend/app/failures/analysis.py:416,3,6,100,function
+Backend,_distinct,backend/app/failures/analysis.py:508,3,8,100,function
+Backend,_exit_code,backend/app/failures/analysis.py:613,3,6,100,function
+Backend,describe,backend/app/generation/planner.py:119,3,6,100,function
+Backend,_describe,backend/app/generation/planner.py:261,3,4,no branches,function
+Backend,calls,backend/app/generation/planner.py:403,3,2,no branches,function
+Backend,model_attempts,backend/app/generation/planner.py:408,3,2,no branches,function
+Backend,groovy_string,backend/app/generation/render.py:65,3,5,100,function
+Backend,freestyle_job_name,backend/app/generation/render.py:174,3,8,100,function
+Backend,render,backend/app/generation/render.py:219,3,6,100,function
+Backend,render_pipeline,backend/app/generation/render.py:283,3,23,no branches,function
+Backend,_given,backend/app/generation/revision.py:83,3,5,100,function
+Backend,_blank_is_absent,backend/app/generation/spec.py:123,3,5,100,function
+Backend,_no_control_characters,backend/app/generation/spec.py:137,3,4,100,function
+Backend,from_yaml,backend/app/generation/spec.py:171,3,8,100,function
+Backend,service_templates,backend/app/generation/spec.py:187,3,8,50,function
+Backend,failures,backend/app/generation/validate.py:98,3,2,no branches,function
+Backend,failures_caused_by,backend/app/generation/validate.py:101,3,2,no branches,function
+Backend,_check_well_formed,backend/app/generation/validate.py:312,3,6,100,function
+Backend,create_app,backend/app/main.py:83,3,50,50,function
+Backend,main,backend/app/openapi_export.py:48,3,10,100,function
+Backend,issue_tokens,backend/app/services/auth.py:250,3,17,no branches,function
+Backend,suite,backend/app/services/catalog.py:76,3,2,no branches,function
+Backend,from_mapping,backend/app/services/catalog.py:98,3,22,no branches,function
+Backend,suite_names,backend/app/services/catalog.py:267,3,3,no branches,function
+Backend,environment_names,backend/app/services/catalog.py:277,3,7,no branches,function
+Backend,_aware,backend/app/services/chains.py:80,3,4,100,function
+Backend,running_chain,backend/app/services/chains.py:111,3,5,100,function
+Backend,_record_run,backend/app/services/chains.py:202,3,21,75,function
+Backend,is_test_job,backend/app/services/chains.py:575,3,5,100,function
+Backend,create_conversation,backend/app/services/conversations.py:94,3,11,no branches,function
+Backend,get_conversation,backend/app/services/conversations.py:131,3,11,100,function
+Backend,refuse_once_run,backend/app/services/conversations.py:160,3,16,100,function
+Backend,get_command,backend/app/services/conversations.py:186,3,14,100,function
+Backend,history_for,backend/app/services/conversations.py:300,3,6,no branches,function
+Backend,known_secrets,backend/app/services/failures.py:54,3,3,no branches,function
+Backend,get_pipeline,backend/app/services/generation.py:99,3,13,50,function
+Backend,stored_spec,backend/app/services/generation.py:121,3,3,no branches,function
+Backend,_first_failure,backend/app/services/generation.py:475,3,5,50,function
+Backend,_upsert_jobs,backend/app/services/generation.py:720,3,23,100,function
+Backend,_screen_sentence,backend/app/services/generation.py:814,3,4,100,function
+Backend,short_name,backend/app/services/git.py:68,3,5,75,function
+Backend,list_branches,backend/app/services/git.py:97,3,3,no branches,function
+Backend,_fetch_crumb,backend/app/services/jenkins.py:412,3,11,0,function
+Backend,queue_item,backend/app/services/jenkins.py:502,3,15,no branches,function
+Backend,console_tail.keep_end,backend/app/services/jenkins.py:572,3,13,not measured,-
+Backend,console_head.keep_start,backend/app/services/jenkins.py:592,3,7,not measured,-
+Backend,last_build,backend/app/services/jenkins.py:958,3,3,no branches,function
+Backend,_millis_to_datetime,backend/app/services/metrics.py:167,3,5,100,function
+Backend,_optional_int,backend/app/services/plugin.py:267,3,7,100,function
+Backend,_first,backend/app/services/plugin.py:373,3,5,100,function
+Backend,clamp_page,backend/app/services/runs.py:62,3,3,no branches,function
+Backend,list_jobs,backend/app/services/runs.py:97,3,23,50,function
+Backend,_aware,backend/app/services/tracker.py:80,3,4,100,function
+Backend,start,backend/app/services/tracker.py:123,3,6,100,function
+Backend,_upsert_run,backend/app/services/tracker.py:274,3,18,75,function
+Backend,_job_names,backend/app/services/tracker.py:349,3,5,50,function
+Backend,_finished_at,backend/app/services/tracker.py:467,3,5,100,function
+Backend,subscribe,backend/app/ws/hub.py:148,3,17,no branches,function
+Backend,put,backend/app/ai/cache.py:119,2,14,100,function
+Backend,prompt_tokens,backend/app/ai/chain.py:94,2,2,no branches,function
+Backend,completion_tokens,backend/app/ai/chain.py:98,2,2,no branches,function
+Backend,help_card,backend/app/ai/clarify.py:191,2,15,no branches,function
+Backend,reconsider,backend/app/ai/parser.py:328,2,47,50,function
+Backend,_finish,backend/app/ai/parser.py:509,2,29,100,function
+Backend,evaluate.escalate,backend/app/ai/policy.py:132,2,4,not measured,-
+Backend,load_prompt,backend/app/ai/prompting.py:180,2,5,100,function
+Backend,stream_text,backend/app/ai/providers/fake.py:93,2,10,100,function
+Backend,_effort,backend/app/ai/providers/groq.py:236,2,4,50,function
+Backend,_short,backend/app/ai/providers/groq.py:252,2,3,no branches,function
+Backend,prompt_hash,backend/app/ai/providers/replay.py:40,2,15,no branches,function
+Backend,__init__,backend/app/ai/quota.py:82,2,10,no branches,function
+Backend,snapshot,backend/app/ai/quota.py:206,2,15,100,function
+Backend,validate,backend/app/ai/validator.py:86,2,18,100,function
+Backend,_resolve,backend/app/ai/validator.py:266,2,11,no branches,function
+Backend,create_user,backend/app/api/admin.py:195,2,29,100,function
+Backend,get_rate_limits,backend/app/api/admin.py:415,2,10,no branches,function
+Backend,get_roles,backend/app/api/admin.py:436,2,2,no branches,function
+Backend,of,backend/app/api/analytics.py:68,2,16,no branches,function
+Backend,of,backend/app/api/assistants.py:97,2,12,no branches,function
+Backend,create_conversation,backend/app/api/assistants.py:191,2,13,no branches,function
+Backend,get_conversation,backend/app/api/assistants.py:234,2,13,no branches,function
+Backend,post_message,backend/app/api/assistants.py:255,2,35,no branches,function
+Backend,client_identifier,backend/app/api/deps.py:51,2,2,no branches,function
+Backend,rate_limit._check,backend/app/api/deps.py:86,2,7,not measured,-
+Backend,require_role._guard,backend/app/api/deps.py:118,2,20,not measured,-
+Backend,regenerate,backend/app/api/generation.py:185,2,22,no branches,function
+Backend,explain.body,backend/app/api/generation.py:245,2,10,not measured,-
+Backend,approve,backend/app/api/generation.py:264,2,26,no branches,function
+Backend,list_runs,backend/app/api/jobs.py:267,2,24,no branches,function
+Backend,of,backend/app/api/services.py:59,2,13,no branches,function
+Backend,list_services,backend/app/api/services.py:97,2,10,no branches,function
+Backend,resync_catalog,backend/app/api/services.py:155,2,23,no branches,function
+Backend,__init__,backend/app/core/errors.py:122,2,13,no branches,function
+Backend,_add_request_id,backend/app/core/logging.py:36,2,5,100,function
+Backend,configure_logging,backend/app/core/logging.py:43,2,39,no branches,function
+Backend,__init__,backend/app/core/ratelimit.py:87,2,10,no branches,function
+Backend,check,backend/app/core/ratelimit.py:107,2,6,100,function
+Backend,verify_password,backend/app/core/security.py:44,2,5,no branches,function
+Backend,needs_rehash,backend/app/core/security.py:56,2,5,no branches,function
+Backend,_positive,backend/app/core/settings.py:95,2,4,50,function
+Backend,load_catalog,backend/app/db/seed.py:99,2,5,no branches,function
+Backend,create_engine,backend/app/db/session.py:21,2,12,0,function
+Backend,get_engine,backend/app/db/session.py:42,2,5,0,function
+Backend,get_session_factory,backend/app/db/session.py:49,2,9,50,function
+Backend,dispose,backend/app/db/session.py:67,2,6,50,function
+Backend,get_db,backend/app/db/session.py:76,2,9,no branches,function
+Backend,cause_found,backend/app/failures/analysis.py:112,2,2,no branches,function
+Backend,normalise,backend/app/failures/analysis.py:324,2,4,100,function
+Backend,_is_noise,backend/app/failures/analysis.py:530,2,2,no branches,function
+Backend,_clip,backend/app/failures/analysis.py:621,2,2,no branches,function
+Backend,_join,backend/app/failures/explainer.py:276,2,2,no branches,function
+Backend,rules_answer,backend/app/failures/explainer.py:326,2,8,no branches,function
+Backend,_mask_lines,backend/app/failures/redact.py:159,2,2,no branches,function
+Backend,_mask_header,backend/app/failures/redact.py:167,2,3,no branches,function
+Backend,default_plan,backend/app/generation/planner.py:195,2,4,no branches,function
+Backend,repair_message,backend/app/generation/planner.py:298,2,7,no branches,function
+Backend,valid_before_repair,backend/app/generation/planner.py:417,2,3,no branches,function
+Backend,valid_after_repair,backend/app/generation/planner.py:423,2,3,no branches,function
+Backend,to_record,backend/app/generation/planner.py:428,2,14,no branches,function
+Backend,to_record,backend/app/generation/render.py:109,2,10,no branches,function
+Backend,to_json,backend/app/generation/render.py:135,2,10,no branches,function
+Backend,render_jenkinsfile,backend/app/generation/render.py:270,2,11,no branches,function
+Backend,checkout,backend/app/generation/revision.py:74,2,2,no branches,function
+Backend,_lowercase_commit,backend/app/generation/spec.py:132,2,2,no branches,function
+Backend,_revision_is_valid,backend/app/generation/spec.py:143,2,6,no branches,function
+Backend,build_planner_schema,backend/app/generation/spec.py:203,2,28,no branches,function
+Backend,ok,backend/app/generation/validate.py:94,2,2,no branches,function
+Backend,to_record,backend/app/generation/validate.py:104,2,2,no branches,function
+Backend,validator_for,backend/app/generation/validate.py:398,2,6,100,function
+Backend,claim,backend/app/services/auth.py:67,2,7,100,function
+Backend,_audit,backend/app/services/auth.py:112,2,12,100,function
+Backend,deploy_target,backend/app/services/catalog.py:83,2,4,100,function
+Backend,_schema_for,backend/app/services/catalog.py:143,2,7,100,function
+Backend,reload,backend/app/services/catalog.py:211,2,9,no branches,function
+Backend,require,backend/app/services/catalog.py:252,2,5,100,function
+Backend,service_names,backend/app/services/catalog.py:264,2,2,no branches,function
+Backend,_iso,backend/app/services/chains.py:87,2,3,no branches,function
+Backend,_running_row,backend/app/services/chains.py:97,2,7,100,function
+Backend,_lock_held,backend/app/services/chains.py:106,2,3,no branches,function
+Backend,chain_runs,backend/app/services/chains.py:226,2,10,no branches,function
+Backend,get_chain,backend/app/services/chains.py:352,2,5,50,function
+Backend,_run_view,backend/app/services/chains.py:359,2,13,100,function
+Backend,latest_chain,backend/app/services/chains.py:487,2,7,100,function
+Backend,list_conversations,backend/app/services/conversations.py:107,2,21,100,function
+Backend,has_recent_run,backend/app/services/conversations.py:264,2,4,no branches,function
+Backend,running_chain_for,backend/app/services/conversations.py:272,2,4,100,function
+Backend,_status,backend/app/services/conversations.py:407,2,11,100,function
+Backend,get_jenkins_client,backend/app/services/dependencies.py:57,2,5,0,function
+Backend,get_git_client,backend/app/services/dependencies.py:74,2,5,0,function
+Backend,get_plugin_client,backend/app/services/dependencies.py:92,2,5,0,function
+Backend,get_catalog,backend/app/services/dependencies.py:110,2,5,0,function
+Backend,stored_artifact,backend/app/services/generation.py:115,2,4,100,function
+Backend,generate,backend/app/services/generation.py:164,2,34,no branches,function
+Backend,approval_summary.jobs,backend/app/services/generation.py:501,2,2,not measured,-
+Backend,_lock,backend/app/services/generation.py:687,2,10,50,function
+Backend,branch_exists,backend/app/services/git.py:102,2,4,100,function
+Backend,invalidate,backend/app/services/git.py:214,2,5,50,function
+Backend,__init__,backend/app/services/git.py:260,2,4,no branches,function
+Backend,validate_job_name,backend/app/services/jenkins.py:176,2,7,50,function
+Backend,__init__,backend/app/services/jenkins.py:300,2,10,no branches,function
+Backend,_backoff,backend/app/services/jenkins.py:402,2,8,0,function
+Backend,job_exists,backend/app/services/jenkins.py:432,2,7,no branches,function
+Backend,last_build,backend/app/services/jenkins.py:523,2,7,no branches,function
+Backend,create_job,backend/app/services/jenkins.py:810,2,7,50,function
+Backend,update_job,backend/app/services/jenkins.py:820,2,7,50,function
+Backend,get_config_xml,backend/app/services/jenkins.py:828,2,5,0,function
+Backend,trigger,backend/app/services/jenkins.py:839,2,11,50,function
+Backend,complete_queue_item,backend/app/services/jenkins.py:851,2,26,no branches,function
+Backend,start_downstream,backend/app/services/jenkins.py:879,2,16,no branches,function
+Backend,pipeline_stages,backend/app/services/jenkins.py:932,2,5,50,function
+Backend,queue_item,backend/app/services/jenkins.py:943,2,4,50,function
+Backend,console_text,backend/app/services/jenkins.py:962,2,5,100,function
+Backend,cancel_queue_item,backend/app/services/jenkins.py:968,2,13,50,function
+Backend,_as_str,backend/app/services/metrics.py:188,2,2,no branches,function
+Backend,queue_length,backend/app/services/plugin.py:122,2,4,100,function
+Backend,_http,backend/app/services/plugin.py:178,2,6,100,function
+Backend,ranking,backend/app/services/plugin.py:218,2,5,100,function
+Backend,health,backend/app/services/plugin.py:224,2,5,50,function
+Backend,aclose,backend/app/services/plugin.py:238,2,4,100,function
+Backend,_optional_number,backend/app/services/plugin.py:263,2,2,no branches,function
+Backend,count_rows,backend/app/services/runs.py:72,2,4,no branches,function
+Backend,get_job,backend/app/services/runs.py:125,2,5,50,function
+Backend,get_run,backend/app/services/runs.py:173,2,5,100,function
+Backend,stop,backend/app/services/tracker.py:131,2,9,100,function
+Backend,_publish,backend/app/services/tracker.py:445,2,5,no branches,function
+Backend,_millis,backend/app/services/tracker.py:460,2,4,100,function
+Backend,unsubscribe,backend/app/ws/hub.py:166,2,13,100,function
+Backend,close,backend/app/ws/hub.py:235,2,7,100,function
+Backend,set_hub,backend/app/ws/hub.py:267,2,3,no branches,function
+Backend,_close,backend/app/ws/routes.py:128,2,5,50,function
+Backend,_drain_incoming,backend/app/ws/routes.py:136,2,3,no branches,function
+Backend,normalise,backend/app/ai/cache.py:43,1,2,no branches,function
+Backend,__init__,backend/app/ai/cache.py:89,1,14,no branches,function
+Backend,clear,backend/app/ai/cache.py:134,1,5,no branches,function
+Backend,__len__,backend/app/ai/cache.py:140,1,3,no branches,function
+Backend,get_response_cache,backend/app/ai/cache.py:148,1,2,no branches,function
+Backend,models,backend/app/ai/chain.py:129,1,2,no branches,function
+Backend,provider,backend/app/ai/chain.py:133,1,2,no branches,function
+Backend,_failure,backend/app/ai/chain.py:318,1,9,no branches,function
+Backend,_backoff,backend/app/ai/chain.py:336,1,2,no branches,function
+Backend,__init__,backend/app/ai/clarify.py:63,1,2,no branches,function
+Backend,justification_question,backend/app/ai/clarify.py:170,1,8,no branches,function
+Backend,merge,backend/app/ai/clarify.py:181,1,3,no branches,function
+Backend,build_provider.respond,backend/app/ai/factory.py:61,1,4,not measured,-
+Backend,__init__,backend/app/ai/guard.py:51,1,8,no branches,function
+Backend,generates_job,backend/app/ai/intent.py:109,1,2,no branches,function
+Backend,with_changes,backend/app/ai/intent.py:112,1,2,no branches,function
+Backend,to_card,backend/app/ai/intent.py:116,1,2,no branches,function
+Backend,unsupported,backend/app/ai/intent.py:121,1,2,no branches,function
+Backend,status,backend/app/ai/parser.py:132,1,2,no branches,function
+Backend,behavior,backend/app/ai/parser.py:136,1,2,no branches,function
+Backend,__init__,backend/app/ai/parser.py:209,1,18,no branches,function
+Backend,messages_for,backend/app/ai/prompting.py:69,1,2,no branches,function
+Backend,placeholders,backend/app/ai/prompting.py:82,1,2,no branches,function
+Backend,as_dict,backend/app/ai/providers/base.py:24,1,2,no branches,function
+Backend,__init__,backend/app/ai/providers/base.py:56,1,3,no branches,function
+Backend,__init__,backend/app/ai/providers/base.py:71,1,11,no branches,function
+Backend,complete_json,backend/app/ai/providers/base.py:125,1,9,not measured,-
+Backend,stream_text,backend/app/ai/providers/base.py:137,1,8,not measured,-
+Backend,aclose,backend/app/ai/providers/base.py:147,1,2,no branches,function
+Backend,_unsupported,backend/app/ai/providers/fake.py:23,1,15,no branches,function
+Backend,aclose,backend/app/ai/providers/groq.py:215,1,2,no branches,function
+Backend,_elapsed,backend/app/ai/providers/groq.py:248,1,2,no branches,function
+Backend,__init__,backend/app/ai/providers/replay.py:69,1,2,no branches,function
+Backend,__aiter__,backend/app/ai/providers/replay.py:72,1,2,no branches,function
+Backend,__anext__,backend/app/ai/providers/replay.py:75,1,2,no branches,function
+Backend,write_fixture,backend/app/ai/providers/replay.py:97,1,3,no branches,function
+Backend,__init__,backend/app/ai/providers/replay.py:108,1,2,no branches,function
+Backend,directory,backend/app/ai/providers/replay.py:112,1,2,no branches,function
+Backend,fixture_path,backend/app/ai/providers/replay.py:115,1,2,no branches,function
+Backend,stream_text,backend/app/ai/providers/replay.py:148,1,9,no branches,function
+Backend,__init__,backend/app/ai/providers/replay.py:168,1,4,no branches,function
+Backend,complete_json,backend/app/ai/providers/replay.py:173,1,31,no branches,function
+Backend,stream_text,backend/app/ai/providers/replay.py:205,1,11,no branches,function
+Backend,aclose,backend/app/ai/providers/replay.py:217,1,2,no branches,function
+Backend,limits_for,backend/app/ai/quota.py:93,1,2,no branches,function
+Backend,record,backend/app/ai/quota.py:161,1,8,no branches,function
+Backend,block,backend/app/ai/quota.py:198,1,6,no branches,function
+Backend,reset,backend/app/ai/quota.py:223,1,3,no branches,function
+Backend,_seconds_to_midnight,backend/app/ai/quota.py:237,1,4,no branches,function
+Backend,get_quota_tracker,backend/app/ai/quota.py:246,1,2,no branches,function
+Backend,__init__,backend/app/ai/rules.py:170,1,2,no branches,function
+Backend,parse_intent,backend/app/ai/rules.py:207,1,2,no branches,function
+Backend,_nullable_enum,backend/app/ai/schema.py:31,1,6,no branches,function
+Backend,_nullable_string,backend/app/ai/schema.py:40,1,2,no branches,function
+Backend,ok,backend/app/ai/validator.py:63,1,2,no branches,function
+Backend,closest,backend/app/ai/validator.py:73,1,5,no branches,function
+Backend,__init__,backend/app/ai/validator.py:82,1,3,no branches,function
+Backend,of,backend/app/api/admin.py:54,1,8,no branches,function
+Backend,get_policy,backend/app/api/admin.py:361,1,8,no branches,function
+Backend,of,backend/app/api/assistants.py:68,1,7,no branches,function
+Backend,get_command,backend/app/api/assistants.py:293,1,7,no branches,function
+Backend,edit_intent,backend/app/api/assistants.py:307,1,14,no branches,function
+Backend,of,backend/app/api/auth.py:75,1,2,no branches,function
+Backend,refresh,backend/app/api/auth.py:144,1,18,no branches,function
+Backend,logout,backend/app/api/auth.py:174,1,7,no branches,function
+Backend,me,backend/app/api/auth.py:194,1,2,no branches,function
+Backend,of,backend/app/api/chains.py:49,1,13,no branches,function
+Backend,get_chain,backend/app/api/chains.py:113,1,10,no branches,function
+Backend,cancel_chain,backend/app/api/chains.py:127,1,9,no branches,function
+Backend,rate_limit,backend/app/api/deps.py:82,1,3,no branches,function
+Backend,require_role,backend/app/api/deps.py:111,1,3,no branches,function
+Backend,get_intent_parser,backend/app/api/deps.py:143,1,9,no branches,function
+Backend,get_planner,backend/app/api/deps.py:155,1,6,no branches,function
+Backend,get_failure_explainer,backend/app/api/deps.py:164,1,8,no branches,function
+Backend,get_clarifier,backend/app/api/deps.py:175,1,2,no branches,function
+Backend,generate,backend/app/api/generation.py:142,1,23,no branches,function
+Backend,get_pipeline,backend/app/api/generation.py:170,1,7,no branches,function
+Backend,explain.record,backend/app/api/generation.py:229,1,13,not measured,-
+Backend,_check_database,backend/app/api/health.py:102,1,3,no branches,function
+Backend,_check_jenkins,backend/app/api/health.py:107,1,3,no branches,function
+Backend,liveness,backend/app/api/health.py:129,1,2,no branches,function
+Backend,_latest_call,backend/app/api/health.py:138,1,8,no branches,function
+Backend,of,backend/app/api/jobs.py:93,1,14,no branches,function
+Backend,of,backend/app/api/jobs.py:141,1,2,no branches,function
+Backend,get_run,backend/app/api/jobs.py:294,1,8,no branches,function
+Backend,cancel_run,backend/app/api/jobs.py:305,1,9,no branches,function
+Backend,get_run_log,backend/app/api/jobs.py:322,1,22,no branches,function
+Backend,explain_run_failure,backend/app/api/jobs.py:357,1,16,no branches,function
+Backend,as_dict,backend/app/api/metrics.py:59,1,2,no branches,function
+Backend,of,backend/app/api/queue.py:59,1,23,no branches,function
+Backend,of,backend/app/api/queue.py:92,1,2,no branches,function
+Backend,of,backend/app/api/queue.py:109,1,10,no branches,function
+Backend,to_payload,backend/app/core/errors.py:136,1,8,no branches,function
+Backend,not_found,backend/app/core/errors.py:149,1,2,no branches,function
+Backend,forbidden,backend/app/core/errors.py:153,1,2,no branches,function
+Backend,unauthorized,backend/app/core/errors.py:157,1,2,no branches,function
+Backend,conflict,backend/app/core/errors.py:161,1,2,no branches,function
+Backend,unavailable,backend/app/core/errors.py:165,1,2,no branches,function
+Backend,_json,backend/app/core/errors.py:169,1,2,no branches,function
+Backend,register_exception_handlers._api_error,backend/app/core/errors.py:181,1,3,not measured,-
+Backend,register_exception_handlers._http_error,backend/app/core/errors.py:203,1,8,not measured,-
+Backend,register_exception_handlers._unhandled,backend/app/core/errors.py:213,1,14,not measured,-
+Backend,register_exception_handlers,backend/app/core/errors.py:173,1,9,no branches,function
+Backend,get_request_id,backend/app/core/logging.py:27,1,2,no branches,function
+Backend,set_request_id,backend/app/core/logging.py:32,1,2,no branches,function
+Backend,get_logger,backend/app/core/logging.py:99,1,2,no branches,function
+Backend,refill_per_second,backend/app/core/ratelimit.py:43,1,2,no branches,function
+Backend,__init__,backend/app/core/ratelimit.py:102,1,4,no branches,function
+Backend,reset,backend/app/core/ratelimit.py:169,1,3,no branches,function
+Backend,get_rate_limiter,backend/app/core/ratelimit.py:178,1,2,no branches,function
+Backend,hash_password,backend/app/core/security.py:39,1,2,no branches,function
+Backend,is_sqlite,backend/app/core/settings.py:145,1,2,no branches,function
+Backend,cors_origins,backend/app/core/settings.py:150,1,2,no branches,function
+Backend,get_settings,backend/app/core/settings.py:155,1,2,no branches,function
+Backend,utcnow,backend/app/db/base.py:35,1,2,no branches,function
+Backend,new_id,backend/app/db/base.py:40,1,2,no branches,function
+Backend,role_enum,backend/app/db/models.py:132,1,2,no branches,function
+Backend,configure,backend/app/db/session.py:60,1,4,no branches,function
+Backend,unavailable,backend/app/failures/analysis.py:395,1,18,no branches,function
+Backend,_shown,backend/app/failures/analysis.py:625,1,2,no branches,function
+Backend,_squash,backend/app/failures/explainer.py:158,1,2,no branches,function
+Backend,__init__,backend/app/failures/explainer.py:343,1,3,no branches,function
+Backend,prompt_version,backend/app/failures/explainer.py:348,1,2,no branches,function
+Backend,chain,backend/app/failures/explainer.py:352,1,2,no branches,function
+Backend,_from_rules,backend/app/failures/explainer.py:398,1,24,no branches,function
+Backend,redact.apply,backend/app/failures/redact.py:116,1,5,not measured,-
+Backend,_mask_url,backend/app/failures/redact.py:163,1,2,no branches,function
+Backend,as_stage,backend/app/generation/planner.py:127,1,7,no branches,function
+Backend,of,backend/app/generation/planner.py:136,1,2,no branches,function
+Backend,default_plan_responder,backend/app/generation/planner.py:310,1,3,no branches,function
+Backend,from_parse,backend/app/generation/planner.py:352,1,7,no branches,function
+Backend,valid,backend/app/generation/planner.py:374,1,2,no branches,function
+Backend,to_record,backend/app/generation/planner.py:377,1,10,no branches,function
+Backend,repairs,backend/app/generation/planner.py:412,1,2,no branches,function
+Backend,__init__,backend/app/generation/planner.py:459,1,4,no branches,function
+Backend,prompt_version,backend/app/generation/planner.py:465,1,2,no branches,function
+Backend,_environment,backend/app/generation/render.py:78,1,11,no branches,function
+Backend,first_job,backend/app/generation/render.py:132,1,2,no branches,function
+Backend,__init__,backend/app/generation/revision.py:59,1,4,no branches,function
+Backend,parameters,backend/app/generation/revision.py:78,1,2,no branches,function
+Backend,increase_indent,backend/app/generation/spec.py:69,1,2,no branches,function
+Backend,revision,backend/app/generation/spec.py:153,1,2,no branches,function
+Backend,to_yaml,backend/app/generation/spec.py:159,1,9,no branches,function
+Backend,_nullable_enum,backend/app/generation/spec.py:198,1,2,no branches,function
+Backend,to_record,backend/app/generation/validate.py:79,1,8,no branches,function
+Backend,__init__,backend/app/generation/validate.py:127,1,3,no branches,function
+Backend,fail,backend/app/generation/validate.py:131,1,2,no branches,function
+Backend,__init__,backend/app/generation/validate.py:150,1,6,no branches,function
+Backend,validate,backend/app/generation/validate.py:157,1,11,no branches,function
+Backend,_check_artifact,backend/app/generation/validate.py:306,1,4,no branches,function
+Backend,export_schema,backend/app/openapi_export.py:22,1,13,no branches,function
+Backend,render,backend/app/openapi_export.py:42,1,2,no branches,function
+Backend,__init__,backend/app/services/auth.py:57,1,4,no branches,function
+Backend,revoke,backend/app/services/auth.py:62,1,4,no branches,function
+Backend,revoke_family,backend/app/services/auth.py:81,1,4,no branches,function
+Backend,is_family_revoked,backend/app/services/auth.py:87,1,4,no branches,function
+Backend,clear,backend/app/services/auth.py:99,1,4,no branches,function
+Backend,get_revoked_tokens,backend/app/services/auth.py:108,1,2,no branches,function
+Backend,record_sign_in_limited,backend/app/services/auth.py:137,1,12,no branches,function
+Backend,record_access_denied,backend/app/services/auth.py:158,1,12,no branches,function
+Backend,_family_lifetime,backend/app/services/auth.py:279,1,2,no branches,function
+Backend,issued_before_reset,backend/app/services/auth.py:383,1,2,no branches,function
+Backend,role_allows,backend/app/services/auth.py:392,1,3,no branches,function
+Backend,allows,backend/app/services/catalog.py:80,1,2,no branches,function
+Backend,extra_stage_command,backend/app/services/catalog.py:94,1,2,no branches,function
+Backend,__init__,backend/app/services/catalog.py:200,1,6,no branches,function
+Backend,path,backend/app/services/catalog.py:208,1,2,no branches,function
+Backend,services,backend/app/services/catalog.py:241,1,4,no branches,function
+Backend,get,backend/app/services/catalog.py:246,1,4,no branches,function
+Backend,_now,backend/app/services/chains.py:76,1,2,no branches,function
+Backend,finish,backend/app/services/chains.py:177,1,3,no branches,function
+Backend,_job,backend/app/services/chains.py:198,1,2,no branches,function
+Backend,_stage_view,backend/app/services/chains.py:483,1,2,no branches,function
+Backend,list_messages,backend/app/services/conversations.py:146,1,7,no branches,function
+Backend,latest_command,backend/app/services/conversations.py:203,1,10,no branches,function
+Backend,policy_context,backend/app/services/conversations.py:289,1,9,no branches,function
+Backend,_reply,backend/app/services/conversations.py:551,1,7,no branches,function
+Backend,get_settings_dep,backend/app/services/dependencies.py:52,1,2,no branches,function
+Backend,set_jenkins_client,backend/app/services/dependencies.py:68,1,3,no branches,function
+Backend,set_git_client,backend/app/services/dependencies.py:86,1,3,no branches,function
+Backend,set_plugin_client,backend/app/services/dependencies.py:104,1,3,no branches,function
+Backend,set_catalog,backend/app/services/dependencies.py:122,1,3,no branches,function
+Backend,_undo_approval,backend/app/services/generation.py:700,1,6,no branches,function
+Backend,is_safe_ref,backend/app/services/git.py:76,1,2,no branches,function
+Backend,is_commit_sha,backend/app/services/git.py:81,1,2,no branches,function
+Backend,list_refs,backend/app/services/git.py:94,1,1,not measured,-
+Backend,aclose,backend/app/services/git.py:133,1,2,no branches,function
+Backend,__init__,backend/app/services/git.py:145,1,5,no branches,function
+Backend,_git_env,backend/app/services/git.py:222,1,6,no branches,function
+Backend,add_branch,backend/app/services/git.py:266,1,2,no branches,function
+Backend,text,backend/app/services/jenkins.py:107,1,2,no branches,function
+Backend,_more_data,backend/app/services/jenkins.py:122,1,3,no branches,function
+Backend,__init__,backend/app/services/jenkins.py:163,1,3,no branches,function
+Backend,console_window,backend/app/services/jenkins.py:226,1,2,no branches,function
+Backend,console_tail,backend/app/services/jenkins.py:234,1,9,no branches,function
+Backend,console_head,backend/app/services/jenkins.py:249,1,3,no branches,function
+Backend,downstream_build,backend/app/services/jenkins.py:259,1,3,not measured,-
+Backend,pipeline_stages,backend/app/services/jenkins.py:265,1,1,not measured,-
+Backend,queued_items,backend/app/services/jenkins.py:269,1,1,not measured,-
+Backend,aclose,backend/app/services/jenkins.py:287,1,2,no branches,function
+Backend,aclose,backend/app/services/jenkins.py:311,1,2,no branches,function
+Backend,_gave_up,backend/app/services/jenkins.py:375,1,12,no branches,function
+Backend,version,backend/app/services/jenkins.py:427,1,3,no branches,function
+Backend,create_job,backend/app/services/jenkins.py:440,1,10,no branches,function
+Backend,update_job,backend/app/services/jenkins.py:451,1,9,no branches,function
+Backend,get_config_xml,backend/app/services/jenkins.py:461,1,4,no branches,function
+Backend,delete_job,backend/app/services/jenkins.py:466,1,4,no branches,function
+Backend,build,backend/app/services/jenkins.py:518,1,4,no branches,function
+Backend,_to_build_info,backend/app/services/jenkins.py:532,1,10,no branches,function
+Backend,console_text,backend/app/services/jenkins.py:543,1,2,no branches,function
+Backend,console_window,backend/app/services/jenkins.py:551,1,7,no branches,function
+Backend,console_tail,backend/app/services/jenkins.py:564,1,3,no branches,function
+Backend,console_head,backend/app/services/jenkins.py:588,1,3,no branches,function
+Backend,cancel_queue_item,backend/app/services/jenkins.py:706,1,4,no branches,function
+Backend,stop_build,backend/app/services/jenkins.py:711,1,3,no branches,function
+Backend,lint_jenkinsfile,backend/app/services/jenkins.py:744,1,6,no branches,function
+Backend,ranking,backend/app/services/jenkins.py:757,1,4,no branches,function
+Backend,__init__,backend/app/services/jenkins.py:788,1,10,no branches,function
+Backend,_record,backend/app/services/jenkins.py:800,1,2,no branches,function
+Backend,version,backend/app/services/jenkins.py:803,1,2,no branches,function
+Backend,job_exists,backend/app/services/jenkins.py:806,1,3,no branches,function
+Backend,delete_job,backend/app/services/jenkins.py:834,1,4,no branches,function
+Backend,build_url,backend/app/services/jenkins.py:901,1,2,no branches,function
+Backend,stop_build,backend/app/services/jenkins.py:982,1,2,no branches,function
+Backend,list_labels,backend/app/services/jenkins.py:985,1,2,no branches,function
+Backend,lint_jenkinsfile,backend/app/services/jenkins.py:988,1,3,no branches,function
+Backend,ranking,backend/app/services/jenkins.py:992,1,2,no branches,function
+Backend,__init__,backend/app/services/metrics.py:91,1,7,no branches,function
+Backend,take,backend/app/services/metrics.py:119,1,4,no branches,function
+Backend,peek,backend/app/services/metrics.py:125,1,3,no branches,function
+Backend,item_ids,backend/app/services/metrics.py:129,1,4,no branches,function
+Backend,clear,backend/app/services/metrics.py:145,1,3,no branches,function
+Backend,__len__,backend/app/services/metrics.py:149,1,3,no branches,function
+Backend,get_pending_timings,backend/app/services/metrics.py:157,1,2,no branches,function
+Backend,ranking,backend/app/services/plugin.py:155,1,1,not measured,-
+Backend,health,backend/app/services/plugin.py:159,1,1,not measured,-
+Backend,recent_metrics,backend/app/services/plugin.py:163,1,1,not measured,-
+Backend,aclose,backend/app/services/plugin.py:166,1,2,no branches,function
+Backend,__init__,backend/app/services/plugin.py:173,1,4,no branches,function
+Backend,__init__,backend/app/services/plugin.py:404,1,5,no branches,function
+Backend,set_unavailable,backend/app/services/plugin.py:410,1,3,no branches,function
+Backend,ranking,backend/app/services/plugin.py:415,1,3,no branches,function
+Backend,health,backend/app/services/plugin.py:419,1,3,no branches,function
+Backend,recent_metrics,backend/app/services/plugin.py:423,1,3,no branches,function
+Backend,__init__,backend/app/services/tracker.py:99,1,20,no branches,function
+Backend,track,backend/app/services/tracker.py:160,1,14,no branches,function
+Backend,pending_triggers,backend/app/services/tracker.py:182,1,2,no branches,function
+Backend,topic,backend/app/ws/hub.py:105,1,2,no branches,function
+Backend,to_json,backend/app/ws/hub.py:108,1,5,no branches,function
+Backend,wants,backend/app/ws/hub.py:129,1,2,no branches,function
+Backend,__init__,backend/app/ws/hub.py:141,1,6,no branches,function
+Backend,subscriber_count,backend/app/ws/hub.py:247,1,2,no branches,function
+Backend,stats,backend/app/ws/hub.py:251,1,6,no branches,function
+Backend,get_hub,backend/app/ws/hub.py:262,1,2,no branches,function
+Frontend,OverviewPage,frontend/src/pages/OverviewPage.tsx:48,31,121,90,file
+Frontend,usePipelinePreview,frontend/src/workspace/usePipelinePreview.ts:52,28,61,72,file
+Frontend,ScoreBar,frontend/src/components/ScoreBar.tsx:28,15,137,100,file
+Frontend,AssistantPage,frontend/src/pages/AssistantPage.tsx:44,15,53,92,file
+Frontend,PreviewPanel,frontend/src/workspace/PreviewPanel.tsx:59,15,125,85,file
+Frontend,onKeyDown,frontend/src/workspace/Composer.tsx:98,13,28,96,file
+Frontend,RunsPage,frontend/src/pages/RunsPage.tsx:45,12,88,92,file
+Frontend,(anonymous),frontend/src/workspace/IntentCard.tsx:155,12,16,71,file
+Frontend,runCardView,frontend/src/workspace/runCardModel.ts:60,12,25,87,file
+Frontend,QueueStatus,frontend/src/pages/QueuePage.tsx:156,10,24,92,file
+Frontend,(anonymous),frontend/src/pages/SignInPage.tsx:88,10,23,90,file
+Frontend,isWebAddress,frontend/src/workspace/RunCard.tsx:27,10,29,96,file
+Frontend,fieldErrors,frontend/src/admin/NewUserForm.tsx:39,9,24,69,file
+Frontend,safeNext,frontend/src/auth/next.ts:11,9,20,100,file
+Frontend,Figure,frontend/src/pages/OverviewPage.tsx:191,9,28,90,file
+Frontend,currentStep,frontend/src/runs/runsModel.ts:99,9,21,83,file
+Frontend,parseLiveEvent,frontend/src/ws/events.ts:47,9,20,86,file
+Frontend,describe,frontend/src/admin/auditModel.ts:10,8,19,100,file
+Frontend,(anonymous),frontend/src/api/client.ts:64,8,12,95,file
+Frontend,StatsFigures,frontend/src/pages/AnalyticsPage.tsx:104,8,47,62,file
+Frontend,Explanation,frontend/src/runs/ExplainFailure.tsx:59,8,41,62,file
+Frontend,artifacts,frontend/src/workspace/usePipelinePreview.ts:29,8,14,72,file
+Frontend,socket.onmessage,frontend/src/ws/LiveEventsClient.ts:128,8,24,84,file
+Frontend,AuditSection,frontend/src/admin/AuditSection.tsx:42,7,59,57,file
+Frontend,(anonymous),frontend/src/api/assistantApi.ts:113,7,30,40,file
+Frontend,(anonymous),frontend/src/auth/SessionProvider.tsx:34,7,13,76,file
+Frontend,ActiveRun,frontend/src/pages/OverviewPage.tsx:221,7,28,90,file
+Frontend,body,frontend/src/runs/ChainDetail.tsx:58,7,46,88,file
+Frontend,ExplainFailure,frontend/src/runs/ExplainFailure.tsx:16,7,40,62,file
+Frontend,LogTail,frontend/src/runs/LogTail.tsx:34,7,58,77,file
+Frontend,(anonymous),frontend/src/workspace/IntentCard.tsx:146,7,5,71,file
+Frontend,previewSummary,frontend/src/workspace/previewSummary.ts:5,7,18,79,file
+Frontend,cell,frontend/src/admin/UsersSection.tsx:90,6,30,91,file
+Frontend,PageHeader,frontend/src/components/PageHeader.tsx:9,6,27,75,file
+Frontend,ordinal,frontend/src/lib/format.ts:11,6,17,95,file
+Frontend,Experiments,frontend/src/pages/AnalyticsPage.tsx:172,6,44,62,file
+Frontend,send,frontend/src/pages/AssistantPage.tsx:95,6,33,92,file
+Frontend,RecentResult,frontend/src/pages/OverviewPage.tsx:265,6,17,90,file
+Frontend,QueuePage,frontend/src/pages/QueuePage.tsx:48,6,39,92,file
+Frontend,explain,frontend/src/pages/SignInPage.tsx:42,6,24,90,file
+Frontend,chainState,frontend/src/runs/runsModel.ts:12,6,16,83,file
+Frontend,onChange,frontend/src/workspace/IntentCard.tsx:173,6,10,71,file
+Frontend,return,frontend/src/workspace/PreviewPanel.tsx:234,6,27,85,file
+Frontend,WorkspaceLayout,frontend/src/workspace/WorkspaceLayout.tsx:21,6,69,94,file
+Frontend,connect,frontend/src/ws/LiveEventsClient.ts:108,6,18,84,file
+Frontend,ResetPassword,frontend/src/admin/ResetPassword.tsx:21,5,82,90,file
+Frontend,UsersSection,frontend/src/admin/UsersSection.tsx:28,5,52,91,file
+Frontend,retryAfterSeconds,frontend/src/api/errors.ts:49,5,8,81,file
+Frontend,(anonymous),frontend/src/auth/SessionProvider.tsx:54,5,11,76,file
+Frontend,BuildStateLabel,frontend/src/components/BuildStateLabel.tsx:10,5,20,100,file
+Frontend,(anonymous),frontend/src/components/code/CodeView.tsx:72,5,2,82,file
+Frontend,ExperimentMetrics,frontend/src/pages/AnalyticsPage.tsx:283,5,26,62,file
+Frontend,thread,frontend/src/pages/AssistantPage.tsx:181,5,25,92,file
+Frontend,ProviderStatus,frontend/src/pages/OverviewPage.tsx:303,5,19,90,file
+Frontend,body,frontend/src/pages/QueuePage.tsx:88,5,29,92,file
+Frontend,(anonymous),frontend/src/queue/QueueRanking.tsx:120,5,20,77,file
+Frontend,read,frontend/src/runs/LogTail.tsx:60,5,19,77,file
+Frontend,keepEnd,frontend/src/runs/logModel.ts:24,5,13,100,file
+Frontend,return,frontend/src/workspace/RunCard.tsx:55,5,12,96,file
+Frontend,wordAt,frontend/src/workspace/composerSuggestions.ts:26,5,11,95,file
+Frontend,suggestionsFor,frontend/src/workspace/composerSuggestions.ts:38,5,22,95,file
+Frontend,valueOf,frontend/src/workspace/specProblems.ts:38,5,9,81,file
+Frontend,specProblems,frontend/src/workspace/specProblems.ts:96,5,19,81,file
+Frontend,submit,frontend/src/admin/ResetPassword.tsx:40,4,11,90,file
+Frontend,readFailure,frontend/src/api/errors.ts:31,4,15,81,file
+Frontend,failureMessage,frontend/src/api/errors.ts:61,4,10,81,file
+Frontend,RequireSession,frontend/src/auth/RequireSession.tsx:13,4,12,100,file
+Frontend,sameUser,frontend/src/auth/session.ts:58,4,4,93,file
+Frontend,(anonymous),frontend/src/components/DataTable.tsx:104,4,16,89,file
+Frontend,isWebAddress,frontend/src/components/ExternalLink.tsx:7,4,27,50,file
+Frontend,stateFromResult,frontend/src/components/buildState.ts:55,4,6,100,file
+Frontend,languageFor,frontend/src/components/code/CodeView.tsx:21,4,11,82,file
+Frontend,(anonymous),frontend/src/components/code/CodeView.tsx:82,4,39,82,file
+Frontend,contributions,frontend/src/components/scoreBarModel.ts:41,4,16,100,file
+Frontend,RunStatistics,frontend/src/pages/AnalyticsPage.tsx:58,4,29,62,file
+Frontend,CatalogPage,frontend/src/pages/CatalogPage.tsx:26,4,30,81,file
+Frontend,Resync,frontend/src/pages/CatalogPage.tsx:140,4,35,81,file
+Frontend,Reachability,frontend/src/pages/CatalogPage.tsx:106,4,32,81,file
+Frontend,linkTo,frontend/src/pages/RunsPage.tsx:66,4,12,92,file
+Frontend,cell,frontend/src/pages/RunsPage.tsx:98,4,12,92,file
+Frontend,heldReason,frontend/src/queue/queueModel.ts:79,4,10,100,file
+Frontend,useEffect,frontend/src/workspace/Composer.tsx:53,4,7,96,file
+Frontend,Row,frontend/src/workspace/IntentCard.tsx:94,4,17,71,file
+Frontend,LiveRunCard,frontend/src/workspace/LiveRunCard.tsx:16,4,34,83,file
+Frontend,(anonymous),frontend/src/workspace/ProgressSteps.tsx:71,4,17,100,file
+Frontend,applySuggestion,frontend/src/workspace/composerSuggestions.ts:61,4,11,95,file
+Frontend,(anonymous),frontend/src/workspace/usePipelinePreview.ts:40,4,5,72,file
+Frontend,onApprove,frontend/src/workspace/usePipelinePreview.ts:150,4,19,72,file
+Frontend,socket.onclose,frontend/src/ws/LiveEventsClient.ts:153,4,15,84,file
+Frontend,cell,frontend/src/admin/AuditSection.tsx:26,3,2,57,file
+Frontend,rateText,frontend/src/admin/PolicySection.tsx:19,3,10,56,file
+Frontend,PolicySection,frontend/src/admin/PolicySection.tsx:43,3,15,56,file
+Frontend,createApiClient,frontend/src/api/client.ts:79,3,4,95,file
+Frontend,isRecord,frontend/src/api/errors.ts:15,3,3,81,file
+Frontend,SignedInAs,frontend/src/app/shell/SignedInAs.tsx:7,3,25,67,file
+Frontend,readPreference,frontend/src/app/theme/theme.ts:21,3,9,100,file
+Frontend,resolveTheme,frontend/src/app/theme/theme.ts:42,3,7,100,file
+Frontend,SessionProvider,frontend/src/auth/SessionProvider.tsx:17,3,16,76,file
+Frontend,signInPath,frontend/src/auth/next.ts:36,3,4,100,file
+Frontend,roleLabel,frontend/src/auth/roles.ts:13,3,4,100,file
+Frontend,(anonymous),frontend/src/components/DataTable.tsx:51,3,21,89,file
+Frontend,PageSection,frontend/src/components/PageStates.tsx:11,3,24,100,file
+Frontend,StatusWord,frontend/src/components/PageStates.tsx:74,3,16,100,file
+Frontend,(anonymous),frontend/src/components/code/CodeView.tsx:64,3,9,82,file
+Frontend,(anonymous),frontend/src/components/code/CodeView.tsx:101,3,4,82,file
+Frontend,(anonymous),frontend/src/components/code/CodeView.tsx:132,3,10,82,file
+Frontend,(anonymous),frontend/src/components/code/CodeView.tsx:143,3,6,82,file
+Frontend,lineAt,frontend/src/components/code/diagnostics.ts:39,3,9,100,file
+Frontend,formatDuration,frontend/src/lib/format.ts:65,3,13,95,file
+Frontend,AdminPage,frontend/src/pages/AdminPage.tsx:17,3,31,83,file
+Frontend,Figure,frontend/src/pages/AnalyticsPage.tsx:163,3,8,62,file
+Frontend,(anonymous),frontend/src/pages/AssistantPage.tsx:64,3,1,92,file
+Frontend,queryFn,frontend/src/pages/AssistantPage.tsx:73,3,2,92,file
+Frontend,draftFor,frontend/src/pages/AssistantPage.tsx:86,3,1,92,file
+Frontend,ServiceEntry,frontend/src/pages/CatalogPage.tsx:72,3,20,81,file
+Frontend,String,frontend/src/pages/OverviewPage.tsx:91,3,3,90,file
+Frontend,(anonymous),frontend/src/pages/OverviewPage.tsx:311,3,9,90,file
+Frontend,(anonymous),frontend/src/pages/QueuePage.tsx:140,3,7,92,file
+Frontend,(anonymous),frontend/src/queue/QueueRanking.tsx:77,3,30,77,file
+Frontend,jobTypeLabel,frontend/src/queue/queueModel.ts:17,3,4,100,file
+Frontend,formatEstimate,frontend/src/queue/queueModel.ts:22,3,10,100,file
+Frontend,formatWait,frontend/src/queue/queueModel.ts:37,3,12,100,file
+Frontend,optimizerStatus,frontend/src/queue/queueModel.ts:68,3,7,100,file
+Frontend,(anonymous),frontend/src/runs/LogTail.tsx:87,3,5,77,file
+Frontend,countLines,frontend/src/runs/logModel.ts:10,3,10,100,file
+Frontend,assistantOf,frontend/src/runs/runsModel.ts:33,3,11,83,file
+Frontend,approve,frontend/src/workspace/ApproveAndRun.tsx:43,3,15,83,file
+Frontend,return,frontend/src/workspace/ChatList.tsx:23,3,25,100,file
+Frontend,return,frontend/src/workspace/Clarification.tsx:23,3,15,100,file
+Frontend,(anonymous),frontend/src/workspace/Composer.tsx:72,3,6,96,file
+Frontend,send,frontend/src/workspace/Composer.tsx:91,3,6,96,file
+Frontend,Field,frontend/src/workspace/IntentCard.tsx:253,3,21,71,file
+Frontend,(anonymous),frontend/src/workspace/ProgressSteps.tsx:19,3,31,100,file
+Frontend,Fallback,frontend/src/workspace/ReplyView.tsx:102,3,3,62,file
+Frontend,intentFields,frontend/src/workspace/intent.ts:27,3,9,100,file
+Frontend,progressAnnouncement,frontend/src/workspace/progress.ts:20,3,7,75,file
+Frontend,(anonymous),frontend/src/workspace/runCardModel.ts:64,3,4,87,file
+Frontend,children,frontend/src/workspace/specProblems.ts:27,3,10,81,file
+Frontend,(anonymous),frontend/src/workspace/specProblems.ts:115,3,12,81,file
+Frontend,(anonymous),frontend/src/workspace/threadOrder.ts:14,3,8,83,file
+Frontend,queryFn,frontend/src/workspace/usePipelinePreview.ts:65,3,2,72,file
+Frontend,queryFn,frontend/src/workspace/usePipelinePreview.ts:70,3,2,72,file
+Frontend,onRegenerate,frontend/src/workspace/usePipelinePreview.ts:121,3,3,72,file
+Frontend,setStatus,frontend/src/ws/LiveEventsClient.ts:197,3,9,84,file
+Frontend,liveEventsUrl,frontend/src/ws/LiveEventsClient.ts:209,3,6,84,file
+Frontend,onError,frontend/src/admin/NewUserForm.tsx:91,2,5,69,file
+Frontend,(anonymous),frontend/src/admin/NewUserForm.tsx:105,2,7,69,file
+Frontend,body,frontend/src/admin/PolicySection.tsx:52,2,15,56,file
+Frontend,(anonymous),frontend/src/admin/ResetPassword.tsx:55,2,8,90,file
+Frontend,onSuccess,frontend/src/admin/UsersSection.tsx:38,2,11,91,file
+Frontend,cell,frontend/src/admin/UsersSection.tsx:56,2,7,91,file
+Frontend,assistantApi,frontend/src/api/assistantApi.ts:36,2,61,40,file
+Frontend,onRequest,frontend/src/api/client.ts:45,2,6,95,file
+Frontend,failureOf,frontend/src/api/request.ts:17,2,12,88,file
+Frontend,Sidebar,frontend/src/app/shell/Sidebar.tsx:13,2,1,100,file
+Frontend,(anonymous),frontend/src/app/shell/Sidebar.tsx:16,2,1,100,file
+Frontend,(anonymous),frontend/src/app/shell/Sidebar.tsx:21,2,23,100,file
+Frontend,(anonymous),frontend/src/app/shell/SignedInAs.tsx:27,2,7,67,file
+Frontend,storePreference,frontend/src/app/theme/theme.ts:30,2,7,100,file
+Frontend,systemPrefersDark,frontend/src/app/theme/theme.ts:38,2,4,100,file
+Frontend,(anonymous),frontend/src/app/theme/theme.ts:54,2,8,100,file
+Frontend,useTheme,frontend/src/app/theme/themeContext.ts:13,2,7,50,file
+Frontend,(anonymous),frontend/src/auth/SessionProvider.tsx:63,2,5,76,file
+Frontend,(anonymous),frontend/src/auth/SessionProvider.tsx:49,2,7,76,file
+Frontend,browserSessionStorage,frontend/src/auth/session.ts:50,2,8,93,file
+Frontend,constructor,frontend/src/auth/session.ts:69,2,6,93,file
+Frontend,useSessionClient,frontend/src/auth/sessionContext.ts:8,2,8,50,file
+Frontend,useSignedInUser,frontend/src/auth/sessionContext.ts:23,2,4,50,file
+Frontend,describeSuites,frontend/src/catalog/catalogModel.ts:8,2,9,88,file
+Frontend,(anonymous),frontend/src/catalog/catalogModel.ts:22,2,1,88,file
+Frontend,describeBranches,frontend/src/catalog/catalogModel.ts:18,2,7,88,file
+Frontend,(anonymous),frontend/src/components/DataTable.tsx:48,2,1,89,file
+Frontend,(anonymous),frontend/src/components/DataTable.tsx:94,2,14,89,file
+Frontend,(anonymous),frontend/src/components/code/CodeView.tsx:71,2,1,82,file
+Frontend,(anonymous),frontend/src/components/code/CodeView.tsx:158,2,9,82,file
+Frontend,(anonymous),frontend/src/components/code/CodeView.tsx:177,2,7,82,file
+Frontend,enter,frontend/src/components/code/diagnostics.ts:29,2,5,100,file
+Frontend,describeScore,frontend/src/components/scoreBarModel.ts:68,2,12,100,file
+Frontend,(anonymous),frontend/src/components/toast/ToastProvider.tsx:34,2,5,0,file
+Frontend,useToast,frontend/src/components/toast/toastContext.ts:8,2,7,50,file
+Frontend,parseApiTime,frontend/src/lib/format.ts:39,2,4,95,file
+Frontend,(anonymous),frontend/src/lib/useMediaQuery.ts:9,2,8,100,file
+Frontend,useMediaQuery,frontend/src/lib/useMediaQuery.ts:7,2,9,100,file
+Frontend,(anonymous),frontend/src/pages/AnalyticsPage.tsx:107,2,2,62,file
+Frontend,rank,frontend/src/pages/AnalyticsPage.tsx:157,2,5,62,file
+Frontend,(anonymous),frontend/src/pages/AssistantPage.tsx:247,2,3,92,file
+Frontend,(anonymous),frontend/src/pages/OverviewPage.tsx:77,2,1,90,file
+Frontend,useGrowOnce,frontend/src/pages/QueuePage.tsx:138,2,6,92,file
+Frontend,Unavailable,frontend/src/pages/QueuePage.tsx:182,2,18,92,file
+Frontend,setFilter,frontend/src/pages/RunsPage.tsx:78,2,9,92,file
+Frontend,cell,frontend/src/pages/RunsPage.tsx:128,2,4,92,file
+Frontend,body,frontend/src/pages/RunsPage.tsx:165,2,8,92,file
+Frontend,inputClass,frontend/src/pages/SignInPage.tsx:222,2,7,90,file
+Frontend,Field,frontend/src/pages/SignInPage.tsx:230,2,26,90,file
+Frontend,QueueRanking,frontend/src/queue/QueueRanking.tsx:28,2,3,77,file
+Frontend,(anonymous),frontend/src/queue/QueueRanking.tsx:98,2,5,77,file
+Frontend,RankingTable,frontend/src/queue/QueueRanking.tsx:37,2,36,77,file
+Frontend,missingUpstreamNote,frontend/src/queue/queueModel.ts:54,2,8,100,file
+Frontend,(anonymous),frontend/src/runs/ChainDetail.tsx:37,2,3,88,file
+Frontend,(anonymous),frontend/src/runs/ChainDetail.tsx:50,2,1,88,file
+Frontend,(anonymous),frontend/src/runs/LogTail.tsx:72,2,1,77,file
+Frontend,lastLines,frontend/src/runs/logModel.ts:39,2,5,100,file
+Frontend,isAssistantFilter,frontend/src/runs/runsModel.ts:59,2,4,83,file
+Frontend,isResultFilter,frontend/src/runs/runsModel.ts:63,2,4,83,file
+Frontend,chainDurationMs,frontend/src/runs/runsModel.ts:88,2,10,83,file
+Frontend,(anonymous),frontend/src/runs/runsModel.ts:116,2,1,83,file
+Frontend,ApproveAndRun,frontend/src/workspace/ApproveAndRun.tsx:22,2,10,83,file
+Frontend,return,frontend/src/workspace/ApproveAndRun.tsx:67,2,10,83,file
+Frontend,(anonymous),frontend/src/workspace/ApproveAndRun.tsx:83,2,5,83,file
+Frontend,(anonymous),frontend/src/workspace/Composer.tsx:144,2,16,96,file
+Frontend,IntentCard,frontend/src/workspace/IntentCard.tsx:23,2,12,71,file
+Frontend,return,frontend/src/workspace/IntentCard.tsx:43,2,6,71,file
+Frontend,(anonymous),frontend/src/workspace/IntentCard.tsx:48,2,6,71,file
+Frontend,(anonymous),frontend/src/workspace/IntentMessage.tsx:71,2,3,83,file
+Frontend,(anonymous),frontend/src/workspace/PreviewPanel.tsx:113,2,5,85,file
+Frontend,Explanation,frontend/src/workspace/PreviewPanel.tsx:214,2,10,85,file
+Frontend,ValidationChecklist,frontend/src/workspace/ProgressSteps.tsx:65,2,10,100,file
+Frontend,Help,frontend/src/workspace/ReplyView.tsx:107,2,12,62,file
+Frontend,return,frontend/src/workspace/ReplyView.tsx:140,2,9,62,file
+Frontend,stageWord,frontend/src/workspace/RunCard.tsx:106,2,3,96,file
+Frontend,(anonymous),frontend/src/workspace/Thread.tsx:16,2,3,100,file
+Frontend,ThreadMessage,frontend/src/workspace/Thread.tsx:34,2,25,100,file
+Frontend,null,frontend/src/workspace/WorkspaceLayout.tsx:67,2,5,94,file
+Frontend,(anonymous),frontend/src/workspace/composerSuggestions.ts:49,2,1,95,file
+Frontend,(anonymous),frontend/src/workspace/composerSuggestions.ts:55,2,1,95,file
+Frontend,(anonymous),frontend/src/workspace/runCardModel.ts:72,2,1,87,file
+Frontend,(anonymous),frontend/src/workspace/specProblems.ts:62,2,4,81,file
+Frontend,(anonymous),frontend/src/workspace/specProblems.ts:91,2,1,81,file
+Frontend,(anonymous),frontend/src/workspace/specProblems.ts:100,2,1,81,file
+Frontend,roleRank,frontend/src/workspace/threadOrder.ts:25,2,3,83,file
+Frontend,(anonymous),frontend/src/workspace/usePipelinePreview.ts:24,2,1,72,file
+Frontend,refresh,frontend/src/workspace/usePipelinePreview.ts:79,2,6,72,file
+Frontend,onExplain,frontend/src/workspace/usePipelinePreview.ts:131,2,8,72,file
+Frontend,useClient,frontend/src/ws/liveEventsContext.ts:8,2,8,67,file
+Frontend,(anonymous),frontend/src/ws/liveEventsContext.ts:29,2,5,67,file
+Frontend,cell,frontend/src/admin/AuditSection.tsx:20,1,2,57,file
+Frontend,cell,frontend/src/admin/AuditSection.tsx:28,1,1,57,file
+Frontend,cell,frontend/src/admin/AuditSection.tsx:30,1,1,57,file
+Frontend,cell,frontend/src/admin/AuditSection.tsx:34,1,4,57,file
+Frontend,queryFn,frontend/src/admin/AuditSection.tsx:47,1,2,57,file
+Frontend,body,frontend/src/admin/AuditSection.tsx:96,1,4,57,file
+Frontend,NewUserForm,frontend/src/admin/NewUserForm.tsx:69,1,8,69,file
+Frontend,mutationFn,frontend/src/admin/NewUserForm.tsx:81,1,2,69,file
+Frontend,onSuccess,frontend/src/admin/NewUserForm.tsx:83,1,8,69,file
+Frontend,(anonymous),frontend/src/admin/NewUserForm.tsx:110,1,3,69,file
+Frontend,(anonymous),frontend/src/admin/NewUserForm.tsx:119,1,6,69,file
+Frontend,(anonymous),frontend/src/admin/NewUserForm.tsx:160,1,5,69,file
+Frontend,cell,frontend/src/admin/PolicySection.tsx:12,1,1,56,file
+Frontend,cell,frontend/src/admin/PolicySection.tsx:13,1,1,56,file
+Frontend,cell,frontend/src/admin/PolicySection.tsx:14,1,1,56,file
+Frontend,cell,frontend/src/admin/PolicySection.tsx:15,1,1,56,file
+Frontend,cell,frontend/src/admin/PolicySection.tsx:34,1,2,56,file
+Frontend,cell,frontend/src/admin/PolicySection.tsx:36,1,1,56,file
+Frontend,queryFn,frontend/src/admin/PolicySection.tsx:45,1,1,56,file
+Frontend,queryFn,frontend/src/admin/PolicySection.tsx:46,1,1,56,file
+Frontend,body,frontend/src/admin/PolicySection.tsx:76,1,4,56,file
+Frontend,limitsBody,frontend/src/admin/PolicySection.tsx:91,1,2,56,file
+Frontend,limitsBody,frontend/src/admin/PolicySection.tsx:100,1,4,56,file
+Frontend,mutationFn,frontend/src/admin/ResetPassword.tsx:31,1,2,90,file
+Frontend,onSuccess,frontend/src/admin/ResetPassword.tsx:32,1,6,90,file
+Frontend,(anonymous),frontend/src/admin/ResetPassword.tsx:94,1,3,90,file
+Frontend,(anonymous),frontend/src/admin/ResetPassword.tsx:112,1,6,90,file
+Frontend,queryFn,frontend/src/admin/UsersSection.tsx:32,1,1,91,file
+Frontend,queryFn,frontend/src/admin/UsersSection.tsx:33,1,1,91,file
+Frontend,mutationFn,frontend/src/admin/UsersSection.tsx:36,1,2,91,file
+Frontend,cell,frontend/src/admin/UsersSection.tsx:66,1,2,91,file
+Frontend,(anonymous),frontend/src/admin/UsersSection.tsx:74,1,3,91,file
+Frontend,(anonymous),frontend/src/admin/UsersSection.tsx:79,1,5,91,file
+Frontend,cell,frontend/src/admin/UsersSection.tsx:123,1,2,91,file
+Frontend,(anonymous),frontend/src/admin/UsersSection.tsx:124,1,6,91,file
+Frontend,cell,frontend/src/admin/UsersSection.tsx:133,1,2,91,file
+Frontend,(anonymous),frontend/src/admin/UsersSection.tsx:153,1,1,91,file
+Frontend,body,frontend/src/admin/UsersSection.tsx:160,1,4,91,file
+Frontend,Deactivate,frontend/src/admin/UsersSection.tsx:181,1,8,91,file
+Frontend,(anonymous),frontend/src/admin/auditModel.ts:31,1,1,100,file
+Frontend,describeDetails,frontend/src/admin/auditModel.ts:29,1,5,100,file
+Frontend,users,frontend/src/api/adminApi.ts:16,1,2,100,file
+Frontend,(anonymous),frontend/src/api/adminApi.ts:19,1,2,100,file
+Frontend,(anonymous),frontend/src/api/adminApi.ts:22,1,1,100,file
+Frontend,(anonymous),frontend/src/api/adminApi.ts:31,1,1,100,file
+Frontend,(anonymous),frontend/src/api/adminApi.ts:39,1,2,100,file
+Frontend,(anonymous),frontend/src/api/adminApi.ts:42,1,2,100,file
+Frontend,(anonymous),frontend/src/api/adminApi.ts:44,1,2,100,file
+Frontend,(anonymous),frontend/src/api/adminApi.ts:47,1,1,100,file
+Frontend,adminApi,frontend/src/api/adminApi.ts:14,1,20,100,file
+Frontend,audit,frontend/src/api/adminApi.ts:68,1,2,100,file
+Frontend,runStats,frontend/src/api/analyticsApi.ts:12,1,2,100,file
+Frontend,experiments,frontend/src/api/analyticsApi.ts:14,1,2,100,file
+Frontend,(anonymous),frontend/src/api/analyticsApi.ts:18,1,1,100,file
+Frontend,analyticsApi,frontend/src/api/analyticsApi.ts:10,1,10,100,file
+Frontend,experiment,frontend/src/api/analyticsApi.ts:39,1,2,100,file
+Frontend,(anonymous),frontend/src/api/apiClientContext.ts:12,1,1,100,file
+Frontend,services,frontend/src/api/assistantApi.ts:38,1,2,40,file
+Frontend,branches,frontend/src/api/assistantApi.ts:40,1,2,40,file
+Frontend,(anonymous),frontend/src/api/assistantApi.ts:44,1,1,40,file
+Frontend,(anonymous),frontend/src/api/assistantApi.ts:47,1,1,40,file
+Frontend,(anonymous),frontend/src/api/assistantApi.ts:54,1,1,40,file
+Frontend,(anonymous),frontend/src/api/assistantApi.ts:61,1,1,40,file
+Frontend,(anonymous),frontend/src/api/assistantApi.ts:70,1,1,40,file
+Frontend,(anonymous),frontend/src/api/assistantApi.ts:73,1,1,40,file
+Frontend,(anonymous),frontend/src/api/assistantApi.ts:81,1,1,40,file
+Frontend,(anonymous),frontend/src/api/assistantApi.ts:88,1,1,40,file
+Frontend,(anonymous),frontend/src/api/assistantApi.ts:93,1,1,40,file
+Frontend,(anonymous),frontend/src/api/assistantApi.ts:102,1,1,40,file
+Frontend,(anonymous),frontend/src/api/assistantApi.ts:109,1,1,40,file
+Frontend,services,frontend/src/api/catalogApi.ts:12,1,2,100,file
+Frontend,branches,frontend/src/api/catalogApi.ts:15,1,2,100,file
+Frontend,(anonymous),frontend/src/api/catalogApi.ts:18,1,2,100,file
+Frontend,catalogApi,frontend/src/api/catalogApi.ts:10,1,4,100,file
+Frontend,setAccessToken,frontend/src/api/client.ts:28,1,4,95,file
+Frontend,getAccessToken,frontend/src/api/client.ts:32,1,4,95,file
+Frontend,setTokenRefresher,frontend/src/api/client.ts:40,1,1,95,file
+Frontend,isAuthEndpoint,frontend/src/api/client.ts:58,1,4,95,file
+Frontend,withTokenRefresh,frontend/src/api/client.ts:63,1,4,95,file
+Frontend,(anonymous),frontend/src/api/client.ts:81,1,1,95,file
+Frontend,createQueryClient,frontend/src/api/queryClient.ts:8,1,12,100,file
+Frontend,queue,frontend/src/api/queueApi.ts:12,1,2,100,file
+Frontend,queueApi,frontend/src/api/queueApi.ts:10,1,4,100,file
+Frontend,constructor,frontend/src/api/request.ts:10,1,4,88,file
+Frontend,chains,frontend/src/api/runsApi.ts:30,1,2,82,file
+Frontend,runsApi,frontend/src/api/runsApi.ts:28,1,9,82,file
+Frontend,(anonymous),frontend/src/api/runsApi.ts:46,1,1,82,file
+Frontend,(anonymous),frontend/src/api/runsApi.ts:49,1,1,82,file
+Frontend,(anonymous),frontend/src/api/runsApi.ts:57,1,1,82,file
+Frontend,(anonymous),frontend/src/api/runsApi.ts:64,1,1,82,file
+Frontend,chainList,frontend/src/api/runsApi.ts:83,1,2,82,file
+Frontend,runList,frontend/src/api/runsApi.ts:85,1,2,82,file
+Frontend,health,frontend/src/api/systemApi.ts:12,1,2,100,file
+Frontend,systemApi,frontend/src/api/systemApi.ts:10,1,4,100,file
+Frontend,App,frontend/src/app/App.tsx:15,1,15,100,file
+Frontend,LoadingApp,frontend/src/app/LoadingApp.tsx:8,1,10,100,file
+Frontend,AppShell,frontend/src/app/shell/AppShell.tsx:13,1,16,100,file
+Frontend,(anonymous),frontend/src/app/shell/AppShell.tsx:61,1,3,100,file
+Frontend,MobileBar,frontend/src/app/shell/AppShell.tsx:30,1,41,100,file
+Frontend,(anonymous),frontend/src/app/shell/Sidebar.tsx:24,1,1,100,file
+Frontend,(anonymous),frontend/src/app/shell/ThemeSwitch.tsx:24,1,3,100,file
+Frontend,(anonymous),frontend/src/app/shell/ThemeSwitch.tsx:20,1,23,100,file
+Frontend,ThemeSwitch,frontend/src/app/shell/ThemeSwitch.tsx:12,1,10,100,file
+Frontend,(anonymous),frontend/src/app/shell/nav.ts:40,1,4,100,file
+Frontend,(anonymous),frontend/src/app/theme/ThemeProvider.tsx:16,1,1,100,file
+Frontend,(anonymous),frontend/src/app/theme/ThemeProvider.tsx:19,1,3,100,file
+Frontend,(anonymous),frontend/src/app/theme/ThemeProvider.tsx:23,1,4,100,file
+Frontend,(anonymous),frontend/src/app/theme/ThemeProvider.tsx:29,1,2,100,file
+Frontend,ThemeProvider,frontend/src/app/theme/ThemeProvider.tsx:14,1,11,100,file
+Frontend,isPreference,frontend/src/app/theme/theme.ts:16,1,4,100,file
+Frontend,applyTheme,frontend/src/app/theme/theme.ts:49,1,4,100,file
+Frontend,watchSystemTheme,frontend/src/app/theme/theme.ts:54,1,1,100,file
+Frontend,(anonymous),frontend/src/app/theme/theme.ts:56,1,1,100,file
+Frontend,(anonymous),frontend/src/app/theme/theme.ts:60,1,3,100,file
+Frontend,RestoringSession,frontend/src/auth/RestoringSession.tsx:5,1,10,100,file
+Frontend,(anonymous),frontend/src/auth/SessionProvider.tsx:28,1,3,76,file
+Frontend,(anonymous),frontend/src/auth/SessionProvider.tsx:32,1,4,76,file
+Frontend,(anonymous),frontend/src/auth/appSession.ts:8,1,1,100,file
+Frontend,isAdmin,frontend/src/auth/roles.ts:22,1,3,100,file
+Frontend,getState,frontend/src/auth/session.ts:76,1,1,93,file
+Frontend,subscribe,frontend/src/auth/session.ts:78,1,1,93,file
+Frontend,(anonymous),frontend/src/auth/session.ts:80,1,3,93,file
+Frontend,(anonymous),frontend/src/auth/session.ts:78,1,4,93,file
+Frontend,if,frontend/src/auth/session.ts:87,1,3,93,file
+Frontend,if,frontend/src/auth/session.ts:116,1,3,93,file
+Frontend,(anonymous),frontend/src/auth/session.ts:153,1,3,93,file
+Frontend,(anonymous),frontend/src/auth/session.ts:217,1,3,93,file
+Frontend,useSession,frontend/src/auth/sessionContext.ts:17,1,5,50,file
+Frontend,readable,frontend/src/catalog/catalogModel.ts:2,1,5,88,file
+Frontend,(anonymous),frontend/src/catalog/catalogModel.ts:14,1,1,88,file
+Frontend,DataTable,frontend/src/components/DataTable.tsx:29,1,11,89,file
+Frontend,(anonymous),frontend/src/components/DataTable.tsx:47,1,1,89,file
+Frontend,Loading,frontend/src/components/PageStates.tsx:38,1,3,100,file
+Frontend,LoadFailed,frontend/src/components/PageStates.tsx:43,1,8,100,file
+Frontend,Empty,frontend/src/components/PageStates.tsx:66,1,3,100,file
+Frontend,Sheet,frontend/src/components/Sheet.tsx:20,1,13,100,file
+Frontend,(anonymous),frontend/src/components/code/CodeView.tsx:69,1,1,82,file
+Frontend,(anonymous),frontend/src/components/code/CodeView.tsx:77,1,3,82,file
+Frontend,(anonymous),frontend/src/components/code/CodeView.tsx:126,1,4,82,file
+Frontend,CodeView,frontend/src/components/code/CodeView.tsx:52,1,19,82,file
+Frontend,showProblems,frontend/src/components/code/CodeView.tsx:175,1,5,82,file
+Frontend,tint,frontend/src/components/code/codeTheme.ts:16,1,2,100,file
+Frontend,underline,frontend/src/components/code/codeTheme.ts:18,1,2,100,file
+Frontend,(anonymous),frontend/src/components/code/diagnostics.ts:35,1,1,100,file
+Frontend,(anonymous),frontend/src/components/code/diagnostics.ts:35,1,1,100,file
+Frontend,yamlSyntaxErrors,frontend/src/components/code/diagnostics.ts:22,1,10,100,file
+Frontend,ownScore,frontend/src/components/scoreBarModel.ts:58,1,4,100,file
+Frontend,isInherited,frontend/src/components/scoreBarModel.ts:63,1,4,100,file
+Frontend,(anonymous),frontend/src/components/scoreBarModel.ts:73,1,1,100,file
+Frontend,percentOfScale,frontend/src/components/scoreBarModel.ts:81,1,4,100,file
+Frontend,(anonymous),frontend/src/components/scoreBarModel.ts:96,1,1,100,file
+Frontend,(anonymous),frontend/src/components/scoreBarModel.ts:98,1,11,100,file
+Frontend,segments,frontend/src/components/scoreBarModel.ts:95,1,6,100,file
+Frontend,(anonymous),frontend/src/components/scoreBarModel.ts:113,1,1,100,file
+Frontend,endPercent,frontend/src/components/scoreBarModel.ts:112,1,3,100,file
+Frontend,(anonymous),frontend/src/components/toast/ToastProvider.tsx:24,1,1,0,file
+Frontend,(anonymous),frontend/src/components/toast/ToastProvider.tsx:21,1,5,0,file
+Frontend,(anonymous),frontend/src/components/toast/ToastProvider.tsx:36,1,1,0,file
+Frontend,(anonymous),frontend/src/components/toast/ToastProvider.tsx:36,1,1,0,file
+Frontend,(anonymous),frontend/src/components/toast/ToastProvider.tsx:31,1,9,0,file
+Frontend,ToastProvider,frontend/src/components/toast/ToastProvider.tsx:17,1,14,0,file
+Frontend,cn,frontend/src/lib/cn.ts:5,1,3,100,file
+Frontend,formatScore,frontend/src/lib/format.ts:6,1,4,95,file
+Frontend,(anonymous),frontend/src/lib/format.ts:31,1,1,95,file
+Frontend,formatTimeOfDay,frontend/src/lib/format.ts:29,1,6,95,file
+Frontend,formatPercent,frontend/src/lib/format.ts:59,1,4,95,file
+Frontend,(anonymous),frontend/src/lib/useMediaQuery.ts:9,1,1,100,file
+Frontend,(anonymous),frontend/src/lib/useMediaQuery.ts:11,1,1,100,file
+Frontend,(anonymous),frontend/src/lib/useMediaQuery.ts:15,1,3,100,file
+Frontend,read,frontend/src/lib/useMediaQuery.ts:21,1,2,100,file
+Frontend,(anonymous),frontend/src/lib/useMediaQuery.ts:23,1,1,100,file
+Frontend,(anonymous),frontend/src/pages/AnalyticsPage.tsx:37,1,3,62,file
+Frontend,AnalyticsPage,frontend/src/pages/AnalyticsPage.tsx:35,1,19,62,file
+Frontend,queryFn,frontend/src/pages/AnalyticsPage.tsx:60,1,1,62,file
+Frontend,body,frontend/src/pages/AnalyticsPage.tsx:81,1,4,62,file
+Frontend,(anonymous),frontend/src/pages/AnalyticsPage.tsx:146,1,5,62,file
+Frontend,queryFn,frontend/src/pages/AnalyticsPage.tsx:178,1,2,62,file
+Frontend,body,frontend/src/pages/AnalyticsPage.tsx:211,1,4,62,file
+Frontend,(anonymous),frontend/src/pages/AnalyticsPage.tsx:257,1,1,62,file
+Frontend,cell,frontend/src/pages/AnalyticsPage.tsx:261,1,2,62,file
+Frontend,cell,frontend/src/pages/AnalyticsPage.tsx:271,1,1,62,file
+Frontend,cell,frontend/src/pages/AnalyticsPage.tsx:272,1,1,62,file
+Frontend,cell,frontend/src/pages/AnalyticsPage.tsx:277,1,2,62,file
+Frontend,cell,frontend/src/pages/AnalyticsPage.tsx:280,1,1,62,file
+Frontend,queryFn,frontend/src/pages/AnalyticsPage.tsx:285,1,1,62,file
+Frontend,body,frontend/src/pages/AnalyticsPage.tsx:303,1,4,62,file
+Frontend,queryFn,frontend/src/pages/AssistantPage.tsx:58,1,2,92,file
+Frontend,(anonymous),frontend/src/pages/AssistantPage.tsx:56,1,4,92,file
+Frontend,queryFn,frontend/src/pages/AssistantPage.tsx:69,1,2,92,file
+Frontend,(anonymous),frontend/src/pages/AssistantPage.tsx:78,1,3,92,file
+Frontend,(anonymous),frontend/src/pages/AssistantPage.tsx:88,1,1,92,file
+Frontend,setDraft,frontend/src/pages/AssistantPage.tsx:87,1,3,92,file
+Frontend,(anonymous),frontend/src/pages/AssistantPage.tsx:117,1,1,92,file
+Frontend,queryFn,frontend/src/pages/AssistantPage.tsx:126,1,1,92,file
+Frontend,thread,frontend/src/pages/AssistantPage.tsx:158,1,2,92,file
+Frontend,(anonymous),frontend/src/pages/AssistantPage.tsx:161,1,1,92,file
+Frontend,(anonymous),frontend/src/pages/AssistantPage.tsx:159,1,4,92,file
+Frontend,(anonymous),frontend/src/pages/AssistantPage.tsx:243,1,3,92,file
+Frontend,(anonymous),frontend/src/pages/AssistantPage.tsx:245,1,3,92,file
+Frontend,(anonymous),frontend/src/pages/AssistantPage.tsx:249,1,1,92,file
+Frontend,queryFn,frontend/src/pages/CatalogPage.tsx:28,1,1,81,file
+Frontend,body,frontend/src/pages/CatalogPage.tsx:50,1,4,81,file
+Frontend,Fact,frontend/src/pages/CatalogPage.tsx:93,1,8,81,file
+Frontend,queryFn,frontend/src/pages/CatalogPage.tsx:108,1,1,81,file
+Frontend,mutationFn,frontend/src/pages/CatalogPage.tsx:145,1,2,81,file
+Frontend,onSuccess,frontend/src/pages/CatalogPage.tsx:146,1,4,81,file
+Frontend,NotFoundPage,frontend/src/pages/NotFoundPage.tsx:5,1,12,100,file
+Frontend,queryFn,frontend/src/pages/OverviewPage.tsx:56,1,2,90,file
+Frontend,queryFn,frontend/src/pages/OverviewPage.tsx:62,1,2,90,file
+Frontend,queryFn,frontend/src/pages/OverviewPage.tsx:67,1,2,90,file
+Frontend,(anonymous),frontend/src/pages/OverviewPage.tsx:69,1,6,90,file
+Frontend,(anonymous),frontend/src/pages/OverviewPage.tsx:79,1,1,90,file
+Frontend,queryFn,frontend/src/pages/OverviewPage.tsx:223,1,1,90,file
+Frontend,queryFn,frontend/src/pages/OverviewPage.tsx:305,1,1,90,file
+Frontend,queryFn,frontend/src/pages/QueuePage.tsx:53,1,2,92,file
+Frontend,(anonymous),frontend/src/pages/QueuePage.tsx:56,1,3,92,file
+Frontend,(anonymous),frontend/src/pages/QueuePage.tsx:71,1,3,92,file
+Frontend,(anonymous),frontend/src/pages/QueuePage.tsx:144,1,3,92,file
+Frontend,(anonymous),frontend/src/pages/QueuePage.tsx:147,1,3,92,file
+Frontend,(anonymous),frontend/src/pages/QueuePage.tsx:209,1,5,92,file
+Frontend,NothingWaiting,frontend/src/pages/QueuePage.tsx:202,1,12,92,file
+Frontend,queryFn,frontend/src/pages/RunsPage.tsx:59,1,1,92,file
+Frontend,(anonymous),frontend/src/pages/RunsPage.tsx:60,1,4,92,file
+Frontend,cell,frontend/src/pages/RunsPage.tsx:92,1,2,92,file
+Frontend,(anonymous),frontend/src/pages/RunsPage.tsx:109,1,1,92,file
+Frontend,cell,frontend/src/pages/RunsPage.tsx:110,1,1,92,file
+Frontend,cell,frontend/src/pages/RunsPage.tsx:114,1,2,92,file
+Frontend,cell,frontend/src/pages/RunsPage.tsx:119,1,5,92,file
+Frontend,body,frontend/src/pages/RunsPage.tsx:183,1,4,92,file
+Frontend,Filters,frontend/src/pages/RunsPage.tsx:211,1,10,92,file
+Frontend,useQuery,frontend/src/pages/RunsPage.tsx:223,1,1,92,file
+Frontend,(anonymous),frontend/src/pages/RunsPage.tsx:225,1,1,92,file
+Frontend,(anonymous),frontend/src/pages/RunsPage.tsx:233,1,3,92,file
+Frontend,(anonymous),frontend/src/pages/RunsPage.tsx:237,1,5,92,file
+Frontend,(anonymous),frontend/src/pages/RunsPage.tsx:243,1,3,92,file
+Frontend,(anonymous),frontend/src/pages/RunsPage.tsx:248,1,3,92,file
+Frontend,(anonymous),frontend/src/pages/RunsPage.tsx:252,1,5,92,file
+Frontend,Select,frontend/src/pages/RunsPage.tsx:262,1,11,92,file
+Frontend,return,frontend/src/pages/RunsPage.tsx:275,1,7,92,file
+Frontend,SignInPage,frontend/src/pages/SignInPage.tsx:67,1,10,90,file
+Frontend,(anonymous),frontend/src/pages/SignInPage.tsx:184,1,1,90,file
+Frontend,(anonymous),frontend/src/pages/SignInPage.tsx:183,1,3,90,file
+Frontend,(anonymous),frontend/src/pages/SignInPage.tsx:188,1,5,90,file
+Frontend,Notice,frontend/src/pages/SignInPage.tsx:261,1,16,90,file
+Frontend,(anonymous),frontend/src/queue/QueueRanking.tsx:58,1,8,77,file
+Frontend,(anonymous),frontend/src/queue/QueueRanking.tsx:130,1,3,77,file
+Frontend,Fact,frontend/src/queue/QueueRanking.tsx:147,1,7,77,file
+Frontend,(anonymous),frontend/src/queue/QueueRanking.tsx:173,1,9,77,file
+Frontend,(anonymous),frontend/src/queue/QueueRanking.tsx:207,1,10,77,file
+Frontend,capitalised,frontend/src/queue/QueueRanking.tsx:224,1,3,77,file
+Frontend,(anonymous),frontend/src/queue/ScoreKey.tsx:13,1,6,100,file
+Frontend,ScoreKey,frontend/src/queue/ScoreKey.tsx:9,1,9,100,file
+Frontend,NumbersSwitch,frontend/src/queue/ScoreKey.tsx:26,1,6,100,file
+Frontend,useQueueApi,frontend/src/queue/queueApiContext.ts:5,1,4,100,file
+Frontend,(anonymous),frontend/src/queue/queueModel.ts:64,1,1,100,file
+Frontend,ranked,frontend/src/queue/queueModel.ts:63,1,4,100,file
+Frontend,ChainDetail,frontend/src/runs/ChainDetail.tsx:22,1,8,88,file
+Frontend,queryFn,frontend/src/runs/ChainDetail.tsx:34,1,1,88,file
+Frontend,(anonymous),frontend/src/runs/ChainDetail.tsx:52,1,1,88,file
+Frontend,(anonymous),frontend/src/runs/ChainDetail.tsx:53,1,1,88,file
+Frontend,(anonymous),frontend/src/runs/ChainDetail.tsx:56,1,1,88,file
+Frontend,(anonymous),frontend/src/runs/ChainDetail.tsx:105,1,11,88,file
+Frontend,body,frontend/src/runs/ChainDetail.tsx:119,1,4,88,file
+Frontend,queryFn,frontend/src/runs/ExplainFailure.tsx:21,1,2,62,file
+Frontend,(anonymous),frontend/src/runs/ExplainFailure.tsx:83,1,1,62,file
+Frontend,(anonymous),frontend/src/runs/ExplainFailure.tsx:88,1,3,62,file
+Frontend,(anonymous),frontend/src/runs/LogTail.tsx:76,1,1,77,file
+Frontend,(anonymous),frontend/src/runs/LogTail.tsx:81,1,4,77,file
+Frontend,(anonymous),frontend/src/runs/LogTail.tsx:52,1,11,77,file
+Frontend,(anonymous),frontend/src/runs/LogTail.tsx:114,1,1,77,file
+Frontend,(anonymous),frontend/src/runs/LogTail.tsx:113,1,3,77,file
+Frontend,(anonymous),frontend/src/runs/LogTail.tsx:124,1,10,77,file
+Frontend,chainQuery,frontend/src/runs/runsModel.ts:71,1,16,83,file
+Frontend,(anonymous),frontend/src/runs/runsModel.ts:101,1,1,83,file
+Frontend,(anonymous),frontend/src/runs/runsModel.ts:106,1,1,83,file
+Frontend,(anonymous),frontend/src/runs/runsModel.ts:110,1,1,83,file
+Frontend,(anonymous),frontend/src/runs/runsModel.ts:125,1,1,83,file
+Frontend,finishedRuns,frontend/src/runs/runsModel.ts:124,1,3,83,file
+Frontend,ChatList,frontend/src/workspace/ChatList.tsx:12,1,9,100,file
+Frontend,(anonymous),frontend/src/workspace/ChatList.tsx:21,1,1,100,file
+Frontend,(anonymous),frontend/src/workspace/ChatList.tsx:36,1,3,100,file
+Frontend,Clarification,frontend/src/workspace/Clarification.tsx:11,1,9,100,file
+Frontend,Composer,frontend/src/workspace/Composer.tsx:27,1,13,96,file
+Frontend,(anonymous),frontend/src/workspace/Composer.tsx:40,1,1,96,file
+Frontend,(anonymous),frontend/src/workspace/Composer.tsx:43,1,1,96,file
+Frontend,update,frontend/src/workspace/Composer.tsx:79,1,5,96,file
+Frontend,accept,frontend/src/workspace/Composer.tsx:85,1,5,96,file
+Frontend,(anonymous),frontend/src/workspace/Composer.tsx:130,1,4,96,file
+Frontend,(anonymous),frontend/src/workspace/Composer.tsx:151,1,4,96,file
+Frontend,(anonymous),frontend/src/workspace/Composer.tsx:209,1,4,96,file
+Frontend,EmptyState,frontend/src/workspace/EmptyState.tsx:11,1,8,100,file
+Frontend,(anonymous),frontend/src/workspace/EmptyState.tsx:29,1,3,100,file
+Frontend,(anonymous),frontend/src/workspace/EmptyState.tsx:27,1,11,100,file
+Frontend,FallbackNotice,frontend/src/workspace/FallbackNotice.tsx:7,1,11,100,file
+Frontend,(anonymous),frontend/src/workspace/IntentCard.tsx:38,1,1,71,file
+Frontend,IntentEditor,frontend/src/workspace/IntentCard.tsx:120,1,11,71,file
+Frontend,(anonymous),frontend/src/workspace/IntentCard.tsx:131,1,1,71,file
+Frontend,(anonymous),frontend/src/workspace/IntentCard.tsx:144,1,1,71,file
+Frontend,(anonymous),frontend/src/workspace/IntentCard.tsx:175,1,1,71,file
+Frontend,(anonymous),frontend/src/workspace/IntentCard.tsx:190,1,3,71,file
+Frontend,(anonymous),frontend/src/workspace/IntentCard.tsx:198,1,5,71,file
+Frontend,(anonymous),frontend/src/workspace/IntentCard.tsx:208,1,5,71,file
+Frontend,(anonymous),frontend/src/workspace/IntentCard.tsx:218,1,5,71,file
+Frontend,(anonymous),frontend/src/workspace/IntentCard.tsx:227,1,5,71,file
+Frontend,IntentMessage,frontend/src/workspace/IntentMessage.tsx:23,1,18,83,file
+Frontend,queryFn,frontend/src/workspace/IntentMessage.tsx:45,1,1,83,file
+Frontend,mutationFn,frontend/src/workspace/IntentMessage.tsx:49,1,2,83,file
+Frontend,onSuccess,frontend/src/workspace/IntentMessage.tsx:50,1,4,83,file
+Frontend,mutationFn,frontend/src/workspace/IntentMessage.tsx:57,1,2,83,file
+Frontend,onSuccess,frontend/src/workspace/IntentMessage.tsx:58,1,3,83,file
+Frontend,(anonymous),frontend/src/workspace/IntentMessage.tsx:69,1,3,83,file
+Frontend,(anonymous),frontend/src/workspace/IntentMessage.tsx:72,1,1,83,file
+Frontend,queryFn,frontend/src/workspace/LiveRunCard.tsx:26,1,2,83,file
+Frontend,(anonymous),frontend/src/workspace/PreviewPanel.tsx:14,1,1,85,file
+Frontend,(anonymous),frontend/src/workspace/PreviewPanel.tsx:15,1,1,85,file
+Frontend,(anonymous),frontend/src/workspace/PreviewPanel.tsx:86,1,9,85,file
+Frontend,(anonymous),frontend/src/workspace/PreviewPanel.tsx:186,1,3,85,file
+Frontend,(anonymous),frontend/src/workspace/PreviewPanel.tsx:194,1,5,85,file
+Frontend,(anonymous),frontend/src/workspace/ProgressSteps.tsx:20,1,1,100,file
+Frontend,ProgressSteps,frontend/src/workspace/ProgressSteps.tsx:15,1,12,100,file
+Frontend,ReplyView,frontend/src/workspace/ReplyView.tsx:17,1,16,62,file
+Frontend,(anonymous),frontend/src/workspace/ReplyView.tsx:114,1,3,62,file
+Frontend,CancelRunning,frontend/src/workspace/ReplyView.tsx:126,1,8,62,file
+Frontend,(anonymous),frontend/src/workspace/RunCard.tsx:71,1,5,96,file
+Frontend,(anonymous),frontend/src/workspace/RunCard.tsx:88,1,13,96,file
+Frontend,SpecEditor,frontend/src/workspace/SpecEditor.tsx:13,1,10,100,file
+Frontend,Thread,frontend/src/workspace/Thread.tsx:12,1,13,100,file
+Frontend,MessageText,frontend/src/workspace/Thread.tsx:61,1,3,100,file
+Frontend,(anonymous),frontend/src/workspace/WorkspaceLayout.tsx:130,1,11,94,file
+Frontend,useAssistantApi,frontend/src/workspace/assistantApiContext.ts:5,1,4,100,file
+Frontend,branches,frontend/src/workspace/assistantApiContext.ts:12,1,2,100,file
+Frontend,conversations,frontend/src/workspace/assistantApiContext.ts:13,1,2,100,file
+Frontend,conversation,frontend/src/workspace/assistantApiContext.ts:14,1,2,100,file
+Frontend,command,frontend/src/workspace/assistantApiContext.ts:15,1,2,100,file
+Frontend,pipeline,frontend/src/workspace/assistantApiContext.ts:16,1,2,100,file
+Frontend,chain,frontend/src/workspace/assistantApiContext.ts:18,1,2,100,file
+Frontend,(anonymous),frontend/src/workspace/composerSuggestions.ts:57,1,1,95,file
+Frontend,(anonymous),frontend/src/workspace/previewSummary.ts:14,1,1,79,file
+Frontend,(anonymous),frontend/src/workspace/progress.ts:21,1,1,75,file
+Frontend,(anonymous),frontend/src/workspace/progress.ts:25,1,1,75,file
+Frontend,jobState,frontend/src/workspace/runCardModel.ts:48,1,4,87,file
+Frontend,(anonymous),frontend/src/workspace/runCardModel.ts:73,1,1,87,file
+Frontend,unquote,frontend/src/workspace/specProblems.ts:47,1,4,81,file
+Frontend,parsePath,frontend/src/workspace/specProblems.ts:90,1,3,81,file
+Frontend,(anonymous),frontend/src/workspace/threadOrder.ts:13,1,1,83,file
+Frontend,(anonymous),frontend/src/workspace/threadOrder.ts:22,1,1,83,file
+Frontend,inThreadOrder,frontend/src/workspace/threadOrder.ts:11,1,7,83,file
+Frontend,pipelineIds,frontend/src/workspace/usePipelinePreview.ts:23,1,4,72,file
+Frontend,(anonymous),frontend/src/workspace/usePipelinePreview.ts:43,1,1,72,file
+Frontend,mutationFn,frontend/src/workspace/usePipelinePreview.ts:87,1,2,72,file
+Frontend,(anonymous),frontend/src/workspace/usePipelinePreview.ts:91,1,1,72,file
+Frontend,(anonymous),frontend/src/workspace/usePipelinePreview.ts:91,1,1,72,file
+Frontend,onSuccess,frontend/src/workspace/usePipelinePreview.ts:88,1,6,72,file
+Frontend,(anonymous),frontend/src/workspace/usePipelinePreview.ts:110,1,1,72,file
+Frontend,setExplanation,frontend/src/workspace/usePipelinePreview.ts:109,1,3,72,file
+Frontend,(anonymous),frontend/src/workspace/usePipelinePreview.ts:118,1,1,72,file
+Frontend,onChange,frontend/src/workspace/usePipelinePreview.ts:117,1,3,72,file
+Frontend,(anonymous),frontend/src/workspace/usePipelinePreview.ts:135,1,3,72,file
+Frontend,(anonymous),frontend/src/workspace/usePipelinePreview.ts:138,1,3,72,file
+Frontend,(anonymous),frontend/src/workspace/usePipelinePreview.ts:141,1,3,72,file
+Frontend,constructor,frontend/src/ws/LiveEventsClient.ts:65,1,3,84,file
+Frontend,start,frontend/src/ws/LiveEventsClient.ts:70,1,5,84,file
+Frontend,stop,frontend/src/ws/LiveEventsClient.ts:76,1,8,84,file
+Frontend,restart,frontend/src/ws/LiveEventsClient.ts:86,1,4,84,file
+Frontend,getStatus,frontend/src/ws/LiveEventsClient.ts:91,1,1,84,file
+Frontend,(anonymous),frontend/src/ws/LiveEventsClient.ts:96,1,3,84,file
+Frontend,subscribe,frontend/src/ws/LiveEventsClient.ts:94,1,4,84,file
+Frontend,(anonymous),frontend/src/ws/LiveEventsClient.ts:101,1,1,84,file
+Frontend,(anonymous),frontend/src/ws/LiveEventsClient.ts:103,1,3,84,file
+Frontend,onStatus,frontend/src/ws/LiveEventsClient.ts:101,1,4,84,file
+Frontend,(anonymous),frontend/src/ws/LiveEventsClient.ts:119,1,1,84,file
+Frontend,socket.onopen,frontend/src/ws/LiveEventsClient.ts:123,1,5,84,file
+Frontend,socket.onerror,frontend/src/ws/LiveEventsClient.ts:169,1,1,84,file
+Frontend,(anonymous),frontend/src/ws/LiveEventsClient.ts:177,1,4,84,file
+Frontend,scheduleReconnect,frontend/src/ws/LiveEventsClient.ts:172,1,7,84,file
+Frontend,(anonymous),frontend/src/ws/LiveEventsClient.ts:185,1,3,84,file
+Frontend,armWatchdog,frontend/src/ws/LiveEventsClient.ts:183,1,4,84,file
+Frontend,clearTimers,frontend/src/ws/LiveEventsClient.ts:190,1,6,84,file
+Frontend,(anonymous),frontend/src/ws/LiveEventsProvider.tsx:17,1,3,100,file
+Frontend,(anonymous),frontend/src/ws/LiveEventsProvider.tsx:15,1,4,100,file
+Frontend,LiveEventsProvider,frontend/src/ws/LiveEventsProvider.tsx:8,1,10,100,file
+Frontend,useLiveEvent,frontend/src/ws/liveEventsContext.ts:17,1,4,67,file
+Frontend,useEffect,frontend/src/ws/liveEventsContext.ts:23,1,3,67,file
+Frontend,(anonymous),frontend/src/ws/liveEventsContext.ts:27,1,4,67,file
+Frontend,useLiveStatus,frontend/src/ws/liveEventsContext.ts:37,1,4,67,file

@@ -20,15 +20,19 @@ import io.jenkins.plugins.queueoptimizer.scoring.ScoredJob;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import jenkins.model.Jenkins;
 
 /**
  * Orders the buildable queue by the report's priority score.
@@ -51,9 +55,20 @@ public class DynamicQueueSorter extends QueueSorter {
     /** One heap for the instance, exposed for the API and the tests. */
     private static final PriorityJobHeap HEAP = new PriorityJobHeap();
 
+    /**
+     * The latest score of every item scored since it entered the queue, kept until it leaves.
+     *
+     * <p>The heap holds only the items buildable at the last pass. An item handed to an executor is
+     * no longer buildable, so the next pass drops it from the heap before its QUEUE_LEFT event is
+     * recorded, and the event lost its score. The metrics recorder takes the score from here
+     * instead, so every scored item's exit carries the score it was dispatched on.
+     */
+    private static final ConcurrentMap<Long, ScoredJob> LAST_SCORES = new ConcurrentHashMap<>();
+
     private final Object cacheLock = new Object();
     private Set<Long> cachedItemIds = Collections.emptySet();
-    private long cachedMinute = -1;
+    private Set<Long> cachedHeldIds = Collections.emptySet();
+    private long cachedBucket = -1;
     private Map<Long, ScoredJob> cachedScores = Collections.emptyMap();
 
     private final AtomicLong sorts = new AtomicLong();
@@ -72,12 +87,19 @@ public class DynamicQueueSorter extends QueueSorter {
         if (!config.isOptimizerEnabled()) {
             // Observe-only, the experiment's baseline arm. Arrival order is preserved exactly,
             // while the metrics recorders keep working, so both arms are measured by the same
-            // code path rather than by two different Jenkins installations.
+            // code path rather than by two different Jenkins installations. The heap is emptied
+            // too, so the ranking reports these items as unscored instead of showing scores from
+            // before the optimizer was switched off.
+            HEAP.replaceAll(Collections.emptyList());
             return;
         }
-        if (items == null || items.size() < 2) {
+        if (items == null || items.isEmpty()) {
+            // Nothing is buildable, so nothing is ranked: an empty heap, not the last items scored.
+            HEAP.replaceAll(Collections.emptyList());
             return;
         }
+        // A single item is scored too. Returning early below two items left a lone job unscored,
+        // or showing a score and aging bonus from an earlier pass (found in T6.6).
 
         long startedAt = System.nanoTime();
         try {
@@ -88,6 +110,7 @@ public class DynamicQueueSorter extends QueueSorter {
             // as items left the queue, and the plugin silently degraded to arrival order while
             // still reporting itself enabled. CacheEvictionRegressionIT guards this.
             HEAP.replaceAll(scores.values());
+            LAST_SCORES.putAll(scores);
 
             items.sort((a, b) -> {
                 ScoredJob left = scores.get(a.getId());
@@ -122,32 +145,89 @@ public class DynamicQueueSorter extends QueueSorter {
     /**
      * Scores every item, reusing the previous pass's scores when nothing relevant has changed.
      *
-     * <p>The cache key is the set of item ids plus the current minute. Including the minute is
-     * what refreshes the aging bonus at least once a minute, matching the report's periodic
-     * rescore, without recomputing estimates on every maintenance pass.
+     * <p>The cache key is the set of buildable item ids, the set of held item ids, and the time
+     * bucket of the rescore interval: the current minute at the default of 60 seconds. Including
+     * the bucket is what refreshes the aging bonus at least once an interval, matching the report's
+     * periodic rescore, without recomputing estimates on every maintenance pass. Until D-072 the
+     * minute was fixed and the rescore interval setting did nothing. The held items are part of
+     * the key, so a job joining or leaving a group rescores its
+     * producer. They are a separate set because an item moving from held to buildable must
+     * rescore too: keyed on one set of all ids, the gate's release left that set unchanged, the
+     * cached scores had none for the released item, and it ranked behind lower work for a pass
+     * (found by GroupInheritanceIT while D-067 was being fixed).
      */
     private Map<Long, ScoredJob> scoreWithCache(List<Queue.BuildableItem> items, OptimizerConfiguration config) {
+        List<Queue.Item> scope = scoringScope(items);
         Set<Long> itemIds = new LinkedHashSet<>();
         for (Queue.BuildableItem item : items) {
             itemIds.add(item.getId());
         }
-        long minute = System.currentTimeMillis() / 60_000L;
+        Set<Long> heldIds = new LinkedHashSet<>();
+        for (Queue.Item item : scope) {
+            if (!itemIds.contains(item.getId())) {
+                heldIds.add(item.getId());
+            }
+        }
+        long bucket = rescoreBucket(System.currentTimeMillis(), config.getRescoreIntervalSeconds());
 
         synchronized (cacheLock) {
-            if (minute == cachedMinute && itemIds.equals(cachedItemIds)) {
+            if (bucket == cachedBucket && itemIds.equals(cachedItemIds) && heldIds.equals(cachedHeldIds)) {
                 cacheHits.incrementAndGet();
                 return cachedScores;
             }
-            Map<Long, ScoredJob> fresh = score(items, config);
+            Map<Long, ScoredJob> fresh = score(items, scope, config);
             cachedItemIds = itemIds;
-            cachedMinute = minute;
+            cachedHeldIds = heldIds;
+            cachedBucket = bucket;
             cachedScores = fresh;
             return fresh;
         }
     }
 
-    private Map<Long, ScoredJob> score(List<Queue.BuildableItem> items, OptimizerConfiguration config) {
-        DependencySnapshot dependencies = DependencyGraphService.build(items);
+    /**
+     * Which rescore interval a moment falls in: the time part of the cache key. At the default of
+     * 60 seconds it is the current minute, as {@code BUILD_PROMPT.md} Part 4.3.7 states. An interval
+     * below one second counts as one, so a mistyped 0 cannot divide by zero; form validation
+     * refuses it anyway.
+     */
+    static long rescoreBucket(long nowMillis, int rescoreIntervalSeconds) {
+        return nowMillis / (1000L * Math.max(1, rescoreIntervalSeconds));
+    }
+
+    /**
+     * The items scored together: the buildable ones, which this pass orders, and the ones the queue
+     * is holding back, which it cannot.
+     *
+     * <p>Grouping the buildable items alone left every producer in a group of one. A job that
+     * {@code DependencyGate} holds is never buildable while its upstream waits, so the upstream
+     * and the work waiting on it were never seen together: D was always 0, and the group
+     * inheritance of report Appendix C could not happen in a live queue. A LOW build ran behind
+     * every MEDIUM job while the HIGH job it unblocks waited too (D-067, GroupInheritanceIT).
+     *
+     * <p>The held items come from the queue's snapshot, at most one maintenance pass old: the same
+     * view the gate and the ranking API read. Maintenance runs as SYSTEM, so none is filtered out.
+     */
+    private static List<Queue.Item> scoringScope(List<Queue.BuildableItem> buildable) {
+        List<Queue.Item> scope = new ArrayList<>(buildable);
+        Jenkins jenkins = Jenkins.getInstanceOrNull();
+        if (jenkins == null) {
+            return scope;
+        }
+        Set<Long> seen = new HashSet<>();
+        for (Queue.BuildableItem item : buildable) {
+            seen.add(item.getId());
+        }
+        for (Queue.Item item : jenkins.getQueue().getItems()) {
+            if (item instanceof Queue.BlockedItem && seen.add(item.getId())) {
+                scope.add(item);
+            }
+        }
+        return scope;
+    }
+
+    private Map<Long, ScoredJob> score(
+            List<Queue.BuildableItem> items, List<Queue.Item> scope, OptimizerConfiguration config) {
+        DependencySnapshot dependencies = DependencyGraphService.build(scope);
         List<BuildRecord> history = BuildHistoryService.recentBuilds(config.getHistoryWindow());
         SimilarityEstimator estimator = new SimilarityEstimator(
                 config.getEstimatorK(), config.getSimilarityThreshold(), config.getRecencyLambdaPerDay());
@@ -157,8 +237,8 @@ public class DynamicQueueSorter extends QueueSorter {
         Map<String, OptionalLong> estimateByJob = new HashMap<>();
 
         long now = System.currentTimeMillis();
-        List<ScoreInput> inputs = new ArrayList<>(items.size());
-        for (Queue.BuildableItem item : items) {
+        List<ScoreInput> inputs = new ArrayList<>(scope.size());
+        for (Queue.Item item : scope) {
             Optional<Job<?, ?>> resolved = JobResolver.resolve(item);
             if (resolved.isEmpty()) {
                 continue;
@@ -189,9 +269,16 @@ public class DynamicQueueSorter extends QueueSorter {
                 config.getAgingIntervalMinutes(),
                 config.getAgingCap());
 
+        // Held items shaped the groups and lent their scores; only buildable work is ranked.
+        Set<Long> buildable = new HashSet<>();
+        for (Queue.BuildableItem item : items) {
+            buildable.add(item.getId());
+        }
         Map<Long, ScoredJob> byItemId = new HashMap<>();
         for (ScoredJob scored : calculator.scoreAll(inputs)) {
-            byItemId.put(scored.itemId(), scored);
+            if (buildable.contains(scored.itemId())) {
+                byItemId.put(scored.itemId(), scored);
+            }
         }
         return byItemId;
     }
@@ -199,6 +286,15 @@ public class DynamicQueueSorter extends QueueSorter {
     /** The shared heap, for the ranking API and the tests. */
     public static PriorityJobHeap getHeap() {
         return HEAP;
+    }
+
+    /**
+     * The score an item was last given, removed as it is read: called once, when the item leaves
+     * the queue. Empty for an item never scored (the baseline arm, or a job that could not be
+     * resolved).
+     */
+    public static Optional<ScoredJob> takeLastScore(long itemId) {
+        return Optional.ofNullable(LAST_SCORES.remove(itemId));
     }
 
     /** Nanoseconds taken by the most recent sort, for the health endpoint. */

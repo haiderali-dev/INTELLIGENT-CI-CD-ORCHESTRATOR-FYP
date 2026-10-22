@@ -46,10 +46,10 @@ public class QueueMetricsRecorder extends QueueListener {
                 .with("waitMillis", waitMillis)
                 .with("cancelled", item.isCancelled());
 
-        // The score the sorter assigned, so the backend can report why an item ranked where it did
-        // rather than only how long it waited.
-        DynamicQueueSorter.getHeap()
-                .get(item.getId())
+        // The score the sorter last assigned, so the backend can report why an item ranked where it
+        // did rather than only how long it waited. Taken from the sorter's per-item record, not the
+        // heap: by the time an item leaves, a later pass may have rebuilt the heap without it.
+        DynamicQueueSorter.takeLastScore(item.getId())
                 .ifPresent(scored -> event.with("score", round(scored.score()))
                         .with("baseScore", round(scored.baseScore()))
                         .with("agingBonus", round(scored.agingBonus()))

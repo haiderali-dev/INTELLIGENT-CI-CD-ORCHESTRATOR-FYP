@@ -11,6 +11,497 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 6
 
+### D-075 Known vulnerabilities in Vite's development server are fixed within the cooldown
+**Date:** 2026-10-22 · **Status:** accepted (hardening of Phases 1 to 6; Phase 6)
+
+**Found by:** `npm audit`, the frontend-audit step of the testing chapter's evidence campaign at
+`31eb935`.
+- **The finding:** one high vulnerability, `vite` 8.3.0 to 8.3.2, made of six advisories against
+  Vite's development server:
+  - command execution through its editor launcher on Windows (GHSA-r825-w8mm-5pxw,
+    GHSA-698v-4r3x-3vcv, GHSA-587h-7wmj-h5pm);
+  - cross-origin script execution through custom middleware (GHSA-9jrq-w75r-8gcw);
+  - files outside `server.fs.allow` served (GHSA-rq7h-c2jc-7f22);
+  - the start of files exposed through `?vite-wasm-instance` (GHSA-vfpm-58rq-9qcg).
+- **Exposure:** the stack's frontend is the static output of `vite build`, served by nginx, so the
+  product as deployed was not exposed. Developers and the tools that start the development server
+  were, on this Windows machine above all.
+
+**The fix:** `vite` 8.3.4.
+- **Why not 8.3.5:** npm's suggested fix was published on 2026-10-21, inside the seven-day cooldown.
+- **Why 8.3.4 is enough:** it is outside the vulnerable range and is the newest release the cooldown
+  allows. No exception was needed, unlike D-071.
+- **What changed:** only Vite's entry in the lock. Its new dependency ranges are met by the versions
+  already locked.
+
+**Evidence (2026-10-22):**
+- `npm audit`: 1 high before, 0 after.
+- The frontend's lint, typecheck and build are clean, and its 296 tests pass.
+- The frontend image was rebuilt with it, and the gate's Phase 6 image and nginx checks pass.
+
+---
+
+### D-074 The migrations are proved against the models, and every downgrade is run, on PostgreSQL
+**Date:** 2026-10-22 · **Status:** accepted (hardening of Phases 1 to 6; Phase 3)
+
+**The gap.**
+- **A test that never ran.** `test_migrations.py` begins by saying it closes a gap: every other
+  test builds its schema from the models, so a model changed without a matching migration would
+  pass them all until it reached a real PostgreSQL. The test meant to close it,
+  `test_alembic_upgrade_matches_the_models`, was a placeholder that always skipped. So every
+  integration run reported one skipped test and checked nothing.
+- **A gate check that ran nothing.** "Every migration is reversible" only read each `downgrade()`
+  for an `op.` call, and said "all downgrade cleanly" though no downgrade had ever run.
+- **How it was found:** the evidence campaign's register listed the one skipped integration test,
+  and its reason pointed at the placeholder.
+
+**What the tests now do**, on a throwaway database of their own on the stack's PostgreSQL (dropped
+afterwards, so nothing the stack or the end-to-end suite stores is touched):
+- **`test_alembic_upgrade_matches_the_models`:** runs `alembic upgrade head` on a fresh database,
+  and asks alembic's own autogenerate comparison what it would change to match `Base.metadata`,
+  types included. The answer must be nothing. Every table Part 4.4.3 names must exist.
+- **`test_every_migration_downgrades_and_upgrades_again`:** upgrades, downgrades to base (which must
+  leave no table but alembic's own), upgrades again, and compares again. A type or index a downgrade
+  forgot would make the second upgrade fail.
+
+Like the other integration tests, they skip without a stack. The gate's check now runs both after
+its file scan, and counts a skip as a failure.
+
+**Evidence (2026-10-22):**
+- Both passed on the stack's PostgreSQL 16 in 6.6 s.
+- Each was shown to catch its defect, then restored byte for byte:
+  - a column added to a model with no migration failed the first test, which named it
+    (`add_column`, `services`, `mutation_probe`);
+  - a `drop_table` removed from the first migration's `downgrade()` failed the second, as
+    `alembic downgrade base` itself failed.
+- Then both passed again, and the gate's check passed through them.
+
+---
+
+### D-073 What experiments E1 to E3 found about three of the report's claims
+**Date:** 2026-10-22 · **Status:** accepted (the testing chapter's experiments; no code change)
+
+The testing chapter ran three experiments in its evidence campaign at `31eb935`
+(`plugin/src/test/java/.../experiment/`, run on request only). Three of their findings bear on
+what the report says, and none is a defect in the code. Each is recorded here, as a conflict between
+the report and the built system, with its report change in `docs/report-updates.md`.
+
+**1. The plugin's cost (E1, inside a real Jenkins).** Report Section 6.6 says every operation
+completes "in microseconds to a fraction of a millisecond, so the plugin adds no measurable
+overhead", assuming *h*, the history an estimate examines, is at most 50. Measured:
+- **The routine pass bears the claim out.** With 30 items queued, a queue-maintenance pass took
+  0.20 ms with the optimizer off and 0.25 ms with it on (medians).
+- **The full rescore does not.** It took 2.1 ms at 30 items and 82 ms at 200. It runs when the queue
+  changes, and at most once a rescore interval otherwise.
+- **Section 6.6's *h* is the odd one out.** The code reads up to 50 builds of *every job on the
+  controller*, as report Section 6.5 says ("at most the last 50 builds per candidate job"), so *h*
+  grows with the number of jobs. The cost tracked queued items × history records.
+  `BUILD_PROMPT.md` 4.3.5's "up to `historyWindow` recent builds across all jobs" reads either way;
+  the code takes Section 6.5's reading.
+- **No code change.** Only Section 6.6's *h*, and its sentence on overhead, need correcting.
+
+**2. Aging under sustained load (E3, a simulation).** Report Section 6.2 gives the aging bonus the
+job of preventing starvation. Over two hours of random arrivals on one executor:
+- **The result:** with aging on and off, every mean wait agreed within 2% at each of four
+  utilisations, and the LOW band's longest wait at 95% utilisation was 1,253 s both ways.
+- **Why:** the bonus is the same for every band and caps at 0.15 after 15 minutes. Under load, the
+  long-waiting jobs of every band sit at the cap together, and 0.15 is less than the urgency gap
+  between LOW and HIGH (0.35).
+- **No code change:** CLAUDE.md fixes the formula to the report's.
+
+**3. Milestone 2's headline result (recomputed from its files, and E2).** Its HIGH band's wait fell
+from 271.5 s to 39.1 s.
+- **The broken edges:** the same run started a job before a job it depends on had finished on 19
+  of the workload's 20 dependency edges. Milestone 2 never measured this.
+- **What respecting dependencies costs:** in simulation on the same workload, no policy that
+  respects dependencies got the HIGH band below 155.9 s. Version 2's optimizer reached 176.7 s
+  with no edge broken, against FIFO's 271.5 s.
+
+**Also measured, and consistent with the report:** the algorithm alone (E1b) scored, sorted and
+heaped 200 items in 83 µs, and 3,200 in 1.6 ms, growing as O(n log n). The simulator was
+validated against Milestone 2's measured runs before it was used: FIFO within 0.1 s a band, and a
+replay of its plugin's order within 5 s a band.
+
+---
+
+### D-072 The optimizer has a settings page, every setting on it does something, and Maven jobs are tested
+**Date:** 2026-10-22 · **Status:** accepted (hardening of Phases 1 to 6; Phase 2)
+
+**The defect.** `BUILD_PROMPT.md` Part 2.2 lists Milestone 2's known problems, to be fixed and never
+repeated. Problem 4 includes "the global configuration page", and T2.2 asks for
+`OptimizerConfiguration` "(global configuration and JCasC)".
+- **What existed:** the class, its fields, configuration as code and the form checks.
+- **What was missing:** a view. Its resource folder had been created empty on 28 September and never
+  held a file.
+- **The consequence:** Manage Jenkins showed no optimizer section, so the 15 settings of report
+  Appendix D could be changed only through configuration as code, and no page could reach the form
+  checks that `OptimizerConfigurationValidationIT` tests.
+- **How it slipped through:** T2.2 had been ticked on the class alone.
+
+It was found while checking the testing chapter's statement that the plugin has a global
+configuration form.
+
+**What was added:**
+- **A settings page.** `config.jelly` for `OptimizerConfiguration` adds a Dynamic Queue Optimizer
+  section to Manage Jenkins > System, with all 15 settings in Appendix D's terms. Numbers use
+  Jenkins' number input, and fractional ones pass `step="any"` through to it, so that the browser
+  does not mark 0.05 invalid. The token is a password field. The titles avoid parentheses: in a
+  Jelly `${%...}` text they would be read as message arguments.
+- **The weight warning now follows the form.** The three weight checks summed the *saved* weights.
+  That meant nothing while there was no form, and on a form it would warn about the last save, not
+  the values being typed. Each check now takes the other two weights as query parameters, which the
+  page sends with it.
+
+**A setting that did nothing now does what it says.** `rescoreIntervalSeconds` (Appendix D, 60) was
+reported by the API and set by configuration as code, but nothing read it: the sorter's cache key
+used a fixed minute. Showing it on a page would have offered a control with no effect. The key now
+uses the interval's time bucket, `DynamicQueueSorter.rescoreBucket`. At the default of 60 that is
+the current minute, exactly as `BUILD_PROMPT.md` Part 4.3.7 step 2 states, and all three JCasC files
+set 60, so the stack's behaviour is unchanged.
+
+**Maven jobs had never been queued in a test.** Part 2.3 promises freestyle, Maven and Pipeline
+jobs, T2.4 asks `JobResolver` to handle all three, and the resolver's comment said Maven jobs "only
+ever take branch one". No test had made one.
+- **The new test:** `MavenPriorityIT` queues a LOW Maven job, a MEDIUM freestyle job and a HIGH
+  Maven job, in that order, on one executor, and asserts the order they are dispatched in.
+- **What it needs:** the Maven Integration plugin, as a test dependency at the BOM's version. The
+  builds themselves fail at once, since no Maven installation is configured, but dispatch order is
+  decided first.
+- **Not covered:** a Maven job's modules built in parallel. Maven jobs do that only when told to,
+  and those modules queue as jobs of their own.
+
+**Evidence (2026-10-22):**
+- **Each new test failed on the defect it guards,** with the code changed back on purpose, and
+  passed once restored byte for byte:
+  - with the page removed, `thePageHasEverySetting` failed and `aValueTypedOnThePageIsSaved` errored;
+  - with the weight check summing saved weights, `weightsAreCheckedSinglyAndTogether`,
+    `theWeightWarningFollowsTheForm` and the page's weight check failed;
+  - with the bucket fixed at a minute, `RescoreBucketTest` failed 2 of 3 (the third is the default
+    case, unchanged by design);
+  - with Maven jobs left unresolved, `MavenPriorityIT` failed, dispatching
+    `[fs-medium, mvn-low, mvn-high]`.
+- **`mvn -B clean verify`:** BUILD SUCCESS, 121 unit tests (1 skipped) and 97 integration tests,
+  SpotBugs 0, Spotless clean. Jenkins' own `InjectedTest` now parses three views.
+- **jenkins-dev was rebuilt with this plugin.** The gate's Phase 1 image check, which compares the
+  page as well as the classes, passes. So do its bot-token, executor, agent, ranking, health and
+  metrics checks.
+
+---
+
+### D-071 A known vulnerability in `certifi` is fixed inside the seven-day cooldown
+**Date:** 2026-10-22 · **Status:** accepted (hardening of Phases 1 to 6; the testing chapter's
+security testing)
+
+**Found by:** `pip-audit` 2.10.1, run for the testing chapter on the 49 packages the backend image
+installs (`uv export --frozen --no-dev --no-emit-project`, audited with `--require-hashes
+--disable-pip`). It was the first known-vulnerability scan of the backend's dependencies; the
+frontend's had been scanned with `npm audit` since T6.2.
+
+**The vulnerability:** `certifi` 2026.7.22, which `httpx` brings in, carries PYSEC-2026-4320
+(GHSA-6q48-6c7w-9gw2).
+- **The flaw:** its CA bundle trusts `emSign ECC Root CA - G3`, under which eight intermediate CAs
+  have compromised private keys. Anyone holding one of those keys, and on the network path, could
+  present a valid-looking certificate for any host.
+- **Where the backend is exposed:** it trusts that bundle when it calls the model provider over HTTPS
+  (`httpx`, through the `openai` client), and its API key travels on those calls.
+- **Where it is not:** it reaches Git hosting through the `git` command, which has its own trust
+  store, and Jenkins over plain HTTP inside the stack.
+
+**The conflict:** the fix, `certifi` 2026.10.19, was three days old. Every pin in this project is
+the newest release at least seven days old (`docs/versions.md`), so that problems in a new release
+have time to surface.
+
+**Why it was taken anyway:** the cooldown guards against what a new release might contain, and for
+this package that can be checked directly. The new wheel was downloaded beside the locked one, whose
+hash matches `uv.lock`, and every file was compared:
+- `core.py` is identical;
+- `__init__.py` differs only in its version string;
+- the CA bundle differs only by the removal of `emSign ECC Root CA - G3`: 121 roots before, 120
+  after, nothing added;
+- the rest is packaging metadata (the generator's setuptools version).
+
+A known way to impersonate any host, against a change that can be read in full and removes one
+certificate: the fix wins, and the exception is limited to this package.
+
+**The lock was written by the project's own uv.** `uv lock --upgrade-package certifi` changed only
+certifi's entry, and the locked wheel's hash is the one inspected. It ran with uv 0.12.20 from
+`.venv-tools/`, which the backend image also uses. A first attempt with the uv on the machine's
+PATH, 0.12.24, also raised the lockfile's format revision from 3 to 5. It was discarded, since an
+older uv may not read the newer format.
+
+**Evidence (2026-10-22):**
+- `pip-audit` found 1 known vulnerability in 49 packages before the change and none after
+  (`docs/testing/evidence/pip-audit-backend-before.json`, `-after.json`).
+- The 4 live tests passed against the real model provider over TLS with the new bundle.
+- The offline suite: 1730 passed.
+- The backend image was rebuilt and runs `certifi` 2026.10.19, and the gate's Phase 3 image check
+  passes.
+
+---
+
+### D-070 The gate checks that the stack runs what the current source builds
+**Date:** 2026-10-22 · **Status:** accepted (hardening of Phases 1 to 6)
+
+**The defect.** Gate checks that drive the running stack, the stack system tests among them, prove
+nothing about a commit if a container runs an image built from older source, and nothing checked
+for that. Preparing the testing chapter's evidence on 2026-10-21, the frontend container turned out
+to be serving a build from before three frontend commits (`217c78f`, `88a6a9a`, `deded23`). The
+Queue page's held-jobs list (D-066) was absent from its bundle, and the system tests had passed
+against it. The backend and jenkins-dev were current.
+
+**Three checks now ask, one per phase that first drives the container:** Phase 1 for jenkins-dev and
+its agents, Phase 3 for the backend, Phase 6 for the frontend. Each fails with the command that
+fixes it.
+
+**Content, not time.** Comparing an image's build time with the last commit to its sources was tried
+first and fails both ways. An image built from the working tree just before its commit reads as
+stale, which is how this project usually works: the agents were built 16 minutes before their commit
+and are byte for byte current. And a rebuild served from cache keeps the old build time, so "stale"
+could never be cleared. Instead:
+- **The backend, the frontend and the agents:** the check builds the service, and compares the
+  image that results with the image digest Compose recorded on the container when it created it
+  (the label `com.docker.compose.image`). Docker's build cache returns the same image when nothing
+  the build reads has changed. The container's own `Image` field cannot be compared, because this
+  machine runs Docker's containerd image store, where that field names the index the image arrived
+  in.
+- **Provenance attestations are off for every image here** (`provenance: false` in
+  `docker-compose.yml`). An attestation records its build time, so each build had a new index digest
+  even when served wholly from cache: two builds of an unchanged backend gave two different IDs.
+  With it off, they gave the same one twice. The images are local and never pushed, so the
+  attestation recorded nothing anyone reads.
+- **jenkins-dev:** its image copies `plugin/target`'s `.hpi`, and every Maven build writes a new
+  build time into the `.hpi`. So the image changes with every build even when no class does, and
+  the build cache cannot answer. Instead the check compares the classes and resources of the plugin
+  Jenkins expanded and is running with those in `plugin/target`'s `.hpi`, and the bundled jars by
+  name, leaving out META-INF, where the build time is. It compares `plugins.txt` and the plugin
+  installer with the copies in the image. It also fails when a plugin source file is newer than the
+  `.hpi`.
+
+**Found on the way, and fixed: the backend had no `.dockerignore`.** Its build context sent the
+147 MB virtualenv to the daemon on every build, and `COPY app ./app` shipped 76 `.pyc` files from
+the developer's own test runs into the image. Each local test run therefore looked like a source
+change to the build cache. `backend/.dockerignore` now excludes them, along with `.env*`. A fresh
+container from the rebuilt image holds no `.pyc` file.
+
+**Evidence (2026-10-22):**
+- **Before the rebuild:** the checks failed for the frontend, the backend (its context changed with
+  the new `.dockerignore`) and the agents (their image metadata changed with the Compose version).
+- **After the rebuild:** all three passed in two consecutive runs, in 2 to 5 seconds each.
+- **Each failure path was shown to fail:**
+  - a one-line change to `backend/app/__init__.py` failed the backend check, and restoring the file
+    passed it again;
+  - a plugin source file made newer than the `.hpi` failed the jenkins-dev check;
+  - an `.hpi` with one altered class failed it, naming the class.
+
+  Each was restored byte for byte, its modification time included, and passed again.
+- The rebuilt frontend's Queue page bundle contains the held-jobs list.
+
+---
+
+### D-069 White-box measurement: coverage everywhere, mutation testing on the algorithms
+**Date:** 2026-10-20 · **Status:** accepted (hardening of Phases 1 to 6; the testing chapter's
+white-box testing)
+
+**What is measured, and with what.** Statement and branch coverage for all three components:
+JaCoCo 0.8.15 through the Jenkins parent POM's `enable-jacoco` profile for the plugin, coverage.py
+through `pytest-cov` for the backend, and V8 coverage through `@vitest/coverage-v8` for the frontend
+(`npm run coverage`). Mutation testing with PIT for the plugin's algorithm classes only, through an
+opt-in `mutation` profile. Neither changes the ordinary build.
+
+**The backend's coverage was under-reported until the tracer was told about greenlets.** SQLAlchemy's
+async engine runs on greenlets, and coverage.py's default tracer loses the lines after a greenlet
+switch: over the offline suite it reported 87% where 92% had run, and `app/services/auth.py` 67.6%
+where 92.3% had. `[tool.coverage.run]` now sets `concurrency = ["thread", "greenlet"]`, so any run
+of `--cov` is right without flags.
+
+**Why PIT only targets the algorithms.** Scoring, the heap, union-find, Kahn's sort, the estimator
+and the priority levels have no Jenkins imports (CLAUDE.md) and unit tests that run in
+milliseconds, so every mutant meets the whole suite for its package. The Jenkins-facing classes are
+covered by JenkinsRule tests that take seconds each; mutating them would cost hours for little.
+`SchedulerOverheadTest` is excluded: a timing test is the wrong oracle for a mutant.
+
+**Equivalent mutants are named, not counted as gaps.** Eleven survive the final run, and no test can
+tell them from the original: the boundary of `waitMillis <= 0` (a zero wait earns nothing either
+way), both boundaries in `dependencyFactor` and the two in group inheritance (a singleton group or an
+equal score gives the same result), `anyKnown` in `scoreAll` (redundant whenever an estimate is
+present), and five in union-find's union by rank, which change the tree's height but never which
+elements are joined.
+
+**Infeasible branches are named too.** Coverage cannot reach them because the code's own invariants
+rule them out: `maxGroupSize <= 1` with a group of two or more, `!anyKnown` with an estimate, a heap
+entry missing from its own index, and `current.equals(ownName)` in `JobPriorityProperty`'s cycle
+walk, which an earlier check makes unreachable.
+
+**Dead code found and removed** (no callers anywhere): `RevokedTokens.is_revoked`, which `claim()`
+replaced; `constant_time_equals`, since the metrics route compares tokens with
+`secrets.compare_digest` itself; and `PolicyDecision.allowed`.
+
+**What the measurements found, and the tests now closing it:**
+- **Backend:** a refresh or access token whose account no longer exists, the password rehash at
+  sign-in, an unreadable stored hash, expiry of the token denylist, a WebSocket that never sends its
+  auth frame, and the heartbeat of an idle one.
+- **Plugin, coverage:** `MetricsPublisher` (5% of branches), the configuration form's validation
+  (never run), the startup warning about a competing `QueueSorter` (Part 4.3.7), and the cycle
+  walk past its first hop.
+- **Plugin, PIT:** a zero aging interval; an aged job's own score; five missing `unlock()` calls the
+  heap's single-threaded tests could not see; `isEmpty`; `hasUnknownEstimate`; and the estimator's
+  threshold boundary and two documented tie-breaks.
+
+**Evidence:** PIT's first run, before the new tests, killed 150 of 173 mutants (87%); after them,
+162 (94%), the 11 survivors being the equivalent ones above. Those two runs used pitest-maven
+1.30.1; it was then pinned to 1.30.0 under the seven-day cooldown (docs/versions.md), and 1.30.0
+gave the same 173 and 162. Coverage figures and the per-test results are in the testing chapter's
+annexure, from the evidence run at the commit that carries this decision.
+
+---
+
+### D-068 Suspicious activity the backend detects is written to the audit log
+**Date:** 2026-10-20 · **Status:** accepted (hardening of Phases 1 to 6; found tracing the report's
+acceptance criteria for the testing chapter)
+
+Report 4.7.4, User Story 5, criterion 3: "Given suspicious activity occurs, when it is detected, then
+the system logs the event for audit purposes." Part 4.4.3 asks for an audit entry for every policy
+denial, and 4.5.5 for every denial. Failed and refused sign-ins and prompt-injection attempts were
+audited already. Three events the backend detected were not:
+- **A role guard refusing a request**, such as a Developer calling the Admin API: no entry and no
+  log line. Now `access.denied`, naming the method and path, the role needed and the role held.
+- **A spent refresh token coming back**, which signs out its whole family: a log line only. Now
+  `auth.session.reused`, with the account and the caller's address.
+- **A sign-in limit engaging**: nothing at all, because a refused attempt never reaches the code that
+  audits sign-ins. Now `auth.login.limited`, naming the account tried, the limit (per account, or per
+  address across accounts) and the address. Both sign-in limits are checked in the login route's
+  body for this; the per-address one used to be a dependency.
+
+**Bounded, so the log cannot be flooded.** A limit records at most one refusal per caller per window
+(a minute, for every limit today): the one that shows it engaged, and one more for each window it
+keeps engaging. Recording every 429 would let anyone hammering the sign-in page write a row per
+request. Role denials are recorded every time, as 4.4.3 asks; they need a valid session, so they are
+attributable, and the API's 300-a-minute limit bounds them.
+
+**Not looked up.** A limited sign-in is recorded without loading the account, so a refusal takes the
+same time whether or not the account exists.
+
+**Evidence:**
+- `test_suspicious_activity_audit.py`, 9 tests. Four mutants (no role audit, no reuse audit, every
+  refusal recorded, no per-address limit) are each killed by them.
+- `test_acceptance_user_stories.py` reads all of them back through `/api/admin/audit`, as an Admin.
+- Gate: the Phase 3 check "suspicious activity is written to the audit log".
+- The gate's "auth endpoints are rate limited" check follows the route's new shape, and now also
+  runs the tests that see the 429s. It had looked for the single limit D-065 replaced, and failed
+  the gate run of 2026-10-20 (84 of 85).
+
+---
+
+### D-067 Dependency groups are formed over the whole queue, not only the buildable items
+**Date:** 2026-10-20 · **Status:** accepted (hardening of Phases 1 to 6; found planning the testing
+chapter's white-box tests)
+
+**The defect.** The sorter grouped and scored only the items Jenkins handed it, which are the
+buildable ones. The dependency gate holds a consumer out of that list while its upstream is queued
+or building (Part 4.3.8). So an upstream and the work waiting on it were never scored together:
+every producer was a group of one, D was always 0, and group inheritance (Part 4.3.6, report
+Appendix C) could not happen in a live queue. A LOW build that a HIGH deployment waited for ran
+behind every MEDIUM job, and the deployment waited for all of them too.
+- **Why nothing caught it:** `AppendixCExampleTest` and `ScoreComponentTest` build their groups by
+  hand. No integration test queued a consumer behind its producer. The live Queue page's score bars
+  never showed a dependency segment, which fits.
+- **Measured before the fix** (`GroupInheritanceIT`, JenkinsRule, one executor): dispatch order
+  `gi-medium-1, gi-medium-2, gi-medium-3, gi-build-api, gi-deploy-api`; the producer's D was 0.0.
+
+**The fix.** The sorter scores the buildable items together with the items the queue is holding back:
+`Queue.getItems()` filtered to `BlockedItem`, the snapshot the gate and the ranking API already
+read. Queue maintenance runs as SYSTEM (`AtmostOneTaskExecutor` and `SafeTimerTask` both impersonate
+`ACL.SYSTEM2`, read from the 2.568.3 bytecode), so no held item is hidden by permissions. Groups, D
+and inheritance are computed over that scope; only the buildable items are ranked, put in the heap
+and reordered. The formula is unchanged.
+- **The cache key gains the held items, as a set of their own.** In the first version of this fix the
+  key was one set of all ids. When the gate released a consumer that set did not change, the cached
+  scores had none for it, and it ranked behind lower work for a pass. `GroupInheritanceIT` caught it.
+- **A wrong turn, recorded so it is not repeated.** That failure was first blamed on the gate reading
+  a stale queue snapshot, and the gate was changed. A diagnostic print showed the snapshot fresh
+  and the gate right, so the gate change was reverted and the cache key fixed instead.
+
+**Scope.** Part 4.3.4 already passes `List<Queue.Item>` to `DependencyGraphService.build`. Read with
+4.3.7 (the sorter scores the list it is handed) and 4.3.8 (the gate) it left D dead. This follows
+the report's intent, Appendix C's "the group's producer is dispatched before its consumer". T's
+normalisation and `maxGroupSize` now span the held items too: they are part of the queue.
+
+**Evidence:** `GroupInheritanceIT`, 4 tests under JenkinsRule, passed three runs in a row.
+- `producerOfAHeldUrgentJobRunsFirst` and `theRankingShowsTheInheritedScore` failed on the code
+  before the fix, as above.
+- Two mutants of the cache key are killed: held items left out (`aLateConsumerLiftsAWaitingProducer`)
+  and one set of all ids (`aReleasedJobIsRankedAtOnce`, `producerOfAHeldUrgentJobRunsFirst`).
+- `mvn -B verify`: 108 unit tests (1 skipped, as before) and 77 integration tests passed; SpotBugs 0.
+
+---
+
+### D-066 The heap holds exactly the buildable items, scored; held jobs are listed apart
+**Date:** 2026-10-20 · **Status:** accepted (hardening of Phases 1 to 6; found in T6.6)
+
+**The sorter no longer returns early below two items.** It scores a lone buildable item, and
+empties the heap when nothing is buildable or the optimizer is off. Before, a lone waiting job had
+no score, or kept a score and aging bonus from an earlier pass. The heap also kept items that had
+left the queue. This follows CLAUDE.md's rule that the sorter always rebuilds the heap.
+
+**A leaving item keeps the score it was dispatched on.** The heap holds only the items buildable
+at the last pass. An item handed to an executor is no longer buildable, so the next pass dropped it
+before its QUEUE_LEFT event read its score. That race had always existed, with any queue of two or
+more. The sorter now keeps each item's latest score in a map until the item leaves, and the
+recorder takes it from there, once.
+
+**Held jobs are a list of their own, not rows in the ranking.** The plugin's API gains
+`heldItems`: every blocked item, with Jenkins's reason, plus the upstream job and its state when
+the dependency gate is the reason. `/api/queue` passes it on as `held_items`, and the Queue page
+lists them under "Held back" in DESIGN.md's words ("Waits for fs-payment-service-build").
+- **The deviation from DESIGN.md:** its Queue sketch draws such a job as a ranked row with a score.
+  A held job cannot be dispatched, and the plugin gives it no score until it is buildable. A rank
+  would say it could run next, so it is listed apart.
+
+**Evidence:**
+- `ApiJsonIT.heldItemsNameTheirUpstream`, under JenkinsRule.
+- A live recording from the rebuilt jenkins-dev (`backend/tests/data/plugin/ranking-held.json`).
+- The backend's parser and route tests on that recording, and the Queue page's tests on its capture
+  through the backend.
+- `HeapFreshnessIT`: five tests, all of which fail with the old early returns.
+
+---
+
+### D-065 The independent security review's fixes, and the choices inside them
+**Date:** 2026-10-18 · **Status:** accepted (hardening of Phases 1 to 6)
+
+The review and every fix are in `docs/security-review-phases-3-5-6.md`. Recorded here are the
+choices the fixes made, where another fix was possible.
+
+- **One request runs once.** A request that was approved cannot be generated, regenerated or
+  approved again; running it again takes a new message. This was already the rule for editing.
+  The partial unique index holds it under concurrency. The alternative, a fresh justification and
+  quota check on every approval, would have kept a second way to start the same HIGH chain.
+- **Refresh tokens have families.** A refresh token carries `fam`, kept through every rotation. A
+  spent token coming back means two parties hold the session, and neither can be told apart, so the
+  whole family is signed out. Like the revocation list (D-021), families are in memory.
+- **Rate-limit keys:**
+  - Signed-in traffic is keyed by the access token's user. The token is verified but not looked
+    up; authorisation is still `CurrentUser`'s.
+  - Sign-in is keyed by address and account (5 a minute), with an address-wide cap (30 a minute).
+  - `X-Forwarded-For` is still ignored. The frontend's nginx and the dev server's proxy both make
+    every client one address, which is why the keys moved off the address.
+- **Ports on loopback.** The stack is for the machine it runs on. A demo on another machine would
+  need a reverse proxy with TLS, not a published Jenkins.
+- **The frontend container is same-origin.** nginx serves the build and proxies `/api` and `/ws`,
+  so the CSP keeps `connect-src 'self'`, and no CORS or build-time API URL is needed.
+  `VITE_API_BASE_URL` remains for running the app against a backend elsewhere; the CSP then adds
+  that origin.
+- **The CSP is a meta tag added at build time.** The dev server injects inline scripts for hot
+  reload, which a strict policy would block. `frame-ancestors` cannot be set by a meta tag, so nginx
+  sends it as a header.
+- **The plan explanation is screened by sentence.** The stream is held back to whole sentences, so
+  a word split across chunks is still caught. Backticks are allowed, unlike in T5.9's suggestions,
+  because an explanation quotes job names in them.
+- **Health reports, but does not call, the model.** The LLM component shows the latest recorded
+  call's outcome. A call made just to probe would spend the free tier's daily quota on monitoring.
+
+---
+
 ### D-064 Lighthouse audits the signed-in assistant pages in the tab Puppeteer signed in
 **Date:** 2026-10-17 · **Status:** accepted (Phase 6 acceptance)
 
@@ -107,7 +598,10 @@ none of the three failures was visual.
 
 **Left as they are, and why.**
 - **The main bundle, 745 kB:** every page is in it. Loading each page lazily from the routes is the
-  fix. That is a performance change, not a visual one, so it is left for a task of its own.
+  fix. That is a performance change, not a visual one, so it is left for a task of its own. Done
+  on 2026-10-20 (hardening of Phases 1 to 6): every page, sign in included, is its own chunk,
+  loaded through React Router's `lazy`; the main bundle is 419 kB (132 kB gzipped), and the build
+  no longer warns. No size limit was raised to get there.
 - **Lighthouse:** not run. The session lives in sessionStorage, which a Lighthouse run starts without,
   so measuring a signed-in assistant page needs a scripted user flow (Lighthouse with Puppeteer), and
   those dependencies are not in the project. Done since, by D-064.
@@ -147,7 +641,8 @@ app and never in the application, let a flow:
   per-service chain lock (4.6.4).
 
 **The real sign-in limit is kept.** Every flow signs in from 127.0.0.1, so all of them share its
-limit of five sign-ins a minute. A flow that gets a 429 waits for as long as the backend asks
+limit of five sign-ins a minute (per account since the 2026-10-18 security fixes, with thirty per
+address across accounts). A flow that gets a 429 waits for as long as the backend asks
 (`retry_after_seconds`). The harness never loosens the limit.
 
 **The built app, through `vite preview`.**
@@ -1540,7 +2035,7 @@ same fix.
 ## Phase 1
 
 ### D-018 The frontend service sits behind a Compose profile until Phase 6
-**Date:** 2026-09-29 · **Status:** decided
+**Date:** 2026-09-29 · **Status:** closed 2026-10-18: `frontend/Dockerfile` exists and the profile is gone (D-065)
 
 `BUILD_PROMPT.md` 4.2.3 lists `frontend` (5173) among the default Compose services. Phase 6 has not
 run, so `frontend/Dockerfile` does not exist, and a default service with a missing build context
@@ -1554,7 +2049,8 @@ The alternative, leaving it as a default and telling people to ignore the error,
 ignore Compose errors, which is the last habit this project needs.
 
 ### D-019 JCasC sets only the optimizer's non-floating-point fields
-**Date:** 2026-09-29 · **Status:** decided, consequence of D-017
+**Date:** 2026-09-29 · **Status:** superseded 2026-10-18 by D-017's resolution: the files now set all
+seven floating-point fields, quoted
 
 The three JCasC files set `optimizerEnabled`, `agingIntervalMinutes`, `estimatorK`,
 `historyWindow`, `rescoreIntervalSeconds`, `metricsEnabled`, `metricsBackendUrl` and
@@ -1618,7 +2114,34 @@ bearing, and neither is dead code.
   its output is what will explain what moved.
 
 ### D-017 JCasC silently ignores the optimizer's floating-point fields
-**Date:** 2026-09-29 · **Status:** open defect, worked around · **Evidence:** `ConfigAsCodeIT`
+**Date:** 2026-09-29 · **Status:** resolved 2026-10-18: root cause found, values quoted · **Evidence:** `ConfigAsCodeIT`
+
+**Resolution, 2026-10-18.** The root cause is JCasC's YAML loader, not the import.
+- **Where:** `io.jenkins.plugins.casc.yaml.ModelConstructor` registers scalar constructors for
+  YAML's `bool`, `int` and `str` tags only. An unquoted `0.6` carries the `float` tag, falls through
+  to SnakeYAML's default constructor, comes back as a `Double` instead of a model node, and is
+  left out of the parsed document. So the setter is never called, no "unknown attribute" error is
+  raised, and the default stays.
+- **How it was found:** a debugging test in a JenkinsRule.
+  - Its setter traces showed JCasC calling `setAgingIntervalMinutes`, never `setWeightUrgency`.
+  - JCasC's FINE log showed no attempt to set it.
+  - The attribute's own setter and the `double` converter both worked when called directly.
+  - `YamlUtils.loadFrom` returned a mapping without the key.
+- **The fix:** quote floating-point values (`weightUrgency: "0.6"`). A quoted value is a
+  string, which JCasC converts to `double` like any other scalar.
+  - All three `jenkins/casc/` files now set all seven fields, quoted, at Appendix D's values.
+  - A Phase 1 `verify.py` check refuses an unquoted or missing one, and any value that is not
+    the report's.
+  - The aging-ablation arm can now be driven from YAML.
+- **Tests (`ConfigAsCodeIT`, 9 passed):**
+  - quoted values apply;
+  - unquoted ones are dropped (this pins JCasC's behaviour, so it fails if a later JCasC reads
+    them);
+  - an exported file imports again with its floating-point values.
+- **Correction:** the investigation below said quoted and unquoted forms behave identically.
+  That was wrong, very likely another stale-class run of the kind described below.
+
+The original record follows.
 
 On `configuration-as-code:2121.v86fe99d4b_b_a_b_` with Jenkins 2.568.3, importing a YAML file into
 `OptimizerConfiguration` applies every `int`, `boolean`, `String` and `Secret` attribute and

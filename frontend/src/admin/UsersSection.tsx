@@ -15,6 +15,7 @@ import { cn } from "@/lib/cn";
 import { formatWhen, parseApiTime } from "@/lib/format";
 
 import { NewUserForm } from "./NewUserForm";
+import { ResetPassword } from "./ResetPassword";
 
 /** Every user fits in one page of the API's largest size; the page says so if one day they do not. */
 export const USER_LIMIT = 200;
@@ -115,6 +116,16 @@ export function UsersSection({ me }: { me: string }) {
           )}
         </span>
       ),
+    },
+    {
+      header: "Password",
+      nowrap: true,
+      cell: ({ id, email }) =>
+        id === me ? (
+          <span className="text-graphite">Another Admin can reset yours</span>
+        ) : (
+          <ResetPassword userId={id} email={email} />
+        ),
     },
     {
       header: "Added",

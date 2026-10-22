@@ -128,3 +128,11 @@ markers = [
     "e2e: end to end through the whole stack. Opt in with -m e2e.",
 ]
 filterwarnings = ["error::DeprecationWarning"]
+
+[tool.coverage.run]
+branch = true
+source = ["app"]
+# The async database layer runs on greenlets (SQLAlchemy asyncio). Without this the tracer loses the
+# lines after a greenlet switch and reports executed code as missed: over the offline suite on
+# 2026-10-20 it reported 87% where 92% had run, auth.py 67.6% where 92.3% had.
+concurrency = ["thread", "greenlet"]

@@ -25,13 +25,14 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import CurrentUser
+from app.api.deps import ApiRateLimit, CurrentUser
 from app.core.errors import ErrorCode, not_found
 from app.db.models import Experiment, ExperimentMetric, JobRun, RunResult
 from app.db.session import get_db
 from app.services.runs import MAX_PAGE_SIZE, clamp_page
 
-router = APIRouter(tags=["analytics"])
+# Every route here carries the general per-user limit (security review, findings 5 and 10).
+router = APIRouter(tags=["analytics"], dependencies=[ApiRateLimit])
 
 
 # ---------------------------------------------------------------------------

@@ -82,6 +82,25 @@ class UnionFindKahnTest {
         }
 
         @Test
+        @DisplayName("a lone element joins a larger group whichever side it is passed on")
+        void unionByRankJoinsEitherWay() {
+            // Union by rank attaches the shallower tree under the deeper one. Coverage showed only
+            // one of the two directions ever ran (2026-10-20); both must join the groups.
+            UnionFind<String> deeperSecond = new UnionFind<>();
+            deeperSecond.union("b", "c");
+            deeperSecond.union("a", "b");
+
+            UnionFind<String> deeperFirst = new UnionFind<>();
+            deeperFirst.union("b", "c");
+            deeperFirst.union("b", "a");
+
+            for (UnionFind<String> uf : List.of(deeperSecond, deeperFirst)) {
+                assertTrue(uf.connected("a", "c"));
+                assertEquals(1, uf.groups().size());
+            }
+        }
+
+        @Test
         @DisplayName("a long chain does not overflow the stack")
         void longChainIsIterative() {
             // Path compression is implemented iteratively on purpose: a recursive find on a
@@ -160,6 +179,18 @@ class UnionFindKahnTest {
 
             assertTrue(result.isAcyclic());
             assertEquals(List.of("test", "deploy"), result.getOrder());
+        }
+
+        @Test
+        @DisplayName("an edge from the group to a node outside it is ignored too")
+        void edgesLeavingTheGroupAreIgnored() {
+            // The other half of the condition: the consumer is what is missing. Coverage showed only
+            // a missing producer had been tried (2026-10-20).
+            var result = KahnTopologicalSort.sort(
+                    List.of("build", "test"), List.of(of("build", "test"), of("test", "deploy-not-queued")));
+
+            assertTrue(result.isAcyclic());
+            assertEquals(List.of("build", "test"), result.getOrder());
         }
 
         @Test

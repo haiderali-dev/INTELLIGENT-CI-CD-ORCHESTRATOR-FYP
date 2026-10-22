@@ -7,7 +7,7 @@ import {
   chainDurationMs,
   chainState,
   currentStep,
-  filterChains,
+  chainQuery,
   finishedRuns,
 } from "./runsModel";
 import { countLines, keepEnd, lastLines } from "./logModel";
@@ -29,17 +29,17 @@ describe("the runs model", () => {
     expect(assistantOf("MAVEN")).toBe("MAVEN");
   });
 
-  it("applies the assistant and result filters the API does not take", () => {
-    const names = (filter: Parameters<typeof filterChains>[1]) =>
-      filterChains(chains, filter).map(({ jobs }) => jobs[0]);
-
-    expect(names({ assistant: null, result: null })).toHaveLength(3);
-    expect(names({ assistant: "pipeline", result: null })).toEqual([
-      "pl-payment-service-build-test-deploy-staging",
-    ]);
-    expect(names({ assistant: "freestyle", result: "failed" })).toEqual(["fs-payment-service-build"]);
-    expect(names({ assistant: "pipeline", result: "failed" })).toEqual([]);
-    expect(names({ assistant: null, result: "running" })).toHaveLength(2);
+  it("turns the page's filters into the API's own query", () => {
+    expect(chainQuery({ service: null, assistant: null, result: null })).toEqual({});
+    expect(chainQuery({ service: "auth-service", assistant: "pipeline", result: "failed" })).toEqual({
+      service: "auth-service",
+      jobType: "PIPELINE",
+      status: "FAILURE",
+    });
+    expect(chainQuery({ service: null, assistant: "freestyle", result: "running" })).toEqual({
+      jobType: "FREESTYLE",
+      status: "RUNNING",
+    });
   });
 
   it("times a finished chain, and not a running one", () => {

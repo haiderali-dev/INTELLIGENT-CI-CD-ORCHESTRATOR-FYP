@@ -84,6 +84,24 @@ class UnscoredItem:
 
 
 @dataclass(frozen=True)
+class HeldItem:
+    """A queued item held back rather than buildable, with why: the plugin's ``heldItems``.
+
+    ``upstream`` and ``upstream_state`` are set when the dependency gate holds it for an upstream
+    job that is still ``queued`` or ``building`` (found in T6.6: such a job was absent from the
+    ranking, so the queue page could not say why it waited).
+    """
+
+    item_id: int
+    job_name: str
+    level: str
+    reason: str | None
+    upstream: str | None
+    upstream_state: str | None
+    wait_seconds: float
+
+
+@dataclass(frozen=True)
 class Ranking:
     """The plugin's view of the queue, or a note saying it could not be read.
 
@@ -97,6 +115,7 @@ class Ranking:
     optimizer_enabled: bool = False
     unavailable_reason: str | None = None
     unscored: tuple[UnscoredItem, ...] = ()
+    held: tuple[HeldItem, ...] = ()
     reported_length: int | None = None
 
     @property
@@ -317,6 +336,21 @@ def parse_ranking(body: dict[str, Any]) -> Ranking:
         if isinstance(entry, dict)
     )
 
+    raw_held = body.get("heldItems")
+    held = tuple(
+        HeldItem(
+            item_id=_optional_int(entry.get("itemId")) or 0,
+            job_name=str(entry.get("jobName", "")),
+            level=str(entry.get("level", "MEDIUM")),
+            reason=entry.get("reason") or None,
+            upstream=entry.get("upstream") or None,
+            upstream_state=entry.get("upstreamState") or None,
+            wait_seconds=_number(entry.get("waitSeconds")),
+        )
+        for entry in (raw_held if isinstance(raw_held, list) else [])
+        if isinstance(entry, dict)
+    )
+
     configuration = body.get("configuration")
     configuration = configuration if isinstance(configuration, dict) else body
     weights = {
@@ -331,6 +365,7 @@ def parse_ranking(body: dict[str, Any]) -> Ranking:
         weights=weights,
         optimizer_enabled=bool(configuration.get("optimizerEnabled", False)),
         unscored=unscored,
+        held=held,
         reported_length=_optional_int(body.get("queueLength")),
     )
 

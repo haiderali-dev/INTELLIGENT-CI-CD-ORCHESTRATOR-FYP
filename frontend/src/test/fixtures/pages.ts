@@ -8,7 +8,7 @@
  * SQLite drops time zones, so most timestamps here have none; PostgreSQL's have one. Both are UTC.
  */
 
-import type { AdminUser, AuditPage, Policy, UserPage } from "@/api/adminApi";
+import type { AdminUser, AuditPage, Policy, RateLimit, UserPage } from "@/api/adminApi";
 import type { ExperimentDetail, ExperimentPage, RunStats } from "@/api/analyticsApi";
 import type { Branches, Resync, ServiceList } from "@/api/catalogApi";
 import type { ApiErrorBody } from "@/api/client";
@@ -1123,7 +1123,8 @@ export const healthLive: Health = {
   }
 };
 
-/** Live mode without a key: the provider is down. */
+/** Live mode without a key: the provider is down. Recaptured on 2026-10-18: the detail no longer
+ * carries the exception's type (security review, finding 10). */
 export const healthLiveNoKey: Answered<Health> = {
   "status": 200,
   "body": {
@@ -1134,17 +1135,89 @@ export const healthLiveNoKey: Answered<Health> = {
       "database": {
         "status": "up",
         "detail": "reachable",
-        "latency_ms": 2
+        "latency_ms": 0,
+        "last_outcome": null,
+        "last_call_at": null
       },
       "jenkins": {
         "status": "up",
         "detail": "Jenkins 2.568.3",
-        "latency_ms": 0
+        "latency_ms": 0,
+        "last_outcome": null,
+        "last_call_at": null
       },
       "llm": {
         "status": "down",
-        "detail": "RuntimeError: LLM_MODE=live but GROQ_API_KEY is empty",
-        "latency_ms": 0
+        "detail": "LLM_MODE=live but GROQ_API_KEY is empty",
+        "latency_ms": 0,
+        "last_outcome": null,
+        "last_call_at": null
+      }
+    }
+  }
+};
+
+/** Live mode, the latest model call answered (captured 2026-10-18; found in T6.7). */
+export const healthLiveAnswered: Answered<Health> = {
+  "status": 200,
+  "body": {
+    "status": "up",
+    "version": "0.1.0",
+    "environment": "test",
+    "components": {
+      "database": {
+        "status": "up",
+        "detail": "reachable",
+        "latency_ms": 0,
+        "last_outcome": null,
+        "last_call_at": null
+      },
+      "jenkins": {
+        "status": "up",
+        "detail": "Jenkins 2.568.3",
+        "latency_ms": 0,
+        "last_outcome": null,
+        "last_call_at": null
+      },
+      "llm": {
+        "status": "up",
+        "detail": "live; chain openai/gpt-oss-120b -> openai/gpt-oss-20b",
+        "latency_ms": 0,
+        "last_outcome": "ok",
+        "last_call_at": "2026-10-18T18:17:32.826037"
+      }
+    }
+  }
+};
+
+/** Live mode, the latest model call was rate limited, so the provider is degraded. */
+export const healthLiveFailed: Answered<Health> = {
+  "status": 200,
+  "body": {
+    "status": "up",
+    "version": "0.1.0",
+    "environment": "test",
+    "components": {
+      "database": {
+        "status": "up",
+        "detail": "reachable",
+        "latency_ms": 0,
+        "last_outcome": null,
+        "last_call_at": null
+      },
+      "jenkins": {
+        "status": "up",
+        "detail": "Jenkins 2.568.3",
+        "latency_ms": 0,
+        "last_outcome": null,
+        "last_call_at": null
+      },
+      "llm": {
+        "status": "degraded",
+        "detail": "live; chain openai/gpt-oss-120b -> openai/gpt-oss-20b",
+        "latency_ms": 0,
+        "last_outcome": "rate_limited",
+        "last_call_at": "2026-10-18T18:17:33.268698"
       }
     }
   }
@@ -1229,5 +1302,67 @@ export const queue: Queue = {
     }
   ],
   "unscored_items": [],
+  "held_items": [],
   "unavailable_reason": null
+};
+
+// Captured on 2026-10-18 the same way, after the hardening added an Admin's password reset and
+// the rate limits for the Admin page.
+export const limits: RateLimit[] = [
+  {
+    "name": "login",
+    "capacity": 5,
+    "per_seconds": 60.0,
+    "applies_to": "sign-in, per address and account"
+  },
+  {
+    "name": "login-address",
+    "capacity": 30,
+    "per_seconds": 60.0,
+    "applies_to": "sign-in, per address across accounts"
+  },
+  {
+    "name": "refresh",
+    "capacity": 30,
+    "per_seconds": 60.0,
+    "applies_to": "session renewal, per address"
+  },
+  {
+    "name": "api",
+    "capacity": 300,
+    "per_seconds": 60.0,
+    "applies_to": "every signed-in request, per user"
+  },
+  {
+    "name": "assistant",
+    "capacity": 20,
+    "per_seconds": 60.0,
+    "applies_to": "assistant messages, generation and explanations, per user"
+  }
+];
+
+export const passwordReset: Answered<AdminUser> = {
+  "status": 200,
+  "body": {
+    "id": "006ef6e6927a4cbd8a63a3289c89bbad",
+    "email": "dev@example.com",
+    "role": "DEVELOPER",
+    "active": true,
+    "created_at": "2026-10-18T18:14:16.472126"
+  }
+};
+
+export const passwordTooShort: Answered<ApiError> = {
+  "status": 422,
+  "body": {
+    "error": {
+      "code": "VALIDATION_FAILED",
+      "message": "Some fields need attention.",
+      "details": {
+        "fields": {
+          "password": "String should have at least 12 characters"
+        }
+      }
+    }
+  }
 };

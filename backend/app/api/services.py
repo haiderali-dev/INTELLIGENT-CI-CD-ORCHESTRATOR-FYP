@@ -18,7 +18,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import AdminUser, CurrentUser
+from app.api.deps import AdminUser, ApiRateLimit, CurrentUser
 from app.core.errors import ErrorCode, not_found, unavailable
 from app.core.logging import get_logger
 from app.core.settings import Settings
@@ -30,7 +30,8 @@ from app.services.dependencies import get_catalog, get_git_client, get_settings_
 from app.services.git import GitClient, GitError
 
 logger = get_logger(__name__)
-router = APIRouter(tags=["services"])
+# Every route here carries the general per-user limit (security review, findings 5 and 10).
+router = APIRouter(tags=["services"], dependencies=[ApiRateLimit])
 
 
 class TestSuiteResponse(BaseModel):
