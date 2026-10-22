@@ -1,0 +1,4 @@
+java=21.0.11
+os=Windows 11 10.0
+processors=8
+max_heap_mb=768

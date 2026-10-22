@@ -1,0 +1,5 @@
+component,statements_or_lines_pct,branches_pct
+"Plugin (JaCoCo, unit and integration tests)",93.2,79.4
+"Backend (coverage.py, offline suite)",93.7,84.6
+"Backend (coverage.py, all four suites)",95.0,87.2
+"Frontend (V8, unit and component tests)",92.54,83.83

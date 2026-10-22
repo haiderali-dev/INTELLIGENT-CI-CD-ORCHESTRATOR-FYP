@@ -1,0 +1,9 @@
+class,mutants,killed,survived,no_coverage
+KahnTopologicalSort,17,17,0,0
+PriorityJobHeap,42,42,0,0
+PriorityLevel,6,6,0,0
+PriorityScoreCalculator,47,41,6,0
+ScoreInput,2,2,0,0
+ScoredJob,6,6,0,0
+SimilarityEstimator,38,38,0,0
+UnionFind,15,10,5,0

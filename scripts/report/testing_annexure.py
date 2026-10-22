@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 import re
 import sys
 from collections import Counter
@@ -61,15 +62,39 @@ def section_environment(manifest: dict) -> list[str]:
     return lines
 
 
-def section_campaign(manifest: dict) -> list[str]:
+# Where each campaign step ran. The manifest records the command only; scripts/test_campaign.py sets these.
+STEP_DIRECTORY = {
+    "plugin": "plugin", "plugin-mutation": "plugin", "plugin-experiments": "plugin",
+    "backend-offline": "backend", "backend-integration": "backend", "backend-e2e": "backend", "backend-live": "backend",
+    "frontend-unit": "frontend", "browser-flows": "frontend", "lighthouse": "frontend", "frontend-audit": "frontend",
+    "stack-system": "(repository root)", "payment-service": "sample-services/payment-service",
+    "auth-service": "sample-services/auth-service",
+}
+
+
+def shown_command(command: list[str], campaign: Path) -> str:
+    """A step's command as the annexure prints it: programs by name, the campaign's folder as <campaign>,
+    other paths relative to the repository, so no machine's own folders appear."""
+    parts = []
+    for index, part in enumerate(command):
+        part = part.replace(str(campaign), "<campaign>").replace(str(REPO_ROOT) + os.sep, "").replace(os.sep, "/")
+        if index == 0:
+            part = Path(part).stem
+        parts.append(f'"{part}"' if " " in part else part)
+    return " ".join(parts)
+
+
+def section_campaign(manifest: dict, campaign: Path) -> list[str]:
     lines = ["## A.2 The evidence campaign, step by step", "",
-             "Each step's command, start time, duration and exit code, from `manifest.json`. Logs and "
-             "reports were kept under `.tmp/campaign/<commit>/`; the per-test results are Annexure B.", ""]
+             "Each step's directory, command, start time, duration and exit code, from `manifest.json`. "
+             f"`<campaign>` is `.tmp/campaign/{manifest['commit'][:7]}/`, where the logs and reports were kept; "
+             "`uv` is the project's own copy in `.venv-tools/`. The per-test results are Annexure B.", ""]
     rows = []
     for step in manifest["steps"]:
-        rows.append([step["name"], f"`{' '.join(Path(part).name if '/' in part or '\\\\' in part else part for part in step['command'])[:110]}`",
-                     step["started"].replace("T", " ").replace("+00:00", " UTC"), step["seconds"], step["exit_code"], step.get("note", "")])
-    lines += table(["Step", "Command", "Started", "Seconds", "Exit", "Note"], rows, ["---", "---", "---", "---:", "---:", "---"])
+        rows.append([step["name"], f"`{STEP_DIRECTORY.get(step['name'], '?')}`", f"`{shown_command(step['command'], campaign)}`",
+                     step["started"].replace("T", " ").replace("+00:00", " UTC"), step["seconds"], step["exit_code"]])
+    lines += table(["Step", "Directory", "Command", "Started", "Seconds", "Exit"], rows,
+                   ["---", "---", "---", "---", "---:", "---:"])
     lines += ["", "The frontend-audit step exits 1 when `npm audit` finds a known vulnerability; here it found "
               "Vite 8.3.2's development-server advisories, fixed after the campaign under D-075 (Section A.12).",
               "", "**Two earlier runs, not cited.**", "",
@@ -86,8 +111,12 @@ def section_gate(gate: Path) -> list[str]:
     text = gate.read_text(encoding="utf-8", errors="replace")
     lines = ["## A.3 The acceptance gate", ""]
     head = text.splitlines()[0] if text else ""
+    checks = re.search(r"\((\d+) checks\)", head)
+    run = re.match(r"gate-run-(\d+)-([0-9a-f]{7})", gate.name)
     summary = [line for line in text.splitlines() if line.strip() in ("ALL CHECKS PASSED",) or line.endswith("CHECKS FAILED")]
-    lines += [f"`python scripts/verify.py --phase 6`: {head.strip()}. Result: **{summary[-1] if summary else 'not finished'}**.", ""]
+    lines += [(f"Gate run {run.group(1)}, at commit `{run.group(2)}`: " if run else "")
+              + f"`python scripts/verify.py --phase 6`, {checks.group(1) if checks else 'all'} checks, from its log "
+              f"`docs/testing/evidence/{gate.name}`. Result: **{summary[-1] if summary else 'not finished'}**.", ""]
     rows, phase = [], "0"
     all_lines = text.splitlines()
     for index, line in enumerate(all_lines):
@@ -137,7 +166,7 @@ def section_coverage(campaign: Path) -> list[str]:
         lines += table(["Class", "Lines", "Lines covered (%)", "Branches", "Branches covered (%)"], sorted(rows),
                        ["---", "---:", "---:", "---:", "---:"])
     for name, title in (("backend-offline-coverage.json", "The backend, offline suite"),
-                        ("backend-e2e-coverage.json", "The backend, offline, integration and end-to-end suites together")):
+                        ("backend-live-coverage.json", "The backend, all four suites together")):
         path = campaign / "backend" / name
         if not path.is_file():
             continue
@@ -361,7 +390,7 @@ def main() -> int:
              f"The evidence behind Chapter 8, generated by `scripts/report/testing_annexure.py` from the evidence "
              f"campaign at commit `{manifest['commit'][:7]}`, the gate's log and the files listed in each section. "
              "Annexure B lists every test that ran.", ""]
-    for section in (section_environment(manifest), section_campaign(manifest), section_gate(args.gate), section_ci(),
+    for section in (section_environment(manifest), section_campaign(manifest, args.campaign.resolve()), section_gate(args.gate), section_ci(),
                     section_coverage(args.campaign), section_mutation(args.campaign), section_experiments(),
                     section_system(args.system), section_screenshots(), section_lighthouse(args.campaign),
                     section_defects(), section_security(), section_dependency_scans(args.campaign),

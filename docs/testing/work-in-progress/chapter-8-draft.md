@@ -18,7 +18,7 @@ results, and Section 8.10 summarises.
 
 **The rule for evidence.** Every result in this chapter comes from a run that happened, at a commit
 that is named. One evidence campaign ran every suite once, at commit `[[COMMIT]]` on
-`[[DATE]]`, and kept each runner's own report: JUnit XML, coverage data, the mutation report and the
+[[DATE]], and kept each runner's own report: JUnit XML, coverage data, the mutation report and the
 logs (`scripts/test_campaign.py`). The register in Annexure B is built from those reports and lists
 every test that ran (`scripts/report/test_register.py`). Where a figure comes from an earlier run, it
 says so. Nothing is estimated. Anything not yet run is listed as not yet run in Section 8.9.4.
@@ -31,7 +31,20 @@ recorded all the same:
 
 Its logs are kept, and Annexure A.2 describes it.
 
-[[SUMMARY]]
+**The results in brief.**
+- **The evidence campaign** ran [[TOTAL_TESTS]] tests in [[N_SUITES]] suites: [[TOTAL_PASSED]]
+  passed, [[TOTAL_FAILED]] failed and [[TOTAL_SKIPPED]] skipped (Section 8.9.1; every test in
+  Annexure B).
+- **The acceptance gate** passed all 89 of its checks on the same code, run 5 (Section 8.6.3).
+- **Coverage:**
+  - the plugin, 93.2% of lines and 79.4% of branches;
+  - the backend, [[BACKEND_COVERAGE_ALL]] of statements over all its suites;
+  - the frontend, [[FRONTEND_COVERAGE]] of statements.
+- **Mutation testing** detected 162 of the plugin's 173 algorithm mutants: every one a test could
+  tell from the original.
+- **Testing and review found 44 defects,** 56 separate problems; 41 are fixed (Section 8.9.2).
+- **Three experiments qualified three of the report's claims:** the plugin's cost, what aging does
+  under load, and what Milestone 2's headline result cost (Sections 8.8 and 8.9.3).
 
 ## 8.2 Testing strategy
 
@@ -72,9 +85,10 @@ larger projects:
 
 - **Automated gates.** No phase was closed until its acceptance gate printed "ALL CHECKS PASSED".
   Each acceptance clause of each phase is a check of its own, so a clause cannot pass unnoticed.
-- **An independent review.** The security review of Phases 3, 5 and 6 was done by a reviewer that
-  had no part in writing the code, working from a read-only copy of it. It did not cover the Java
-  plugin. An earlier review of Phase 5 was not independent: its reviewer stopped on a usage limit,
+- **An independent review.** The security review of Phases 3, 5 and 6 was done by a separate AI
+  agent, a Claude Code subagent that had no part in writing the code, working from a read-only copy
+  of it. It was independent of the code's authors, though not of the kind of tool that assisted
+  them, and it did not cover the Java plugin. An earlier review of Phase 5 was not independent: its reviewer stopped on a usage limit,
   and the developer finished it, which its own record says.
 
 Development was assisted by an AI coding assistant, Claude Code, and every change was reviewed and
@@ -120,7 +134,7 @@ This section follows those tasks.
 | --- | --- |
 | Purpose | Let a developer create Jenkins jobs in plain English, and order Jenkins' queue by urgency, dependency and expected duration instead of arrival |
 | Components | A Jenkins plugin (Java 21, Jenkins 2.568.3); a backend (Python 3.12, FastAPI, PostgreSQL 16) holding two assistants and a rule-based fallback for the language model; a React 19 frontend; a Docker Compose stack |
-| Size of the code under test | Plugin [[PLUGIN_LINES]] lines in 23 classes; backend [[BACKEND_STATEMENTS]] statements in [[BACKEND_MODULES]] modules; frontend [[FRONTEND_STATEMENTS]] statements |
+| Size of the code under test | Plugin: 1,200 executable lines in 23 source files (34 classes, nested ones included); backend: [[BACKEND_STATEMENTS]] statements in [[BACKEND_MODULES]] modules; frontend: [[FRONTEND_STATEMENTS]] statements |
 | Users | Developers, DevOps engineers and Admins, each with their own permissions |
 | Environment | Staging only. Production deploys are refused by policy for every role |
 | External dependencies | Jenkins and its agents, GitHub for the sample services' repositories, PostgreSQL, a hosted language model (Groq, free tier) |
@@ -169,9 +183,9 @@ used, and where its evidence is.
 | Security | Is it protected against misuse? | Two security reviews, one independent; tests of authentication, roles, tokens, rate limits, redaction, the content policy and the audit; dependency scans | 8.7.3, Annexure A |
 | *Functional* | | | |
 | Requirements | Does it do what is specified? | Acceptance tests of the report's user stories; the gates' acceptance checks | 8.5.4, gate |
-| Regression | Does what worked still work? | CI on every push; every gate re-runs every earlier phase's checks | 8.6.2 |
+| Regression | Does what worked still work? | CI on every push; every gate re-runs every earlier phase's checks | 8.6.3 |
 | Error handling | Does it handle errors properly? | Invalid commands, Jenkins down, the model unreachable, a failing test branch | 8.5, 8.7 |
-| Manual support | Does the human side work? | Accessibility audits; screenshots reviewed; keyboard-only flows | 8.7.3 |
+| Manual support | Does the human side work? | Accessibility audits; screenshots reviewed; keyboard-only flows | 8.7.2 |
 | Intersystem | Do the connected systems work together? | Plugin to backend metrics; backend to Jenkins, Git and the model; frontend to backend over HTTP and WebSocket | 8.6 |
 | Control | Do the controls work? | Audit entries; idempotent approval; the per-service chain lock; the daily HIGH quota; role guards | 8.5, 8.7 |
 | Parallel | Do old and new give the same, or better, results? | FIFO against the optimizer on the same workload: Milestone 2's measured runs, and the simulation | 8.8 |
@@ -244,9 +258,10 @@ three ways:
 - **Each acceptance clause is a gate check.** The gate began with 11 checks in Phase 0 and has 89
   for Phases 0 to 6. An audit on 18 October 2026 found acceptance clauses with no check of their
   own, and those checks were added.
-- **Reviews.** The security reviews inspected the tests as well as the code; the review of Phases 3,
-  5 and 6 was independent. Each finding came with a regression test that fails without its fix,
-  and the independent review confirmed each one by removing the fix and watching its test fail.
+- **Reviews.** The security reviewers ran the existing suites as well as reading the code; the
+  review of Phases 3, 5 and 6 was independent of the code's authors. Each of its 15 findings was
+  fixed with a regression test, and every fix that changed code was checked by removing it and
+  watching its test fail (`docs/security-review-phases-3-5-6.md`).
 - **The tests were themselves tested.** Mutation testing showed which assertions were missing
   (Section 8.4.7). Coverage showed which paths no test took, and found the coverage measurement
   itself under-reporting (Section 8.4.6).
@@ -422,11 +437,11 @@ Coverage measures how much of the code the tests executed: the statements (or li
 outcome of each branch [22, ch. 19]. It was measured for all three components in the evidence
 campaign:
 - **The plugin:** JaCoCo, over its unit and JenkinsRule tests.
-- **The backend:** coverage.py, once over the offline suite and once more with the integration and
-  end-to-end suites added.
+- **The backend:** coverage.py, once over the offline suite and once more with the integration,
+  end-to-end and live suites added.
 - **The frontend:** V8's own coverage, over its unit and component tests.
 
-**Table {T:coverage}: Statement and branch coverage** (the evidence campaign at `ac8305a`; every
+**Table {T:coverage}: Statement and branch coverage** (the evidence campaign at `[[COMMIT]]`; every
 module in Annexure A.5, Figure {F:coverage})
 
 | Component | Measured over | Lines or statements | Branches |
@@ -493,7 +508,7 @@ milliseconds. The Jenkins-facing classes are covered by integration tests that t
 too slow to run once per mutant.
 
 **Table {T:mutation}: Mutation testing of the plugin's algorithm classes** (PIT 1.30.0, at
-`ac8305a`; Annexure A.6, Figure {F:mutation})
+`[[COMMIT]]`; Annexure A.6, Figure {F:mutation})
 
 | Class | Mutants | Killed by a failing test | Killed by a time-out | Survived |
 | --- | ---: | ---: | ---: | ---: |
@@ -535,13 +550,16 @@ Every component is also checked without running it, on every push (Table {T:stat
 
 **Table {T:static}: Static analysis**
 
-| Component | Tool | What it checks | Result at `[[COMMIT]]` |
-| --- | --- | --- | --- |
-| Plugin | SpotBugs | Bug patterns in the bytecode | [[SPOTBUGS]] |
-| Plugin | Spotless | Formatting | [[SPOTLESS]] |
-| Backend | Ruff, with its Bandit security rules | Lint, imports, naming, security patterns | [[RUFF]] |
-| Backend | mypy, strict | Types | [[MYPY]] |
-| Frontend | ESLint, TypeScript strict | Lint, types | [[ESLINT_TSC]] |
+| Component | Tool | What it checks | Result | Where it ran |
+| --- | --- | --- | --- | --- |
+| Plugin | SpotBugs | Bug patterns in the bytecode | 0 bug instances | the campaign's plugin build |
+| Plugin | Spotless | Formatting | clean | the campaign's plugin build |
+| Backend | Ruff, with its Bandit security rules, and its formatter | Lint, imports, naming, security patterns, format | clean | gate run 5 |
+| Backend | mypy, strict | Types | clean | gate run 5 |
+| Frontend | ESLint, TypeScript strict | Lint, types | clean | gate run 5 |
+
+Gate run 5 ran on code identical to the campaign's; the commits between them change documentation
+only.
 
 ## 8.5 Black-box testing
 
@@ -618,7 +636,8 @@ typed against it (D-055).
 
 Validation testing asks whether the software meets the requirements its users stated
 [22, ch. 20]. The report states them as user stories with Given-When-Then acceptance criteria
-(Section 4.7) and six quality requirements (Section 4.8). Table {T:matrix} is the test matrix of Perry's
+(Section 4.7) and six quality requirements (Section 4.8). Its stories are numbered 1, 2, 4 and 5;
+there is no User Story 3. Table {T:matrix} is the test matrix of Perry's
 plan [23, ch. 8]: every criterion and requirement, and the tests that check it. Where a criterion
 concerns the API, it has an acceptance test of its own, worded as the report words it, in
 `backend/tests/test_acceptance_user_stories.py`.
@@ -629,13 +648,13 @@ concerns the API, it has an acceptance test of its own, worded as the report wor
 | --- | --- |
 | **US1, AC1** (4.7.1): an authenticated user's valid command is parsed into a structured pipeline action | `test_us1_ac1_a_valid_command_is_parsed_into_a_structured_action`; `test_a_clear_request_is_parsed_recorded_and_ready`; browser flow: a freestyle deploy, with a clarification, through to Run started |
 | **US1, AC2**: an invalid command shows a validation error and does not trigger Jenkins | `test_us1_ac2_an_invalid_command_is_answered_and_never_reaches_jenkins` (production, prompt injection, an unknown service, a vague request), `test_us1_ac2_an_oversized_command_is_a_validation_error`; browser flow: refuses a production deploy and says why |
-| **US1, AC3**: a valid command produces Jenkins-ready output | `test_us1_ac3_a_valid_command_generates_jenkins_ready_freestyle_jobs` and `…_a_linted_jenkinsfile`; the golden-file tests; the linter test against the real Jenkins; system test: a Pipeline build is linted and run by the real Jenkins |
+| **US1, AC3**: a valid command produces Jenkins-ready output | `test_us1_ac3_a_valid_command_generates_jenkins_ready_freestyle_jobs` and `test_us1_ac3_a_valid_command_generates_a_linted_jenkinsfile`; `test_rendered_output_matches_the_golden_files` (4 golden files); against the real Jenkins, `test_the_linter_accepts_every_jenkinsfile_the_generator_produces`; system test: a Pipeline build is linted and run by the real Jenkins |
 | **US2, AC1** (4.7.2): a new urgent job arriving among waiting ones is ranked, not appended | `CacheEvictionRegressionIT`: a job queued mid-drain is ranked, not appended; `GroupInheritanceIT`: a consumer queued after its producer was ranked lifts the producer at once |
 | **US2, AC2**: when a runner frees, the next most suitable job is chosen | `MultiExecutorIT` (both tests); `CacheEvictionRegressionIT`: draining 20 jobs keeps priority order throughout; `FreestylePriorityIT`: all three bands drain in priority order |
 | **US2, AC3**: an updated ranking is reflected on the dashboard | Queue page: follows queue events; asks again on every event that moves a run in or out of the queue; asks again every 10 seconds; browser flow: shows a HIGH job above a LOW job, in the plugin's order |
-| **US4, AC1** (4.7.3): a running pipeline's status is visible | System tests: a freestyle build's run card follows it live; a Pipeline's stages are followed live; `RunCard` tests |
+| **US4, AC1** (4.7.3): a running pipeline's status is visible | System tests: a freestyle build runs on the real Jenkins, and its run card follows it live; a Pipeline build is linted and run by the real Jenkins, its stages followed live; `RunCard` tests |
 | **US4, AC2**: queue changes update the metrics live | `test_ws.py` (events reach their subscribers only); `LiveEventsClient` tests; gate check: a live plugin event reaches the backend |
-| **US4, AC3**: a completed job's logs and result appear | Runs page: opens a failed run, with its stages, jobs, the end of its log and why it failed; follows the runs as events arrive; the backend's run-log tests |
+| **US4, AC3**: a completed job's logs and result appear | Runs page: opens a failed run, with its stages, jobs, the end of its log and why it failed; follows the runs as events arrive; `test_jenkins_console.py` (12: a log is read from its offset, its end kept with true line numbers, and read again until Jenkins says it is whole) |
 | **US5, AC1** (4.7.4): without signing in, access is denied | `test_us5_ac1_without_signing_in_every_protected_operation_is_refused`; `test_ws.py`: a bad token is closed with a policy code; browser flow: returns to the page that was asked for |
 | **US5, AC2**: a session may do only what its role permits | `test_us5_ac2_a_session_is_allowed_only_what_its_role_permits` (three roles); `test_us5_ac2_production_is_refused_for_every_role`; the policy sweep in `test_ai_policy.py`; browser flow: a Developer is not offered Admin |
 | **US5, AC3**: suspicious activity is logged for audit | `test_us5_ac3_suspicious_activity_is_logged_and_an_admin_can_read_it`; `test_suspicious_activity_audit.py` (9); `test_an_injection_attempt_is_refused_and_logged` |
@@ -644,7 +663,7 @@ concerns the API, it has an acceptance test of its own, worded as the report wor
 | **Reliability** | The recovery test; `MetricsPublisherIT` (a stalled backend never blocks recording); retried checkouts; the end-to-end suite on the real Jenkins |
 | **Usability** | 16 Lighthouse audits; 40 screenshots reviewed against the design document; a keyboard-only flow |
 | **Maintainability** | Static analysis clean (Section 8.4.8); complexity (Section 8.4.6); every gate re-runs every earlier phase's checks |
-| **Security** | The independent review and its regression tests ([[REVIEW_TESTS]] in `test_security_review_fixes.py`, and the others its record names); the content-security-policy test; the loopback-ports check; Table {T:epbva}'s limits; the dependency scans |
+| **Security** | The independent review and its regression tests ([[REVIEW_TESTS]] in `test_security_review_fixes.py`, and the others its record names); browser flow: the app runs under its Content-Security-Policy without a single violation; gate check: every published port is bound to loopback; Table {T:epbva}'s limits; the dependency scans |
 
 [[TRACEABILITY_RESULT]]
 
@@ -701,7 +720,7 @@ parser written from the specification's prose read every field as 0 against the 
 
 **Table {T:integration}: Integration suites**
 
-| Integration | Suite | Tests | Result at `[[COMMIT]]` |
+| Integration | Suite | Tests | Result (the evidence campaign, unless named) |
 | --- | --- | ---: | --- |
 | The plugin in Jenkins: queue order for freestyle, Maven and Pipeline jobs, the gate, several executors, configuration as code and the settings page, the API, metrics | Plugin integration tests (JenkinsRule) | [[N_PLUGIN_IT]] | [[R_PLUGIN_IT]] |
 | The backend and jenkins-dev, PostgreSQL's migrations, Git's remotes | Backend integration tests | [[N_BACKEND_INT]] | [[R_BACKEND_INT]] |
@@ -725,9 +744,14 @@ that worked is caught where it was made [22, ch. 20]. Here it happens at two lev
 - **Every gate re-runs all earlier phases.** The Phase 6 gate runs Phase 0's checks through Phase
   6's: [[GATE_CHECKS]] checks.
 
-CI's failures were real defects, not noise. A clean checkout found that the Phase 0 gate depended on
-empty folders git does not store (DF-09), and that the failure analysis's test logs had been kept
-out of the repository by an ignore rule (DF-20). Both passed on the developer's machine.
+CI's failures were real defects, not noise:
+- **On a clean checkout,** the Phase 0 gate depended on empty folders git does not store (DF-09),
+  and the failure analysis's test logs had been kept out of the repository by an ignore rule
+  (DF-20). Both had passed on the developer's machine.
+- **A work-in-progress script, committed while this chapter was being written, quoted the script
+  console's address in a string,** and Phase 0's guard failed CI on two commits (DF-43). The guard
+  was right: the script had been committed without Phase 0 being run first. The evidence campaign
+  was moved to the commit that removed it, whose CI passed.
 
 [[FIGURE f10-ci-history {F:ci} | Continuous integration runs, by day and outcome]]
 
@@ -776,9 +800,12 @@ All passed in the gate run at `[[GATE_COMMIT]]`.
 
 - **Requirements.**
   - **The end-to-end suite** has a test for each of the nine commands the specification lists
-    (Part 4.6.5), and runs it through the assistants to builds on the real jenkins-dev. The model's
-    answers are replayed from recordings of the real model ([[N_BACKEND_E2E]] tests,
-    [[R_BACKEND_E2E]]).
+    (Part 4.6.5), and runs it through the assistants to builds on the real jenkins-dev.
+    - **In the evidence campaign it ran with the real model,** in the suite's live mode, which it
+      takes whenever a model key is configured: [[N_BACKEND_E2E]] tests, [[R_BACKEND_E2E]].
+    - **The gate runs it on replayed recordings of the model,** so that its verdict depends on
+      neither the model nor its quota. Gate run 5 passed 12, plus the failing-branch chain
+      separately.
   - **The stack's system tests** take a freestyle chain and a Pipeline from a sentence typed into
     the stack's own frontend to a build that succeeds on an agent, followed live on the run card. The
     stack runs its model in fake mode, its default, so these tests check the system around the model,
@@ -815,7 +842,10 @@ here:
   - The tests cover authentication, refresh-token rotation and reuse, rate limits, role guards,
     redaction of secrets in logs, prompt-injection attempts and the content security policy.
   - Gate checks keep every port on loopback and Jenkins' update-site signatures checked.
-  - `npm audit` found [[NPM_AUDIT]] known vulnerabilities in the frontend's dependencies.
+  - Known-vulnerability scans of the dependencies (Annexure A.12):
+    - `npm audit`, over the frontend's dependencies and tools: [[NPM_AUDIT]];
+    - `pip-audit`, over the 49 packages the backend's image installs: one, in `certifi`, fixed
+      under D-071. None remain.
 - **Performance testing.** Load and stress (Section 8.7.1), and the plugin's overhead inside
   Jenkins (Section 8.8.1).
 - **Accessibility testing.** Lighthouse, as above.
@@ -836,10 +866,15 @@ here:
   - quoted text cannot escape its fence;
   - generated XML and Jenkinsfiles are validated, the Jenkinsfile by Jenkins' own linter.
 
-  Tests run the model three ways: *fake*, deterministic answers for the offline suite; *replay*,
-  recorded real answers for the end-to-end suite, with a miss counted as a failure; and *live*,
-  the real model, on request only. The evaluation of the assistants' accuracy on a human-labelled
-  test set is Phase 8's (Section 8.9.4).
+  Tests run the model three ways:
+  - *fake:* deterministic answers, for the offline suite;
+  - *replay:* recorded answers of the real model, which the gate uses for the end-to-end suite,
+    and where a recording missing for a prompt counts as a failure;
+  - *live:* the real model, for the live tests, and for the end-to-end suite whenever a model key is
+    configured, as in the evidence campaign.
+
+  The evaluation of the assistants' accuracy on a human-labelled test set is Phase 8's
+  (Section 8.9.4).
 
 ## 8.8 Experiments and simulations
 
@@ -870,33 +905,33 @@ the 90th percentile in brackets; `scheduler-overhead-jenkins.csv`, Figure {F:ove
 
 | Items queued | Held by the gate | History records | Maintenance, optimizer off | Maintenance, optimizer on | Scoring pass, empty cache | Scoring pass, full cache |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 10 | 2 | 10 | 0.24 (0.58) | 0.22 (0.30) | 0.59 (0.90) | 0.018 (0.018) |
-| 30 | 6 | 40 | 0.21 (0.38) | 0.26 (0.27) | 2.16 (2.91) | 0.044 (0.053) |
-| 100 | 20 | 140 | 0.79 (0.81) | 1.19 (1.91) | 19.6 (21.5) | 0.082 (0.084) |
-| 200 | 40 | 340 | 1.23 (1.28) | 2.73 (4.03) | 81.3 (90.6) | 0.168 (0.173) |
+| 10 | 2 | 10 | 0.30 (0.58) | 0.21 (0.32) | 0.87 (1.76) | 0.020 (0.020) |
+| 30 | 6 | 40 | 0.20 (0.35) | 0.25 (0.26) | 2.11 (2.40) | 0.028 (0.049) |
+| 100 | 20 | 140 | 0.70 (0.90) | 1.08 (1.19) | 18.0 (25.3) | 0.099 (0.143) |
+| 200 | 40 | 340 | 1.29 (1.59) | 2.68 (4.08) | 82.4 (125.6) | 0.192 (0.235) |
 
 **Table {T:e1b}: E1b, scoring, sorting and heaping alone** (microseconds: the median of 101 runs,
 the 90th percentile in brackets; `scheduler-overhead-algorithm.csv`)
 
 | Items | 10 | 30 | 50 | 100 | 200 | 400 | 800 | 1600 | 3200 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| µs | 39 (54) | 26 (47) | 33 (69) | 46 (94) | 86 (92) | 173 (185) | 358 (423) | 791 (874) | 1629 (1785) |
+| µs | 38 (60) | 25 (40) | 32 (52) | 46 (77) | 83 (89) | 166 (176) | 355 (413) | 775 (854) | 1552 (1660) |
 
 [[FIGURE f06-scheduler-overhead {F:overhead} | E1: the plugin's cost inside Jenkins, and the algorithm alone]]
 
 What E1 shows:
 - **The routine pass costs Jenkins almost nothing at the POC's scale.** With 30 items queued, a
-  maintenance pass took 0.21 ms with the optimizer off and 0.26 ms with it on (medians). At 10 items
+  maintenance pass took 0.20 ms with the optimizer off and 0.25 ms with it on (medians). At 10 items
   the difference was inside the noise: the median with the optimizer on was the lower one.
 - **The full scoring pass is where the cost is.** It runs when the queue changes, and once per
-  rescore interval otherwise: 2.2 ms at 30 items and 81 ms at 200. With the cache full, the same
-  pass took 0.04 and 0.17 ms.
+  rescore interval otherwise: 2.1 ms at 30 items and 82 ms at 200. With the cache full, the same
+  pass took 0.03 and 0.19 ms.
 - **It grows with items times history.** The estimator compares each queued job with every
   recorded build, and history holds up to 50 builds of *every job on the controller*, not of the
   queued ones only. Here the jobs of the earlier sizes stayed on the controller, so 200 queued items
   met 340 records. From 30 items up, the cost per item-and-record pair stayed between about 1 and
   2 µs, as an O(n·h) computation's should. At 10 items the fixed cost of a pass dominates.
-- **The algorithm alone is fast and grows as O(n log n):** 86 µs at 200 items, against the 5 ms
+- **The algorithm alone is fast and grows as O(n log n):** 83 µs at 200 items, against the 5 ms
   budget of objective O4, and 1.6 ms at 3200, roughly doubling as the queue doubles. (Its 10-item
   median is above its 30-item one: at that size the timer measures the JIT, not the code.)
 
@@ -1118,11 +1153,11 @@ cycle to the report's Appendix F. None of it has run. E2 and E3 bear on its desi
 
 ### 8.9.2 The defects testing found
 
-Testing and review found 42 defects between 28 September and 22 October 2026. One entry, DF-28,
-gathers 13 low-severity findings of the independent security review, so there were 54 separate
+Testing and review found 44 defects between 28 September and 22 October 2026. One entry, DF-28,
+gathers 13 low-severity findings of the independent security review, so there were 56 separate
 problems in all. Annexure A.10 lists each defect with the test or record that shows it and the
 commit that dealt with it:
-- **39 are fixed.**
+- **41 are fixed.**
 - **One is mitigated.** DF-22: agents intermittently fail to resolve `github.com` under Docker
   Desktop's resolver, and a checkout now retries twice.
 - **Two are recorded rather than fixed.** DF-01, the stale `comparison.json`, is in Milestone 2's
@@ -1137,7 +1172,7 @@ Figure {F:defects} shows how each defect was found and where.
 What the distribution says:
 
 - **Most defects lived between components, not inside them.** Unit tests found 4. Integration and
-  system tests found 18, and those were defects no unit test could have seen, because each unit was
+  system tests found 19, and those were defects no unit test could have seen, because each unit was
   right on its own terms:
   - The scoring classes computed the dependency factor correctly, but the sorter handed them only the
     buildable items. So in a live queue no group ever had two members, and the factor was always 0
@@ -1152,12 +1187,14 @@ What the distribution says:
   This is the case Pressman and Maxim make for integration testing [22, ch. 20]: interfaces carry
   assumptions that only meet when the parts do.
 
-  One system-level find was in no code of this project at all. The first known-vulnerability scan
-  of the backend's dependencies found that `certifi`, two levels down, trusted a CA root whose
-  intermediates had leaked keys (DF-40, D-071).
+  Two system-level finds were in no code of this project at all, but in what it depends on:
+  - the first known-vulnerability scan of the backend's dependencies found that `certifi`, two
+    levels down, trusted a CA root whose intermediates had leaked keys (DF-40, D-071);
+  - the evidence campaign's scan of the frontend's found six advisories against the Vite
+    development server the project builds with (DF-44, D-075).
 - **Review found the most, 13.** Eight came from the two security reviews, and each of their fixes
-  has a regression test that fails without it; the independent review watched each one fail with
-  its fix removed. The other five came from checking data, builds, documents and results by hand:
+  has a regression test. The other five came from checking data, builds, documents and results by
+  hand:
   - Milestone 2's stored results (DF-01);
   - Maven's lifecycle, in which `mvn verify` had been skipping every integration test while
     reporting success (DF-04);
@@ -1168,7 +1205,7 @@ What the distribution says:
   - asking why one integration test was skipped in the evidence campaign (DF-42). It was a
     placeholder that had never been written, so nothing had ever proved that the migrations build
     the schema the models describe, or that any migration downgrades.
-- **The test machinery had defects too, and finding them mattered as much.** Ten of the 42 were in
+- **The test machinery had defects too, and finding them mattered as much.** Ten of the 44 were in
   the tests, gates, CI or measurements, not in the product:
   - a script-console guard that missed untracked files (DF-02);
   - a test that assumed a Pipeline enters the queue once (DF-03);
@@ -1199,8 +1236,8 @@ Three of the report's claims were put to the test, and each needs qualifying; th
 recorded in `docs/report-updates.md` (D-073).
 
 - **"The plugin adds no measurable overhead" (Section 6.6).** True of the routine pass at the POC's
-  scale: 0.05 ms on a 0.2 ms maintenance pass at 30 items. Not true of the full rescore, which took
-  2.2 ms at 30 items and 81 ms at 200 and runs at least once a rescore interval.
+  scale: 0.05 ms on a 0.20 ms maintenance pass at 30 items. Not true of the full rescore, which took
+  2.1 ms at 30 items and 82 ms at 200 and runs at least once a rescore interval.
   - **The cost grows with the jobs on the controller as well as with the queue**, since the history
     is 50 builds *per job*.
   - **An extrapolation, not a measurement:** at the measured 1 to 2 µs a pair, a controller with
@@ -1214,12 +1251,12 @@ recorded in `docs/report-updates.md` (D-073).
     and capped below the gap between LOW and HIGH, so a LOW job can wait 20 minutes with or without
     it.
   - **The formula is the report's and stays.** What the report should say is that aging, with these
-    parameters, softens nothing; band-aware aging, or a higher cap, is future work.
+    parameters, trims only the longest waits, slightly, and does not prevent starvation; band-aware
+    aging, or a higher cap, is future work.
 - **Milestone 2's improvement (Chapter 12).** Its HIGH band's wait fell from 271.5 to 39.1 s, and
   the same run broke 19 of 20 dependency edges. Version 2 keeps every edge, and the price of that, on
-  this workload, is a HIGH band that waits at least 155.9 s under every simulated policy that keeps
-  them.
-  When Chapter 12 compares the two, the column of broken edges belongs beside the waits.
+  this workload and one executor, is a HIGH band that waits at least 155.9 s under every simulated
+  policy that keeps them. When Chapter 12 compares the two, the column of broken edges belongs beside the waits.
 
 **What the scheduler is for, as the experiments show it:**
 - **On one executor it chooses who waits; it removes no waiting.** The makespan was the same under
@@ -1249,7 +1286,8 @@ That is the report's claim, with its cost stated.
 - **One browser.** The browser flows, audits and screenshots ran in Google Chrome only. Firefox and
   Safari were not tested.
 - **Independence.** The developers wrote the tests, with an AI coding assistant. Only the security
-  review of Phases 3, 5 and 6 was independent, and it did not cover the Java plugin. The plugin's
+  review of Phases 3, 5 and 6 was independent of them, its reviewer was itself an AI agent, and it
+  did not cover the Java plugin. The plugin's
   defences are its own tests and the gates, plus a white-box check of its web surface made while
   writing this chapter, by the developers and so not independent:
   - each of its three endpoints only reads, changing nothing, and requires Jenkins' Overall/Read
@@ -1266,9 +1304,10 @@ That is the report's claim, with its cost stated.
   was run, so Section 4.8's usability requirement is supported, not demonstrated.
 - **Security testing had no penetration test.** It consisted of the reviews, the tests that came
   from them, and known-vulnerability scans of dependencies:
-  - **Frontend:** `npm audit` on its production dependencies.
+  - **Frontend:** `npm audit` over all its dependencies, its tools included: [[NPM_AUDIT]].
   - **Backend:** `pip-audit` 2.10.1 on the 49 packages its image installs. The scan found one known
-    vulnerability, in `certifi` [[CERTIFI_OUTCOME]].
+    vulnerability, in `certifi` (PYSEC-2026-4320). It was fixed under D-071, and a second scan found
+    none.
   - **Plugin:** it bundles no third-party library (its `.hpi` holds only its own jar). It runs on
     Jenkins core and on plugins pinned in `plugins.txt`, which were not scanned.
 
@@ -1286,7 +1325,38 @@ That is the report's claim, with its cost stated.
 
 ## 8.10 Chapter summary
 
-[[CHAPTER_SUMMARY]]
+This chapter tested the Intelligent CI/CD Orchestrator at every level of Pressman and Maxim's
+strategy, under a plan built through Perry's six tasks:
+- **unit and white-box:** basis paths, coverage, complexity and mutation;
+- **black-box:** equivalence classes, boundary values and the API's contract;
+- **validation:** every acceptance criterion of the report's user stories;
+- **integration:** each component against the real thing it depends on;
+- **system:** structural and functional tests of the running stack, and the specialised tests a web
+  application with a language model needs.
+
+Every result comes from a run at a named commit, and every test that ran is in Annexure B.
+
+Four lessons stand out:
+
+1. **Most defects lived between components.** Unit tests found 4 of the 44 defects; integration
+   and system tests found 19. The most consequential, a dependency factor that was always 0 in a
+   live queue, passed every unit test of the code that computed it.
+2. **The test machinery needed testing too.** Ten defects were in tests, gates, CI or measurement,
+   not in the product. Two would have made later results meaningless: integration tests that never
+   ran, and a gate that could pass on a stale container.
+3. **A green result says only what was run.** The coverage tool under-read the backend by five
+   points. A placeholder test skipped, unnoticed, in every run. A gate check reported downgrades it
+   never ran. Each was found by asking what a number actually measured.
+4. **Three of the report's claims need qualifying, and the evidence says how:**
+   - the plugin's cost is negligible in the routine pass but not in a full rescore, and it grows
+     with the controller's jobs;
+   - aging, as specified, does not prevent starvation under sustained load;
+   - Milestone 2's headline improvement came from breaking 19 of 20 dependency edges, which
+     version 2 never does.
+
+What remains is outside this chapter: Phase 7's controlled experiment on real Jenkins controllers,
+and Phase 8's evaluation of the assistants against human-labelled answers. E2 and E3 have already
+shaped the first; the second needs the drafted evaluation items reviewed by people.
 
 ## References
 

@@ -1982,19 +1982,23 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
         - `npm audit`: 0 vulnerabilities;
         - lint and typecheck clean; 296 tests pass; the build passes;
         - the frontend image was rebuilt, and the Phase 6 image and nginx checks pass.
-- [ ] **The testing chapter (Chapter 8), in progress; stopped at a usage limit on 2026-10-22.**
-      - **The draft:** `docs/testing/work-in-progress/chapter-8-draft.md`. All sections are written,
-        with the experiment results, defect analysis and limitations from real runs. 45
-        `[[PLACEHOLDERS]]` remain for numbers from the final evidence campaign.
-      - **Next steps,** in `docs/testing/work-in-progress/after-campaign-todo.md`:
-        1. a full gate at the final commit (run 5 was started at `8263a7e` and its result was not
-           recorded);
-        2. the full campaign at that same commit;
-        3. `system_load_test.py` and `recovery_test.py`;
-        4. the register, figures and annexure;
-        5. D-073 and the report items, re-checking E1's timings;
-        6. fill and assemble with `assemble_chapter.py`, then check the cited tests with
-           `check_cited_tests.py`.
+- [x] **The sixth full gate run (2026-10-22, at `0285f30`) failed one check and was stopped.** 68
+      checks passed. In the backend quality bar, the offline suite ran past its 600-second limit.
+      - **The machine was the cause, not the code.** Windows' battery report shows the laptop went
+        onto battery at 11:29 and was suspended from 11:34 to 11:56, during Phase 3. On battery its
+        CPU runs at about half speed: run alone afterwards, the offline suite passed all 1,730 tests
+        in 437 s, against 245 s in the evidence campaign, which ran on mains power.
+      - **Its log is kept** (`docs/testing/evidence/gate-run-6-0285f30-stopped.log`). CLAUDE.md now
+        says to start a gate or a measurement only on mains power. The gate runs again in full.
+- [ ] **The testing chapter (Chapter 8), in progress.**
+      - **Built:** the register of all 2,434 tests (Annexure B), the figures, Annexure A, and
+        `scripts/report/check_citations.py`, which checks every test the chapter cites against the
+        register (76 of 76 ran and passed).
+      - **The draft** (`docs/testing/work-in-progress/chapter-8-draft.md`) was reviewed line by line
+        against the data and the records. It now states that the independent security reviewer was
+        an AI agent, and that the fixes were checked in the main session, as the review's record says.
+      - **Next steps,** in `docs/testing/work-in-progress/after-campaign-todo.md`: gate run 7 on
+        mains power, the load and recovery tests, then fill and assemble the chapter.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not

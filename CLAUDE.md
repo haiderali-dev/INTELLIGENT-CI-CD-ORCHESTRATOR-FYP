@@ -46,6 +46,10 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
   uv 0.12.20 at `.venv-tools/` (project-local; the backend venv is `backend/.venv`, Python 3.12.14).
 - gh 2.102.0 is installed and logged in (checked 2026-10-11). Open each phase PR against `main`:
   stacked PRs merged into intermediate branches and kept Phases 2 to 4 out of `main`.
+- This is a laptop. On battery its CPU runs at about half speed, and it suspends when idle: gate run
+  6 (2026-10-22) went onto battery, was suspended for 22 minutes in Phase 3, and timed out in the
+  backend suite. Start a gate or a measurement only on mains power:
+  `(Get-CimInstance Win32_Battery).BatteryStatus` is 2 on mains and 1 on battery.
 - Docker Desktop does not start with Windows here. Launch
   `%LOCALAPPDATA%/Programs/DockerDesktop/Docker Desktop.exe` and wait for `docker info` to succeed
   (about 30 s) before any Phase 1 or Phase 3+ acceptance check.

@@ -1,16 +1,23 @@
-# Repository edits held until gate 5 and the final campaign (both at 8263a7e) are done
+# The testing chapter: what is left (2026-10-22, 12:20)
 
-1. scripts/report/testing_annexure.py, section_campaign: a paragraph on the rehearsal at ac8305a
-   (Parts A and B only; three backend steps failed in a DNS outage 06:41-06:56 and passed when
-   re-run; its skipped test led to DF-42). Its attempt-1 logs: .tmp/campaign/ac8305a/.
-   Consider copying a short excerpt of the outage errors into docs/testing/evidence/.
-2. docs/decisions.md: D-073, with E1's figures from the FINAL campaign (check every E1 number:
-   0.21/0.26 ms, 2.2 ms, 81 ms, 86 µs, 1.6 ms). E2/E3 are deterministic: confirm unchanged.
-3. docs/report-updates.md: the three items in report-updates-new.md, E1 numbers re-checked.
-4. docs/testing/chapter-8-software-testing.md: the draft, labels numbered, placeholders filled;
-   run check_cited_tests.py against the register.
-5. Generate: register (test_register.py --gate gate-5.log --ci ci-runs.json), figures
-   (testing_figures.py --ci --complexity complexity CSV re-run at the final commit), annexure
-   (testing_annexure.py --gate --system .tmp/system). Copy gate-5.log to docs/testing/evidence/.
-6. PROGRESS.md: gate 5, the campaign, load and recovery tests, the chapter.
-7. Chapter E1 section and 8.9.3: re-check every E1 number against the final campaign's CSV.
+Done:
+- the evidence campaign at `31eb935`; D-073, D-075, DF-43 and DF-44 (`0285f30`);
+- the register, figures and annexure builders in `scripts/report/`, and their outputs;
+- `scripts/report/check_citations.py`: every test the chapter cites ran and passed (76 of 76);
+- the draft, reviewed line by line against the data and the records.
+
+Left, in order:
+1. Gate run 7 at the commit after `0285f30`, on mains power. Gate run 6 failed one check when the
+   laptop went onto battery and was suspended for 22 minutes (CLAUDE.md, environment facts).
+2. On mains power, after the gate: `python scripts/system_load_test.py`, then
+   `python scripts/recovery_test.py`. Both write to `.tmp/system`.
+3. Refetch the CI history, then rebuild the register, figures and annexure, with
+   `--gate docs/testing/evidence/gate-run-7-<sha>.log --system .tmp/system`.
+4. In the draft, gate run 7 replaces gate run 5: Section 8.1's results in brief, the
+   static-analysis table and the note under it, the metrics row in 8.6.2, 8.7.1's Operations,
+   8.7.2's replayed end-to-end sentence, and the gate runs in 8.9.4's limits. `values.json` too:
+   `GATE_COMMIT` and `R_METRICS_CHECK`.
+5. `fill_placeholders.py chapter-8-draft.md <out> .tmp/campaign/31eb935 .tmp/system values.json`,
+   then `assemble_chapter.py` into `docs/testing/chapter-8-software-testing.md`, then
+   `python scripts/report/check_citations.py`.
+6. Remove this folder, check the chapter off in `PROGRESS.md`, commit, push, and see CI pass.

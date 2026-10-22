@@ -144,7 +144,7 @@ def coverage(campaign: Path) -> list[list[object]]:
         rows.append(["Plugin (JaCoCo, unit and integration tests)", round(pct("LINE"), 1), round(pct("BRANCH"), 1)])
     for name, label in (
         ("backend-offline-coverage.json", "Backend (coverage.py, offline suite)"),
-        ("backend-e2e-coverage.json", "Backend (coverage.py, offline, integration and end-to-end)"),
+        ("backend-live-coverage.json", "Backend (coverage.py, all four suites)"),
     ):
         path = campaign / "backend" / name
         if path.is_file():
@@ -206,7 +206,7 @@ def complexity(campaign: Path, lizard_csv: Path | None) -> None:
             functions.append({"component": component, "file": file, "name": row[7], "start": int(row[9]),
                               "end": int(row[10]), "ccn": int(row[1]), "nloc": int(row[0])})
 
-    backend_json = campaign / "backend" / "backend-e2e-coverage.json"
+    backend_json = campaign / "backend" / "backend-live-coverage.json"
     if not backend_json.is_file():
         backend_json = campaign / "backend" / "backend-offline-coverage.json"
     backend = json.loads(backend_json.read_text(encoding="utf-8"))["files"] if backend_json.is_file() else {}
@@ -240,7 +240,10 @@ def complexity(campaign: Path, lizard_csv: Path | None) -> None:
                         return f"{100 * s['covered_branches'] / s['num_branches']:.0f}", "function"
         if function["component"] == "Plugin":
             simple, _, method = function["name"].rpartition("::")
-            candidates = jacoco.get((simple.split("::")[-1], method), [])
+            # lizard can name a method after a nested type declared just before it (Result::sort is
+            # KahnTopologicalSort.sort), so the file's own class is tried as well.
+            outer = function["file"].rsplit("/", 1)[-1].removesuffix(".java")
+            candidates = jacoco.get((simple.split("::")[-1], method), []) or jacoco.get((outer, method), [])
             if candidates:
                 line, missed, covered = min(candidates, key=lambda c: abs(c[0] - function["start"]))
                 if missed + covered == 0:
@@ -260,7 +263,8 @@ def complexity(campaign: Path, lizard_csv: Path | None) -> None:
         if not group:
             continue
         values = [f["ccn"] for f in group]
-        summary_rows.append([component, len(group), round(statistics.mean(values), 2), statistics.median(values),
+        # An even count's median is a float (1.0) and an odd count's an int (2): printed alike with :g.
+        summary_rows.append([component, len(group), round(statistics.mean(values), 2), f"{statistics.median(values):g}",
                              max(values), sum(v > 10 for v in values), sum(v > 15 for v in values)])
         for function in sorted(group, key=lambda f: (-f["ccn"], f["file"])):
             percent, basis = coverage_of(function)
@@ -478,9 +482,11 @@ def figure_coverage() -> None:
     axis.set_yticks(y, names)
     axis.set_xlim(0, 110)
     axis.xaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value:.0f}%"))
-    axis.legend(loc="lower right")
+    # Below the axis, in a row: inside the plot it covered the plugin's bars and their labels.
+    axis.legend(loc="upper center", bbox_to_anchor=(0.5, -0.14), ncols=2)
     axis.grid(axis="y", visible=False)
     axis.set_title("Structural coverage by component")
+    figure.tight_layout()
     save(figure, "f04-coverage")
 
 
@@ -582,16 +588,18 @@ def figure_simulation() -> None:
     axis.set_title("E2: the simulator against Milestone 2's measured runs")
     save(figure, "f07-simulator-validation")
 
-    figure, (one, three) = plt.subplots(1, 2, figsize=(6.5, 3.0), sharey=False)
+    figure, (one, three) = plt.subplots(1, 2, figsize=(6.5, 3.3), sharey=False)
     policies = [("FIFO", "FIFO, no gate (stock Jenkins)"), ("URGENCY", "Static urgency, gated"),
                 ("OPTIMIZER", "Version 2 optimizer, gated")]
     known = [r for r in rows if r["source"] == "simulated" and r["estimates"] in ("known", "-")]
     band_bars(one, [r for r in known if r["executors"] == "1"], policies, "One executor")
     band_bars(three, [r for r in known if r["executors"] == "3"], policies, "Three executors")
-    one.legend(loc="upper left", fontsize=7)
+    # One legend for both panels, below them: inside the left panel it covered FIFO's HIGH bar.
+    handles, labels = one.get_legend_handles_labels()
+    figure.legend(handles, labels, loc="lower center", ncols=3, fontsize=7)
     figure.suptitle("E2: Milestone 2's workload under three policies (simulated)", x=0.01, ha="left",
                     fontsize=10, fontweight="bold", color=INK)
-    figure.tight_layout()
+    figure.tight_layout(rect=(0, 0.07, 1, 1))
     save(figure, "f08-policies-m2-workload")
 
 
@@ -640,9 +648,14 @@ def figure_complexity() -> None:
                      color=SLOTS[slot], edgecolors=SURFACE, linewidths=0.8, label=f"{component} ({len(group)} functions with branches)",
                      alpha=0.85, zorder=3)
     risky = [r for r in rows if int(r["ccn"]) > 10 and int(r["branch_coverage_pct"]) < 80]
-    for r in risky:
-        axis.annotate(r["function"].split("::")[-1], (int(r["ccn"]), int(r["branch_coverage_pct"])), xytext=(4, -3),
+    # Points at the same coverage sit side by side, so their labels are stepped down one line each
+    # (edit_intent and verify_quotes, both at 75%, printed over each other).
+    seen: Counter[int] = Counter()
+    for r in sorted(risky, key=lambda r: (int(r["branch_coverage_pct"]), int(r["ccn"]))):
+        y = int(r["branch_coverage_pct"])
+        axis.annotate(r["function"].split("::")[-1], (int(r["ccn"]), y), xytext=(4, -3 - 9 * seen[y]),
                       textcoords="offset points", fontsize=7, color=SECONDARY)
+        seen[y] += 1
     axis.axvline(10, color=AXIS, linewidth=0.8, zorder=1)
     axis.set_xlabel("Cyclomatic complexity of the function (lizard)")
     axis.set_ylabel("Its branches covered (%)")

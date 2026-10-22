@@ -1,0 +1,98 @@
+run,date,branch,commit,event,conclusion,title
+37654567305,2026-10-07,phase-3-backend,71b0131,push,failure,test(backend): T3.9 integration tests; Phase 3 acceptance met
+37658215939,2026-10-07,phase-3-backend,5db5e28,push,success,add AI prompts skeleton directory
+37954922569,2026-10-09,phase-4-ai-core,576728f,push,success,test(ai): T4.8 opt-in live test and Phase 4 checks; Phase 4 acceptanc…
+37954922255,2026-10-09,phase-2-plugin,ae92b60,push,success,test(plugin): T2.13 the remaining Part 4.3.10 tests; two findings
+37954921877,2026-10-09,phase-0-foundation,716581c,push,success,"fix(verify): scope the script-console check to code, and scan uncommi…"
+38004200327,2026-10-09,phase-4-ai-core,765e5d3,push,success,chore: finalize Phase 4 AI core updates
+38137593861,2026-10-11,phase-5-assistants,e4032f5,push,success,test(phase-5): failing-tests acceptance groundwork and three defects
+38138391114,2026-10-11,phase-3-backend,79d3472,push,success,Merge pull request #1 from haiderali-dev/phase-5-assistants
+38139342335,2026-10-11,phase-5-assistants,c43899b,push,success,fix(phase-5): working checkouts and deploys; failing-tests acceptance…
+38140615342,2026-10-11,phase-0-foundation,716581c,pull_request,success,Phase 0 foundation
+38142294637,2026-10-11,main,9c3347c,push,success,Merge pull request #2 from haiderali-dev/phase-0-foundation
+38143281316,2026-10-11,phase-0-foundation,3757733,push,success,Merge pull request #3 from haiderali-dev/phase-2-plugin
+38143775947,2026-10-11,phase-2-plugin,057c2f0,push,success,Merge pull request #4 from haiderali-dev/phase-3-backend
+38147273385,2026-10-11,recovery/phase-2-plugin,ae92b60,pull_request,success,Recovery: Phase 2 Jenkins plugin into main
+38147276654,2026-10-11,recovery/phase-3-backend,5db5e28,pull_request,success,Recovery: Phases 1+3 Docker stack and backend into main
+38147280740,2026-10-11,recovery/phase-4-ai-core,765e5d3,pull_request,success,Recovery: Phase 4 AI core into main
+38148489921,2026-10-11,main,0214390,push,cancelled,Merge pull request #5 from haiderali-dev/recovery/phase-2-plugin
+38148540818,2026-10-11,main,7cab8cf,push,cancelled,Merge pull request #6 from haiderali-dev/recovery/phase-3-backend
+38148570445,2026-10-11,main,69d6f62,push,success,Merge pull request #7 from haiderali-dev/recovery/phase-4-ai-core
+38153857626,2026-10-11,fix/pipeline-log-finish-race,b1bc0c1,pull_request,success,"fix(backend): wait on X-More-Data, not building, before a log is whole"
+38155038508,2026-10-11,main,48b1dda,push,success,Merge pull request #8 from haiderali-dev/fix/pipeline-log-finish-race
+38155900580,2026-10-11,phase-2-plugin,ae92b60,push,success,test(plugin): T2.13 the remaining Part 4.3.10 tests; two findings
+38155902273,2026-10-11,phase-3-backend,5db5e28,push,success,add AI prompts skeleton directory
+38156409348,2026-10-11,phase-5-assistants,c43899b,pull_request,success,Phase 5 groundwork: failing-tests acceptance and four checkout/deploy defects
+38156987705,2026-10-11,main,357f1aa,push,success,CI
+38160905159,2026-10-11,phase-5-assistants,3aa1cff,push,success,chore(phase-5): preparation before T5.1
+38161864114,2026-10-11,phase-5-assistants,3aa1cff,pull_request,success,Phase 5: Freestyle and Pipeline assistants (T5.1-T5.9)
+38171280650,2026-10-11,phase-5-assistants,2ac9d01,push,success,"feat(generation): T5.1 spec model, planner schema and one revision rule"
+38171284360,2026-10-11,phase-5-assistants,2ac9d01,pull_request,success,Phase 5: Freestyle and Pipeline assistants (T5.1-T5.9)
+38321338100,2026-10-12,phase-5-assistants,e1072da,push,success,feat(generation): T5.2 planner with default plans and a repair loop
+38321341672,2026-10-12,phase-5-assistants,e1072da,pull_request,success,Phase 5: Freestyle and Pipeline assistants (T5.1-T5.9)
+38324951864,2026-10-12,phase-5-assistants,18063be,push,success,feat(generation): T5.3 templates derived from the reference configs
+38324955242,2026-10-12,phase-5-assistants,18063be,pull_request,success,Phase 5: Freestyle and Pipeline assistants (T5.1-T5.9)
+38325433887,2026-10-13,phase-5-assistants,80639d1,push,success,feat(generation): T5.4 freestyle and Pipeline validators
+38325438000,2026-10-13,phase-5-assistants,80639d1,pull_request,success,Phase 5: Freestyle and Pipeline assistants (T5.1-T5.9)
+38326122229,2026-10-13,phase-5-assistants,049caa7,push,success,"feat(api): T5.5 assistant conversations, messages and intent editing"
+38326126200,2026-10-13,phase-5-assistants,049caa7,pull_request,success,Phase 5: Freestyle and Pipeline assistants (T5.1-T5.9)
+38326834111,2026-10-13,phase-5-assistants,a4adf3d,push,success,"feat(api): T5.6 generate, regenerate, explain and approve"
+38326837897,2026-10-13,phase-5-assistants,a4adf3d,pull_request,success,Phase 5: Freestyle and Pipeline assistants (T5.1-T5.9)
+38328017467,2026-10-13,phase-5-assistants,c30dcc6,push,success,"feat(backend): T5.7 chain lock, chain tracking and Pipeline stage tra…"
+38328021287,2026-10-13,phase-5-assistants,c30dcc6,pull_request,success,Phase 5: Freestyle and Pipeline assistants (T5.1-T5.9)
+38330368459,2026-10-13,phase-5-assistants,d011f73,push,success,"test(e2e): T5.8 end-to-end suite, replay fixtures and Phase 5 checks …"
+38330371822,2026-10-13,phase-5-assistants,d011f73,pull_request,success,Phase 5: Freestyle and Pipeline assistants (T5.1-T5.9)
+38358654352,2026-10-13,phase-5-assistants,f787450,push,failure,feat(failures): T5.9 explain failure for failed runs
+38358657287,2026-10-13,phase-5-assistants,f787450,pull_request,failure,Phase 5: Freestyle and Pipeline assistants (T5.1-T5.9)
+38366063791,2026-10-13,phase-5-assistants,5f96bda,push,success,fix(tests): commit the captured failure logs that .gitignore hid
+38366069196,2026-10-13,phase-5-assistants,5f96bda,pull_request,success,Phase 5: Freestyle and Pipeline assistants (T5.1-T5.9)
+38373779603,2026-10-13,phase-5-assistants,1caa544,push,success,docs(phase-5): security review record; keep failed gate output
+38373787540,2026-10-13,phase-5-assistants,1caa544,pull_request,success,Phase 5: Freestyle and Pipeline assistants (T5.1-T5.9)
+38427407502,2026-10-13,phase-5-assistants,b662871,push,success,fix(failures): read the failing step before the rest of the log
+38427418084,2026-10-13,phase-5-assistants,b662871,pull_request,success,Phase 5: Freestyle and Pipeline assistants (T5.1-T5.9)
+38430339891,2026-10-13,phase-5-assistants,42b04b2,push,success,docs(progress): Phase 5 done -- T5.8 and T5.9 checked off on a passin…
+38430348554,2026-10-13,phase-5-assistants,42b04b2,pull_request,success,Phase 5: Freestyle and Pipeline assistants (T5.1-T5.9)
+38437589365,2026-10-13,phase-5-assistants,93b38cf,push,success,ci(jenkins): retry a failed SCM checkout twice on jenkins-dev
+38437598025,2026-10-13,phase-5-assistants,93b38cf,pull_request,success,Phase 5: Freestyle and Pipeline assistants (T5.1-T5.9)
+38439318226,2026-10-13,main,8da58b9,push,success,Merge pull request #10 from haiderali-dev/phase-5-assistants
+38442251676,2026-10-13,phase-6-frontend,d06ea63,push,success,docs(progress): record PR #10 merged as 8da58b9; open Phase 6
+38467146820,2026-10-13,phase-6-frontend,158e4dc,push,cancelled,fix(failures): do not read a checkout attempt that Jenkins retried
+38467692692,2026-10-13,phase-6-frontend,7ca50d8,push,success,"feat(frontend): T6.2 project, tokens, shell, routing, API client and …"
+38468386574,2026-10-13,phase-6-frontend,60be62c,push,success,docs(claude): two lessons that repeated in this session
+38705021201,2026-10-15,phase-6-frontend,5faaa72,push,success,"feat(frontend): T6.3 sign in, session handling and sign-out"
+38714523703,2026-10-15,phase-6-frontend,5610201,push,success,feat(frontend): T6.4 shared assistant workspace components
+38720983228,2026-10-15,phase-6-frontend,6953d6d,push,success,"fix(plugin-client): read the ranking's real field names, tested on li…"
+38729134124,2026-10-15,phase-6-frontend,6269f5f,push,success,feat(api): type the assistant payloads in the OpenAPI schema
+38792947715,2026-10-15,phase-6-frontend,f43f0db,push,success,feat(frontend): T6.5 Freestyle Assistant and Pipeline Assistant pages
+38796958592,2026-10-15,phase-6-frontend,b73c946,push,success,docs(progress): record the Phase 6 gate passing 75 of 75 on f43f0db
+38802956163,2026-10-15,phase-6-frontend,40c6108,push,success,feat(frontend): T6.6 Queue page with score bars
+38848168418,2026-10-16,phase-6-frontend,e59d81c,push,success,"feat(frontend): T6.7 Overview, Jobs and runs, Analytics, Service cata…"
+38853258488,2026-10-16,phase-6-frontend,13f644b,push,success,test(frontend): T6.8 browser flows against the backend in fake mode
+38885272144,2026-10-16,phase-6-frontend,a5519fa,push,success,"docs(frontend): T6.9 screenshots of every screen, reviewed against DE…"
+39026561925,2026-10-17,phase-6-frontend,86d9a8d,push,success,fix(frontend): open a new chat only once its first exchange is stored
+39028582938,2026-10-17,phase-6-frontend,5bd1982,push,success,docs(progress): record the Phase 6 gate passing 77 of 77 on 86d9a8d
+39030064897,2026-10-17,phase-6-frontend,ff70254,push,success,test(frontend): Lighthouse accessibility audits of both assistant pages
+39031717314,2026-10-17,phase-6-frontend,3172cd2,push,success,docs(progress): record the Phase 6 gate passing 78 of 78 on ff70254
+39032215210,2026-10-17,phase-6-frontend,3172cd2,pull_request,success,Phase 6: Frontend (T6.1-T6.9)
+39032782135,2026-10-17,main,31a725f,push,success,Merge pull request #11 from haiderali-dev/phase-6-frontend
+39152598262,2026-10-18,phase-6-hardening,6d66e91,push,success,"fix(security): independent review of Phases 3, 5 and 6, all 15 findin…"
+39153902801,2026-10-18,phase-6-hardening,13588fa,push,success,feat: close the API gaps the Phase 6 pages ran into
+39344924302,2026-10-19,phase-6-hardening,217c78f,push,success,"feat(plugin): score a lone job, keep exit scores, and list jobs held …"
+39346443912,2026-10-20,phase-6-hardening,88a6a9a,push,success,perf(frontend): load every page on first navigation
+39347627505,2026-10-20,phase-6-hardening,ffcd507,push,cancelled,"test: gate checks for every acceptance clause, and system tests on th…"
+39348067474,2026-10-20,phase-6-hardening,deded23,push,cancelled,ci: Lighthouse on every push; screenshots from the final UI
+39348259894,2026-10-20,phase-6-hardening,08477e5,push,success,"test(stack): a Pipeline linted and run by the real Jenkins, through t…"
+39371958462,2026-10-20,phase-6-hardening,3e2eeae,push,success,fix(backend): audit the suspicious activity the backend detects; acce…
+39377219935,2026-10-20,phase-6-hardening,e1127cf,push,success,"test(plugin): experiments E1 to E3, and a campaign that runs every su…"
+39511825868,2026-10-20,phase-6-hardening,b16eb17,push,success,"test: a page test waits for the page, not a second; password length b…"
+39700898376,2026-10-22,phase-6-hardening,0603d4e,push,success,fix(stack): the gate checks that containers run what the source build…
+39705160985,2026-10-22,phase-6-hardening,ac8305a,push,success,test: the evidence campaign runs in parts; three more chapter figures…
+39705210895,2026-10-22,phase-6-hardening,ac8305a,pull_request,success,"Phase 6 hardening: every open defect in Phases 1 to 6 fixed, tested and gated"
+39714725656,2026-10-22,phase-6-hardening,8263a7e,push,cancelled,docs(testing): DF-42 in the defect log
+39714728993,2026-10-22,phase-6-hardening,8263a7e,pull_request,cancelled,"Phase 6 hardening: every open defect in Phases 1 to 6 fixed, tested and gated"
+39715084390,2026-10-22,phase-6-hardening,00c433b,push,failure,"docs(testing): save the testing chapter's draft and tools, in progress"
+39715088715,2026-10-22,phase-6-hardening,00c433b,pull_request,failure,"Phase 6 hardening: every open defect in Phases 1 to 6 fixed, tested and gated"
+39726780627,2026-10-22,phase-6-hardening,e0c0c69,push,failure,"docs: record the full gate's fifth run, 89 of 89 at 8263a7e"
+39726785641,2026-10-22,phase-6-hardening,e0c0c69,pull_request,failure,"Phase 6 hardening: every open defect in Phases 1 to 6 fixed, tested and gated"
+39728484869,2026-10-22,phase-6-hardening,31eb935,push,success,fix(docs): remove a work-in-progress script the script-console guard …
+39728490681,2026-10-22,phase-6-hardening,31eb935,pull_request,success,"Phase 6 hardening: every open defect in Phases 1 to 6 fixed, tested and gated"
