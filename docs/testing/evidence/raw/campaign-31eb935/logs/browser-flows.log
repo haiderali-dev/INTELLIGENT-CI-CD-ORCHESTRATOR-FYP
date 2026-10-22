@@ -1,0 +1,18 @@
+
+Running 12 tests using 1 worker
+
+[1/12] [flows] › e2e\assistants.spec.ts:16:3 › the assistants › a freestyle deploy, with a clarification, through to Run started
+[2/12] [flows] › e2e\assistants.spec.ts:50:3 › the assistants › a Pipeline deploy, with its Jenkinsfile
+[3/12] [flows] › e2e\assistants.spec.ts:74:3 › the assistants › refuses a production deploy and says why
+[4/12] [flows] › e2e\assistants.spec.ts:87:3 › the assistants › says when the rule parser answered instead of the model
+[5/12] [flows] › e2e\assistants.spec.ts:103:3 › the assistants › approves and runs with the keyboard alone
+[6/12] [flows] › e2e\csp.spec.ts:11:1 › the app runs under its Content-Security-Policy without a single violation
+[7/12] [flows] › e2e\queue.spec.ts:10:3 › the queue › shows a HIGH job above a LOW job, in the plugin's order
+[8/12] [flows] › e2e\queue.spec.ts:25:3 › the queue › says the ranking is unavailable, and why, when the plugin cannot be read
+[9/12] [flows] › e2e\roles.spec.ts:8:3 › what each role is offered › a Developer is not offered Admin, and the page says why it is closed
+[10/12] [flows] › e2e\roles.spec.ts:24:3 › what each role is offered › an Admin sees every user, and adds one
+[11/12] [flows] › e2e\sign-in.spec.ts:6:3 › signing in › says exactly what is wrong, lets the person in, and lets them out
+[12/12] [flows] › e2e\sign-in.spec.ts:27:3 › signing in › returns to the page that was asked for
+  12 passed (1.6m)
+
+--- stderr ---

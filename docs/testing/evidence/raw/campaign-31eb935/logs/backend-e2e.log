@@ -1,0 +1,8 @@
+.............                                                            [100%]
+=============================== tests coverage ================================
+______________ coverage: platform win32, python 3.12.14-final-0 _______________
+
+Coverage JSON written to file D:\FYP POC\CICD project - Copy\.tmp\campaign\31eb935\backend\backend-e2e-coverage.json
+13 passed, 1767 deselected in 587.84s (0:09:47)
+
+--- stderr ---

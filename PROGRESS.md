@@ -2017,6 +2017,21 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
       - **Corrections made in review:** the independent security reviewer is disclosed as an AI
         agent; the check that each fix's test fails without it is credited to the main session, as
         the review's record says; two section references; and the aging finding's wording.
+- [x] **The raw test evidence is committed** (2026-10-23), in `docs/testing/evidence/raw/`, which its
+      README indexes: 165 files, 18 MB, exactly as the runs wrote them.
+      - **What:** the evidence campaign at `31eb935` (every runner's JUnit XML, coverage data, PIT's
+        and JaCoCo's XML, the experiments' CSVs, each step's log, the manifest); the load and
+        recovery reports; gate run 7's 16 Lighthouse reports; and the rehearsal's backend steps from
+        the network outage, which the chapter says are kept.
+      - **Stored byte for byte:** `.gitattributes` exempts the folder from line-ending conversion,
+        and `.gitignore` lets its logs in. `SHA256SUMS` lists every file's hash; each copy was hashed
+        against its original (0 differ), and `sha256sum -c SHA256SUMS` passes.
+      - **Scanned before committing, since the repository is public:** no script-console reference.
+        Every key- and token-shaped string, and the one Basic credential, is one of the synthetic
+        test vectors of `backend/tests/test_failures_redact.py`, matched exactly. Maven's reports do
+        show this machine's paths and Windows user name, as the README says.
+      - **Annexure A and the chapter now point to the folder;** `check_citations.py` still finds
+        76 of 76, and Phase 0 passes.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not

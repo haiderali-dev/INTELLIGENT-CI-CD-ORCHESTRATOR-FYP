@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="8" skipped="1" tests="32" time="514.128" timestamp="2026-10-22T06:41:22.644020+05:00" hostname="HAIDER-HP"><testcase classname="tests.test_git" name="test_a_real_remote_resolves" time="0.888" /><testcase classname="tests.test_integration_failures" name="test_a_real_failing_test_job_is_explained_from_its_real_log" time="62.710" /><testcase classname="tests.test_integration_generation" name="test_the_linter_accepts_every_jenkinsfile_the_generator_produces" time="2.391" /><testcase classname="tests.test_integration_generation" name="test_the_linter_rejects_a_broken_jenkinsfile" time="0.353" /><testcase classname="tests.test_integration_generation" name="test_jenkins_keeps_the_chain_the_templates_write" time="0.685" /><testcase classname="tests.test_integration_generation" name="test_jenkins_keeps_the_pipeline_job_the_templates_write" time="0.376" /><testcase classname="tests.test_integration_jenkins" name="test_a_freestyle_job_is_created_triggered_and_read" time="10.588" /><testcase classname="tests.test_integration_jenkins" name="test_a_pipeline_job_is_created_triggered_and_read" time="14.654" /><testcase classname="tests.test_integration_jenkins" name="test_a_pipeline_job_still_accepts_parameters_after_a_run" time="12.531" /><testcase classname="tests.test_integration_jenkins" name="test_the_declarative_linter_accepts_the_reference_pipeline" time="0.329" /><testcase classname="tests.test_integration_jenkins" name="test_the_linter_rejects_a_broken_jenkinsfile" time="0.319" /><testcase classname="tests.test_integration_jenkins" name="test_the_agent_labels_the_catalog_names_exist" time="0.306" /><testcase classname="tests.test_integration_jenkins" name="test_an_unknown_job_is_reported_as_missing" time="0.366" /><testcase classname="tests.test_integration_jenkins" name="test_the_plugin_ranking_is_readable_live" time="0.304" /><testcase classname="tests.test_integration_revision" name="test_both_job_types_check_out_the_same_commit[commit wins over branch]" time="25.763" /><testcase classname="tests.test_integration_revision" name="test_both_job_types_check_out_the_same_commit[branch head without a commit]" time="24.805" /><testcase classname="tests.test_integration_revision" name="test_both_job_types_check_out_the_same_commit[main with neither]" time="24.810" /><testcase classname="tests.test_integration_revision" name="test_both_job_types_check_out_the_same_commit[main when both are blank]" time="24.815" /><testcase classname="tests.test_integration_revision" name="test_a_revision_that_does_not_exist_fails_both_job_types[commit that does not exist]" time="63.373"><failure message="assert &quot;Couldn't find any revision to build&quot; in &quot;Started by user \x1b[8mha:////4GiDgYr70JsXZMu5KXXq5+gvC/g8ajLqu7A4M9BRLYiaAAAAoh+LCAAAAAAAAP9b85aBtbiIQTGjNKU4P08vOT+...8Aw7lrnr0AAAA=\x1b[0m[Pipeline] End of Pipeline\r\nERROR: Error fetching remote repo 'origin'\r\nFinished: FAILURE\r\n&quot;">jobs = &lt;app.services.jenkins.HttpJenkinsClient object at 0x000001DF39FE25D0&gt;
+parameters = {'commit': '0000000deadbeef', 'branch': 'main'}
+
+    @pytest.mark.parametrize(
+        "parameters",
+        [
+            pytest.param(
+                {"commit": "0000000deadbeef", "branch": "main"}, id="commit that does not exist"
+            ),
+            pytest.param(
+                {"commit": None, "branch": "no-such-branch-d041"}, id="branch that does not exist"
+            ),
+        ],
+    )
+    async def test_a_revision_that_does_not_exist_fails_both_job_types(
+        jobs: HttpJenkinsClient, parameters: dict[str, str | None]
+    ) -&gt; None:
+        """Well-formed, so the backend passes it on, but not in the repository. Both must fail at
+        checkout. Neither may build anything else: no commit is checked out at all."""
+        values = select_revision(parameters["commit"], parameters["branch"]).parameters()
+    
+        for job in (FREESTYLE_JOB, PIPELINE_JOB):
+            result, head, log = await run(jobs, job, values)
+            assert result == "FAILURE", f"{job} finished {result} with {values}"
+            assert head is None, f"{job} fell back to {head}"
+&gt;           assert NO_REVISION in log
+E           assert "Couldn't find any revision to build" in "Started by user \x1b[8mha:////4GiDgYr70JsXZMu5KXXq5+gvC/g8ajLqu7A4M9BRLYiaAAAAoh+LCAAAAAAAAP9b85aBtbiIQTGjNKU4P08vOT+...8Aw7lrnr0AAAA=\x1b[0m[Pipeline] End of Pipeline\r\nERROR: Error fetching remote repo 'origin'\r\nFinished: FAILURE\r\n"
+
+tests\test_integration_revision.py:239: AssertionError</failure></testcase><testcase classname="tests.test_integration_revision" name="test_a_revision_that_does_not_exist_fails_both_job_types[branch that does not exist]" time="28.821"><failure message="assert &quot;Couldn't find any revision to build&quot; in &quot;Started by user \x1b[8mha:////4GiDgYr70JsXZMu5KXXq5+gvC/g8ajLqu7A4M9BRLYiaAAAAoh+LCAAAAAAAAP9b85aBtbiIQTGjNKU4P08vOT+...at hudson.model.Executor.run(Executor.java:456)\r\nERROR: Error fetching remote repo 'origin'\r\nFinished: FAILURE\r\n&quot;">jobs = &lt;app.services.jenkins.HttpJenkinsClient object at 0x000001DF3A02FC50&gt;
+parameters = {'commit': None, 'branch': 'no-such-branch-d041'}
+
+    @pytest.mark.parametrize(
+        "parameters",
+        [
+            pytest.param(
+                {"commit": "0000000deadbeef", "branch": "main"}, id="commit that does not exist"
+            ),
+            pytest.param(
+                {"commit": None, "branch": "no-such-branch-d041"}, id="branch that does not exist"
+            ),
+        ],
+    )
+    async def test_a_revision_that_does_not_exist_fails_both_job_types(
+        jobs: HttpJenkinsClient, parameters: dict[str, str | None]
+    ) -&gt; None:
+        """Well-formed, so the backend passes it on, but not in the repository. Both must fail at
+        checkout. Neither may build anything else: no commit is checked out at all."""
+        values = select_revision(parameters["commit"], parameters["branch"]).parameters()
+    
+        for job in (FREESTYLE_JOB, PIPELINE_JOB):
+            result, head, log = await run(jobs, job, values)
+            assert result == "FAILURE", f"{job} finished {result} with {values}"
+            assert head is None, f"{job} fell back to {head}"
+&gt;           assert NO_REVISION in log
+E           assert "Couldn't find any revision to build" in "Started by user \x1b[8mha:////4GiDgYr70JsXZMu5KXXq5+gvC/g8ajLqu7A4M9BRLYiaAAAAoh+LCAAAAAAAAP9b85aBtbiIQTGjNKU4P08vOT+...at hudson.model.Executor.run(Executor.java:456)\r\nERROR: Error fetching remote repo 'origin'\r\nFinished: FAILURE\r\n"
+
+tests\test_integration_revision.py:239: AssertionError</failure></testcase><testcase classname="tests.test_integration_revision" name="test_an_invalid_commit_never_reaches_jenkins[latest]" time="0.004" /><testcase classname="tests.test_integration_revision" name="test_an_invalid_commit_never_reaches_jenkins[not-a-sha]" time="0.003" /><testcase classname="tests.test_integration_revision" name="test_an_invalid_commit_never_reaches_jenkins[3f9c2ab; id]" time="0.003" /><testcase classname="tests.test_integration_revision" name="test_the_pipeline_applies_the_rule_to_raw_parameters[BRANCH only]" time="30.834"><failure message="AssertionError: assert 'FAILURE' == 'SUCCESS'&#10;  &#10;  - SUCCESS&#10;  + FAILURE">jobs = &lt;app.services.jenkins.HttpJenkinsClient object at 0x000001DF39C59A00&gt;
+heads = {'main': '998844b0159c13bf8ab32e1e2da2f4a187b7eb61', 'demo/failing-tests': 'da997c8be894b8058c9c88068295964b81f2d846'}
+parameters = {'BRANCH': 'demo/failing-tests', 'COMMIT': ''}, expected = 'demo'
+
+    @pytest.mark.parametrize(
+        ("parameters", "expected"),
+        [
+            pytest.param({"BRANCH": DEMO_BRANCH, "COMMIT": ""}, "demo", id="BRANCH only"),
+            pytest.param({"BRANCH": "", "COMMIT": ""}, "main", id="both blank: main, not any branch"),
+            pytest.param({"BRANCH": "main", "COMMIT": "demo"}, "demo", id="raw COMMIT wins"),
+        ],
+    )
+    async def test_the_pipeline_applies_the_rule_to_raw_parameters(
+        jobs: HttpJenkinsClient, heads: dict[str, str], parameters: dict[str, str], expected: str
+    ) -&gt; None:
+        sha = {"demo": heads[DEMO_BRANCH], "main": heads["main"]}
+        values = {name: sha.get(value, value) for name, value in parameters.items()}
+    
+        result, head, _ = await run(jobs, PIPELINE_JOB, values)
+    
+&gt;       assert result == "SUCCESS"
+E       AssertionError: assert 'FAILURE' == 'SUCCESS'
+E         
+E         - SUCCESS
+E         + FAILURE
+
+tests\test_integration_revision.py:270: AssertionError</failure></testcase><testcase classname="tests.test_integration_revision" name="test_the_pipeline_applies_the_rule_to_raw_parameters[both blank: main, not any branch]" time="28.819"><failure message="AssertionError: assert 'FAILURE' == 'SUCCESS'&#10;  &#10;  - SUCCESS&#10;  + FAILURE">jobs = &lt;app.services.jenkins.HttpJenkinsClient object at 0x000001DF3A001970&gt;
+heads = {'main': '998844b0159c13bf8ab32e1e2da2f4a187b7eb61', 'demo/failing-tests': 'da997c8be894b8058c9c88068295964b81f2d846'}
+parameters = {'BRANCH': '', 'COMMIT': ''}, expected = 'main'
+
+    @pytest.mark.parametrize(
+        ("parameters", "expected"),
+        [
+            pytest.param({"BRANCH": DEMO_BRANCH, "COMMIT": ""}, "demo", id="BRANCH only"),
+            pytest.param({"BRANCH": "", "COMMIT": ""}, "main", id="both blank: main, not any branch"),
+            pytest.param({"BRANCH": "main", "COMMIT": "demo"}, "demo", id="raw COMMIT wins"),
+        ],
+    )
+    async def test_the_pipeline_applies_the_rule_to_raw_parameters(
+        jobs: HttpJenkinsClient, heads: dict[str, str], parameters: dict[str, str], expected: str
+    ) -&gt; None:
+        sha = {"demo": heads[DEMO_BRANCH], "main": heads["main"]}
+        values = {name: sha.get(value, value) for name, value in parameters.items()}
+    
+        result, head, _ = await run(jobs, PIPELINE_JOB, values)
+    
+&gt;       assert result == "SUCCESS"
+E       AssertionError: assert 'FAILURE' == 'SUCCESS'
+E         
+E         - SUCCESS
+E         + FAILURE
+
+tests\test_integration_revision.py:270: AssertionError</failure></testcase><testcase classname="tests.test_integration_revision" name="test_the_pipeline_applies_the_rule_to_raw_parameters[raw COMMIT wins]" time="30.884"><failure message="AssertionError: assert 'FAILURE' == 'SUCCESS'&#10;  &#10;  - SUCCESS&#10;  + FAILURE">jobs = &lt;app.services.jenkins.HttpJenkinsClient object at 0x000001DF39C8F710&gt;
+heads = {'main': '998844b0159c13bf8ab32e1e2da2f4a187b7eb61', 'demo/failing-tests': 'da997c8be894b8058c9c88068295964b81f2d846'}
+parameters = {'BRANCH': 'main', 'COMMIT': 'demo'}, expected = 'demo'
+
+    @pytest.mark.parametrize(
+        ("parameters", "expected"),
+        [
+            pytest.param({"BRANCH": DEMO_BRANCH, "COMMIT": ""}, "demo", id="BRANCH only"),
+            pytest.param({"BRANCH": "", "COMMIT": ""}, "main", id="both blank: main, not any branch"),
+            pytest.param({"BRANCH": "main", "COMMIT": "demo"}, "demo", id="raw COMMIT wins"),
+        ],
+    )
+    async def test_the_pipeline_applies_the_rule_to_raw_parameters(
+        jobs: HttpJenkinsClient, heads: dict[str, str], parameters: dict[str, str], expected: str
+    ) -&gt; None:
+        sha = {"demo": heads[DEMO_BRANCH], "main": heads["main"]}
+        values = {name: sha.get(value, value) for name, value in parameters.items()}
+    
+        result, head, _ = await run(jobs, PIPELINE_JOB, values)
+    
+&gt;       assert result == "SUCCESS"
+E       AssertionError: assert 'FAILURE' == 'SUCCESS'
+E         
+E         - SUCCESS
+E         + FAILURE
+
+tests\test_integration_revision.py:270: AssertionError</failure></testcase><testcase classname="tests.test_integration_revision" name="test_the_pipeline_refuses_invalid_raw_parameters_before_checkout[bad COMMIT]" time="10.593" /><testcase classname="tests.test_integration_revision" name="test_the_pipeline_refuses_invalid_raw_parameters_before_checkout[bad BRANCH]" time="8.560" /><testcase classname="tests.test_integration_revision" name="test_a_chain_job_checks_out_the_revision_written_into_its_defaults" time="38.986"><failure message="AssertionError: assert 'FAILURE' == 'SUCCESS'&#10;  &#10;  - SUCCESS&#10;  + FAILURE">jenkins = &lt;app.services.jenkins.HttpJenkinsClient object at 0x000001DF39FE2750&gt;
+heads = {'main': '998844b0159c13bf8ab32e1e2da2f4a187b7eb61', 'demo/failing-tests': 'da997c8be894b8058c9c88068295964b81f2d846'}
+
+    async def test_a_chain_job_checks_out_the_revision_written_into_its_defaults(
+        jenkins: HttpJenkinsClient, heads: dict[str, str]
+    ) -&gt; None:
+        """How a freestyle chain really runs (4.6): the first job is triggered, and the next ones are
+        started by a downstream trigger that passes no parameters. They follow their own defaults."""
+        defaults = select_revision(None, DEMO_BRANCH).parameters()
+        await recreate(jenkins, FREESTYLE_JOB, freestyle_config(defaults))
+        await recreate(jenkins, UPSTREAM_JOB, upstream_config())
+        before = await jenkins.last_build(FREESTYLE_JOB)
+    
+        upstream = await wait_for_build(jenkins, UPSTREAM_JOB, await jenkins.trigger(UPSTREAM_JOB))
+        assert await wait_for_finish(jenkins, UPSTREAM_JOB, upstream) == "SUCCESS"
+    
+        number = None
+        for _ in range(90):
+            latest = await jenkins.last_build(FREESTYLE_JOB)
+            if latest is not None and (before is None or latest.number &gt; before.number):
+                number = latest.number
+                break
+            await asyncio.sleep(2)
+        assert number is not None, "the downstream trigger did not start the freestyle job"
+        result = await wait_for_finish(jenkins, FREESTYLE_JOB, number)
+        log = await wait_for_complete_log(jenkins, FREESTYLE_JOB, number)
+    
+&gt;       assert result == "SUCCESS"
+E       AssertionError: assert 'FAILURE' == 'SUCCESS'
+E         
+E         - SUCCESS
+E         + FAILURE
+
+tests\test_integration_revision.py:325: AssertionError</failure></testcase><testcase classname="tests.test_integration_revision" name="test_regenerating_a_job_keeps_its_parameters[freestyle]" time="30.844"><failure message="AssertionError: assert 'FAILURE' == 'SUCCESS'&#10;  &#10;  - SUCCESS&#10;  + FAILURE">jenkins = &lt;app.services.jenkins.HttpJenkinsClient object at 0x000001DF39C48D40&gt;
+heads = {'main': '998844b0159c13bf8ab32e1e2da2f4a187b7eb61', 'demo/failing-tests': 'da997c8be894b8058c9c88068295964b81f2d846'}
+job = 'it-revision-freestyle'
+config = &lt;function freestyle_config at 0x000001DF39988AE0&gt;
+
+    @pytest.mark.parametrize(
+        ("job", "config"),
+        [
+            pytest.param(FREESTYLE_JOB, freestyle_config, id="freestyle"),
+            pytest.param(PIPELINE_JOB, pipeline_config, id="pipeline"),
+        ],
+    )
+    async def test_regenerating_a_job_keeps_its_parameters(
+        jenkins: HttpJenkinsClient, heads: dict[str, str], job: str, config: Callable[[], str]
+    ) -&gt; None:
+        """D-034: pushing an exported Pipeline config used to wipe the parameters its first run had
+        registered, so the next parameterised trigger got 400. Push twice, then trigger at once."""
+        for _ in range(2):
+            await recreate(jenkins, job, config())
+    
+        stored = await jenkins.get_config_xml(job)
+        assert "hudson.model.ParametersDefinitionProperty" in stored
+        assert "&lt;name&gt;BRANCH&lt;/name&gt;" in stored
+        assert "&lt;name&gt;COMMIT&lt;/name&gt;" in stored
+    
+        result, head, _ = await run(jenkins, job, select_revision(None, DEMO_BRANCH).parameters())
+&gt;       assert result == "SUCCESS"
+E       AssertionError: assert 'FAILURE' == 'SUCCESS'
+E         
+E         - SUCCESS
+E         + FAILURE
+
+tests\test_integration_revision.py:355: AssertionError</failure></testcase><testcase classname="tests.test_integration_revision" name="test_regenerating_a_job_keeps_its_parameters[pipeline]" time="30.876"><failure message="AssertionError: assert 'FAILURE' == 'SUCCESS'&#10;  &#10;  - SUCCESS&#10;  + FAILURE">jenkins = &lt;app.services.jenkins.HttpJenkinsClient object at 0x000001DF3A035CD0&gt;
+heads = {'main': '998844b0159c13bf8ab32e1e2da2f4a187b7eb61', 'demo/failing-tests': 'da997c8be894b8058c9c88068295964b81f2d846'}
+job = 'it-revision-pipeline'
+config = &lt;function pipeline_config at 0x000001DF39988A40&gt;
+
+    @pytest.mark.parametrize(
+        ("job", "config"),
+        [
+            pytest.param(FREESTYLE_JOB, freestyle_config, id="freestyle"),
+            pytest.param(PIPELINE_JOB, pipeline_config, id="pipeline"),
+        ],
+    )
+    async def test_regenerating_a_job_keeps_its_parameters(
+        jenkins: HttpJenkinsClient, heads: dict[str, str], job: str, config: Callable[[], str]
+    ) -&gt; None:
+        """D-034: pushing an exported Pipeline config used to wipe the parameters its first run had
+        registered, so the next parameterised trigger got 400. Push twice, then trigger at once."""
+        for _ in range(2):
+            await recreate(jenkins, job, config())
+    
+        stored = await jenkins.get_config_xml(job)
+        assert "hudson.model.ParametersDefinitionProperty" in stored
+        assert "&lt;name&gt;BRANCH&lt;/name&gt;" in stored
+        assert "&lt;name&gt;COMMIT&lt;/name&gt;" in stored
+    
+        result, head, _ = await run(jenkins, job, select_revision(None, DEMO_BRANCH).parameters())
+&gt;       assert result == "SUCCESS"
+E       AssertionError: assert 'FAILURE' == 'SUCCESS'
+E         
+E         - SUCCESS
+E         + FAILURE
+
+tests\test_integration_revision.py:355: AssertionError</failure></testcase><testcase classname="tests.test_migrations" name="test_alembic_upgrade_matches_the_models" time="0.004"><skipped type="pytest.skip" message="needs a PostgreSQL container; run with -m integration against the Compose stack">D:\FYP POC\CICD project - Copy\backend\tests\test_migrations.py:268: needs a PostgreSQL container; run with -m integration against the Compose stack</skipped></testcase></testsuite></testsuites>

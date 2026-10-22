@@ -1,0 +1,112 @@
+   0.263 [id=1]	INFO	o.jvnet.hudson.test.WarExploder#explode: Picking up existing exploded jenkins.war at D:\FYP POC\CICD project - Copy\plugin\target\jenkins-for-test
+   1.273 [id=1]	INFO	o.jvnet.hudson.test.JenkinsRule#createWebServer2: Running on http://localhost:51546/jenkins/
+   1.510 [id=1]	INFO	jenkins.model.Jenkins#<init>: Starting version 2.568.3
+   1.715 [id=49]	INFO	jenkins.InitReactorRunner$1#onAttained: Started initialization
+   7.798 [id=62]	INFO	jenkins.InitReactorRunner$1#onAttained: Listed all plugins
+   7.808 [id=61]	INFO	j.b.api.BouncyCastlePlugin#start: D:\FYP POC\CICD project - Copy\plugin\target\tmp\j h7583545972523013330\plugins\bouncycastle-api\WEB-INF\optional-lib not found; for non RealJenkinsRule this is fine and can be ignored.
+  10.282 [id=53]	INFO	jenkins.InitReactorRunner$1#onAttained: Prepared all plugins
+  10.306 [id=50]	INFO	jenkins.InitReactorRunner$1#onAttained: Started all plugins
+  10.308 [id=61]	INFO	jenkins.InitReactorRunner$1#onAttained: Augmented all extensions
+  11.780 [id=58]	INFO	jenkins.InitReactorRunner$1#onAttained: System config loaded
+  11.868 [id=60]	INFO	jenkins.InitReactorRunner$1#onAttained: System config adapted
+  11.869 [id=60]	INFO	jenkins.InitReactorRunner$1#onAttained: Loaded all jobs
+  11.880 [id=55]	INFO	jenkins.InitReactorRunner$1#onAttained: Configuration for all jobs updated
+  11.896 [id=55]	INFO	jenkins.InitReactorRunner$1#onAttained: Completed initialization
+  13.361 [id=91]	INFO	o.j.h.test.SimpleCommandLauncher#launch: agent launched for slave0
+
+=== QUEUE SHAPE: agent 'worker' busy with one build, one more queued ===
+items=1  buildable=1
+  item id=4 state=BuildableItem
+    task=part of probe-waiting #1
+    isJob=false flyweight=false
+    blockage=Waiting for next available executor on ‘slave0’
+    ownerTask chain:
+        hop 0: org.jenkinsci.plugins.workflow.support.steps.ExecutorStepExecution$PlaceholderTask
+        hop 1: org.jenkinsci.plugins.workflow.job.WorkflowJob   <-- IS A Job
+        (getOwnerTask() returns self; chain ends)
+  node slave0     online=true  executors=1 busy=1
+  controller executors=1
+
+  22.088 [id=1]	INFO	hudson.lifecycle.Lifecycle#onStatusUpdate: Stopping Jenkins
+  22.215 [id=102]	INFO	o.j.h.test.SimpleCommandLauncher#afterDisconnect: killed Process[pid=18924, exitValue=0] with {HUDSON_COOKIE=dc738e1b-0d5c-44dc-8884-9b07f4b8da1a} for slave0
+  22.216 [id=107]	INFO	o.j.h.test.SimpleCommandLauncher#afterDisconnect: no process for slave0
+  22.217 [id=1]	INFO	hudson.lifecycle.Lifecycle#onStatusUpdate: Jenkins stopped
+  22.264 [id=1]	INFO	o.j.h.t.TemporaryDirectoryAllocator#dispose: deleting D:\FYP POC\CICD project - Copy\plugin\target\tmp\j h7583545972523013330
+   0.361 [id=1]	INFO	o.jvnet.hudson.test.JenkinsRule#createWebServer2: Running on http://localhost:51551/jenkins/
+   0.374 [id=1]	INFO	jenkins.model.Jenkins#<init>: Starting version 2.568.3
+   0.393 [id=153]	INFO	jenkins.InitReactorRunner$1#onAttained: Started initialization
+   0.395 [id=162]	INFO	jenkins.InitReactorRunner$1#onAttained: Listed all plugins
+   0.402 [id=159]	INFO	j.b.api.BouncyCastlePlugin#start: D:\FYP POC\CICD project - Copy\plugin\target\tmp\j h4426702122511575452\plugins\bouncycastle-api\WEB-INF\optional-lib not found; for non RealJenkinsRule this is fine and can be ignored.
+   0.600 [id=163]	INFO	jenkins.InitReactorRunner$1#onAttained: Prepared all plugins
+   0.602 [id=167]	INFO	jenkins.InitReactorRunner$1#onAttained: Started all plugins
+   0.603 [id=154]	INFO	jenkins.InitReactorRunner$1#onAttained: Augmented all extensions
+   1.051 [id=164]	INFO	jenkins.InitReactorRunner$1#onAttained: System config loaded
+   1.074 [id=164]	INFO	jenkins.InitReactorRunner$1#onAttained: System config adapted
+   1.074 [id=164]	INFO	jenkins.InitReactorRunner$1#onAttained: Loaded all jobs
+   1.076 [id=166]	INFO	jenkins.InitReactorRunner$1#onAttained: Configuration for all jobs updated
+   1.105 [id=158]	INFO	jenkins.InitReactorRunner$1#onAttained: Completed initialization
+   1.965 [id=91]	INFO	o.j.h.test.SimpleCommandLauncher#launch: agent launched for slave0
+   6.516 [id=194]	INFO	h.r.SynchronousCommandTransport$ReaderThread#run: I/O error in channel slave0
+java.io.EOFException
+	at java.base/java.io.ObjectInputStream$PeekInputStream.readFully(ObjectInputStream.java:2933)
+	at java.base/java.io.ObjectInputStream$BlockDataInputStream.readShort(ObjectInputStream.java:3428)
+	at java.base/java.io.ObjectInputStream.readStreamHeader(ObjectInputStream.java:985)
+	at java.base/java.io.ObjectInputStream.<init>(ObjectInputStream.java:416)
+	at hudson.remoting.ObjectInputStreamEx.<init>(ObjectInputStreamEx.java:50)
+	at hudson.remoting.Command.readFrom(Command.java:141)
+	at hudson.remoting.Command.readFrom(Command.java:127)
+	at hudson.remoting.AbstractSynchronousByteArrayCommandTransport.read(AbstractSynchronousByteArrayCommandTransport.java:35)
+	at hudson.remoting.SynchronousCommandTransport$ReaderThread.run(SynchronousCommandTransport.java:62)
+Caused: java.io.IOException: Unexpected termination of the channel
+	at hudson.remoting.SynchronousCommandTransport$ReaderThread.run(SynchronousCommandTransport.java:80)
+   6.540 [id=107]	INFO	o.j.h.test.SimpleCommandLauncher#afterDisconnect: killed Process[pid=17584, exitValue=-1] with {HUDSON_COOKIE=dabf867c-588b-4fab-b496-5b80c99219a5} for slave0
+   6.540 [id=194]	INFO	o.j.h.test.SimpleCommandLauncher#afterDisconnect: no process for slave0
+
+=== QUEUE SHAPE: agent 'worker' offline, controller has 1 executor ===
+items=1  buildable=1
+  item id=6 state=BuildableItem
+    task=part of probe-offline-agent #1
+    isJob=false flyweight=false
+    blockage=‘slave0’ is offline
+    ownerTask chain:
+        hop 0: org.jenkinsci.plugins.workflow.support.steps.ExecutorStepExecution$PlaceholderTask
+        hop 1: org.jenkinsci.plugins.workflow.job.WorkflowJob   <-- IS A Job
+        (getOwnerTask() returns self; chain ends)
+  node slave0     online=false executors=1 busy=0
+  controller executors=1
+
+  11.316 [id=107]	INFO	o.j.h.test.SimpleCommandLauncher#launch: agent launched for slave0
+  11.585 [id=1]	INFO	hudson.lifecycle.Lifecycle#onStatusUpdate: Stopping Jenkins
+  11.653 [id=208]	INFO	o.j.h.test.SimpleCommandLauncher#afterDisconnect: killed Process[pid=8444, exitValue=0] with {HUDSON_COOKIE=136f8c18-7d60-43c2-9afe-6e56f1d02faa} for slave0
+  11.653 [id=91]	INFO	o.j.h.test.SimpleCommandLauncher#afterDisconnect: no process for slave0
+  11.654 [id=1]	INFO	hudson.lifecycle.Lifecycle#onStatusUpdate: Jenkins stopped
+  11.702 [id=1]	INFO	o.j.h.t.TemporaryDirectoryAllocator#dispose: deleting D:\FYP POC\CICD project - Copy\plugin\target\tmp\j h4426702122511575452
+   0.317 [id=1]	INFO	o.jvnet.hudson.test.JenkinsRule#createWebServer2: Running on http://localhost:51554/jenkins/
+   0.320 [id=1]	INFO	jenkins.model.Jenkins#<init>: Starting version 2.568.3
+   0.336 [id=230]	INFO	jenkins.InitReactorRunner$1#onAttained: Started initialization
+   0.342 [id=236]	INFO	jenkins.InitReactorRunner$1#onAttained: Listed all plugins
+   0.345 [id=229]	INFO	j.b.api.BouncyCastlePlugin#start: D:\FYP POC\CICD project - Copy\plugin\target\tmp\j h9622985427044492997\plugins\bouncycastle-api\WEB-INF\optional-lib not found; for non RealJenkinsRule this is fine and can be ignored.
+   0.495 [id=230]	INFO	jenkins.InitReactorRunner$1#onAttained: Prepared all plugins
+   0.497 [id=239]	INFO	jenkins.InitReactorRunner$1#onAttained: Started all plugins
+   0.498 [id=238]	INFO	jenkins.InitReactorRunner$1#onAttained: Augmented all extensions
+   0.958 [id=236]	INFO	jenkins.InitReactorRunner$1#onAttained: System config loaded
+   0.978 [id=241]	INFO	jenkins.InitReactorRunner$1#onAttained: System config adapted
+   0.979 [id=234]	INFO	jenkins.InitReactorRunner$1#onAttained: Loaded all jobs
+   0.980 [id=234]	INFO	jenkins.InitReactorRunner$1#onAttained: Configuration for all jobs updated
+   1.012 [id=239]	INFO	jenkins.InitReactorRunner$1#onAttained: Completed initialization
+
+=== QUEUE SHAPE: controller numExecutors = 0 ===
+items=1  buildable=1
+  item id=8 state=BuildableItem
+    task=part of probe-zero-exec #1
+    isJob=false flyweight=false
+    blockage=Waiting for next available executor
+    ownerTask chain:
+        hop 0: org.jenkinsci.plugins.workflow.support.steps.ExecutorStepExecution$PlaceholderTask
+        hop 1: org.jenkinsci.plugins.workflow.job.WorkflowJob   <-- IS A Job
+        (getOwnerTask() returns self; chain ends)
+  controller executors=0
+
+   5.295 [id=1]	INFO	hudson.lifecycle.Lifecycle#onStatusUpdate: Stopping Jenkins
+   5.315 [id=1]	INFO	hudson.lifecycle.Lifecycle#onStatusUpdate: Jenkins stopped
+   5.358 [id=1]	INFO	o.j.h.t.TemporaryDirectoryAllocator#dispose: deleting D:\FYP POC\CICD project - Copy\plugin\target\tmp\j h9622985427044492997

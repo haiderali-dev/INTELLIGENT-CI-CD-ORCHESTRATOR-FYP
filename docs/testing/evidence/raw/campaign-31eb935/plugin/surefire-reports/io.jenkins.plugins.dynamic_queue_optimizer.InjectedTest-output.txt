@@ -1,0 +1,15 @@
+Running InjectedTest for io.jenkins.plugins:dynamic-queue-optimizer:2.0.0-SNAPSHOT
+   0.250 [id=1]	INFO	o.jvnet.hudson.test.WarExploder#explode: Exploding C:\Users\haide\.m2\repository\org\jenkins-ci\main\jenkins-war\2.568.3\jenkins-war-2.568.3.war into D:\FYP POC\CICD project - Copy\plugin\target\jenkins-for-test
+   4.379 [id=1]	INFO	o.jvnet.hudson.test.JenkinsRule#createWebServer2: Running on http://localhost:51533/jenkins/
+   4.584 [id=1]	INFO	jenkins.model.Jenkins#<init>: Starting version 2.568.3
+   4.766 [id=49]	INFO	jenkins.InitReactorRunner$1#onAttained: Started initialization
+  10.569 [id=56]	INFO	jenkins.InitReactorRunner$1#onAttained: Listed all plugins
+  10.578 [id=47]	INFO	j.b.api.BouncyCastlePlugin#start: D:\FYP POC\CICD project - Copy\plugin\target\tmp\j h12036062188879722985\plugins\bouncycastle-api\WEB-INF\optional-lib not found; for non RealJenkinsRule this is fine and can be ignored.
+  13.238 [id=57]	INFO	jenkins.InitReactorRunner$1#onAttained: Prepared all plugins
+  13.259 [id=57]	INFO	jenkins.InitReactorRunner$1#onAttained: Started all plugins
+  13.260 [id=57]	INFO	jenkins.InitReactorRunner$1#onAttained: Augmented all extensions
+  14.549 [id=53]	INFO	jenkins.InitReactorRunner$1#onAttained: System config loaded
+  14.623 [id=53]	INFO	jenkins.InitReactorRunner$1#onAttained: System config adapted
+  14.625 [id=58]	INFO	jenkins.InitReactorRunner$1#onAttained: Loaded all jobs
+  14.635 [id=58]	INFO	jenkins.InitReactorRunner$1#onAttained: Configuration for all jobs updated
+  14.657 [id=62]	INFO	jenkins.InitReactorRunner$1#onAttained: Completed initialization

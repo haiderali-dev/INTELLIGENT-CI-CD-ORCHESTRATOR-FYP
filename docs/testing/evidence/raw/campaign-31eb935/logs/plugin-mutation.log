@@ -1,0 +1,244 @@
+[INFO] Scanning for projects...
+[INFO] Artifact org.jenkins-ci.tools:maven-hpi-plugin:pom:3.1838.va_13472137a_6a_ is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases)]
+[INFO] Artifact org.jenkins-ci.tools:maven-hpi-plugin:pom:3.1838.va_13472137a_6a_ is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases)]
+[WARNING] The POM for org.jenkins-ci.tools:maven-hpi-plugin:jar:3.1838.va_13472137a_6a_ is missing, no dependency information available
+[INFO] Artifact org.jenkins-ci.tools:maven-hpi-plugin:jar:3.1838.va_13472137a_6a_ is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases)]
+[INFO] Artifact org.jenkins-ci.tools:maven-hpi-plugin:jar:3.1838.va_13472137a_6a_ is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases)]
+[WARNING] Failed to build parent project for io.jenkins.plugins:dynamic-queue-optimizer:hpi:2.0.0-SNAPSHOT
+[INFO] 
+[INFO] -------------< io.jenkins.plugins:dynamic-queue-optimizer >-------------
+[INFO] Building Dynamic Queue Optimizer 2.0.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ hpi ]---------------------------------
+[INFO] 
+[INFO] --- hpi:3.1838.va_13472137a_6a_:validate (default-validate) @ dynamic-queue-optimizer ---
+[INFO] 
+[INFO] --- hpi:3.1838.va_13472137a_6a_:validate-hpi (default-validate-hpi) @ dynamic-queue-optimizer ---
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (display-info) @ dynamic-queue-optimizer ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] Rule 1: org.apache.maven.enforcer.rules.version.RequireJavaVersion passed
+[INFO] Rule 2: org.apache.maven.enforcer.rules.version.RequireJavaVersion passed
+[INFO] Rule 3: org.apache.maven.enforcer.rules.RequirePluginVersions passed
+[INFO] Rule 4: org.codehaus.mojo.extraenforcer.dependencies.EnforceBytecodeVersion passed
+[INFO] Rule 5: org.apache.maven.enforcer.rules.dependency.BannedDependencies passed
+[INFO] Rule 6: org.apache.maven.enforcer.rules.dependency.BannedDependencies passed
+[INFO] Rule 7: org.apache.maven.enforcer.rules.dependency.RequireUpperBoundDeps passed
+[INFO] banObsoleteDependencyOverrides skipped
+[INFO] Rule 8: io.jenkins.tools.maven.jenkins_enforcer_rules.BanObsoleteDependencyOverrides passed
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (no-snapshots-in-release) @ dynamic-queue-optimizer ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.dependency.RequireReleaseDeps passed
+[INFO] 
+[INFO] --- localizer:1.31:generate (default) @ dynamic-queue-optimizer ---
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (check-junit-imports) @ dynamic-queue-optimizer ---
+[INFO] Skipping Rule Enforcement.
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (check-commons-lang-imports) @ dynamic-queue-optimizer ---
+[INFO] Skipping Rule Enforcement.
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (check-deprecated-stapler-imports) @ dynamic-queue-optimizer ---
+[INFO] Skipping Rule Enforcement.
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ dynamic-queue-optimizer ---
+[INFO] Copying 3 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.16.0:compile (default-compile) @ dynamic-queue-optimizer ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- access-modifier-checker:1.35:enforce (default-enforce) @ dynamic-queue-optimizer ---
+[INFO] 
+[INFO] --- bridge-method-injector:1.32:process (default) @ dynamic-queue-optimizer ---
+[INFO] 
+[INFO] --- hpi:3.1838.va_13472137a_6a_:insert-test (default-insert-test) @ dynamic-queue-optimizer ---
+[INFO] 
+[INFO] --- antrun:3.2.0:run (createTempDir) @ dynamic-queue-optimizer ---
+[INFO] Executing tasks
+[INFO] Executed tasks
+[INFO] 
+[INFO] --- resources:3.5.0:testResources (default-testResources) @ dynamic-queue-optimizer ---
+[INFO] Copying 3 resources from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.16.0:testCompile (default-testCompile) @ dynamic-queue-optimizer ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- hpi:3.1838.va_13472137a_6a_:test-hpl (default-test-hpl) @ dynamic-queue-optimizer ---
+[INFO] Generating D:\FYP POC\CICD project - Copy\plugin\target\test-classes\the.hpl
+[INFO] 
+[INFO] --- hpi:3.1838.va_13472137a_6a_:resolve-test-dependencies (default-resolve-test-dependencies) @ dynamic-queue-optimizer ---
+[INFO] 
+[INFO] --- pitest:1.30.0:mutationCoverage (default-cli) @ dynamic-queue-optimizer ---
+[INFO] Root dir is : D:\FYP POC\CICD project - Copy\plugin
+[INFO] Found plugin : Default csv report plugin
+[INFO] Found plugin : Default xml report plugin
+[INFO] Found plugin : Log progress during mutation analysis
+[INFO] Found plugin : Default html report plugin
+[INFO] Found plugin : Static initializer code detector plugin
+[INFO] Found plugin : Excluded annotations plugin
+[INFO] Found plugin : Try with resources filter
+[INFO] Found plugin : Inlined finally block filter plugin
+[INFO] Found plugin : Implicit null check filter
+[INFO] Found plugin : Method reference null check filter
+[INFO] Found plugin : For each loop filter
+[INFO] Found plugin : Enum junk filter
+[INFO] Found plugin : Record junk mutation filter
+[INFO] Found plugin : String switch filter
+[INFO] Found plugin : Assertions filter
+[INFO] Found plugin : Enum switch filter
+[INFO] Found plugin : Logging calls filter
+[INFO] Found plugin : Infinite for loop filter
+[INFO] Found plugin : Long running iterator loop filter
+[INFO] Found plugin : For loop counter filter
+[INFO] Found plugin : Kotlin junk mutations filter
+[INFO] Found plugin : Groovy junk mutations filter
+[INFO] Found plugin : Max mutations per class limit
+[INFO] Found plugin : Equals shortcut equivalent mutant filter
+[INFO] Found plugin : Trivial return vals equivalence filter
+[INFO] Found plugin : Filters mutants with line number <= 1
+[INFO] Found plugin : Division by one equivalent mutant filter
+[INFO] Found plugin : Lombok junk mutations filter
+[INFO] Found plugin : Filter mutations to defensive wrappers such as unmodifiableCollection on return or field write
+[INFO] Found plugin : Final field null assignment equivalent mutant filter
+[INFO] Found plugin : Mutant export plugin
+[INFO] Found plugin : Auto add java.awt.headless=true to keep keyboard focus on Mac OS
+[INFO] Found plugin : Auto set number of threads based on machine
+[INFO] Found plugin : Automatically add -ea to launch args to enable assertions
+[INFO] Found plugin : Default build verifier
+[INFO] Found plugin : Detect missing JUnit5 plugin
+[INFO] Found plugin : Detect missing TestNG plugin
+[INFO] Found plugin : Detect missing kotlin plugin
+[INFO] Found plugin : Detect missing spring plugin
+[INFO] Found plugin : Default coverage exporter
+[INFO] Found plugin : Basic test statistics
+[INFO] Found shared classpath plugin : Default mutation engine
+[INFO] Found shared classpath plugin : JUnit 5 test framework support
+[INFO] Found shared classpath plugin : JUnit plugin
+[INFO] Found shared classpath plugin : Support for mocking frameworks using javassist
+[INFO] Found shared classpath plugin : Disable JaCoCo
+[INFO] Found shared classpath plugin : Normalise record attributes
+[INFO] Found shared classpath plugin : Reset environment for javassist
+[INFO] Available mutators : EXPERIMENTAL_ARGUMENT_PROPAGATION,FALSE_RETURNS,TRUE_RETURNS,CONDITIONALS_BOUNDARY,CONSTRUCTOR_CALLS,EMPTY_RETURNS,INCREMENTS,INLINE_CONSTS,INVERT_NEGS,MATH,NEGATE_CONDITIONALS,NON_VOID_METHOD_CALLS,NULL_RETURNS,PRIMITIVE_RETURNS,REMOVE_CONDITIONALS_EQUAL_IF,REMOVE_CONDITIONALS_EQUAL_ELSE,REMOVE_CONDITIONALS_ORDER_IF,REMOVE_CONDITIONALS_ORDER_ELSE,VOID_METHOD_CALLS,EXPERIMENTAL_BIG_DECIMAL,EXPERIMENTAL_BIG_INTEGER,EXPERIMENTAL_MEMBER_VARIABLE,EXPERIMENTAL_NAKED_RECEIVER,REMOVE_INCREMENTS,EXPERIMENTAL_SWITCH
+[INFO] Adding org.pitest:pitest-junit5-plugin to SUT classpath
+[INFO] Adding org.pitest:pitest to SUT classpath
+[INFO] Mutating from D:\FYP POC\CICD project - Copy\plugin\target\classes
+[INFO] Replacing properties in argLine -Xmx768m
+/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\|/-\/-\|/-\|/-================================================================================
+- Mutators
+================================================================================
+> org.pitest.mutationtest.engine.gregor.mutators.ConditionalsBoundaryMutator
+>> Generated 12 Killed 4 (33%)
+> KILLED 4 SURVIVED 8 TIMED_OUT 0 NON_VIABLE 0 
+> MEMORY_ERROR 0 NOT_STARTED 0 STARTED 0 RUN_ERROR 0 
+> NO_COVERAGE 0 EQUIVALENT 0 
+--------------------------------------------------------------------------------
+> org.pitest.mutationtest.engine.gregor.mutators.returns.PrimitiveReturnsMutator
+>> Generated 12 Killed 12 (100%)
+> KILLED 12 SURVIVED 0 TIMED_OUT 0 NON_VIABLE 0 
+> MEMORY_ERROR 0 NOT_STARTED 0 STARTED 0 RUN_ERROR 0 
+> NO_COVERAGE 0 EQUIVALENT 0 
+--------------------------------------------------------------------------------
+> org.pitest.mutationtest.engine.gregor.mutators.VoidMethodCallMutator
+>> Generated 26 Killed 26 (100%)
+> KILLED 16 SURVIVED 0 TIMED_OUT 10 NON_VIABLE 0 
+> MEMORY_ERROR 0 NOT_STARTED 0 STARTED 0 RUN_ERROR 0 
+> NO_COVERAGE 0 EQUIVALENT 0 
+--------------------------------------------------------------------------------
+> org.pitest.mutationtest.engine.gregor.mutators.returns.BooleanTrueReturnValsMutator
+>> Generated 8 Killed 8 (100%)
+> KILLED 8 SURVIVED 0 TIMED_OUT 0 NON_VIABLE 0 
+> MEMORY_ERROR 0 NOT_STARTED 0 STARTED 0 RUN_ERROR 0 
+> NO_COVERAGE 0 EQUIVALENT 0 
+--------------------------------------------------------------------------------
+> org.pitest.mutationtest.engine.gregor.mutators.InvertNegsMutator
+>> Generated 1 Killed 1 (100%)
+> KILLED 1 SURVIVED 0 TIMED_OUT 0 NON_VIABLE 0 
+> MEMORY_ERROR 0 NOT_STARTED 0 STARTED 0 RUN_ERROR 0 
+> NO_COVERAGE 0 EQUIVALENT 0 
+--------------------------------------------------------------------------------
+> org.pitest.mutationtest.engine.gregor.mutators.returns.NullReturnValsMutator
+>> Generated 19 Killed 19 (100%)
+> KILLED 19 SURVIVED 0 TIMED_OUT 0 NON_VIABLE 0 
+> MEMORY_ERROR 0 NOT_STARTED 0 STARTED 0 RUN_ERROR 0 
+> NO_COVERAGE 0 EQUIVALENT 0 
+--------------------------------------------------------------------------------
+> org.pitest.mutationtest.engine.gregor.mutators.MathMutator
+>> Generated 30 Killed 29 (97%)
+> KILLED 29 SURVIVED 1 TIMED_OUT 0 NON_VIABLE 0 
+> MEMORY_ERROR 0 NOT_STARTED 0 STARTED 0 RUN_ERROR 0 
+> NO_COVERAGE 0 EQUIVALENT 0 
+--------------------------------------------------------------------------------
+> org.pitest.mutationtest.engine.gregor.mutators.returns.EmptyObjectReturnValsMutator
+>> Generated 12 Killed 12 (100%)
+> KILLED 12 SURVIVED 0 TIMED_OUT 0 NON_VIABLE 0 
+> MEMORY_ERROR 0 NOT_STARTED 0 STARTED 0 RUN_ERROR 0 
+> NO_COVERAGE 0 EQUIVALENT 0 
+--------------------------------------------------------------------------------
+> org.pitest.mutationtest.engine.gregor.mutators.returns.BooleanFalseReturnValsMutator
+>> Generated 5 Killed 5 (100%)
+> KILLED 5 SURVIVED 0 TIMED_OUT 0 NON_VIABLE 0 
+> MEMORY_ERROR 0 NOT_STARTED 0 STARTED 0 RUN_ERROR 0 
+> NO_COVERAGE 0 EQUIVALENT 0 
+--------------------------------------------------------------------------------
+> org.pitest.mutationtest.engine.gregor.mutators.NegateConditionalsMutator
+>> Generated 48 Killed 46 (96%)
+> KILLED 44 SURVIVED 2 TIMED_OUT 2 NON_VIABLE 0 
+> MEMORY_ERROR 0 NOT_STARTED 0 STARTED 0 RUN_ERROR 0 
+> NO_COVERAGE 0 EQUIVALENT 0 
+--------------------------------------------------------------------------------
+================================================================================
+- Timings
+================================================================================
+> pre-scan for mutations : < 1 second
+> scan classpath : < 1 second
+> coverage and dependency analysis : 2 seconds
+> build mutation tests : < 1 second
+> run mutation analysis : 1 minutes and 0 seconds
+--------------------------------------------------------------------------------
+> Total  : 1 minutes and 3 seconds
+--------------------------------------------------------------------------------
+> 0 tests took longer than 2000 ms
+> Slowest test ([engine:junit-jupiter]/[class:io.jenkins.plugins.queueoptimizer.heap.PriorityJobHeapTest]/[method:concurrentAccessIsSafe()]) took 439 ms
+> Largest test ([engine:junit-jupiter]/[class:io.jenkins.plugins.queueoptimizer.scoring.AppendixCExampleTest]/[method:intermediateFactorsMatchTheReport()]) covered 182 blocks
+================================================================================
+- Statistics
+================================================================================
+>> Line Coverage (for mutated classes only): 270/278 (97%)
+>> 6 tests examined
+>> Generated 173 mutations Killed 162 (94%)
+>> Mutations with no coverage 0. Test strength 94%
+>> Ran 759 tests (4.39 tests per mutation)
+Enhanced functionality available at https://www.arcmutate.com/
+
+Build messages:- 
+* Project uses Spring, but the Arcmutate Spring plugin is not present. (https://docs.arcmutate.com/docs/spring.html)
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  01:19 min
+[INFO] Finished at: 2026-10-22T10:42:33+05:00
+[INFO] ------------------------------------------------------------------------
+
+--- stderr ---
+10:41:30?AM PIT >> INFO : Verbose logging is disabled. If you encounter a problem, please enable it before reporting an issue.
+10:41:30?AM PIT >> INFO : Created 10 mutation test units in pre scan
+10:41:31?AM PIT >> INFO : Sending 6 test classes to minion
+10:41:31?AM PIT >> INFO : Sent tests to minion
+10:41:33?AM PIT >> INFO : Calculated coverage in 2 seconds.
+10:41:33?AM PIT >> INFO : 0 tests took longer than 2000 ms
+10:41:33?AM PIT >> INFO : Slowest test ([engine:junit-jupiter]/[class:io.jenkins.plugins.queueoptimizer.heap.PriorityJobHeapTest]/[method:concurrentAccessIsSafe()]) took 439 ms
+10:41:33?AM PIT >> INFO : Largest test ([engine:junit-jupiter]/[class:io.jenkins.plugins.queueoptimizer.scoring.AppendixCExampleTest]/[method:intermediateFactorsMatchTheReport()]) covered 182 blocks
+10:41:33?AM PIT >> INFO : Created 10 mutation test units
+10:41:41?AM PIT >> WARNING : Minion exited abnormally due to TIMED_OUT
+10:41:41?AM PIT >> WARNING : Minion exited abnormally due to TIMED_OUT
+10:41:49?AM PIT >> WARNING : Minion exited abnormally due to TIMED_OUT
+10:41:49?AM PIT >> WARNING : Minion exited abnormally due to TIMED_OUT
+10:41:58?AM PIT >> WARNING : Minion exited abnormally due to TIMED_OUT
+10:42:02?AM PIT >> WARNING : Minion exited abnormally due to TIMED_OUT
+10:42:08?AM PIT >> WARNING : Minion exited abnormally due to TIMED_OUT
+10:42:13?AM PIT >> WARNING : Minion exited abnormally due to TIMED_OUT
+10:42:17?AM PIT >> WARNING : Minion exited abnormally due to TIMED_OUT
+10:42:22?AM PIT >> WARNING : Minion exited abnormally due to TIMED_OUT
+10:42:26?AM PIT >> WARNING : Minion exited abnormally due to TIMED_OUT
+10:42:32?AM PIT >> WARNING : Minion exited abnormally due to TIMED_OUT
+10:42:33?AM PIT >> INFO : Completed in 63 seconds

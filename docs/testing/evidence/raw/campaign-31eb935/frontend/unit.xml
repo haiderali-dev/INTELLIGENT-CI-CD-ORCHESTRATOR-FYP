@@ -1,0 +1,667 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="296" failures="0" errors="0" time="85.3770046">
+    <testsuite name="src/admin/auditModel.test.ts" timestamp="2026-10-22T06:06:31.655Z" hostname="HAIDER-HP" tests="5" failures="0" errors="0" skipped="0" time="0.0159677">
+        <testcase classname="src/admin/auditModel.test.ts" name="audit details &gt; words each kind of value the backend stores" time="0.0076525">
+        </testcase>
+        <testcase classname="src/admin/auditModel.test.ts" name="the catalog&apos;s words &gt; makes the catalog&apos;s names readable" time="0.0007998">
+        </testcase>
+        <testcase classname="src/admin/auditModel.test.ts" name="the catalog&apos;s words &gt; describes suites and branches, marking the default" time="0.000911">
+        </testcase>
+        <testcase classname="src/admin/auditModel.test.ts" name="roles &gt; names each role, and shows one it does not know as sent" time="0.0020064">
+        </testcase>
+        <testcase classname="src/admin/auditModel.test.ts" name="roles &gt; offers Admin work only to an Admin" time="0.0006305">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/api/client.test.ts" timestamp="2026-10-22T06:06:31.658Z" hostname="HAIDER-HP" tests="7" failures="0" errors="0" skipped="0" time="0.0504564">
+        <testcase classname="src/api/client.test.ts" name="api client &gt; calls the backend&apos;s paths, with no token until one is set" time="0.0198881">
+        </testcase>
+        <testcase classname="src/api/client.test.ts" name="api client &gt; sends the access token as a bearer token once one is set" time="0.0038634">
+        </testcase>
+        <testcase classname="src/api/client.test.ts" name="api client after a 401 &gt; gets a new access token and repeats the request once with it" time="0.0067797">
+        </testcase>
+        <testcase classname="src/api/client.test.ts" name="api client after a 401 &gt; sends the same body again" time="0.0084863">
+        </testcase>
+        <testcase classname="src/api/client.test.ts" name="api client after a 401 &gt; returns the 401 when no new token can be had" time="0.0021892">
+        </testcase>
+        <testcase classname="src/api/client.test.ts" name="api client after a 401 &gt; repeats a request only once" time="0.0027947">
+        </testcase>
+        <testcase classname="src/api/client.test.ts" name="api client after a 401 &gt; takes the auth endpoints&apos; own 401s as answers, never as a reason to refresh" time="0.0023817">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/app/shell/AppShell.test.tsx" timestamp="2026-10-22T06:06:31.659Z" hostname="HAIDER-HP" tests="11" failures="0" errors="0" skipped="0" time="3.8524319">
+        <testcase classname="src/app/shell/AppShell.test.tsx" name="app shell &gt; names every page, with the two assistants as separate entries" time="1.33534">
+        </testcase>
+        <testcase classname="src/app/shell/AppShell.test.tsx" name="app shell &gt; lists Admin only for Admins, since the backend refuses everyone else" time="0.2255247">
+        </testcase>
+        <testcase classname="src/app/shell/AppShell.test.tsx" name="app shell &gt; marks the page you are on" time="0.2343067">
+        </testcase>
+        <testcase classname="src/app/shell/AppShell.test.tsx" name="app shell &gt; says Staging, so nobody in the room has to wonder" time="0.154683">
+        </testcase>
+        <testcase classname="src/app/shell/AppShell.test.tsx" name="app shell &gt; gives each assistant&apos;s header its own accent" time="0.4978915">
+        </testcase>
+        <testcase classname="src/app/shell/AppShell.test.tsx" name="app shell &gt; switches theme with the keyboard or the mouse, and remembers it" time="0.4332865">
+        </testcase>
+        <testcase classname="src/app/shell/AppShell.test.tsx" name="app shell &gt; offers a way on from an unknown address" time="0.1847106">
+        </testcase>
+        <testcase classname="src/app/shell/AppShell.test.tsx" name="app shell &gt; starts with a link that skips to the content" time="0.2027595">
+        </testcase>
+        <testcase classname="src/app/shell/AppShell.test.tsx" name="who is signed in &gt; names the signed-in person and their role" time="0.1882639">
+        </testcase>
+        <testcase classname="src/app/shell/AppShell.test.tsx" name="who is signed in &gt; signs out to the sign-in page, which says so and does not offer the last page back" time="0.2365161">
+        </testcase>
+        <testcase classname="src/app/shell/AppShell.test.tsx" name="who is signed in &gt; sends you to sign in, keeping your place, when the session ends while you work" time="0.1544767">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/app/theme/theme.test.ts" timestamp="2026-10-22T06:06:31.661Z" hostname="HAIDER-HP" tests="8" failures="0" errors="0" skipped="0" time="0.0218021">
+        <testcase classname="src/app/theme/theme.test.ts" name="theme preference &gt; is light until the viewer chooses, because projectors wash dark themes out" time="0.0073991">
+        </testcase>
+        <testcase classname="src/app/theme/theme.test.ts" name="theme preference &gt; remembers a choice, and ignores anything it did not write" time="0.0014586">
+        </testcase>
+        <testcase classname="src/app/theme/theme.test.ts" name="theme preference &gt; falls back to light when storage is blocked" time="0.0066601">
+        </testcase>
+        <testcase classname="src/app/theme/theme.test.ts" name="theme preference &gt; light with a dark system (false) is light" time="0.0006866">
+        </testcase>
+        <testcase classname="src/app/theme/theme.test.ts" name="theme preference &gt; light with a dark system (true) is light" time="0.0003354">
+        </testcase>
+        <testcase classname="src/app/theme/theme.test.ts" name="theme preference &gt; dark with a dark system (false) is dark" time="0.0003265">
+        </testcase>
+        <testcase classname="src/app/theme/theme.test.ts" name="theme preference &gt; system with a dark system (false) is light" time="0.000248">
+        </testcase>
+        <testcase classname="src/app/theme/theme.test.ts" name="theme preference &gt; system with a dark system (true) is dark" time="0.00025">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/auth/SessionProvider.test.tsx" timestamp="2026-10-22T06:06:31.663Z" hostname="HAIDER-HP" tests="2" failures="0" errors="0" skipped="0" time="0.2027279">
+        <testcase classname="src/auth/SessionProvider.test.tsx" name="SessionProvider &gt; opens the live connection with the new token on sign-in, and closes it on sign-out" time="0.0876032">
+        </testcase>
+        <testcase classname="src/auth/SessionProvider.test.tsx" name="SessionProvider &gt; refreshes once and reconnects when the server refuses the connection&apos;s token" time="0.1107254">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/auth/next.test.ts" timestamp="2026-10-22T06:06:31.664Z" hostname="HAIDER-HP" tests="3" failures="0" errors="0" skipped="0" time="0.007027">
+        <testcase classname="src/auth/next.test.ts" name="where to go after signing in &gt; follows a path on this site, keeping its query and fragment" time="0.0033769">
+        </testcase>
+        <testcase classname="src/auth/next.test.ts" name="where to go after signing in &gt; goes to the overview for anything that is not a path on this site" time="0.0006777">
+        </testcase>
+        <testcase classname="src/auth/next.test.ts" name="where to go after signing in &gt; carries the page to return to, but not the overview" time="0.0003259">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/auth/session.test.ts" timestamp="2026-10-22T06:06:31.668Z" hostname="HAIDER-HP" tests="14" failures="0" errors="0" skipped="0" time="0.122499">
+        <testcase classname="src/auth/session.test.ts" name="signing in &gt; keeps the access token in memory and the refresh token in this tab&apos;s storage" time="0.0325895">
+        </testcase>
+        <testcase classname="src/auth/session.test.ts" name="signing in &gt; reports a refused sign-in with the API&apos;s code, and keeps nothing" time="0.0041163">
+        </testcase>
+        <testcase classname="src/auth/session.test.ts" name="signing in &gt; tells a server that did not answer from one that said no" time="0.0026954">
+        </testcase>
+        <testcase classname="src/auth/session.test.ts" name="restoring after a reload &gt; starts signed out, asking nothing, when no refresh token is stored" time="0.0054907">
+        </testcase>
+        <testcase classname="src/auth/session.test.ts" name="restoring after a reload &gt; trades the stored refresh token for a new pair" time="0.004814">
+        </testcase>
+        <testcase classname="src/auth/session.test.ts" name="restoring after a reload &gt; ends a refused session and says it ended, or that the account is disabled" time="0.0037759">
+        </testcase>
+        <testcase classname="src/auth/session.test.ts" name="restoring after a reload &gt; keeps the stored token when the server does not answer, for the next reload" time="0.0017136">
+        </testcase>
+        <testcase classname="src/auth/session.test.ts" name="refreshing &gt; shares one refresh between everything that needs one at the same moment" time="0.0040861">
+        </testcase>
+        <testcase classname="src/auth/session.test.ts" name="refreshing &gt; renews the access token a minute before it expires" time="0.0275574">
+        </testcase>
+        <testcase classname="src/auth/session.test.ts" name="refreshing &gt; keeps the session through a renewal that got no answer, and tries again" time="0.0046068">
+        </testcase>
+        <testcase classname="src/auth/session.test.ts" name="refreshing &gt; does not refresh with no session" time="0.0008342">
+        </testcase>
+        <testcase classname="src/auth/session.test.ts" name="signing out &gt; revokes the refresh token on the server, then forgets both tokens" time="0.0168429">
+        </testcase>
+        <testcase classname="src/auth/session.test.ts" name="signing out &gt; still signs out when the server does not answer" time="0.0028541">
+        </testcase>
+        <testcase classname="src/auth/session.test.ts" name="signing out &gt; renews an access token that expired, so the refresh token is revoked properly" time="0.0040643">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/BuildStateLabel.test.tsx" timestamp="2026-10-22T06:06:31.670Z" hostname="HAIDER-HP" tests="5" failures="0" errors="0" skipped="0" time="0.2965872">
+        <testcase classname="src/components/BuildStateLabel.test.tsx" name="build states &gt; are an icon and a word, every one of them" time="0.2240817">
+        </testcase>
+        <testcase classname="src/components/BuildStateLabel.test.tsx" name="build states &gt; keep colour for succeeded, failed and unstable; the rest are Graphite" time="0.002877">
+        </testcase>
+        <testcase classname="src/components/BuildStateLabel.test.tsx" name="build states &gt; turn only the running ring, and stop it under reduced motion" time="0.0401064">
+        </testcase>
+        <testcase classname="src/components/BuildStateLabel.test.tsx" name="build states &gt; take a name for what they belong to" time="0.0241775">
+        </testcase>
+        <testcase classname="src/components/BuildStateLabel.test.tsx" name="build states &gt; are read from Jenkins&apos; result words" time="0.0013521">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/ScoreBar.test.tsx" timestamp="2026-10-22T06:06:31.672Z" hostname="HAIDER-HP" tests="9" failures="0" errors="0" skipped="0" time="0.8382435">
+        <testcase classname="src/components/ScoreBar.test.tsx" name="ScoreBar &gt; reads without colour: one image named with the score and every part" time="0.4481952">
+        </testcase>
+        <testcase classname="src/components/ScoreBar.test.tsx" name="ScoreBar &gt; marks the ceiling at 1.0, and an inherited score with an Ink tick" time="0.0501973">
+        </testcase>
+        <testcase classname="src/components/ScoreBar.test.tsx" name="ScoreBar &gt; draws the four segments in the formula&apos;s order and hues, rounding only the data end" time="0.0209437">
+        </testcase>
+        <testcase classname="src/components/ScoreBar.test.tsx" name="ScoreBar &gt; follows the weights the API reports" time="0.0259133">
+        </testcase>
+        <testcase classname="src/components/ScoreBar.test.tsx" name="ScoreBar &gt; draws nothing for a factor of zero" time="0.016602">
+        </testcase>
+        <testcase classname="src/components/ScoreBar.test.tsx" name="ScoreBar &gt; says so instead of guessing when the weights are missing" time="0.005754">
+        </testcase>
+        <testcase classname="src/components/ScoreBar.test.tsx" name="ScoreBar &gt; gives the run card a legend with each contribution" time="0.0421093">
+        </testcase>
+        <testcase classname="src/components/ScoreBar.test.tsx" name="ScoreBar &gt; grows its data from 0 only when asked, and never its scale marks" time="0.0265903">
+        </testcase>
+        <testcase classname="src/components/ScoreBar.test.tsx" name="ScoreBar &gt; shows the same words as a tooltip on keyboard focus" time="0.1974229">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/code/CodeView.test.tsx" timestamp="2026-10-22T06:06:31.674Z" hostname="HAIDER-HP" tests="6" failures="0" errors="0" skipped="0" time="1.4996471">
+        <testcase classname="src/components/code/CodeView.test.tsx" name="CodeView &gt; shows read-only code that can still be focused and read" time="0.9356643">
+        </testcase>
+        <testcase classname="src/components/code/CodeView.test.tsx" name="CodeView &gt; lets the spec be edited" time="0.0783558">
+        </testcase>
+        <testcase classname="src/components/code/CodeView.test.tsx" name="CodeView &gt; follows new text from outside, such as a regenerated spec" time="0.0575024">
+        </testcase>
+        <testcase classname="src/components/code/CodeView.test.tsx" name="CodeView &gt; lists the backend&apos;s problems by line, and YAML&apos;s own" time="0.0971815">
+        </testcase>
+        <testcase classname="src/components/code/CodeView.test.tsx" name="CodeView &gt; lists nothing for read-only code" time="0.0356536">
+        </testcase>
+        <testcase classname="src/components/code/CodeView.test.tsx" name="CodeView &gt; shows what a regenerate changed" time="0.286552">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/code/diagnostics.test.ts" timestamp="2026-10-22T06:06:31.675Z" hostname="HAIDER-HP" tests="4" failures="0" errors="0" skipped="0" time="0.0397443">
+        <testcase classname="src/components/code/diagnostics.test.ts" name="YAML syntax errors &gt; finds none in a valid spec" time="0.0192024">
+        </testcase>
+        <testcase classname="src/components/code/diagnostics.test.ts" name="YAML syntax errors &gt; names the line a structural mistake is on, once per line" time="0.0145408">
+        </testcase>
+        <testcase classname="src/components/code/diagnostics.test.ts" name="YAML syntax errors &gt; leaves to the backend what the grammar lets through" time="0.0013115">
+        </testcase>
+        <testcase classname="src/components/code/diagnostics.test.ts" name="YAML syntax errors &gt; counts lines from 1" time="0.0004782">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/components/scoreBarModel.test.ts" timestamp="2026-10-22T06:06:31.676Z" hostname="HAIDER-HP" tests="7" failures="0" errors="0" skipped="0" time="0.0191085">
+        <testcase classname="src/components/scoreBarModel.test.ts" name="score bar arithmetic &gt; makes each segment weight times factor, with aging as a bonus" time="0.0087778">
+        </testcase>
+        <testcase classname="src/components/scoreBarModel.test.ts" name="score bar arithmetic &gt; takes the weights from the API, never from the UI" time="0.001001">
+        </testcase>
+        <testcase classname="src/components/scoreBarModel.test.ts" name="score bar arithmetic &gt; knows an inherited score from its own, as the plugin defines them" time="0.0010166">
+        </testcase>
+        <testcase classname="src/components/scoreBarModel.test.ts" name="score bar arithmetic &gt; reads a live inherited score the way the plugin reported it" time="0.0006942">
+        </testcase>
+        <testcase classname="src/components/scoreBarModel.test.ts" name="score bar arithmetic &gt; names the score in DESIGN.md&apos;s words" time="0.0005433">
+        </testcase>
+        <testcase classname="src/components/scoreBarModel.test.ts" name="score bar arithmetic &gt; draws on one fixed scale from 0 to 1.15, segments side by side" time="0.0014139">
+        </testcase>
+        <testcase classname="src/components/scoreBarModel.test.ts" name="score bar arithmetic &gt; draws nothing for a factor of zero, and leaves no gap for it" time="0.0006848">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/lib/format.test.ts" timestamp="2026-10-22T06:06:31.677Z" hostname="HAIDER-HP" tests="7" failures="0" errors="0" skipped="0" time="0.0156036">
+        <testcase classname="src/lib/format.test.ts" name="format &gt; prints scores with three decimals, as Appendix C does" time="0.0063029">
+        </testcase>
+        <testcase classname="src/lib/format.test.ts" name="format &gt; names queue positions as ordinals" time="0.002318">
+        </testcase>
+        <testcase classname="src/lib/format.test.ts" name="format &gt; prints durations so a column of them lines up" time="0.0008379">
+        </testcase>
+        <testcase classname="src/lib/format.test.ts" name="format &gt; reads an API time without an offset as UTC, and one with an offset as it says" time="0.0011675">
+        </testcase>
+        <testcase classname="src/lib/format.test.ts" name="format &gt; prints when something happened: the time today, the date before that" time="0.0007655">
+        </testcase>
+        <testcase classname="src/lib/format.test.ts" name="format &gt; prints a ratio as a whole percentage" time="0.0004712">
+        </testcase>
+        <testcase classname="src/lib/format.test.ts" name="format &gt; prints a time of day on the 24-hour clock, padded" time="0.000511">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/pages/AdminPage.test.tsx" timestamp="2026-10-22T06:06:31.678Z" hostname="HAIDER-HP" tests="14" failures="0" errors="0" skipped="0" time="12.4794539">
+        <testcase classname="src/pages/AdminPage.test.tsx" name="the admin page &gt; is closed to anyone but an Admin, and asks the backend for nothing" time="1.7380464">
+        </testcase>
+        <testcase classname="src/pages/AdminPage.test.tsx" name="the admin page &gt; lists the users, and offers no control over your own access" time="0.8181059">
+        </testcase>
+        <testcase classname="src/pages/AdminPage.test.tsx" name="the admin page &gt; changes a role" time="0.5774115">
+        </testcase>
+        <testcase classname="src/pages/AdminPage.test.tsx" name="the admin page &gt; asks before deactivating someone, and says exactly what it does" time="1.0885048">
+        </testcase>
+        <testcase classname="src/pages/AdminPage.test.tsx" name="the admin page &gt; says why a change was refused" time="0.3750368">
+        </testcase>
+        <testcase classname="src/pages/AdminPage.test.tsx" name="the admin page &gt; adds a user, checking the password before asking" time="1.404435">
+        </testcase>
+        <testcase classname="src/pages/AdminPage.test.tsx" name="the admin page &gt; puts the backend&apos;s refusal under the field it names" time="1.0889619">
+        </testcase>
+        <testcase classname="src/pages/AdminPage.test.tsx" name="the admin page &gt; shows the HIGH quota and the rules in force, and says they cannot be changed here" time="0.356483">
+        </testcase>
+        <testcase classname="src/pages/AdminPage.test.tsx" name="the admin page &gt; shows the rate limits the backend enforces" time="0.3508201">
+        </testcase>
+        <testcase classname="src/pages/AdminPage.test.tsx" name="the admin page &gt; resets someone&apos;s password, checking it before asking, but never yours" time="1.8780032">
+        </testcase>
+        <testcase classname="src/pages/AdminPage.test.tsx" name="the admin page &gt; says why a password was not reset" time="1.1637757">
+        </testcase>
+        <testcase classname="src/pages/AdminPage.test.tsx" name="the admin page &gt; shows the audit log a page at a time, newest first" time="0.561721">
+        </testcase>
+        <testcase classname="src/pages/AdminPage.test.tsx" name="the admin page &gt; pages through a longer audit log" time="0.9081419">
+        </testcase>
+        <testcase classname="src/pages/AdminPage.test.tsx" name="the admin page &gt; says what failed when the users cannot be loaded" time="0.1656448">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/pages/AnalyticsPage.test.tsx" timestamp="2026-10-22T06:06:31.681Z" hostname="HAIDER-HP" tests="6" failures="0" errors="0" skipped="0" time="2.5487012">
+        <testcase classname="src/pages/AnalyticsPage.test.tsx" name="analytics &gt; counts the runs, and says not measured, never 0, where nothing was measured" time="1.081666">
+        </testcase>
+        <testcase classname="src/pages/AnalyticsPage.test.tsx" name="analytics &gt; invites a first run when there are none, and says the experiments have not run" time="0.4319033">
+        </testcase>
+        <testcase classname="src/pages/AnalyticsPage.test.tsx" name="analytics &gt; lists the experiment runs and shows a run&apos;s metrics when chosen" time="0.5320015">
+        </testcase>
+        <testcase classname="src/pages/AnalyticsPage.test.tsx" name="analytics &gt; says the chatbot evaluation has nothing to show, rather than inventing it" time="0.1243185">
+        </testcase>
+        <testcase classname="src/pages/AnalyticsPage.test.tsx" name="analytics &gt; says each part is loading, and what failed" time="0.1347726">
+        </testcase>
+        <testcase classname="src/pages/AnalyticsPage.test.tsx" name="analytics &gt; counts again when a run starts or finishes" time="0.2380175">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/pages/AssistantPage.test.tsx" timestamp="2026-10-22T06:06:31.682Z" hostname="HAIDER-HP" tests="15" failures="0" errors="0" skipped="0" time="15.6870803">
+        <testcase classname="src/pages/AssistantPage.test.tsx" name="an assistant page &gt; opens a new chat only once its first exchange is stored, so it never loads it empty" time="3.2796579">
+        </testcase>
+        <testcase classname="src/pages/AssistantPage.test.tsx" name="an assistant page &gt; invites a first request, and makes the chat only when one is sent" time="1.0423439">
+        </testcase>
+        <testcase classname="src/pages/AssistantPage.test.tsx" name="an assistant page &gt; fills the composer with an example command, ready to send" time="0.292434">
+        </testcase>
+        <testcase classname="src/pages/AssistantPage.test.tsx" name="an assistant page &gt; shows the thread in order, a message before its reply even at the same moment" time="0.4379978">
+        </testcase>
+        <testcase classname="src/pages/AssistantPage.test.tsx" name="an assistant page &gt; edits the intent, and the card shows the change" time="0.4947936">
+        </testcase>
+        <testcase classname="src/pages/AssistantPage.test.tsx" name="an assistant page &gt; generates, and the preview shows the spec, each job&apos;s config.xml and the checks" time="1.9404532">
+        </testcase>
+        <testcase classname="src/pages/AssistantPage.test.tsx" name="an assistant page &gt; approves with one idempotency key, says Run started, and follows the run" time="1.5358758">
+        </testcase>
+        <testcase classname="src/pages/AssistantPage.test.tsx" name="an assistant page &gt; refreshes the run card when the run changes" time="0.6339341">
+        </testcase>
+        <testcase classname="src/pages/AssistantPage.test.tsx" name="an assistant page &gt; puts an edited spec&apos;s error on its line" time="0.35032">
+        </testcase>
+        <testcase classname="src/pages/AssistantPage.test.tsx" name="an assistant page &gt; asks its question with answers to click, and sends the one chosen" time="0.8487426">
+        </testcase>
+        <testcase classname="src/pages/AssistantPage.test.tsx" name="an assistant page &gt; explains the plan as the words arrive" time="0.6562421">
+        </testcase>
+        <testcase classname="src/pages/AssistantPage.test.tsx" name="an assistant page &gt; keeps a message that was not sent, and says why" time="1.3825846">
+        </testcase>
+        <testcase classname="src/pages/AssistantPage.test.tsx" name="an assistant page &gt; stops waiting on request, and says what that means" time="1.6277072">
+        </testcase>
+        <testcase classname="src/pages/AssistantPage.test.tsx" name="an assistant page &gt; is the Pipeline Assistant on its own page, previewing the Jenkinsfile" time="0.5586869">
+        </testcase>
+        <testcase classname="src/pages/AssistantPage.test.tsx" name="an assistant page &gt; says when a chat cannot be opened, with the way to a new one" time="0.3417592">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/pages/CatalogPage.test.tsx" timestamp="2026-10-22T06:06:31.685Z" hostname="HAIDER-HP" tests="6" failures="0" errors="0" skipped="0" time="2.8626081">
+        <testcase classname="src/pages/CatalogPage.test.tsx" name="the service catalog &gt; shows each service&apos;s repository, branches, suites, environments and reachability" time="1.0342446">
+        </testcase>
+        <testcase classname="src/pages/CatalogPage.test.tsx" name="the service catalog &gt; says so while it loads, and when the catalog is empty" time="0.5661663">
+        </testcase>
+        <testcase classname="src/pages/CatalogPage.test.tsx" name="the service catalog &gt; says what failed, and loads again on request" time="0.3010716">
+        </testcase>
+        <testcase classname="src/pages/CatalogPage.test.tsx" name="the service catalog &gt; says why a repository was not checked when the request itself failed" time="0.1804874">
+        </testcase>
+        <testcase classname="src/pages/CatalogPage.test.tsx" name="the service catalog &gt; offers the resync to an Admin only" time="0.5297862">
+        </testcase>
+        <testcase classname="src/pages/CatalogPage.test.tsx" name="the service catalog &gt; says why a resync was refused" time="0.2461987">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/pages/OverviewPage.test.tsx" timestamp="2026-10-22T06:06:31.686Z" hostname="HAIDER-HP" tests="9" failures="0" errors="0" skipped="0" time="3.3890395">
+        <testcase classname="src/pages/OverviewPage.test.tsx" name="the overview &gt; leads with the jobs waiting, then my active runs and how many recent runs failed" time="0.4865335">
+        </testcase>
+        <testcase classname="src/pages/OverviewPage.test.tsx" name="the overview &gt; says how the AI provider is configured, and how its latest call ended" time="1.0313381">
+        </testcase>
+        <testcase classname="src/pages/OverviewPage.test.tsx" name="the overview &gt; shows where each of my runs waits, with its score bar, or what it is doing" time="0.2849063">
+        </testcase>
+        <testcase classname="src/pages/OverviewPage.test.tsx" name="the overview &gt; lists only the runs I started" time="0.1712533">
+        </testcase>
+        <testcase classname="src/pages/OverviewPage.test.tsx" name="the overview &gt; lists the latest results, and explains a failure on request" time="0.4906313">
+        </testcase>
+        <testcase classname="src/pages/OverviewPage.test.tsx" name="the overview &gt; says why the jobs waiting are unknown when the ranking is unavailable" time="0.1176049">
+        </testcase>
+        <testcase classname="src/pages/OverviewPage.test.tsx" name="the overview &gt; invites a first run when nothing has run, and says nothing has finished" time="0.3237466">
+        </testcase>
+        <testcase classname="src/pages/OverviewPage.test.tsx" name="the overview &gt; says what is loading, and what failed" time="0.1381337">
+        </testcase>
+        <testcase classname="src/pages/OverviewPage.test.tsx" name="the overview &gt; follows runs and the queue as events arrive" time="0.3401918">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/pages/QueuePage.test.tsx" timestamp="2026-10-22T06:06:31.688Z" hostname="HAIDER-HP" tests="15" failures="0" errors="0" skipped="0" time="6.0605175">
+        <testcase classname="src/pages/QueuePage.test.tsx" name="the queue page &gt; ranks each waiting job and explains its score with its bar" time="1.8542">
+        </testcase>
+        <testcase classname="src/pages/QueuePage.test.tsx" name="the queue page &gt; lists queued work the optimizer has not scored, which the waiting count includes" time="0.2711385">
+        </testcase>
+        <testcase classname="src/pages/QueuePage.test.tsx" name="the queue page &gt; lists a job held for its upstream, naming the job it waits for" time="0.1902737">
+        </testcase>
+        <testcase classname="src/pages/QueuePage.test.tsx" name="the queue page &gt; puts a HIGH job above lower urgency, in the plugin&apos;s rank order" time="0.3157331">
+        </testcase>
+        <testcase classname="src/pages/QueuePage.test.tsx" name="the queue page &gt; adds each bar&apos;s four contributions as columns when asked" time="0.5888953">
+        </testcase>
+        <testcase classname="src/pages/QueuePage.test.tsx" name="the queue page &gt; follows queue events, and only the first load grows the bars" time="0.6859571">
+        </testcase>
+        <testcase classname="src/pages/QueuePage.test.tsx" name="the queue page &gt; asks again on every event that moves a run in or out of the queue" time="0.4625236">
+        </testcase>
+        <testcase classname="src/pages/QueuePage.test.tsx" name="the queue page &gt; asks again every 10 seconds, because waits and aging grow between events" time="0.2084177">
+        </testcase>
+        <testcase classname="src/pages/QueuePage.test.tsx" name="the queue page &gt; says the ranking is unavailable and why, instead of drawing empty bars" time="0.1484604">
+        </testcase>
+        <testcase classname="src/pages/QueuePage.test.tsx" name="the queue page &gt; says when the optimizer is off, and still shows the scores" time="0.2181402">
+        </testcase>
+        <testcase classname="src/pages/QueuePage.test.tsx" name="the queue page &gt; invites a build when nothing is waiting" time="0.1766276">
+        </testcase>
+        <testcase classname="src/pages/QueuePage.test.tsx" name="the queue page &gt; says what failed when the queue cannot be loaded, and tries again on request" time="0.2057402">
+        </testcase>
+        <testcase classname="src/pages/QueuePage.test.tsx" name="the queue page &gt; keeps the last ranking when a refresh fails, and says from when" time="0.2178862">
+        </testcase>
+        <testcase classname="src/pages/QueuePage.test.tsx" name="the queue page &gt; stacks each job under 768 px, with its bar on its own line and labelled facts" time="0.2878146">
+        </testcase>
+        <testcase classname="src/pages/QueuePage.test.tsx" name="the queue page &gt; names an upstream job that Jenkins does not have, under the job that names it" time="0.2238085">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/pages/RunsPage.test.tsx" timestamp="2026-10-22T06:06:31.690Z" hostname="HAIDER-HP" tests="12" failures="0" errors="0" skipped="0" time="6.5352879">
+        <testcase classname="src/pages/RunsPage.test.tsx" name="jobs and runs &gt; lists every run newest first, with its service, assistant, jobs, result and time" time="1.7975704">
+        </testcase>
+        <testcase classname="src/pages/RunsPage.test.tsx" name="jobs and runs &gt; filters by service, assistant and result in the API, and keeps them in the address" time="1.058937">
+        </testcase>
+        <testcase classname="src/pages/RunsPage.test.tsx" name="jobs and runs &gt; says when only the newest runs are shown" time="0.2080688">
+        </testcase>
+        <testcase classname="src/pages/RunsPage.test.tsx" name="jobs and runs &gt; invites a first run when there are none" time="0.304194">
+        </testcase>
+        <testcase classname="src/pages/RunsPage.test.tsx" name="jobs and runs &gt; says what failed, and loads again on request" time="0.2339977">
+        </testcase>
+        <testcase classname="src/pages/RunsPage.test.tsx" name="jobs and runs &gt; opens a failed run: its stages, its jobs, the end of its log, and why it failed" time="0.6002625">
+        </testcase>
+        <testcase classname="src/pages/RunsPage.test.tsx" name="jobs and runs &gt; shows another job&apos;s log when asked" time="0.577544">
+        </testcase>
+        <testcase classname="src/pages/RunsPage.test.tsx" name="jobs and runs &gt; follows a building Pipeline&apos;s log from where it left off" time="0.53004">
+        </testcase>
+        <testcase classname="src/pages/RunsPage.test.tsx" name="jobs and runs &gt; says why a log could not be read, and tries again" time="0.3045669">
+        </testcase>
+        <testcase classname="src/pages/RunsPage.test.tsx" name="jobs and runs &gt; says why a failure could not be explained" time="0.3739563">
+        </testcase>
+        <testcase classname="src/pages/RunsPage.test.tsx" name="jobs and runs &gt; follows the runs as events arrive" time="0.2191636">
+        </testcase>
+        <testcase classname="src/pages/RunsPage.test.tsx" name="jobs and runs &gt; stacks each run under 768 px, with labelled facts" time="0.3227406">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/pages/SignInPage.test.tsx" timestamp="2026-10-22T06:06:31.693Z" hostname="HAIDER-HP" tests="16" failures="0" errors="0" skipped="0" time="13.3253763">
+        <testcase classname="src/pages/SignInPage.test.tsx" name="sign in &gt; asks for the email and password in plain words, with the cursor in the email field" time="1.2886718">
+        </testcase>
+        <testcase classname="src/pages/SignInPage.test.tsx" name="sign in &gt; names each missing field, and sends nothing" time="0.3681114">
+        </testcase>
+        <testcase classname="src/pages/SignInPage.test.tsx" name="sign in &gt; says what an email address should look like" time="0.8767646">
+        </testcase>
+        <testcase classname="src/pages/SignInPage.test.tsx" name="sign in &gt; names a password longer than the backend accepts" time="0.6919528">
+        </testcase>
+        <testcase classname="src/pages/SignInPage.test.tsx" name="sign in &gt; points at the email field when the backend refuses its format" time="1.0956828">
+        </testcase>
+        <testcase classname="src/pages/SignInPage.test.tsx" name="sign in &gt; says the email or password is wrong, keeps the email and clears the password" time="0.7945109">
+        </testcase>
+        <testcase classname="src/pages/SignInPage.test.tsx" name="sign in &gt; says when the account is disabled, and who can fix it" time="0.9079186">
+        </testcase>
+        <testcase classname="src/pages/SignInPage.test.tsx" name="sign in &gt; says how long to wait after too many attempts" time="1.0617693">
+        </testcase>
+        <testcase classname="src/pages/SignInPage.test.tsx" name="sign in &gt; says when the server did not answer, and what to check" time="1.0309937">
+        </testcase>
+        <testcase classname="src/pages/SignInPage.test.tsx" name="sign in &gt; shows and hides the password on request" time="1.0150024">
+        </testcase>
+        <testcase classname="src/pages/SignInPage.test.tsx" name="arriving at and leaving sign in &gt; sends a visitor with no session to sign in, then on to the page they asked for" time="1.1968753">
+        </testcase>
+        <testcase classname="src/pages/SignInPage.test.tsx" name="arriving at and leaving sign in &gt; never follows a next address off this site" time="1.1141038">
+        </testcase>
+        <testcase classname="src/pages/SignInPage.test.tsx" name="arriving at and leaving sign in &gt; skips the form for someone already signed in" time="0.1852405">
+        </testcase>
+        <testcase classname="src/pages/SignInPage.test.tsx" name="arriving at and leaving sign in &gt; restores the session after a reload without showing the form" time="0.5143188">
+        </testcase>
+        <testcase classname="src/pages/SignInPage.test.tsx" name="arriving at and leaving sign in &gt; says the session ended when a stored one is refused, and returns there afterwards" time="1.1091267">
+        </testcase>
+        <testcase classname="src/pages/SignInPage.test.tsx" name="arriving at and leaving sign in &gt; says when the server could not be reached to restore the session" time="0.0694884">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/queue/queueModel.test.ts" timestamp="2026-10-22T06:06:31.696Z" hostname="HAIDER-HP" tests="7" failures="0" errors="0" skipped="0" time="0.0096436">
+        <testcase classname="src/queue/queueModel.test.ts" name="the queue model &gt; names each Jenkins job class the plugin reports in words" time="0.0037191">
+        </testcase>
+        <testcase classname="src/queue/queueModel.test.ts" name="the queue model &gt; prints the plugin&apos;s estimates, and says when there is none" time="0.0006782">
+        </testcase>
+        <testcase classname="src/queue/queueModel.test.ts" name="the queue model &gt; prints a wait in seconds for the first minute, then in whole minutes" time="0.0003442">
+        </testcase>
+        <testcase classname="src/queue/queueModel.test.ts" name="the queue model &gt; names the upstream jobs a job depends on that Jenkins does not have" time="0.0004065">
+        </testcase>
+        <testcase classname="src/queue/queueModel.test.ts" name="the queue model &gt; keeps the plugin&apos;s rank order, whatever order the items arrive in" time="0.0012333">
+        </testcase>
+        <testcase classname="src/queue/queueModel.test.ts" name="the queue model &gt; says why a job is held, naming its upstream when the plugin does" time="0.0005033">
+        </testcase>
+        <testcase classname="src/queue/queueModel.test.ts" name="the queue model &gt; says whether the optimizer is ordering the queue" time="0.000322">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/runs/runsModel.test.ts" timestamp="2026-10-22T06:06:31.697Z" hostname="HAIDER-HP" tests="9" failures="0" errors="0" skipped="0" time="0.0261529">
+        <testcase classname="src/runs/runsModel.test.ts" name="the runs model &gt; reads a chain&apos;s status as a build state, naming the one Jenkins has no word for" time="0.0091415">
+        </testcase>
+        <testcase classname="src/runs/runsModel.test.ts" name="the runs model &gt; names the assistant from the job type" time="0.001137">
+        </testcase>
+        <testcase classname="src/runs/runsModel.test.ts" name="the runs model &gt; turns the page&apos;s filters into the API&apos;s own query" time="0.0009284">
+        </testcase>
+        <testcase classname="src/runs/runsModel.test.ts" name="the runs model &gt; times a finished chain, and not a running one" time="0.0010674">
+        </testcase>
+        <testcase classname="src/runs/runsModel.test.ts" name="the runs model &gt; says what an active chain is doing: a Pipeline&apos;s stage, or the job under way" time="0.0012311">
+        </testcase>
+        <testcase classname="src/runs/runsModel.test.ts" name="the runs model &gt; keeps the newest finished runs, leaving out those still building" time="0.0044126">
+        </testcase>
+        <testcase classname="src/runs/runsModel.test.ts" name="the log tail &gt; counts a line once its newline has arrived" time="0.0010412">
+        </testcase>
+        <testcase classname="src/runs/runsModel.test.ts" name="the log tail &gt; keeps the end of a log with its newlines, so the next window joins it correctly" time="0.0008802">
+        </testcase>
+        <testcase classname="src/runs/runsModel.test.ts" name="the log tail &gt; shows the last lines of the real failing log, ending where Jenkins ended it" time="0.001434">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/styles/tokens.test.ts" timestamp="2026-10-22T06:06:31.698Z" hostname="HAIDER-HP" tests="16" failures="0" errors="0" skipped="0" time="0.0188311">
+        <testcase classname="src/styles/tokens.test.ts" name="design tokens &gt; reads all thirteen of DESIGN.md&apos;s colours" time="0.0076181">
+        </testcase>
+        <testcase classname="src/styles/tokens.test.ts" name="design tokens &gt; --ground has DESIGN.md&apos;s value in both themes" time="0.0009102">
+        </testcase>
+        <testcase classname="src/styles/tokens.test.ts" name="design tokens &gt; --panel has DESIGN.md&apos;s value in both themes" time="0.0003456">
+        </testcase>
+        <testcase classname="src/styles/tokens.test.ts" name="design tokens &gt; --ink has DESIGN.md&apos;s value in both themes" time="0.0002719">
+        </testcase>
+        <testcase classname="src/styles/tokens.test.ts" name="design tokens &gt; --graphite has DESIGN.md&apos;s value in both themes" time="0.0002878">
+        </testcase>
+        <testcase classname="src/styles/tokens.test.ts" name="design tokens &gt; --spruce has DESIGN.md&apos;s value in both themes" time="0.0002456">
+        </testcase>
+        <testcase classname="src/styles/tokens.test.ts" name="design tokens &gt; --plum has DESIGN.md&apos;s value in both themes" time="0.0002508">
+        </testcase>
+        <testcase classname="src/styles/tokens.test.ts" name="design tokens &gt; --factor-urgency has DESIGN.md&apos;s value in both themes" time="0.0002869">
+        </testcase>
+        <testcase classname="src/styles/tokens.test.ts" name="design tokens &gt; --factor-dependency has DESIGN.md&apos;s value in both themes" time="0.0003341">
+        </testcase>
+        <testcase classname="src/styles/tokens.test.ts" name="design tokens &gt; --factor-execution-time has DESIGN.md&apos;s value in both themes" time="0.0002439">
+        </testcase>
+        <testcase classname="src/styles/tokens.test.ts" name="design tokens &gt; --factor-aging has DESIGN.md&apos;s value in both themes" time="0.000357">
+        </testcase>
+        <testcase classname="src/styles/tokens.test.ts" name="design tokens &gt; --state-succeeded has DESIGN.md&apos;s value in both themes" time="0.0003607">
+        </testcase>
+        <testcase classname="src/styles/tokens.test.ts" name="design tokens &gt; --state-failed has DESIGN.md&apos;s value in both themes" time="0.0002855">
+        </testcase>
+        <testcase classname="src/styles/tokens.test.ts" name="design tokens &gt; --state-unstable has DESIGN.md&apos;s value in both themes" time="0.0003531">
+        </testcase>
+        <testcase classname="src/styles/tokens.test.ts" name="design tokens &gt; defines no colour that DESIGN.md does not name" time="0.001686">
+        </testcase>
+        <testcase classname="src/styles/tokens.test.ts" name="design tokens &gt; derives Rule from Graphite and Panel, as DESIGN.md says" time="0.0007236">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/workspace/ApproveAndRun.test.tsx" timestamp="2026-10-22T06:06:31.701Z" hostname="HAIDER-HP" tests="3" failures="0" errors="0" skipped="0" time="1.4423043">
+        <testcase classname="src/workspace/ApproveAndRun.test.tsx" name="ApproveAndRun &gt; approves with the keyboard alone, says exactly what will happen, then Run started" time="0.9886259">
+        </testcase>
+        <testcase classname="src/workspace/ApproveAndRun.test.tsx" name="ApproveAndRun &gt; keeps a refusal in the dialog, with what happened and what to do" time="0.337724">
+        </testcase>
+        <testcase classname="src/workspace/ApproveAndRun.test.tsx" name="ApproveAndRun &gt; cannot be approved before every check passes, and says so" time="0.1118803">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/workspace/Clarification.test.tsx" timestamp="2026-10-22T06:06:31.702Z" hostname="HAIDER-HP" tests="3" failures="0" errors="0" skipped="0" time="0.8082087">
+        <testcase classname="src/workspace/Clarification.test.tsx" name="Clarification &gt; asks the question with at most four answers to click" time="0.6904993">
+        </testcase>
+        <testcase classname="src/workspace/Clarification.test.tsx" name="Clarification &gt; takes no answer while one is being sent" time="0.1069658">
+        </testcase>
+        <testcase classname="src/workspace/Clarification.test.tsx" name="Clarification &gt; asks for a typed answer when there is nothing to click" time="0.0064809">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/workspace/Composer.test.tsx" timestamp="2026-10-22T06:06:31.703Z" hostname="HAIDER-HP" tests="8" failures="0" errors="0" skipped="0" time="2.8291723">
+        <testcase classname="src/workspace/Composer.test.tsx" name="Composer &gt; has each assistant&apos;s own placeholder and name" time="0.578663">
+        </testcase>
+        <testcase classname="src/workspace/Composer.test.tsx" name="Composer &gt; sends on Enter, trimmed, and adds a line on Shift+Enter" time="0.8962878">
+        </testcase>
+        <testcase classname="src/workspace/Composer.test.tsx" name="Composer &gt; sends nothing when there is nothing to send" time="0.1993219">
+        </testcase>
+        <testcase classname="src/workspace/Composer.test.tsx" name="Composer &gt; completes service names from the keyboard" time="0.3492545">
+        </testcase>
+        <testcase classname="src/workspace/Composer.test.tsx" name="Composer &gt; offers the slash commands with what they stand for, and moves through them" time="0.178531">
+        </testcase>
+        <testcase classname="src/workspace/Composer.test.tsx" name="Composer &gt; closes the list on Escape until the text changes" time="0.3515587">
+        </testcase>
+        <testcase classname="src/workspace/Composer.test.tsx" name="Composer &gt; offers Stop while waiting, and keeps typing but not sending" time="0.2477238">
+        </testcase>
+        <testcase classname="src/workspace/Composer.test.tsx" name="Composer &gt; says how much room is left near the backend&apos;s limit" time="0.0232667">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/workspace/IntentCard.test.tsx" timestamp="2026-10-22T06:06:31.705Z" hostname="HAIDER-HP" tests="7" failures="0" errors="0" skipped="0" time="2.3888755">
+        <testcase classname="src/workspace/IntentCard.test.tsx" name="IntentCard &gt; shows the four fields as labelled chips" time="0.4959567">
+        </testcase>
+        <testcase classname="src/workspace/IntentCard.test.tsx" name="IntentCard &gt; generates on request, and once only while it is generating" time="0.1414069">
+        </testcase>
+        <testcase classname="src/workspace/IntentCard.test.tsx" name="IntentCard &gt; does not generate twice" time="0.106202">
+        </testcase>
+        <testcase classname="src/workspace/IntentCard.test.tsx" name="IntentCard &gt; offers only catalog values when editing, and never production" time="0.2776964">
+        </testcase>
+        <testcase classname="src/workspace/IntentCard.test.tsx" name="IntentCard &gt; moves to the new service&apos;s own branches and environments" time="0.3375063">
+        </testcase>
+        <testcase classname="src/workspace/IntentCard.test.tsx" name="IntentCard &gt; sends only what changed" time="0.5003138">
+        </testcase>
+        <testcase classname="src/workspace/IntentCard.test.tsx" name="IntentCard &gt; sends nothing when nothing changed, and Cancel changes nothing" time="0.5254131">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/workspace/PreviewPanel.test.tsx" timestamp="2026-10-22T06:06:31.706Z" hostname="HAIDER-HP" tests="9" failures="0" errors="0" skipped="0" time="3.7284906">
+        <testcase classname="src/workspace/PreviewPanel.test.tsx" name="PreviewPanel &gt; invites the next step before there is anything to show" time="0.1076108">
+        </testcase>
+        <testcase classname="src/workspace/PreviewPanel.test.tsx" name="PreviewPanel &gt; shows config.xml for freestyle and the Jenkinsfile for Pipeline" time="0.346548">
+        </testcase>
+        <testcase classname="src/workspace/PreviewPanel.test.tsx" name="PreviewPanel &gt; names the Pipeline&apos;s artifact the Jenkinsfile" time="0.1031126">
+        </testcase>
+        <testcase classname="src/workspace/PreviewPanel.test.tsx" name="PreviewPanel &gt; opens on the spec, editable, with Approve and run below the tabs" time="1.1086689">
+        </testcase>
+        <testcase classname="src/workspace/PreviewPanel.test.tsx" name="PreviewPanel &gt; offers to generate again from an edited spec" time="0.2911398">
+        </testcase>
+        <testcase classname="src/workspace/PreviewPanel.test.tsx" name="PreviewPanel &gt; shows each job&apos;s config.xml read-only, one job at a time" time="0.8009847">
+        </testcase>
+        <testcase classname="src/workspace/PreviewPanel.test.tsx" name="PreviewPanel &gt; puts the progress line and the checklist under Checks" time="0.2740809">
+        </testcase>
+        <testcase classname="src/workspace/PreviewPanel.test.tsx" name="PreviewPanel &gt; explains the plan on request, and shows the words as they arrive" time="0.3063351">
+        </testcase>
+        <testcase classname="src/workspace/PreviewPanel.test.tsx" name="PreviewPanel &gt; says when the explanation is still being written" time="0.1778411">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/workspace/ProgressSteps.test.tsx" timestamp="2026-10-22T06:06:31.708Z" hostname="HAIDER-HP" tests="5" failures="0" errors="0" skipped="0" time="0.6583975">
+        <testcase classname="src/workspace/ProgressSteps.test.tsx" name="ProgressSteps &gt; shows the four steps in order, each with how it went" time="0.5142278">
+        </testcase>
+        <testcase classname="src/workspace/ProgressSteps.test.tsx" name="ProgressSteps &gt; shows the exact error, and the steps after it as not reached" time="0.0586214">
+        </testcase>
+        <testcase classname="src/workspace/ProgressSteps.test.tsx" name="ProgressSteps &gt; keeps state colours off steps that are not builds" time="0.0169886">
+        </testcase>
+        <testcase classname="src/workspace/ProgressSteps.test.tsx" name="ValidationChecklist &gt; gives each check its result as a word, and the reason when it did not pass" time="0.0507973">
+        </testcase>
+        <testcase classname="src/workspace/ProgressSteps.test.tsx" name="ValidationChecklist &gt; says when nothing has run" time="0.013645">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/workspace/RunCard.test.tsx" timestamp="2026-10-22T06:06:31.709Z" hostname="HAIDER-HP" tests="6" failures="0" errors="0" skipped="0" time="0.8350316">
+        <testcase classname="src/workspace/RunCard.test.tsx" name="RunCard &gt; says where the run waits, why, and what its score is made of" time="0.6297618">
+        </testcase>
+        <testcase classname="src/workspace/RunCard.test.tsx" name="RunCard &gt; gives the plugin&apos;s reason when the run is blocked" time="0.0416272">
+        </testcase>
+        <testcase classname="src/workspace/RunCard.test.tsx" name="RunCard &gt; says the ranking is unavailable rather than drawing an empty bar" time="0.0066545">
+        </testcase>
+        <testcase classname="src/workspace/RunCard.test.tsx" name="RunCard &gt; names each stage with its state, then the result and how long it took" time="0.0859361">
+        </testcase>
+        <testcase classname="src/workspace/RunCard.test.tsx" name="RunCard &gt; links to Jenkins in a new tab, and says so" time="0.0616013">
+        </testcase>
+        <testcase classname="src/workspace/RunCard.test.tsx" name="RunCard &gt; never links to anything but a web address" time="0.0047509">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/workspace/WorkspaceLayout.test.tsx" timestamp="2026-10-22T06:06:31.710Z" hostname="HAIDER-HP" tests="5" failures="0" errors="0" skipped="0" time="1.4745347">
+        <testcase classname="src/workspace/WorkspaceLayout.test.tsx" name="WorkspaceLayout &gt; puts chats, thread and preview side by side from 1280 px" time="0.6454137">
+        </testcase>
+        <testcase classname="src/workspace/WorkspaceLayout.test.tsx" name="WorkspaceLayout &gt; gives the page its assistant&apos;s accent" time="0.0308843">
+        </testcase>
+        <testcase classname="src/workspace/WorkspaceLayout.test.tsx" name="WorkspaceLayout &gt; makes the preview a drawer under 1280 px" time="0.4409177">
+        </testcase>
+        <testcase classname="src/workspace/WorkspaceLayout.test.tsx" name="WorkspaceLayout &gt; makes it a bottom sheet under 768 px, with a one-line summary to open it" time="0.1753671">
+        </testcase>
+        <testcase classname="src/workspace/WorkspaceLayout.test.tsx" name="WorkspaceLayout &gt; closes the chats sheet when another chat is chosen" time="0.1771711">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/workspace/assistantModels.test.ts" timestamp="2026-10-22T06:06:31.711Z" hostname="HAIDER-HP" tests="12" failures="0" errors="0" skipped="0" time="0.0660645">
+        <testcase classname="src/workspace/assistantModels.test.ts" name="spec problems &gt; puts the backend&apos;s schema error on the line it names" time="0.0306913">
+        </testcase>
+        <testcase classname="src/workspace/assistantModels.test.ts" name="spec problems &gt; follows a path into the stages, and puts a missing field on the stage it belongs to" time="0.0110302">
+        </testcase>
+        <testcase classname="src/workspace/assistantModels.test.ts" name="spec problems &gt; uses YAML&apos;s own line number when the spec is not YAML at all" time="0.0016069">
+        </testcase>
+        <testcase classname="src/workspace/assistantModels.test.ts" name="spec problems &gt; lists a problem with no line without placing it" time="0.0006392">
+        </testcase>
+        <testcase classname="src/workspace/assistantModels.test.ts" name="spec problems &gt; says nothing when the spec passed, and leaves other checks to the checklist" time="0.0005632">
+        </testcase>
+        <testcase classname="src/workspace/assistantModels.test.ts" name="spec problems &gt; finds a path&apos;s offset, and the deepest part of it that exists" time="0.0048728">
+        </testcase>
+        <testcase classname="src/workspace/assistantModels.test.ts" name="thread order &gt; puts a message before its reply when both have the same time" time="0.0009606">
+        </testcase>
+        <testcase classname="src/workspace/assistantModels.test.ts" name="thread order &gt; orders the captured conversation with every message before its reply" time="0.0004971">
+        </testcase>
+        <testcase classname="src/workspace/assistantModels.test.ts" name="run card view &gt; shows a queued chain&apos;s place, score and the jobs still to run" time="0.0026605">
+        </testcase>
+        <testcase classname="src/workspace/assistantModels.test.ts" name="run card view &gt; shows a finished chain&apos;s result, its duration, and the failed run&apos;s Jenkins page" time="0.000871">
+        </testcase>
+        <testcase classname="src/workspace/assistantModels.test.ts" name="run card view &gt; shows a Pipeline&apos;s stages, not its one job" time="0.000691">
+        </testcase>
+        <testcase classname="src/workspace/assistantModels.test.ts" name="preview summary &gt; says in one line what the preview holds" time="0.0063948">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/workspace/composerSuggestions.test.ts" timestamp="2026-10-22T06:06:31.713Z" hostname="HAIDER-HP" tests="4" failures="0" errors="0" skipped="0" time="0.0135279">
+        <testcase classname="src/workspace/composerSuggestions.test.ts" name="composer suggestions &gt; finds the word that ends at the caret, and none mid-word" time="0.0073562">
+        </testcase>
+        <testcase classname="src/workspace/composerSuggestions.test.ts" name="composer suggestions &gt; offers catalog services from their second letter, case-insensitively" time="0.0010917">
+        </testcase>
+        <testcase classname="src/workspace/composerSuggestions.test.ts" name="composer suggestions &gt; offers the slash commands only at the start of a message" time="0.0006189">
+        </testcase>
+        <testcase classname="src/workspace/composerSuggestions.test.ts" name="composer suggestions &gt; replaces the word with the choice and a space, caret after it" time="0.0006074">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/workspace/workspaceParts.test.tsx" timestamp="2026-10-22T06:06:31.714Z" hostname="HAIDER-HP" tests="5" failures="0" errors="0" skipped="0" time="1.161141">
+        <testcase classname="src/workspace/workspaceParts.test.tsx" name="EmptyState &gt; says what the assistant creates, offers four commands and names the services" time="0.8024847">
+        </testcase>
+        <testcase classname="src/workspace/workspaceParts.test.tsx" name="EmptyState &gt; is not a dead end when the catalog is empty" time="0.0177265">
+        </testcase>
+        <testcase classname="src/workspace/workspaceParts.test.tsx" name="ChatList &gt; lists the chats, marks the open one, and starts a new one" time="0.2726801">
+        </testcase>
+        <testcase classname="src/workspace/workspaceParts.test.tsx" name="ChatList &gt; says how to start when there are none" time="0.0072133">
+        </testcase>
+        <testcase classname="src/workspace/workspaceParts.test.tsx" name="Thread &gt; announces new messages, and names who said each one" time="0.0530795">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/ws/LiveEventsClient.test.ts" timestamp="2026-10-22T06:06:31.715Z" hostname="HAIDER-HP" tests="16" failures="0" errors="0" skipped="0" time="0.0467175">
+        <testcase classname="src/ws/LiveEventsClient.test.ts" name="LiveEventsClient &gt; authenticates in its first frame, never in the URL" time="0.0159628">
+        </testcase>
+        <testcase classname="src/ws/LiveEventsClient.test.ts" name="LiveEventsClient &gt; is open once the server says hello, and passes on every event but heartbeats" time="0.0033362">
+        </testcase>
+        <testcase classname="src/ws/LiveEventsClient.test.ts" name="LiveEventsClient &gt; stops for good when the token is refused (1008)" time="0.005198">
+        </testcase>
+        <testcase classname="src/ws/LiveEventsClient.test.ts" name="LiveEventsClient &gt; reconnects after any other close, doubling the wait each time" time="0.0033092">
+        </testcase>
+        <testcase classname="src/ws/LiveEventsClient.test.ts" name="LiveEventsClient &gt; never waits more than thirty seconds between attempts" time="0.0025852">
+        </testcase>
+        <testcase classname="src/ws/LiveEventsClient.test.ts" name="LiveEventsClient &gt; closes a connection that has gone quiet, then reconnects" time="0.0016933">
+        </testcase>
+        <testcase classname="src/ws/LiveEventsClient.test.ts" name="LiveEventsClient &gt; opens nothing without a token, and says why" time="0.0011237">
+        </testcase>
+        <testcase classname="src/ws/LiveEventsClient.test.ts" name="LiveEventsClient &gt; reports its status changes, and stopping ignores the close that follows" time="0.0019127">
+        </testcase>
+        <testcase classname="src/ws/LiveEventsClient.test.ts" name="liveEventsUrl &gt; base &quot;&quot; on { protocol: &apos;http:&apos;, …(1) } is ws://localhost:5173/ws" time="0.0015585">
+        </testcase>
+        <testcase classname="src/ws/LiveEventsClient.test.ts" name="liveEventsUrl &gt; base &quot;&quot; on { protocol: &apos;https:&apos;, …(1) } is wss://demo.example/ws" time="0.000748">
+        </testcase>
+        <testcase classname="src/ws/LiveEventsClient.test.ts" name="liveEventsUrl &gt; base &quot;http://localhost:8000&quot; on { protocol: &apos;http:&apos;, …(1) } is ws://localhost:8000/ws" time="0.0007973">
+        </testcase>
+        <testcase classname="src/ws/LiveEventsClient.test.ts" name="parseLiveEvent &gt; refuses not JSON" time="0.0010549">
+        </testcase>
+        <testcase classname="src/ws/LiveEventsClient.test.ts" name="parseLiveEvent &gt; refuses not an object" time="0.0006666">
+        </testcase>
+        <testcase classname="src/ws/LiveEventsClient.test.ts" name="parseLiveEvent &gt; refuses an unknown type" time="0.0005863">
+        </testcase>
+        <testcase classname="src/ws/LiveEventsClient.test.ts" name="parseLiveEvent &gt; refuses no sentAt" time="0.0005959">
+        </testcase>
+        <testcase classname="src/ws/LiveEventsClient.test.ts" name="parseLiveEvent &gt; gives an event with no data an empty object" time="0.0007795">
+        </testcase>
+    </testsuite>
+</testsuites>

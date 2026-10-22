@@ -1,0 +1,163 @@
+[INFO] Scanning for projects...
+[INFO] Artifact org.jenkins-ci.tools:maven-hpi-plugin:pom:3.1838.va_13472137a_6a_ is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases)]
+[INFO] Artifact org.jenkins-ci.tools:maven-hpi-plugin:pom:3.1838.va_13472137a_6a_ is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases)]
+[WARNING] The POM for org.jenkins-ci.tools:maven-hpi-plugin:jar:3.1838.va_13472137a_6a_ is missing, no dependency information available
+[INFO] Artifact org.jenkins-ci.tools:maven-hpi-plugin:jar:3.1838.va_13472137a_6a_ is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases)]
+[INFO] Artifact org.jenkins-ci.tools:maven-hpi-plugin:jar:3.1838.va_13472137a_6a_ is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [central (https://repo.maven.apache.org/maven2, default, releases)]
+[WARNING] Failed to build parent project for io.jenkins.plugins:dynamic-queue-optimizer:hpi:2.0.0-SNAPSHOT
+[INFO] 
+[INFO] -------------< io.jenkins.plugins:dynamic-queue-optimizer >-------------
+[INFO] Building Dynamic Queue Optimizer 2.0.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ hpi ]---------------------------------
+[INFO] 
+[INFO] --- hpi:3.1838.va_13472137a_6a_:validate (default-validate) @ dynamic-queue-optimizer ---
+[INFO] 
+[INFO] --- hpi:3.1838.va_13472137a_6a_:validate-hpi (default-validate-hpi) @ dynamic-queue-optimizer ---
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (display-info) @ dynamic-queue-optimizer ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] Rule 1: org.apache.maven.enforcer.rules.version.RequireJavaVersion passed
+[INFO] Rule 2: org.apache.maven.enforcer.rules.version.RequireJavaVersion passed
+[INFO] Rule 3: org.apache.maven.enforcer.rules.RequirePluginVersions passed
+[INFO] Rule 4: org.codehaus.mojo.extraenforcer.dependencies.EnforceBytecodeVersion passed
+[INFO] Rule 5: org.apache.maven.enforcer.rules.dependency.BannedDependencies passed
+[INFO] Rule 6: org.apache.maven.enforcer.rules.dependency.BannedDependencies passed
+[INFO] Rule 7: org.apache.maven.enforcer.rules.dependency.RequireUpperBoundDeps passed
+[INFO] banObsoleteDependencyOverrides skipped
+[INFO] Rule 8: io.jenkins.tools.maven.jenkins_enforcer_rules.BanObsoleteDependencyOverrides passed
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (no-snapshots-in-release) @ dynamic-queue-optimizer ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.dependency.RequireReleaseDeps passed
+[INFO] 
+[INFO] --- localizer:1.31:generate (default) @ dynamic-queue-optimizer ---
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (check-junit-imports) @ dynamic-queue-optimizer ---
+[INFO] Skipping Rule Enforcement.
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (check-commons-lang-imports) @ dynamic-queue-optimizer ---
+[INFO] Skipping Rule Enforcement.
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (check-deprecated-stapler-imports) @ dynamic-queue-optimizer ---
+[INFO] Skipping Rule Enforcement.
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ dynamic-queue-optimizer ---
+[INFO] Copying 3 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.16.0:compile (default-compile) @ dynamic-queue-optimizer ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- access-modifier-checker:1.35:enforce (default-enforce) @ dynamic-queue-optimizer ---
+[INFO] 
+[INFO] --- bridge-method-injector:1.32:process (default) @ dynamic-queue-optimizer ---
+[INFO] 
+[INFO] --- hpi:3.1838.va_13472137a_6a_:insert-test (default-insert-test) @ dynamic-queue-optimizer ---
+[INFO] 
+[INFO] --- antrun:3.2.0:run (createTempDir) @ dynamic-queue-optimizer ---
+[INFO] Executing tasks
+[INFO] Executed tasks
+[INFO] 
+[INFO] --- resources:3.5.0:testResources (default-testResources) @ dynamic-queue-optimizer ---
+[INFO] Copying 3 resources from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.16.0:testCompile (default-testCompile) @ dynamic-queue-optimizer ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- hpi:3.1838.va_13472137a_6a_:test-hpl (default-test-hpl) @ dynamic-queue-optimizer ---
+[INFO] Generating D:\FYP POC\CICD project - Copy\plugin\target\test-classes\the.hpl
+[INFO] 
+[INFO] --- hpi:3.1838.va_13472137a_6a_:resolve-test-dependencies (default-resolve-test-dependencies) @ dynamic-queue-optimizer ---
+[INFO] 
+[INFO] --- hpi:3.1838.va_13472137a_6a_:test-runtime (default-test-runtime) @ dynamic-queue-optimizer ---
+[INFO] Setting jenkins.addOpens to --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED
+[INFO] Setting jenkins.insaneHook to --patch-module='java.base=D:\FYP POC\CICD project - Copy\plugin\target\patch-modules\org-netbeans-insane-hook.jar' --add-exports=java.base/org.netbeans.insane.hook=ALL-UNNAMED
+[INFO] 
+[INFO] --- surefire:3.6.0:test (default-test) @ dynamic-queue-optimizer ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running io.jenkins.plugins.queueoptimizer.experiment.QueueSimulationExperiment
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.876 s -- in io.jenkins.plugins.queueoptimizer.experiment.QueueSimulationExperiment
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- license:210.v568d0b_a_2b_e44:process (default) @ dynamic-queue-optimizer ---
+[INFO] Generated D:\FYP POC\CICD project - Copy\plugin\target\dynamic-queue-optimizer\WEB-INF\licenses.xml
+[INFO] 
+[INFO] --- hpi:3.1838.va_13472137a_6a_:hpi (default-hpi) @ dynamic-queue-optimizer ---
+[INFO] Generating D:\FYP POC\CICD project - Copy\plugin\target\dynamic-queue-optimizer\META-INF\MANIFEST.MF
+[INFO] Checking for attached .jar artifact ...
+[INFO] Generating jar D:\FYP POC\CICD project - Copy\plugin\target\dynamic-queue-optimizer.jar
+[INFO] Building jar: D:\FYP POC\CICD project - Copy\plugin\target\dynamic-queue-optimizer.jar
+[INFO] Exploding webapp...
+[INFO] Copy webapp webResources to D:\FYP POC\CICD project - Copy\plugin\target\dynamic-queue-optimizer
+[INFO] Assembling webapp dynamic-queue-optimizer in D:\FYP POC\CICD project - Copy\plugin\target\dynamic-queue-optimizer
+[INFO] Generating hpi D:\FYP POC\CICD project - Copy\plugin\target\dynamic-queue-optimizer.hpi
+[INFO] Building jar: D:\FYP POC\CICD project - Copy\plugin\target\dynamic-queue-optimizer.hpi
+[INFO] 
+[INFO] --- jar:3.5.1:test-jar (maybe-test-jar) @ dynamic-queue-optimizer ---
+[INFO] Skipping packaging of the test-jar
+[INFO] 
+[INFO] --- failsafe:3.6.0:integration-test (integration-tests) @ dynamic-queue-optimizer ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running io.jenkins.plugins.queueoptimizer.experiment.SchedulerOverheadExperiment
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 41.14 s -- in io.jenkins.plugins.queueoptimizer.experiment.SchedulerOverheadExperiment
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] >>> spotbugs:4.10.4.1:check (spotbugs) > :spotbugs @ dynamic-queue-optimizer >>>
+[INFO] 
+[INFO] --- spotbugs:4.10.4.1:spotbugs (spotbugs) @ dynamic-queue-optimizer ---
+[INFO] Done SpotBugs Analysis....
+[INFO] Skipping com.github.spotbugs:spotbugs-maven-plugin:4.10.4.1:spotbugs report goal
+[INFO] 
+[INFO] <<< spotbugs:4.10.4.1:check (spotbugs) < :spotbugs @ dynamic-queue-optimizer <<<
+[INFO] 
+[INFO] 
+[INFO] --- spotbugs:4.10.4.1:check (spotbugs) @ dynamic-queue-optimizer ---
+[INFO] BugInstance size is 0
+[INFO] Error size is 0
+[INFO] No errors/warnings found
+[INFO] 
+[INFO] --- spotless:3.10.2:check (default) @ dynamic-queue-optimizer ---
+[INFO] Spotless.Java is keeping 56 files clean - 0 needs changes to be clean, 0 were already clean, 56 were skipped because caching determined they were already clean
+[INFO] Spotless.Pom is keeping 1 files clean - 0 needs changes to be clean, 0 were already clean, 1 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] --- failsafe:3.6.0:verify (integration-tests) @ dynamic-queue-optimizer ---
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  01:17 min
+[INFO] Finished at: 2026-10-22T10:43:53+05:00
+[INFO] ------------------------------------------------------------------------
+
+--- stderr ---
+   0.167 [id=1]	INFO	o.jvnet.hudson.test.WarExploder#explode: Picking up existing exploded jenkins.war at D:\FYP POC\CICD project - Copy\plugin\target\jenkins-for-test
+   0.863 [id=1]	INFO	o.jvnet.hudson.test.JenkinsRule#createWebServer2: Running on http://localhost:50650/jenkins/
+   1.021 [id=1]	INFO	jenkins.model.Jenkins#<init>: Starting version 2.568.3
+   1.154 [id=48]	INFO	jenkins.InitReactorRunner$1#onAttained: Started initialization
+   6.354 [id=61]	INFO	jenkins.InitReactorRunner$1#onAttained: Listed all plugins
+   6.362 [id=48]	INFO	j.b.api.BouncyCastlePlugin#start: D:\FYP POC\CICD project - Copy\plugin\target\tmp\j h9461179101347861892\plugins\bouncycastle-api\WEB-INF\optional-lib not found; for non RealJenkinsRule this is fine and can be ignored.
+   8.141 [id=59]	INFO	jenkins.InitReactorRunner$1#onAttained: Prepared all plugins
+   8.156 [id=59]	INFO	jenkins.InitReactorRunner$1#onAttained: Started all plugins
+   8.157 [id=59]	INFO	jenkins.InitReactorRunner$1#onAttained: Augmented all extensions
+   9.416 [id=47]	INFO	jenkins.InitReactorRunner$1#onAttained: System config loaded
+   9.482 [id=47]	INFO	jenkins.InitReactorRunner$1#onAttained: System config adapted
+   9.483 [id=48]	INFO	jenkins.InitReactorRunner$1#onAttained: Loaded all jobs
+   9.491 [id=56]	INFO	jenkins.InitReactorRunner$1#onAttained: Configuration for all jobs updated
+   9.506 [id=61]	INFO	jenkins.InitReactorRunner$1#onAttained: Completed initialization
+  38.852 [id=1]	INFO	hudson.lifecycle.Lifecycle#onStatusUpdate: Stopping Jenkins
+  38.928 [id=1]	INFO	hudson.lifecycle.Lifecycle#onStatusUpdate: Jenkins stopped
+  38.968 [id=1]	INFO	o.j.h.t.TemporaryDirectoryAllocator#dispose: deleting D:\FYP POC\CICD project - Copy\plugin\target\tmp\j h9461179101347861892

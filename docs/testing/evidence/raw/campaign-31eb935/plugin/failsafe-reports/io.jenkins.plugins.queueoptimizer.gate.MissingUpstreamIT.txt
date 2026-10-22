@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: io.jenkins.plugins.queueoptimizer.gate.MissingUpstreamIT
+-------------------------------------------------------------------------------
+Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 25.54 s -- in io.jenkins.plugins.queueoptimizer.gate.MissingUpstreamIT

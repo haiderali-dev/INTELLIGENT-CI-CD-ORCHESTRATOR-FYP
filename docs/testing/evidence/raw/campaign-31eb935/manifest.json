@@ -1,0 +1,324 @@
+{
+  "commit": "31eb93530935124935261039df99c6efa6460c98",
+  "branch": "phase-6-hardening",
+  "written": "2026-10-22T06:11:22+00:00",
+  "machine": {
+    "os": "nt win32",
+    "python": "3.14.2",
+    "processors": 8
+  },
+  "steps": [
+    {
+      "name": "plugin",
+      "command": [
+        "mvn.cmd",
+        "-B",
+        "-ntp",
+        "clean",
+        "verify",
+        "-P",
+        "enable-jacoco"
+      ],
+      "started": "2026-10-22T05:31:31+00:00",
+      "seconds": 580.5,
+      "exit_code": 0,
+      "log": "logs\\plugin.log",
+      "artifacts": [
+        "plugin/surefire-reports/",
+        "plugin/failsafe-reports/",
+        "plugin/jacoco.xml",
+        "plugin/jacoco.csv"
+      ],
+      "note": ""
+    },
+    {
+      "name": "plugin-mutation",
+      "command": [
+        "mvn.cmd",
+        "-B",
+        "-ntp",
+        "-P",
+        "mutation",
+        "test-compile",
+        "org.pitest:pitest-maven:mutationCoverage"
+      ],
+      "started": "2026-10-22T05:41:12+00:00",
+      "seconds": 81.6,
+      "exit_code": 0,
+      "log": "logs\\plugin-mutation.log",
+      "artifacts": [
+        "plugin-mutation/mutations.xml"
+      ],
+      "note": ""
+    },
+    {
+      "name": "plugin-experiments",
+      "command": [
+        "mvn.cmd",
+        "-B",
+        "-ntp",
+        "verify",
+        "-Dtest=QueueSimulationExperiment",
+        "-Dit.test=SchedulerOverheadExperiment",
+        "-Dsurefire.failIfNoSpecifiedTests=false",
+        "-Dfailsafe.failIfNoSpecifiedTests=false"
+      ],
+      "started": "2026-10-22T05:42:34+00:00",
+      "seconds": 79.1,
+      "exit_code": 0,
+      "log": "logs\\plugin-experiments.log",
+      "artifacts": [
+        "plugin-experiments/scheduler-overhead-algorithm.csv",
+        "plugin-experiments/scheduler-overhead-algorithm.environment.txt",
+        "plugin-experiments/scheduler-overhead-jenkins.csv",
+        "plugin-experiments/scheduler-overhead-jenkins.environment.txt",
+        "plugin-experiments/simulation-m2-calibration.csv",
+        "plugin-experiments/simulation-m2-calibration.environment.txt",
+        "plugin-experiments/simulation-m2-jobs.csv",
+        "plugin-experiments/simulation-m2-jobs.environment.txt",
+        "plugin-experiments/simulation-m2-summary.csv",
+        "plugin-experiments/simulation-m2-summary.environment.txt",
+        "plugin-experiments/simulation-sustained-load.csv",
+        "plugin-experiments/simulation-sustained-load.environment.txt"
+      ],
+      "note": ""
+    },
+    {
+      "name": "backend-offline",
+      "command": [
+        "D:\\FYP POC\\CICD project - Copy\\.venv-tools\\Scripts\\uv.exe",
+        "run",
+        "--no-sync",
+        "python",
+        "-m",
+        "pytest",
+        "-m",
+        "not live and not e2e and not integration",
+        "-p",
+        "no:cacheprovider",
+        "--junitxml=D:\\FYP POC\\CICD project - Copy\\.tmp\\campaign\\31eb935\\backend\\backend-offline.xml",
+        "--cov=app",
+        "--cov-report=json:D:\\FYP POC\\CICD project - Copy\\.tmp\\campaign\\31eb935\\backend\\backend-offline-coverage.json"
+      ],
+      "started": "2026-10-22T05:43:53+00:00",
+      "seconds": 244.9,
+      "exit_code": 0,
+      "log": "logs\\backend-offline.log",
+      "artifacts": [
+        "backend/backend-offline.xml",
+        "backend/backend-offline-coverage.json"
+      ],
+      "note": ""
+    },
+    {
+      "name": "backend-integration",
+      "command": [
+        "D:\\FYP POC\\CICD project - Copy\\.venv-tools\\Scripts\\uv.exe",
+        "run",
+        "--no-sync",
+        "python",
+        "-m",
+        "pytest",
+        "-m",
+        "integration",
+        "-p",
+        "no:cacheprovider",
+        "--junitxml=D:\\FYP POC\\CICD project - Copy\\.tmp\\campaign\\31eb935\\backend\\backend-integration.xml",
+        "--cov=app",
+        "--cov-report=json:D:\\FYP POC\\CICD project - Copy\\.tmp\\campaign\\31eb935\\backend\\backend-integration-coverage.json",
+        "--cov-append"
+      ],
+      "started": "2026-10-22T05:47:58+00:00",
+      "seconds": 429.8,
+      "exit_code": 0,
+      "log": "logs\\backend-integration.log",
+      "artifacts": [
+        "backend/backend-integration.xml",
+        "backend/backend-integration-coverage.json"
+      ],
+      "note": ""
+    },
+    {
+      "name": "backend-e2e",
+      "command": [
+        "D:\\FYP POC\\CICD project - Copy\\.venv-tools\\Scripts\\uv.exe",
+        "run",
+        "--no-sync",
+        "python",
+        "-m",
+        "pytest",
+        "-m",
+        "e2e",
+        "-p",
+        "no:cacheprovider",
+        "--junitxml=D:\\FYP POC\\CICD project - Copy\\.tmp\\campaign\\31eb935\\backend\\backend-e2e.xml",
+        "--cov=app",
+        "--cov-report=json:D:\\FYP POC\\CICD project - Copy\\.tmp\\campaign\\31eb935\\backend\\backend-e2e-coverage.json",
+        "--cov-append"
+      ],
+      "started": "2026-10-22T05:55:07+00:00",
+      "seconds": 593.8,
+      "exit_code": 0,
+      "log": "logs\\backend-e2e.log",
+      "artifacts": [
+        "backend/backend-e2e.xml",
+        "backend/backend-e2e-coverage.json"
+      ],
+      "note": ""
+    },
+    {
+      "name": "backend-live",
+      "command": [
+        "D:\\FYP POC\\CICD project - Copy\\.venv-tools\\Scripts\\uv.exe",
+        "run",
+        "--no-sync",
+        "python",
+        "-m",
+        "pytest",
+        "-m",
+        "live",
+        "-p",
+        "no:cacheprovider",
+        "--junitxml=D:\\FYP POC\\CICD project - Copy\\.tmp\\campaign\\31eb935\\backend\\backend-live.xml",
+        "--cov=app",
+        "--cov-report=json:D:\\FYP POC\\CICD project - Copy\\.tmp\\campaign\\31eb935\\backend\\backend-live-coverage.json",
+        "--cov-append"
+      ],
+      "started": "2026-10-22T06:05:01+00:00",
+      "seconds": 12.7,
+      "exit_code": 0,
+      "log": "logs\\backend-live.log",
+      "artifacts": [
+        "backend/backend-live.xml",
+        "backend/backend-live-coverage.json"
+      ],
+      "note": ""
+    },
+    {
+      "name": "frontend-unit",
+      "command": [
+        "npx.cmd",
+        "vitest",
+        "run",
+        "--coverage",
+        "--reporter=default",
+        "--reporter=junit",
+        "--outputFile.junit=D:\\FYP POC\\CICD project - Copy\\.tmp\\campaign\\31eb935\\frontend\\unit.xml"
+      ],
+      "started": "2026-10-22T06:05:38+00:00",
+      "seconds": 53.2,
+      "exit_code": 0,
+      "log": "logs\\frontend-unit.log",
+      "artifacts": [
+        "frontend/unit.xml",
+        "frontend/coverage-summary.json"
+      ],
+      "note": ""
+    },
+    {
+      "name": "browser-flows",
+      "command": [
+        "npx.cmd",
+        "playwright",
+        "test",
+        "--reporter=line,junit"
+      ],
+      "started": "2026-10-22T06:06:31+00:00",
+      "seconds": 98.3,
+      "exit_code": 0,
+      "log": "logs\\browser-flows.log",
+      "artifacts": [
+        "frontend/browser-flows.xml"
+      ],
+      "note": ""
+    },
+    {
+      "name": "lighthouse",
+      "command": [
+        "npx.cmd",
+        "playwright",
+        "test",
+        "--project=lighthouse",
+        "--reporter=line,junit"
+      ],
+      "started": "2026-10-22T06:08:10+00:00",
+      "seconds": 107.3,
+      "exit_code": 0,
+      "log": "logs\\lighthouse.log",
+      "artifacts": [
+        "frontend/lighthouse.xml"
+      ],
+      "note": ""
+    },
+    {
+      "name": "stack-system",
+      "command": [
+        "C:\\Users\\haide\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "D:\\FYP POC\\CICD project - Copy\\scripts\\stack_system_test.py",
+        "--reporter=line,junit"
+      ],
+      "started": "2026-10-22T06:09:57+00:00",
+      "seconds": 47.2,
+      "exit_code": 0,
+      "log": "logs\\stack-system.log",
+      "artifacts": [
+        "frontend/stack.xml"
+      ],
+      "note": ""
+    },
+    {
+      "name": "payment-service",
+      "command": [
+        "D:\\FYP POC\\CICD project - Copy\\sample-services\\payment-service\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "tests",
+        "-p",
+        "no:cacheprovider",
+        "--junitxml=D:\\FYP POC\\CICD project - Copy\\.tmp\\campaign\\31eb935\\sample-services\\payment-service.xml"
+      ],
+      "started": "2026-10-22T06:10:44+00:00",
+      "seconds": 29.0,
+      "exit_code": 0,
+      "log": "logs\\payment-service.log",
+      "artifacts": [
+        "sample-services/payment-service.xml"
+      ],
+      "note": ""
+    },
+    {
+      "name": "auth-service",
+      "command": [
+        "node",
+        "--test",
+        "--test-reporter=spec",
+        "--test-reporter-destination=stdout",
+        "--test-reporter=junit",
+        "--test-reporter-destination=D:\\FYP POC\\CICD project - Copy\\.tmp\\campaign\\31eb935\\sample-services\\auth-service.xml",
+        "test\\unit.test.js"
+      ],
+      "started": "2026-10-22T06:11:13+00:00",
+      "seconds": 6.2,
+      "exit_code": 0,
+      "log": "logs\\auth-service.log",
+      "artifacts": [
+        "sample-services/auth-service.xml"
+      ],
+      "note": ""
+    },
+    {
+      "name": "frontend-audit",
+      "command": [
+        "npm.cmd",
+        "audit",
+        "--json"
+      ],
+      "started": "2026-10-22T06:11:19+00:00",
+      "seconds": 3.0,
+      "exit_code": 1,
+      "log": "logs\\frontend-audit.log",
+      "artifacts": [],
+      "note": ""
+    }
+  ]
+}

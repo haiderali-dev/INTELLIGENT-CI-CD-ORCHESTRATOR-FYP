@@ -1,0 +1,174 @@
+
+ RUN  v5.0.3 D:/FYP POC/CICD project - Copy/frontend
+      Coverage enabled with v8
+
+ ✓ src/workspace/PreviewPanel.test.tsx (9 tests) 3728ms
+   ✓ PreviewPanel (9)
+     ✓ shows config.xml for freestyle and the Jenkinsfile for Pipeline 347ms
+     ✓ opens on the spec, editable, with Approve and run below the tabs 1109ms
+     ✓ shows each job's config.xml read-only, one job at a time 801ms
+     ✓ explains the plan on request, and shows the words as they arrive 306ms
+ ✓ src/app/shell/AppShell.test.tsx (11 tests) 3852ms
+   ✓ app shell (8)
+     ✓ names every page, with the two assistants as separate entries 1335ms
+     ✓ gives each assistant's header its own accent 498ms
+     ✓ switches theme with the keyboard or the mouse, and remembers it 433ms
+ ✓ src/pages/QueuePage.test.tsx (15 tests) 6061ms
+   ✓ the queue page (15)
+     ✓ ranks each waiting job and explains its score with its bar 1854ms
+     ✓ puts a HIGH job above lower urgency, in the plugin's rank order 316ms
+     ✓ adds each bar's four contributions as columns when asked 589ms
+     ✓ follows queue events, and only the first load grows the bars 686ms
+     ✓ asks again on every event that moves a run in or out of the queue 463ms
+ ✓ src/pages/RunsPage.test.tsx (12 tests) 6535ms
+   ✓ jobs and runs (12)
+     ✓ lists every run newest first, with its service, assistant, jobs, result and time 1798ms
+     ✓ filters by service, assistant and result in the API, and keeps them in the address 1059ms
+     ✓ invites a first run when there are none 304ms
+     ✓ opens a failed run: its stages, its jobs, the end of its log, and why it failed 600ms
+     ✓ shows another job's log when asked 578ms
+     ✓ follows a building Pipeline's log from where it left off 530ms
+     ✓ says why a log could not be read, and tries again 305ms
+     ✓ says why a failure could not be explained 374ms
+     ✓ stacks each run under 768 px, with labelled facts 323ms
+ ✓ src/pages/AdminPage.test.tsx (14 tests) 12479ms
+   ✓ the admin page (14)
+     ✓ is closed to anyone but an Admin, and asks the backend for nothing 1738ms
+     ✓ lists the users, and offers no control over your own access 818ms
+     ✓ changes a role 577ms
+     ✓ asks before deactivating someone, and says exactly what it does 1089ms
+     ✓ says why a change was refused 375ms
+     ✓ adds a user, checking the password before asking 1404ms
+     ✓ puts the backend's refusal under the field it names 1089ms
+     ✓ shows the HIGH quota and the rules in force, and says they cannot be changed here 356ms
+     ✓ shows the rate limits the backend enforces 351ms
+     ✓ resets someone's password, checking it before asking, but never yours 1878ms
+     ✓ says why a password was not reset 1164ms
+     ✓ shows the audit log a page at a time, newest first 562ms
+     ✓ pages through a longer audit log 908ms
+ ✓ src/pages/SignInPage.test.tsx (16 tests) 13325ms
+   ✓ sign in (10)
+     ✓ asks for the email and password in plain words, with the cursor in the email field 1289ms
+     ✓ names each missing field, and sends nothing 368ms
+     ✓ says what an email address should look like 877ms
+     ✓ names a password longer than the backend accepts 692ms
+     ✓ points at the email field when the backend refuses its format 1096ms
+     ✓ says the email or password is wrong, keeps the email and clears the password 795ms
+     ✓ says when the account is disabled, and who can fix it 908ms
+     ✓ says how long to wait after too many attempts 1062ms
+     ✓ says when the server did not answer, and what to check 1031ms
+     ✓ shows and hides the password on request 1015ms
+   ✓ arriving at and leaving sign in (6)
+     ✓ sends a visitor with no session to sign in, then on to the page they asked for 1197ms
+     ✓ never follows a next address off this site 1114ms
+     ✓ restores the session after a reload without showing the form 514ms
+     ✓ says the session ended when a stored one is refused, and returns there afterwards 1109ms
+ ✓ src/workspace/Composer.test.tsx (8 tests) 2829ms
+   ✓ Composer (8)
+     ✓ has each assistant's own placeholder and name 579ms
+     ✓ sends on Enter, trimmed, and adds a line on Shift+Enter 896ms
+     ✓ completes service names from the keyboard 349ms
+     ✓ closes the list on Escape until the text changes 352ms
+ ✓ src/pages/AssistantPage.test.tsx (15 tests) 15687ms
+   ✓ an assistant page (15)
+     ✓ opens a new chat only once its first exchange is stored, so it never loads it empty 3280ms
+     ✓ invites a first request, and makes the chat only when one is sent 1042ms
+     ✓ shows the thread in order, a message before its reply even at the same moment 438ms
+     ✓ edits the intent, and the card shows the change 495ms
+     ✓ generates, and the preview shows the spec, each job's config.xml and the checks 1940ms
+     ✓ approves with one idempotency key, says Run started, and follows the run 1536ms
+     ✓ refreshes the run card when the run changes 634ms
+     ✓ puts an edited spec's error on its line 350ms
+     ✓ asks its question with answers to click, and sends the one chosen 849ms
+     ✓ explains the plan as the words arrive 656ms
+     ✓ keeps a message that was not sent, and says why 1383ms
+     ✓ stops waiting on request, and says what that means 1628ms
+     ✓ is the Pipeline Assistant on its own page, previewing the Jenkinsfile 559ms
+     ✓ says when a chat cannot be opened, with the way to a new one 342ms
+ ✓ src/pages/OverviewPage.test.tsx (9 tests) 3389ms
+   ✓ the overview (9)
+     ✓ leads with the jobs waiting, then my active runs and how many recent runs failed 487ms
+     ✓ says how the AI provider is configured, and how its latest call ended 1031ms
+     ✓ lists the latest results, and explains a failure on request 491ms
+     ✓ invites a first run when nothing has run, and says nothing has finished 324ms
+     ✓ follows runs and the queue as events arrive 340ms
+ ✓ src/pages/AnalyticsPage.test.tsx (6 tests) 2549ms
+   ✓ analytics (6)
+     ✓ counts the runs, and says not measured, never 0, where nothing was measured 1082ms
+     ✓ invites a first run when there are none, and says the experiments have not run 432ms
+     ✓ lists the experiment runs and shows a run's metrics when chosen 532ms
+ ✓ src/pages/CatalogPage.test.tsx (6 tests) 2863ms
+   ✓ the service catalog (6)
+     ✓ shows each service's repository, branches, suites, environments and reachability 1034ms
+     ✓ says so while it loads, and when the catalog is empty 566ms
+     ✓ says what failed, and loads again on request 301ms
+     ✓ offers the resync to an Admin only 530ms
+ ✓ src/workspace/IntentCard.test.tsx (7 tests) 2389ms
+   ✓ IntentCard (7)
+     ✓ shows the four fields as labelled chips 496ms
+     ✓ moves to the new service's own branches and environments 338ms
+     ✓ sends only what changed 500ms
+     ✓ sends nothing when nothing changed, and Cancel changes nothing 525ms
+ ✓ src/components/code/CodeView.test.tsx (6 tests) 1500ms
+   ✓ CodeView (6)
+     ✓ shows read-only code that can still be focused and read 936ms
+ ✓ src/workspace/ApproveAndRun.test.tsx (3 tests) 1442ms
+   ✓ ApproveAndRun (3)
+     ✓ approves with the keyboard alone, says exactly what will happen, then Run started 989ms
+     ✓ keeps a refusal in the dialog, with what happened and what to do 338ms
+ ✓ src/workspace/workspaceParts.test.tsx (5 tests) 1161ms
+   ✓ EmptyState (2)
+     ✓ says what the assistant creates, offers four commands and names the services 802ms
+ ✓ src/workspace/WorkspaceLayout.test.tsx (5 tests) 1475ms
+   ✓ WorkspaceLayout (5)
+     ✓ puts chats, thread and preview side by side from 1280 px 645ms
+     ✓ makes the preview a drawer under 1280 px 441ms
+ ✓ src/workspace/ProgressSteps.test.tsx (5 tests) 658ms
+   ✓ ProgressSteps (3)
+     ✓ shows the four steps in order, each with how it went 514ms
+ ✓ src/components/ScoreBar.test.tsx (9 tests) 838ms
+   ✓ ScoreBar (9)
+     ✓ reads without colour: one image named with the score and every part 448ms
+ ✓ src/components/BuildStateLabel.test.tsx (5 tests) 297ms
+ ✓ src/workspace/Clarification.test.tsx (3 tests) 808ms
+   ✓ Clarification (3)
+     ✓ asks the question with at most four answers to click 690ms
+ ✓ src/workspace/RunCard.test.tsx (6 tests) 835ms
+   ✓ RunCard (6)
+     ✓ says where the run waits, why, and what its score is made of 630ms
+ ✓ src/auth/SessionProvider.test.tsx (2 tests) 203ms
+ ✓ src/auth/session.test.ts (14 tests) 122ms
+ ✓ src/workspace/assistantModels.test.ts (12 tests) 66ms
+ ✓ src/ws/LiveEventsClient.test.ts (16 tests) 47ms
+ ✓ src/api/client.test.ts (7 tests) 50ms
+ ✓ src/components/code/diagnostics.test.ts (4 tests) 40ms
+ ✓ src/runs/runsModel.test.ts (9 tests) 26ms
+ ✓ src/app/theme/theme.test.ts (8 tests) 22ms
+ ✓ src/components/scoreBarModel.test.ts (7 tests) 19ms
+ ✓ src/styles/tokens.test.ts (16 tests) 19ms
+ ✓ src/lib/format.test.ts (7 tests) 16ms
+ ✓ src/admin/auditModel.test.ts (5 tests) 16ms
+ ✓ src/workspace/composerSuggestions.test.ts (4 tests) 14ms
+ ✓ src/queue/queueModel.test.ts (7 tests) 10ms
+ ✓ src/auth/next.test.ts (3 tests) 7ms
+
+ Test Files  36 passed (36)
+      Tests  296 passed (296)
+   Start at  11:05:40
+   Duration  51.36s (environment 53%, tests 26%, setup 10%, import 9%, worker 1%, transform 1%)
+
+Environment  jsdom was created 36 times · 171.33s total, 53% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+JUNIT report written to D:/FYP POC/CICD project - Copy/.tmp/campaign/31eb935/frontend/unit.xml
+[34m % [39m[2mCoverage report from [22m[33mv8[39m
+
+=============================== Coverage summary ===============================
+Statements   : 92.54% ( 1874/2025 )
+Branches     : 83.83% ( 1364/1627 )
+Functions    : 93.73% ( 643/686 )
+Lines        : 92.79% ( 1790/1929 )
+================================================================================
+
+--- stderr ---

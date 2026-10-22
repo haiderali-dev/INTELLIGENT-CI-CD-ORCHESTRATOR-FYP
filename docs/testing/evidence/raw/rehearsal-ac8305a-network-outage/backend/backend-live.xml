@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="4" time="16.570" timestamp="2026-10-22T06:56:35.781158+05:00" hostname="HAIDER-HP"><testcase classname="tests.test_ai_live" name="test_the_real_model_parses_a_command_through_the_whole_pipeline" time="3.277"><failure message="AssertionError: ('openai/gpt-oss-120b: unavailable after 3 attempts', 'openai/gpt-oss-20b: unavailable after 3 attempts')&#10;assert 'RULES' == 'LLM'&#10;  &#10;  - LLM&#10;  + RULES">settings = Settings(environment=&lt;Environment.TEST: 'test'&gt;, database_url='sqlite+aiosqlite:///:memory:', jenkins_url='http://jenk...ost:5173', high_urgency_daily_quota=3, seed_admin_email='admin@example.com', seed_admin_password='test-admin-password')
+
+    async def test_the_real_model_parses_a_command_through_the_whole_pipeline(
+        settings: Settings,
+    ) -&gt; None:
+        key = groq_key()
+        catalog = Catalog(REPO_ROOT / "catalog" / "services.yaml")
+        git = FakeGitClient()
+        git.add_branch(
+            "https://github.com/haiderali-dev/payment-service.git",
+            "release/2.1",
+            "3f786850e387550fdab836ed7e6dc881de23001b",
+        )
+        parser = build_intent_parser(
+            settings.model_copy(update={"llm_mode": LlmMode.LIVE, "groq_api_key": key}),
+            catalog=catalog,
+            git=git,
+            quota=QuotaTracker(),
+            cache=ResponseCache(),
+        )
+    
+        outcome = await parser.interpret(MESSAGE, context=PolicyContext(role=Role.DEVELOPER))
+    
+        # The model answered -- not the rule parser -- through the strict schema this code builds.
+&gt;       assert outcome.parser == "LLM", outcome.fallback_reasons
+E       AssertionError: ('openai/gpt-oss-120b: unavailable after 3 attempts', 'openai/gpt-oss-20b: unavailable after 3 attempts')
+E       assert 'RULES' == 'LLM'
+E         
+E         - LLM
+E         + RULES
+
+tests\test_ai_live.py:77: AssertionError</failure></testcase><testcase classname="tests.test_generation_planner_live" name="test_the_real_model_plans_by_the_rules[every suite, with a scan]" time="3.254"><failure message="AssertionError: the model never produced a valid plan: ('openai/gpt-oss-120b: unavailable after 3 attempts', 'openai/gpt-oss-20b: unavailable after 3 attempts')&#10;assert 'default' == 'model'&#10;  &#10;  - model&#10;  + default">settings = Settings(environment=&lt;Environment.TEST: 'test'&gt;, database_url='sqlite+aiosqlite:///:memory:', jenkins_url='http://jenk...ost:5173', high_urgency_daily_quota=3, seed_admin_email='admin@example.com', seed_admin_password='test-admin-password')
+quota = &lt;app.ai.quota.QuotaTracker object at 0x000002848612AB10&gt;
+intent = Intent(action=&lt;Action.BUILD_TEST_DEPLOY: 'BUILD_TEST_DEPLOY'&gt;, service='payment-service', branch=None, commit=None, en...te=None, urgency=None, extra_stages=(&lt;ExtraStage.SECURITY_SCAN: 'security_scan'&gt;,), justification=None, confidence=0.0)
+
+    @pytest.mark.parametrize("intent", REQUESTS)
+    async def test_the_real_model_plans_by_the_rules(
+        settings: Settings, quota: QuotaTracker, intent: Intent
+    ) -&gt; None:
+        live = settings.model_copy(update={"llm_mode": LlmMode.LIVE, "groq_api_key": groq_key()})
+        catalog = Catalog(REAL_CATALOG)
+        # Waiting out a per-minute limit is cheap here, and a fallback would hide what is measured.
+        planner = build_planner(live, catalog=catalog, quota=quota, max_wait=65.0)
+    
+        outcome = await planner.plan(PlanRequest(intent=intent, assistant=Assistant.PIPELINE))
+    
+        print(
+            f"\n  {outcome.model}: valid before repair={outcome.valid_before_repair}, "
+            f"repairs={outcome.repairs}, source={outcome.source}, "
+            f"tokens={sum(c.prompt_tokens + c.completion_tokens for c in outcome.calls)}"
+        )
+        for attempt in outcome.attempts:
+            if attempt.issues:
+                print(f"    attempt {attempt.number}: {list(attempt.issues)}")
+    
+&gt;       assert outcome.source == "model", (
+            f"the model never produced a valid plan: {outcome.fallback_reasons}"
+        )
+E       AssertionError: the model never produced a valid plan: ('openai/gpt-oss-120b: unavailable after 3 attempts', 'openai/gpt-oss-20b: unavailable after 3 attempts')
+E       assert 'default' == 'model'
+E         
+E         - model
+E         + default
+
+tests\test_generation_planner_live.py:91: AssertionError</failure></testcase><testcase classname="tests.test_generation_planner_live" name="test_the_real_model_plans_by_the_rules[a named suite, with lint]" time="3.403"><failure message="AssertionError: the model never produced a valid plan: ('openai/gpt-oss-120b: unavailable after 3 attempts', 'openai/gpt-oss-20b: unavailable after 3 attempts')&#10;assert 'default' == 'model'&#10;  &#10;  - model&#10;  + default">settings = Settings(environment=&lt;Environment.TEST: 'test'&gt;, database_url='sqlite+aiosqlite:///:memory:', jenkins_url='http://jenk...ost:5173', high_urgency_daily_quota=3, seed_admin_email='admin@example.com', seed_admin_password='test-admin-password')
+quota = &lt;app.ai.quota.QuotaTracker object at 0x000002848612AB10&gt;
+intent = Intent(action=&lt;Action.TEST: 'TEST'&gt;, service='auth-service', branch=None, commit=None, environment=None, test_suite='unit', urgency=None, extra_stages=(&lt;ExtraStage.LINT: 'lint'&gt;,), justification=None, confidence=0.0)
+
+    @pytest.mark.parametrize("intent", REQUESTS)
+    async def test_the_real_model_plans_by_the_rules(
+        settings: Settings, quota: QuotaTracker, intent: Intent
+    ) -&gt; None:
+        live = settings.model_copy(update={"llm_mode": LlmMode.LIVE, "groq_api_key": groq_key()})
+        catalog = Catalog(REAL_CATALOG)
+        # Waiting out a per-minute limit is cheap here, and a fallback would hide what is measured.
+        planner = build_planner(live, catalog=catalog, quota=quota, max_wait=65.0)
+    
+        outcome = await planner.plan(PlanRequest(intent=intent, assistant=Assistant.PIPELINE))
+    
+        print(
+            f"\n  {outcome.model}: valid before repair={outcome.valid_before_repair}, "
+            f"repairs={outcome.repairs}, source={outcome.source}, "
+            f"tokens={sum(c.prompt_tokens + c.completion_tokens for c in outcome.calls)}"
+        )
+        for attempt in outcome.attempts:
+            if attempt.issues:
+                print(f"    attempt {attempt.number}: {list(attempt.issues)}")
+    
+&gt;       assert outcome.source == "model", (
+            f"the model never produced a valid plan: {outcome.fallback_reasons}"
+        )
+E       AssertionError: the model never produced a valid plan: ('openai/gpt-oss-120b: unavailable after 3 attempts', 'openai/gpt-oss-20b: unavailable after 3 attempts')
+E       assert 'default' == 'model'
+E         
+E         - model
+E         + default
+
+tests\test_generation_planner_live.py:91: AssertionError</failure></testcase><testcase classname="tests.test_generation_planner_live" name="test_the_real_model_plans_by_the_rules[a deploy that needs tests first]" time="3.168"><failure message="AssertionError: the model never produced a valid plan: ('openai/gpt-oss-120b: unavailable after 3 attempts', 'openai/gpt-oss-20b: unavailable after 3 attempts')&#10;assert 'default' == 'model'&#10;  &#10;  - model&#10;  + default">settings = Settings(environment=&lt;Environment.TEST: 'test'&gt;, database_url='sqlite+aiosqlite:///:memory:', jenkins_url='http://jenk...ost:5173', high_urgency_daily_quota=3, seed_admin_email='admin@example.com', seed_admin_password='test-admin-password')
+quota = &lt;app.ai.quota.QuotaTracker object at 0x000002848612AB10&gt;
+intent = Intent(action=&lt;Action.DEPLOY: 'DEPLOY'&gt;, service='payment-service', branch=None, commit=None, environment=&lt;TargetEnvir... urgency=None, extra_stages=(&lt;ExtraStage.INTEGRATION_TESTS: 'integration_tests'&gt;,), justification=None, confidence=0.0)
+
+    @pytest.mark.parametrize("intent", REQUESTS)
+    async def test_the_real_model_plans_by_the_rules(
+        settings: Settings, quota: QuotaTracker, intent: Intent
+    ) -&gt; None:
+        live = settings.model_copy(update={"llm_mode": LlmMode.LIVE, "groq_api_key": groq_key()})
+        catalog = Catalog(REAL_CATALOG)
+        # Waiting out a per-minute limit is cheap here, and a fallback would hide what is measured.
+        planner = build_planner(live, catalog=catalog, quota=quota, max_wait=65.0)
+    
+        outcome = await planner.plan(PlanRequest(intent=intent, assistant=Assistant.PIPELINE))
+    
+        print(
+            f"\n  {outcome.model}: valid before repair={outcome.valid_before_repair}, "
+            f"repairs={outcome.repairs}, source={outcome.source}, "
+            f"tokens={sum(c.prompt_tokens + c.completion_tokens for c in outcome.calls)}"
+        )
+        for attempt in outcome.attempts:
+            if attempt.issues:
+                print(f"    attempt {attempt.number}: {list(attempt.issues)}")
+    
+&gt;       assert outcome.source == "model", (
+            f"the model never produced a valid plan: {outcome.fallback_reasons}"
+        )
+E       AssertionError: the model never produced a valid plan: ('openai/gpt-oss-120b: unavailable after 3 attempts', 'openai/gpt-oss-20b: unavailable after 3 attempts')
+E       assert 'default' == 'model'
+E         
+E         - model
+E         + default
+
+tests\test_generation_planner_live.py:91: AssertionError</failure></testcase></testsuite></testsuites>
