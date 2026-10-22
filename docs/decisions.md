@@ -11,6 +11,36 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 6
 
+### D-075 Known vulnerabilities in Vite's development server are fixed within the cooldown
+**Date:** 2026-10-22 · **Status:** accepted (hardening of Phases 1 to 6; Phase 6)
+
+**Found by:** `npm audit`, the frontend-audit step of the testing chapter's evidence campaign at
+`31eb935`.
+- **The finding:** one high vulnerability, `vite` 8.3.0 to 8.3.2, made of six advisories against
+  Vite's development server:
+  - command execution through its editor launcher on Windows (GHSA-r825-w8mm-5pxw,
+    GHSA-698v-4r3x-3vcv, GHSA-587h-7wmj-h5pm);
+  - cross-origin script execution through custom middleware (GHSA-9jrq-w75r-8gcw);
+  - files outside `server.fs.allow` served (GHSA-rq7h-c2jc-7f22);
+  - the start of files exposed through `?vite-wasm-instance` (GHSA-vfpm-58rq-9qcg).
+- **Exposure:** the stack's frontend is the static output of `vite build`, served by nginx, so the
+  product as deployed was not exposed. Developers and the tools that start the development server
+  were, on this Windows machine above all.
+
+**The fix:** `vite` 8.3.4.
+- **Why not 8.3.5:** npm's suggested fix was published on 2026-10-21, inside the seven-day cooldown.
+- **Why 8.3.4 is enough:** it is outside the vulnerable range and is the newest release the cooldown
+  allows. No exception was needed, unlike D-071.
+- **What changed:** only Vite's entry in the lock. Its new dependency ranges are met by the versions
+  already locked.
+
+**Evidence (2026-10-22):**
+- `npm audit`: 1 high before, 0 after.
+- The frontend's lint, typecheck and build are clean, and its 296 tests pass.
+- The frontend image was rebuilt with it, and the gate's Phase 6 image and nginx checks pass.
+
+---
+
 ### D-074 The migrations are proved against the models, and every downgrade is run, on PostgreSQL
 **Date:** 2026-10-22 · **Status:** accepted (hardening of Phases 1 to 6; Phase 3)
 

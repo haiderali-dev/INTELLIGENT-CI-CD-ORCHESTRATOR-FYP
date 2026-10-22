@@ -1958,6 +1958,25 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
       - **Check:** `verify.py --phase 0` passes locally, 11 of 11.
       - **The evidence campaign,** started at `e0c0c69`, was stopped and is run again at the fixed
         commit, so that the commit it cites has a green CI.
+- [x] **The evidence campaign ran in full at `31eb935`** (code identical to gate run 5's).
+      - **Every test step passed:**
+        - plugin: 121 unit tests (1 skipped) and 97 integration tests, JaCoCo, PIT 162 of 173;
+        - experiments E1 to E3; E2 and E3 byte-identical to the rehearsal;
+        - backend: offline 1730, integration 33 with none skipped, end-to-end 13 on the live
+          model, live 4;
+        - frontend: 296 tests with coverage; 12 browser flows; 16 Lighthouse audits; 3 stack
+          system tests;
+        - sample services: 12 and 7.
+      - **One finding:** `npm audit` reported Vite's development-server advisories (D-075, below).
+- [x] **D-075, Vite 8.3.2's development-server advisories (Phase 6).** Six advisories, one high,
+      among them command execution through the editor launcher on Windows. The production build
+      served by nginx was not exposed.
+      - **The fix:** `vite` 8.3.4, the newest release the seven-day cooldown allows, and outside the
+        vulnerable range. 8.3.5 was one day old.
+      - **Checks run:**
+        - `npm audit`: 0 vulnerabilities;
+        - lint and typecheck clean; 296 tests pass; the build passes;
+        - the frontend image was rebuilt, and the Phase 6 image and nginx checks pass.
 - [ ] **The testing chapter (Chapter 8), in progress; stopped at a usage limit on 2026-10-22.**
       - **The draft:** `docs/testing/work-in-progress/chapter-8-draft.md`. All sections are written,
         with the experiment results, defect analysis and limitations from real runs. 45

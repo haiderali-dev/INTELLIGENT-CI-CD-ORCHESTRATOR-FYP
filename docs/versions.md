@@ -163,7 +163,7 @@ conflict and no known vulnerability in the production dependencies.
 | `@codemirror/lint`, `@codemirror/merge` | 6.9.7, 6.12.2 | the same on 2026-10-15 | Inline spec errors, and the diff after a regenerate |
 | `@lezer/highlight` | 1.2.5 | the same on 2026-10-15 | The tags the code views' monochrome highlight style is written against |
 | `@fontsource/ibm-plex-sans`, `@fontsource/ibm-plex-mono` | 5.3.0 | 5.3.0 | Self-hosted fonts, Latin subset only |
-| `vite`, `@vitejs/plugin-react` | 8.3.2, 6.1.2 | 8.3.4, 6.1.2 | |
+| `vite`, `@vitejs/plugin-react` | 8.3.4 (8.3.2 until 2026-10-22), 6.1.2 | 8.3.4, 6.1.2 | 8.3.2 carried six advisories against Vite's development server; see below |
 | `tailwindcss`, `@tailwindcss/vite` | 4.3.3 | 4.3.3 | |
 | `typescript` | **5.9.3** | 7.0.2 | See below |
 | `eslint`, `@eslint/js` | 10.12.0, 10.0.1 | the same | |
@@ -209,6 +209,19 @@ library has been added yet. The browser tests' tools:
 
 Playwright came with T6.8 (D-062); Lighthouse and puppeteer-core with the accessibility audits
 (D-064), puppeteer-core at the version Lighthouse itself uses, so there is one copy.
+
+**`vite` moved from 8.3.2 to 8.3.4 on 2026-10-22 (D-075).**
+- **Why:** the testing chapter's evidence campaign ran `npm audit`, and it reported one high
+  vulnerability, `vite` 8.3.0 to 8.3.2. That is six advisories against Vite's development server,
+  among them command execution through its editor launcher on Windows (GHSA-r825-w8mm-5pxw) and
+  cross-origin script execution (GHSA-9jrq-w75r-8gcw).
+- **Exposure:** the production frontend is static files from `vite build`, served by nginx, so it
+  was not exposed; the development server and the tools that run it were.
+- **Why 8.3.4:** npm's suggested fix was 8.3.5, published on 2026-10-21, inside the seven-day
+  cooldown. 8.3.4 (2026-10-08) is outside the vulnerable range and is the newest release the
+  cooldown allows.
+- **The change:** the lock changed only Vite's entry.
+- **After it:** `npm audit` found 0 vulnerabilities.
 
 ## Images
 
