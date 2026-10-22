@@ -136,6 +136,18 @@ class Campaign:
         return kept
 
     def write_manifest(self) -> None:
+        """Write the manifest, keeping the steps an earlier run at the same commit recorded.
+
+        A campaign may be run in parts (`--only`), for example to give the machine's memory back
+        between the browser steps. A part replaces the record of any step it runs again and keeps
+        the rest, so the manifest always holds the latest run of every step at this commit."""
+        path = self.out / "manifest.json"
+        steps = {step.name: asdict(step) for step in self.steps}
+        if path.is_file():
+            earlier = json.loads(path.read_text(encoding="utf-8"))
+            if earlier.get("commit") == self.commit:
+                kept = [step for step in earlier.get("steps", []) if step["name"] not in steps]
+                steps = {step["name"]: step for step in kept} | steps
         manifest = {
             "commit": self.commit,
             "branch": git("rev-parse", "--abbrev-ref", "HEAD"),
@@ -145,9 +157,9 @@ class Campaign:
                 "python": sys.version.split()[0],
                 "processors": os.cpu_count(),
             },
-            "steps": [asdict(step) for step in self.steps],
+            "steps": list(steps.values()),
         }
-        (self.out / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+        path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------------------------------

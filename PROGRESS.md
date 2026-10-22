@@ -1904,6 +1904,18 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
         - 4 live tests passed against the real provider with the new bundle;
         - offline suite: 1730 passed;
         - the backend image was rebuilt with it, and the Phase 3 image check passes.
+- [x] **Chapter tooling.**
+      - **The campaign can run in parts** (`scripts/test_campaign.py --only`). Its manifest keeps
+        every step's latest run at the commit, so the machine can be given memory back between the
+        browser steps.
+        - Tested on a scratch folder: two parts and a re-run merged as intended, and another commit
+          started a fresh manifest.
+      - **Three more figures and their data** (`scripts/report/testing_figures.py`), run on today's
+        data:
+        - complexity against branch coverage, per function;
+        - Milestone 2's five runs recomputed, with the dependency edges each one broke;
+        - the defects by how they were found and by phase.
+      - **The defect log has 41 entries;** DF-36 to DF-41 are new.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not

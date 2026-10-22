@@ -402,6 +402,65 @@ def figure_phase() -> None:
     save(figure, "f03-tests-by-phase")
 
 
+# How each defect was found, folded from defects.csv's free-text level into the techniques of
+# Pressman and Maxim's strategy (chapter 8.2), in the order the chapter discusses them.
+TECHNIQUES = (
+    ("Unit", "Unit testing"),
+    ("Integration", "Integration testing"),
+    ("System", "System testing"),
+    ("Acceptance", "Acceptance testing"),
+    ("Regression", "Regression (CI and gates)"),
+    ("Coverage", "Coverage analysis"),
+    ("", "Review and inspection"),
+)
+
+
+def technique(level: str) -> str:
+    return next(name for prefix, name in TECHNIQUES if level.startswith(prefix))
+
+
+def defects() -> list[list[object]]:
+    rows = read_csv(DATA / "defects.csv")
+    found = Counter(technique(row["level"]) for row in rows)
+    phases = Counter(row["phase"] for row in rows)
+    # Every phase 0 to 6, a phase with none included, then any defect that spans phases.
+    order = [str(n) for n in range(7)] + sorted(p for p in phases if not p.isdigit())
+    summary = [["technique", name, found[name]] for _, name in TECHNIQUES]
+    summary += [["phase", phase, phases[phase]] for phase in order]
+    write_csv("defects-summary.csv", ["by", "group", "defects"], summary)
+    return summary
+
+
+def figure_defects() -> None:
+    rows = read_csv(DATA / "defects-summary.csv")
+    found = [row for row in rows if row["by"] == "technique" and int(row["defects"])]
+    phases = [row for row in rows if row["by"] == "phase"]
+    figure, (left, right) = plt.subplots(1, 2, figsize=(6.5, 3.0), gridspec_kw={"width_ratios": [1.5, 1]})
+    names = [row["group"] for row in found][::-1]
+    values = [int(row["defects"]) for row in found][::-1]
+    bars = left.barh(names, values, color=SLOTS[0], height=0.6, edgecolor=SURFACE, linewidth=1.2)
+    for bar, value in zip(bars, values, strict=True):
+        left.text(value, bar.get_y() + bar.get_height() / 2, f" {value}", va="center", fontsize=8, color=SECONDARY)
+    left.set_xlabel("Defects")
+    left.grid(axis="y", visible=False)
+    left.set_title("How each was found")
+    labels = [row["group"].replace("-", " to ") for row in phases]
+    counts = [int(row["defects"]) for row in phases]
+    bars = right.bar(labels, counts, color=SLOTS[0], width=0.6, edgecolor=SURFACE, linewidth=1.2)
+    for bar, value in zip(bars, counts, strict=True):
+        right.text(bar.get_x() + bar.get_width() / 2, value, f"{value}", ha="center", va="bottom", fontsize=8,
+                   color=SECONDARY)
+    right.set_xlabel("Phase of the defective work")
+    right.yaxis.set_major_locator(MaxNLocator(integer=True))
+    right.grid(axis="x", visible=False)
+    right.set_title("Where it was")
+    right.tick_params(axis="x", labelsize=7)
+    figure.suptitle(f"The {sum(counts)} defects testing and review found", x=0.01, ha="left", fontsize=10,
+                    fontweight="bold", color=INK)
+    figure.tight_layout()
+    save(figure, "f13-defects")
+
+
 def figure_coverage() -> None:
     rows = read_csv(DATA / "coverage-summary.csv")
     figure, axis = plt.subplots(figsize=(6.5, 0.5 * len(rows) + 1.2))
@@ -636,10 +695,11 @@ def main() -> int:
     ci_history(args.ci)
     complexity(args.campaign, args.complexity)
     m2_runs()
+    defects()
     copy_experiments(args.campaign)
 
     for draw in (figure_suites, figure_growth, figure_phase, figure_coverage, figure_mutation, figure_overhead,
-                 figure_simulation, figure_sustained, figure_ci, figure_complexity, figure_m2):
+                 figure_simulation, figure_sustained, figure_ci, figure_complexity, figure_m2, figure_defects):
         try:
             draw()
         except (FileNotFoundError, StopIteration, KeyError, ValueError) as missing:
