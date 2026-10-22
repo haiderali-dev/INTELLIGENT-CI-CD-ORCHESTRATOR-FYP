@@ -23,8 +23,9 @@ differ.
       it is a claim about delivered work rather than a detail.*
 - [ ] **Section 12.1.3, p. 82 [81]: the experiment is described as 25 jobs.** It was 30. See
       Appendix B below.
-- [ ] **Section 12.1.3, p. 82 [81]: "three dependency chains".** The workload declares 17 dependency
-      edges across seven `build → test → deploy` chains plus two fan-in jobs.
+- [ ] **Section 12.1.3, p. 82 [81]: "three dependency chains".** The workload declares 20 dependency
+      edges, on 17 dependent jobs: seven `build → test → deploy` chains (14 edges), two fan-in jobs
+      (5 edges) and a release-notes job after the smoke test (1 edge).
 
 ## Blocking: the formula the report publishes was not the formula that ran
 

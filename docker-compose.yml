@@ -27,6 +27,11 @@ x-jenkins-common: &jenkins-common
     # jenkins/controller/.
     context: .
     dockerfile: jenkins/controller/Dockerfile
+    # No provenance attestation on any image here. They are local and never pushed, and the
+    # attestation's timestamp gives every build a new image ID, even one served wholly from cache.
+    # With it off, the same source builds the same ID, which is how the gate tells a stale container
+    # from a current one (verify.py, "...run what the current source builds").
+    provenance: false
   restart: unless-stopped
   environment: &jenkins-env
     JENKINS_ADMIN_PASSWORD: ${JENKINS_ADMIN_PASSWORD:?set JENKINS_ADMIN_PASSWORD in .env}
@@ -55,6 +60,7 @@ x-agent-common: &agent-common
   build:
     context: jenkins/agent
     dockerfile: Dockerfile
+    provenance: false
   restart: unless-stopped
   environment: &agent-env
     # The controller authenticates with the private half of this pair; bootstrap.py writes both.
@@ -145,6 +151,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      provenance: false
     container_name: orchestrator-backend
     restart: unless-stopped
     environment:
@@ -197,6 +204,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      provenance: false
     container_name: orchestrator-frontend
     restart: unless-stopped
     ports:

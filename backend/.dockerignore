@@ -1,0 +1,15 @@
+# The image copies only pyproject.toml, uv.lock, alembic.ini, alembic/ and app/ (Dockerfile). The
+# rest stays out of the build context: the virtualenv is large, a secret must never reach the daemon,
+# and local bytecode shipped inside app/ until 2026-10-21 (76 .pyc files), which also made every
+# local test run look like a source change to the build cache.
+.env
+.env.*
+.venv/
+**/__pycache__/
+**/*.pyc
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+tests/

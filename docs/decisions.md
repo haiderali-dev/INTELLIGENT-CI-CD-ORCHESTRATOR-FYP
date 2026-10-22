@@ -11,6 +11,65 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 6
 
+### D-070 The gate checks that the stack runs what the current source builds
+**Date:** 2026-10-22 · **Status:** accepted (hardening of Phases 1 to 6)
+
+**The defect.** Gate checks that drive the running stack, the stack system tests among them, prove
+nothing about a commit if a container runs an image built from older source, and nothing checked
+for that. Preparing the testing chapter's evidence on 2026-10-21, the frontend container turned out
+to be serving a build from before three frontend commits (`217c78f`, `88a6a9a`, `deded23`). The
+Queue page's held-jobs list (D-066) was absent from its bundle, and the system tests had passed
+against it. The backend and jenkins-dev were current.
+
+**Three checks now ask, one per phase that first drives the container:** Phase 1 for jenkins-dev and
+its agents, Phase 3 for the backend, Phase 6 for the frontend. Each fails with the command that
+fixes it.
+
+**Content, not time.** Comparing an image's build time with the last commit to its sources was tried
+first and fails both ways. An image built from the working tree just before its commit reads as
+stale, which is how this project usually works: the agents were built 16 minutes before their commit
+and are byte for byte current. And a rebuild served from cache keeps the old build time, so "stale"
+could never be cleared. Instead:
+- **The backend, the frontend and the agents:** the check builds the service, and compares the
+  image that results with the image digest Compose recorded on the container when it created it
+  (the label `com.docker.compose.image`). Docker's build cache returns the same image when nothing
+  the build reads has changed. The container's own `Image` field cannot be compared, because this
+  machine runs Docker's containerd image store, where that field names the index the image arrived
+  in.
+- **Provenance attestations are off for every image here** (`provenance: false` in
+  `docker-compose.yml`). An attestation records its build time, so each build had a new index digest
+  even when served wholly from cache: two builds of an unchanged backend gave two different IDs.
+  With it off, they gave the same one twice. The images are local and never pushed, so the
+  attestation recorded nothing anyone reads.
+- **jenkins-dev:** its image copies `plugin/target`'s `.hpi`, and every Maven build writes a new
+  build time into the `.hpi`. So the image changes with every build even when no class does, and
+  the build cache cannot answer. Instead the check compares the classes and resources of the plugin
+  Jenkins expanded and is running with those in `plugin/target`'s `.hpi`, and the bundled jars by
+  name, leaving out META-INF, where the build time is. It compares `plugins.txt` and the plugin
+  installer with the copies in the image. It also fails when a plugin source file is newer than the
+  `.hpi`.
+
+**Found on the way, and fixed: the backend had no `.dockerignore`.** Its build context sent the
+147 MB virtualenv to the daemon on every build, and `COPY app ./app` shipped 76 `.pyc` files from
+the developer's own test runs into the image. Each local test run therefore looked like a source
+change to the build cache. `backend/.dockerignore` now excludes them, along with `.env*`. A fresh
+container from the rebuilt image holds no `.pyc` file.
+
+**Evidence (2026-10-22):**
+- **Before the rebuild:** the checks failed for the frontend, the backend (its context changed with
+  the new `.dockerignore`) and the agents (their image metadata changed with the Compose version).
+- **After the rebuild:** all three passed in two consecutive runs, in 2 to 5 seconds each.
+- **Each failure path was shown to fail:**
+  - a one-line change to `backend/app/__init__.py` failed the backend check, and restoring the file
+    passed it again;
+  - a plugin source file made newer than the `.hpi` failed the jenkins-dev check;
+  - an `.hpi` with one altered class failed it, naming the class.
+
+  Each was restored byte for byte, its modification time included, and passed again.
+- The rebuilt frontend's Queue page bundle contains the held-jobs list.
+
+---
+
 ### D-069 White-box measurement: coverage everywhere, mutation testing on the algorithms
 **Date:** 2026-10-20 · **Status:** accepted (hardening of Phases 1 to 6; the testing chapter's
 white-box testing)

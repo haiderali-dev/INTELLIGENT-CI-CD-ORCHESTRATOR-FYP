@@ -60,7 +60,11 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
   the sandbox off.
 - Jenkins LTS baseline is pinned to 2.568.3. The report's Appendix E says 2.541.x and must be updated.
 - Build order was Phase 0 → 2 → 1 → 3..8, because JenkinsRule needs no Docker. Phases 0-6 are done
-  (Phase 6 merged as PR #11; hardened on `phase-6-hardening`, 2026-10-18 to 2026-10-20).
+  (Phase 6 merged as PR #11; hardened on `phase-6-hardening`, 2026-10-18 to 2026-10-22).
+- Docker here uses the containerd image store, so a container's `Image` field names the index its
+  image arrived in. Compare a container with Compose's `com.docker.compose.image` label instead.
+  Provenance attestations are off in `docker-compose.yml`, because they gave every build a new ID
+  (D-070).
 
 ## Lessons (add one line whenever a mistake repeats)
 - Pipeline queue items are placeholder tasks; resolve the job with getOwnerTask().
@@ -84,7 +88,8 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
   `"\N{NAME}"` constant, then grep the file for the raw character.
   Repeated on 2026-10-18: a hex escape for NUL in a regex, patched through a heredoc, landed as a
   real NUL byte. After any scripted edit, scan the file for bytes below 0x20 other than tab and
-  newline.
+  newline. Repeated on 2026-10-21: `lineterminator="\n"`, patched through a heredoc, became a real
+  newline inside the string. The byte scan cannot see that; `ast.parse` caught it. Use Edit.
 - A Pipeline reports `building: false` and its result before `Finished: SUCCESS` is in the log.
   Wait on progressiveText's `X-More-Data`, never on `building`, before treating a log as whole
   (D-039).

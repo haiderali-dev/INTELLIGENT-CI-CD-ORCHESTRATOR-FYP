@@ -16,6 +16,7 @@ is ordered by phase then by registration order.
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import math
 import os
@@ -25,6 +26,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
+import zipfile
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -1006,6 +1008,136 @@ def check_compose_config() -> Result:
     return ok("the merged configuration is valid")
 
 
+# A check that tests the running stack says nothing about this commit if a container runs an image
+# built from older source. On 2026-10-21 the frontend container was three frontend commits behind,
+# the Queue page's held-jobs list among them, and the stack system tests passed against it.
+#
+# The test is content, not time: Docker's build cache is asked. Building a service from the current
+# source returns the very image the container runs when nothing it is built from has changed, and a
+# new image otherwise. (Comparing build and commit times fails both ways: an image built from the
+# working tree just before its commit reads as stale, and a cached rebuild keeps the old time.)
+
+
+def _compose_image(service: str) -> str:
+    """The image Compose builds for a service with no `image:` key: <project>-<service>."""
+    config = run(["docker", "compose", "config", "--format", "json"], timeout=120)
+    project = json.loads(config.stdout).get("name", "") if config.returncode == 0 else ""
+    return f"{project or REPO_ROOT.name}-{service}"
+
+
+def _runs_current_build(service: str, container: str) -> str | None:
+    """None when building the service now gives the image its container runs; otherwise why not.
+
+    The container's side is the image digest Compose records on it when it creates it (the label
+    com.docker.compose.image), the same identity Compose compares when deciding to recreate. The
+    container's own Image field cannot be used: on Docker's containerd store it names the index the
+    image arrived in, which an attestation made unique per build (docker-compose.yml). The build is
+    left in place, so a stale container needs only `docker compose up -d`."""
+    label = '{{index .Config.Labels "com.docker.compose.image"}}'
+    running = run(["docker", "inspect", "--format", label, container], timeout=60)
+    if running.returncode != 0:
+        return f"{container} is not running"
+    if not running.stdout.strip().startswith("sha256:"):
+        return f"{container} has no image digest from Compose; recreate it with `docker compose up -d`"
+    build = run(["docker", "compose", "build", "--quiet", service], timeout=1800)
+    if build.returncode != 0:
+        detail = (build.stderr or build.stdout).strip().splitlines()
+        return f"`docker compose build {service}` failed: {' / '.join(detail[-2:])[:200]}"
+    image = _compose_image(service)
+    built = run(["docker", "image", "inspect", "--format", "{{.Id}}", image], timeout=60)
+    if built.stdout.strip() != running.stdout.strip():
+        return (
+            f"{container} runs an image other than the one the current source builds; that build "
+            f"is now ready, so `docker compose up -d {service}` replaces it"
+        )
+    return None
+
+
+def _jar_entries(data: bytes) -> dict[str, int]:
+    """Each file in a jar and its CRC, leaving out META-INF (the manifest records the build time)."""
+    with zipfile.ZipFile(io.BytesIO(data)) as jar:
+        return {
+            entry.filename: entry.CRC
+            for entry in jar.infolist()
+            if not entry.is_dir() and not entry.filename.startswith("META-INF/")
+        }
+
+
+def _jenkins_dev_runs_built_plugin() -> str | None:
+    """None when jenkins-dev runs the plugin classes plugin/target's .hpi holds, built from the
+    current source; otherwise why not.
+
+    Docker's cache cannot answer for this image: every Maven build writes a new build time into the
+    .hpi, so its bytes, and the image, change even when no class does. The classes are compared
+    instead, in the plugin Jenkins expanded and is running, and so are the two files the image
+    copies from jenkins/controller."""
+    rebuild = "Rebuild: `docker compose build jenkins-dev`, then `docker compose up -d jenkins-dev`"
+    hpi = REPO_ROOT / "plugin" / "target" / "dynamic-queue-optimizer.hpi"
+    if not hpi.is_file():
+        return "plugin/target has no .hpi; run `cd plugin && mvn -B verify`"
+    sources = [p for p in (REPO_ROOT / "plugin" / "src" / "main").rglob("*") if p.is_file()]
+    newest = max([*sources, REPO_ROOT / "plugin" / "pom.xml"], key=lambda p: p.stat().st_mtime)
+    if newest.stat().st_mtime > hpi.stat().st_mtime:
+        changed = newest.relative_to(REPO_ROOT).as_posix()
+        return f"{changed} changed after the .hpi was built; run `cd plugin && mvn -B verify`"
+
+    def container_file(path: str) -> bytes | None:
+        result = subprocess.run(
+            ["docker", "exec", "orchestrator-jenkins-dev", "cat", path],
+            capture_output=True,
+            timeout=60,
+            check=False,
+        )
+        return result.stdout if result.returncode == 0 else None
+
+    for name, path in (
+        ("plugins.txt", "/usr/share/jenkins/ref/plugins.txt"),
+        ("install-plugin-under-test.sh", "/usr/local/bin/install-plugin-under-test.sh"),
+    ):
+        if container_file(path) != (REPO_ROOT / "jenkins" / "controller" / name).read_bytes():
+            return f"jenkins-dev's image holds another jenkins/controller/{name}. {rebuild}"
+
+    with zipfile.ZipFile(hpi) as outer:
+        bundled = {
+            name.removeprefix("WEB-INF/lib/")
+            for name in outer.namelist()
+            if re.fullmatch(r"WEB-INF/lib/[^/]+\.jar", name)
+        }
+        built = _jar_entries(outer.read("WEB-INF/lib/dynamic-queue-optimizer.jar"))
+    lib = "/var/jenkins_home/plugins/dynamic-queue-optimizer/WEB-INF/lib"
+    listing = run(["docker", "exec", "orchestrator-jenkins-dev", "ls", lib], timeout=60)
+    if listing.returncode != 0:
+        return f"jenkins-dev has no expanded plugin to compare: {listing.stderr.strip()[:120]}"
+    jar = container_file(f"{lib}/dynamic-queue-optimizer.jar")
+    if not jar:
+        return "could not read the plugin jenkins-dev runs"
+    running = _jar_entries(jar)
+    differ = sorted(n for n in built.keys() | running.keys() if built.get(n) != running.get(n))
+    if differ or bundled != set(listing.stdout.split()):
+        files = "1 file differs" if len(differ) == 1 else f"{len(differ)} files differ"
+        what = f"{files} ({', '.join(differ[:3])})" if differ else "bundled jars differ"
+        return f"jenkins-dev runs a plugin unlike plugin/target's .hpi: {what}. {rebuild}"
+    return None
+
+
+@check(1, "jenkins-dev and its agents run what the current source builds")
+def check_jenkins_images_current() -> Result:
+    if not have("docker"):
+        return fail("blocked: Docker is not installed (see the check above)")
+    problems = [
+        problem
+        for problem in (
+            _jenkins_dev_runs_built_plugin(),
+            _runs_current_build("agent-1", "orchestrator-agent-1"),
+            _runs_current_build("agent-2", "orchestrator-agent-2"),
+        )
+        if problem
+    ]
+    if problems:
+        return fail("; ".join(problems))
+    return ok("jenkins-dev runs plugin/target's classes and files; both agents match their build")
+
+
 # ---------------------------------------------------------------------------
 # Phase 1 and 2, live: these need a running stack. Each one reports the exact
 # missing prerequisite rather than a generic failure.
@@ -1538,6 +1670,14 @@ def check_backend_image_has_migrations() -> Result:
     if missing:
         return fail("the image does not copy: " + ", ".join(missing))
     return ok("alembic.ini, alembic/ and app/ all copied")
+
+
+@check(3, "the backend container runs what the current source builds")
+def check_backend_image_current() -> Result:
+    if not have("docker"):
+        return fail("blocked: Docker is not installed (see Phase 1)")
+    problem = _runs_current_build("backend", "orchestrator-backend")
+    return fail(problem) if problem else ok("building the backend now gives the image it runs")
 
 
 @check(3, "backend quality bars pass")
@@ -3219,6 +3359,14 @@ def _python_enum_values(source: str, name: str) -> list[str]:
 def _ts_const_values(source: str, name: str) -> list[str]:
     match = re.search(rf"export const {name} = \[(.*?)\] as const", source, re.DOTALL)
     return re.findall(r'"([^"]+)"', match.group(1)) if match else []
+
+
+@check(6, "the frontend container runs what the current source builds")
+def check_frontend_image_current() -> Result:
+    if not have("docker"):
+        return fail("blocked: Docker is not installed (see Phase 1)")
+    problem = _runs_current_build("frontend", "orchestrator-frontend")
+    return fail(problem) if problem else ok("building the frontend now gives the image it serves")
 
 
 @check(6, "the system tests pass through the running stack's own frontend")

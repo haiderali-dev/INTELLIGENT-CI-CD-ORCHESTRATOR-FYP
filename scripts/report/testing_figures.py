@@ -23,11 +23,14 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from xml.etree import ElementTree
 
+from datetime import datetime
+
 import matplotlib
 
 matplotlib.use("Agg")
+import matplotlib.dates as mdates  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
-from matplotlib.ticker import FuncFormatter  # noqa: E402
+from matplotlib.ticker import FuncFormatter, MaxNLocator  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DATA = REPO_ROOT / "docs" / "testing" / "data"
@@ -79,7 +82,8 @@ def save(figure: plt.Figure, name: str) -> None:
 def write_csv(name: str, header: list[str], rows: list[list[object]]) -> None:
     DATA.mkdir(parents=True, exist_ok=True)
     with (DATA / name).open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.writer(handle)
+        # Rows end in LF, as the repository stores text; the csv module's default is CRLF.
+        writer = csv.writer(handle, lineterminator=chr(10))
         writer.writerow(header)
         writer.writerows(rows)
     print(f"data {name}")
@@ -112,7 +116,10 @@ def test_growth() -> list[list[object]]:
         return sum(int(line.rsplit(":", 1)[1]) for line in out.splitlines() if line.strip())
 
     rows = []
-    for line in git("log", "--reverse", "--format=%H%x09%cs").splitlines():
+    # Merges are left out: the recovery merges into main (PRs 5 to 7) carried trees from before the
+    # later phases, so counting them would show tests vanishing and returning. Every other commit's
+    # tree holds all the work before it on its branch.
+    for line in git("log", "--reverse", "--no-merges", "--date-order", "--format=%H%x09%cI").splitlines():
         commit, date = line.split("\t")
         rows.append([
             commit[:7],
@@ -149,7 +156,8 @@ def coverage(campaign: Path) -> list[list[object]]:
     if summary.is_file():
         total = json.loads(summary.read_text(encoding="utf-8"))["total"]
         rows.append(["Frontend (V8, unit and component tests)", total["statements"]["pct"], total["branches"]["pct"]])
-    write_csv("coverage-summary.csv", ["component", "statements_or_lines_pct", "branches_pct"], rows)
+    if rows:
+        write_csv("coverage-summary.csv", ["component", "statements_or_lines_pct", "branches_pct"], rows)
     return rows
 
 
@@ -181,6 +189,146 @@ def ci_history(ci: Path | None) -> list[list[object]]:
     ]
     write_csv("ci-runs.csv", ["run", "date", "branch", "commit", "event", "conclusion", "title"], rows)
     return rows
+
+
+def complexity(campaign: Path, lizard_csv: Path | None) -> None:
+    """Cyclomatic complexity per function (lizard), with each function's own branch coverage where
+    the coverage tool reports one: per function for the backend (coverage.py) and per method for the
+    plugin (JaCoCo); per file for the frontend, and marked so."""
+    if lizard_csv is None or not lizard_csv.is_file():
+        return
+    functions = []
+    with lizard_csv.open(encoding="utf-8", errors="replace") as handle:
+        for row in csv.reader(handle):
+            # lizard --csv: NLOC, CCN, token, PARAM, length, location, file, function, long_name, start, end
+            file = row[6].replace("\\", "/")
+            component = "Plugin" if file.startswith("plugin/") else "Backend" if file.startswith("backend/") else "Frontend"
+            functions.append({"component": component, "file": file, "name": row[7], "start": int(row[9]),
+                              "end": int(row[10]), "ccn": int(row[1]), "nloc": int(row[0])})
+
+    backend_json = campaign / "backend" / "backend-e2e-coverage.json"
+    if not backend_json.is_file():
+        backend_json = campaign / "backend" / "backend-offline-coverage.json"
+    backend = json.loads(backend_json.read_text(encoding="utf-8"))["files"] if backend_json.is_file() else {}
+    backend = {name.replace("\\", "/"): data for name, data in backend.items()}
+    jacoco: dict[tuple[str, str], list[tuple[int, int, int]]] = defaultdict(list)
+    report = campaign / "plugin" / "jacoco.xml"
+    if report.is_file():
+        root = ElementTree.parse(report).getroot()  # noqa: S314 (JaCoCo's own report)
+        for cls in root.iter("class"):
+            simple = cls.get("name", "").split("/")[-1].split("$")[-1]
+            for method in cls.iter("method"):
+                counters = {c.get("type"): c for c in method.findall("counter")}
+                branch = counters.get("BRANCH")
+                missed, covered = (int(branch.get("missed")), int(branch.get("covered"))) if branch is not None else (0, 0)
+                jacoco[(simple, method.get("name", ""))].append((int(method.get("line") or 0), missed, covered))
+    frontend_summary = campaign / "frontend" / "coverage-summary.json"
+    frontend = json.loads(frontend_summary.read_text(encoding="utf-8")) if frontend_summary.is_file() else {}
+    frontend = {name.replace("\\", "/").split("/frontend/")[-1]: data for name, data in frontend.items()}
+
+    def coverage_of(function: dict) -> tuple[str, str]:
+        """(branch coverage %, how it was measured)."""
+        if function["component"] == "Backend":
+            data = backend.get(function["file"].removeprefix("backend/"))
+            if data:
+                for name, summary in data.get("functions", {}).items():
+                    lines = set(summary.get("executed_lines", [])) | set(summary.get("missing_lines", []))
+                    if name.split(".")[-1] == function["name"] and lines & set(range(function["start"], function["end"] + 1)):
+                        s = summary["summary"]
+                        if not s.get("num_branches"):
+                            return "no branches", "function"
+                        return f"{100 * s['covered_branches'] / s['num_branches']:.0f}", "function"
+        if function["component"] == "Plugin":
+            simple, _, method = function["name"].rpartition("::")
+            candidates = jacoco.get((simple.split("::")[-1], method), [])
+            if candidates:
+                line, missed, covered = min(candidates, key=lambda c: abs(c[0] - function["start"]))
+                if missed + covered == 0:
+                    return "no branches", "method"
+                return f"{100 * covered / (missed + covered):.0f}", "method"
+        if function["component"] == "Frontend":
+            data = frontend.get(function["file"].removeprefix("frontend/"))
+            if data:
+                return f"{data['branches']['pct']:.0f}", "file"
+        return "not measured", "-"
+
+    summary_rows = []
+    top_rows = []
+    all_rows = []
+    for component in ("Plugin", "Backend", "Frontend"):
+        group = [f for f in functions if f["component"] == component]
+        if not group:
+            continue
+        values = [f["ccn"] for f in group]
+        summary_rows.append([component, len(group), round(statistics.mean(values), 2), statistics.median(values),
+                             max(values), sum(v > 10 for v in values), sum(v > 15 for v in values)])
+        for function in sorted(group, key=lambda f: (-f["ccn"], f["file"])):
+            percent, basis = coverage_of(function)
+            row = [component, function["name"], f"{function['file']}:{function['start']}", function["ccn"],
+                   function["nloc"], percent, basis]
+            all_rows.append(row)
+            if len([r for r in top_rows if r[0] == component]) < 10:
+                top_rows.append(row)
+    header = ["component", "function", "where", "ccn", "nloc", "branch_coverage_pct", "coverage_measured_per"]
+    write_csv("complexity-summary.csv", ["component", "functions", "mean_ccn", "median_ccn", "max_ccn",
+                                         "over_10", "over_15"], summary_rows)
+    write_csv("complexity-top.csv", header, top_rows)
+    write_csv("complexity-all.csv", header, all_rows)
+
+
+def m2_runs() -> list[list[object]]:
+    """Every stored Milestone 2 run, recomputed from its raw result file (legacy/, read only): the
+    same waits as docs/m2-baseline.md, plus the dependency edges each run broke, which it never
+    measured. An edge is broken when a job started before a job it depends on had finished."""
+    folder = REPO_ROOT / "legacy" / "m2-poc" / "experiment"
+    spec = {job["name"]: job for job in json.loads((folder / "scripts" / "jobs.json").read_text(encoding="utf-8"))}
+    edges = [(up, job["name"]) for job in spec.values() for up in job["dependsOn"]]
+    rows = []
+    for label, name in (("Baseline (stock Jenkins, FIFO)", "baseline-results.json"),
+                        ("Plugin, run 1", "plugin-results.json"), ("Plugin, run 2", "plugin-results-run2.json"),
+                        ("Plugin, run 3", "plugin-results-run3.json"), ("Plugin, run 4 (the report's)", "plugin-results-run4.json")):
+        result = json.loads((folder / "results" / name).read_text(encoding="utf-8"))
+        t0 = result["t0"]
+        # The baseline's leftover 31st job is not in the workload (docs/m2-baseline.md 4.2).
+        runs = {job["name"]: ((job["startTime"] - t0) / 1000, (job["startTime"] - t0 + job["duration"]) / 1000)
+                for job in result["jobs"] if job["name"] in spec}
+        waits = {level: [runs[n][0] for n in runs if spec[n]["priority"] == level] for level in ("HIGH", "MEDIUM", "LOW")}
+        broken = sum(1 for up, down in edges if up in runs and down in runs and runs[down][0] < runs[up][1])
+        rows.append([label, name, len(runs), round(max(end for _, end in runs.values()), 2),
+                     round(statistics.mean(start for start, _ in runs.values()), 2),
+                     *(round(statistics.mean(waits[level]), 2) for level in ("HIGH", "MEDIUM", "LOW")), broken, len(edges)])
+    write_csv("m2-runs.csv", ["run", "file", "jobs", "makespan_s", "mean_wait_s", "high_mean_s", "medium_mean_s",
+                              "low_mean_s", "dependency_violations", "dependency_edges"], rows)
+    return rows
+
+
+def figure_m2() -> None:
+    rows = read_csv(DATA / "m2-runs.csv")
+    figure, (waits, broken) = plt.subplots(1, 2, figsize=(6.5, 3.0), gridspec_kw={"width_ratios": [2.2, 1]})
+    labels = ["FIFO", "Run 1", "Run 2", "Run 3", "Run 4"]
+    width = 0.26
+    for slot, (key, band) in enumerate((("high_mean_s", "HIGH"), ("medium_mean_s", "MEDIUM"), ("low_mean_s", "LOW"))):
+        waits.bar([index + (slot - 1) * width for index in range(len(rows))], [float(row[key]) for row in rows], width,
+                  color=SLOTS[slot], label=band, edgecolor=SURFACE, linewidth=1.2)
+    waits.set_xticks(range(len(rows)), labels)
+    waits.set_ylabel("Mean wait (s)")
+    waits.set_ylim(0, max(float(row[key]) for row in rows for key in ("high_mean_s", "medium_mean_s", "low_mean_s")) * 1.18)
+    waits.legend(loc="upper left", ncols=3, fontsize=7)
+    waits.grid(axis="x", visible=False)
+    waits.set_title("Waits by band")
+    values = [int(row["dependency_violations"]) for row in rows]
+    bars = broken.bar(labels, values, color=SLOTS[0], width=0.6, edgecolor=SURFACE, linewidth=1.2)
+    for bar, value in zip(bars, values, strict=True):
+        broken.text(bar.get_x() + bar.get_width() / 2, value, f"{value}", ha="center", va="bottom", fontsize=8, color=SECONDARY)
+    broken.set_ylabel(f"Edges broken (of {rows[0]['dependency_edges']})")
+    broken.yaxis.set_major_locator(MaxNLocator(integer=True))
+    broken.grid(axis="x", visible=False)
+    broken.set_title("Dependency order broken")
+    broken.tick_params(axis="x", labelsize=7)
+    figure.suptitle("Milestone 2's measured runs, recomputed from its result files", x=0.01, ha="left", fontsize=10,
+                    fontweight="bold", color=INK)
+    figure.tight_layout()
+    save(figure, "f12-m2-runs")
 
 
 def copy_experiments(campaign: Path) -> None:
@@ -219,17 +367,17 @@ def figure_suites() -> None:
 def figure_growth() -> None:
     rows = read_csv(DATA / "test-growth.csv")
     figure, axis = plt.subplots(figsize=(6.5, 3.2))
-    x = list(range(len(rows)))
+    when = [datetime.fromisoformat(row["date"]) for row in rows]
     for slot, (key, label) in enumerate((("backend", "Backend"), ("frontend", "Frontend"), ("plugin", "Plugin"))):
         values = [int(row[key]) for row in rows]
-        axis.plot(x, values, color=SLOTS[slot], linewidth=2, label=label)
-        axis.annotate(f"{label} {values[-1]}", (x[-1], values[-1]), xytext=(4, 0), textcoords="offset points",
+        axis.step(when, values, where="post", color=SLOTS[slot], linewidth=2, label=label)
+        axis.annotate(f"{label} {values[-1]}", (when[-1], values[-1]), xytext=(4, 0), textcoords="offset points",
                       va="center", color=SECONDARY, fontsize=8)
-    ticks = [index for index in range(len(rows)) if index == 0 or rows[index]["date"] != rows[index - 1]["date"]]
-    axis.set_xticks(ticks, [rows[index]["date"][5:] for index in ticks], rotation=0, fontsize=7)
-    axis.set_xlim(0, len(rows) + 8)
+    axis.xaxis.set_major_locator(mdates.DayLocator(interval=3))
+    axis.xaxis.set_major_formatter(mdates.DateFormatter("%d %b"))
+    axis.set_xlim(when[0], when[-1] + (when[-1] - when[0]) * 0.12)
     axis.set_ylabel("Test functions in the source")
-    axis.set_xlabel("Commits, oldest to newest (labelled with the first commit of each day)")
+    axis.set_xlabel("Commit date (merge commits left out)")
     axis.legend(loc="upper left")
     axis.grid(axis="x", visible=False)
     axis.set_title("Test functions defined, commit by commit")
@@ -423,6 +571,28 @@ def figure_sustained() -> None:
               ["policy", "utilisation", "seeds", "high_mean_s", "medium_mean_s", "low_mean_s", "low_p95_s", "low_max_s"], table)
 
 
+def figure_complexity() -> None:
+    rows = [r for r in read_csv(DATA / "complexity-all.csv")
+            if r["component"] in ("Plugin", "Backend") and r["branch_coverage_pct"].isdigit()]
+    figure, axis = plt.subplots(figsize=(6.5, 3.4))
+    for slot, component in enumerate(("Backend", "Plugin")):
+        group = [r for r in rows if r["component"] == component]
+        axis.scatter([int(r["ccn"]) for r in group], [int(r["branch_coverage_pct"]) for r in group], s=18,
+                     color=SLOTS[slot], edgecolors=SURFACE, linewidths=0.8, label=f"{component} ({len(group)} functions with branches)",
+                     alpha=0.85, zorder=3)
+    risky = [r for r in rows if int(r["ccn"]) > 10 and int(r["branch_coverage_pct"]) < 80]
+    for r in risky:
+        axis.annotate(r["function"].split("::")[-1], (int(r["ccn"]), int(r["branch_coverage_pct"])), xytext=(4, -3),
+                      textcoords="offset points", fontsize=7, color=SECONDARY)
+    axis.axvline(10, color=AXIS, linewidth=0.8, zorder=1)
+    axis.set_xlabel("Cyclomatic complexity of the function (lizard)")
+    axis.set_ylabel("Its branches covered (%)")
+    axis.set_ylim(-3, 105)
+    axis.legend(loc="lower right")
+    axis.set_title("Complexity against branch coverage, per function")
+    save(figure, "f11-complexity-coverage")
+
+
 def figure_ci() -> None:
     rows = read_csv(DATA / "ci-runs.csv")
     by_day: dict[str, Counter[str]] = defaultdict(Counter)
@@ -445,7 +615,7 @@ def figure_ci() -> None:
                               f"{value} failed", va="center", fontsize=7, color=SECONDARY)
         bottom = [b + v for b, v in zip(bottom, values, strict=True)]
     axis.set_ylabel("CI runs")
-    axis.legend(loc="upper left")
+    axis.legend(loc="upper right")
     axis.grid(axis="x", visible=False)
     total = Counter(row["conclusion"] for row in rows)
     axis.set_title(f"Continuous integration: {len(rows)} runs ({total['success']} passed, {total['failure']} failed)")
@@ -456,6 +626,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("campaign", type=Path)
     parser.add_argument("--ci", type=Path)
+    parser.add_argument("--complexity", type=Path, help="lizard's --csv output for the three components' main code")
     args = parser.parse_args()
     style()
 
@@ -463,10 +634,12 @@ def main() -> int:
     coverage(args.campaign)
     mutation(args.campaign)
     ci_history(args.ci)
+    complexity(args.campaign, args.complexity)
+    m2_runs()
     copy_experiments(args.campaign)
 
     for draw in (figure_suites, figure_growth, figure_phase, figure_coverage, figure_mutation, figure_overhead,
-                 figure_simulation, figure_sustained, figure_ci):
+                 figure_simulation, figure_sustained, figure_ci, figure_complexity, figure_m2):
         try:
             draw()
         except (FileNotFoundError, StopIteration, KeyError, ValueError) as missing:

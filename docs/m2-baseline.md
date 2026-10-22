@@ -42,9 +42,11 @@ in Part 2.3).
 | LOW | 6 | 5 to 20 s |
 
 Submitted in band order, LOW first, then MEDIUM, then HIGH — the arrival pattern that makes FIFO
-look worst and the optimizer look best. 17 dependency edges are declared, mostly
-`build-X → test-X → deploy-X` chains, plus `integration-test-suite` depending on three test jobs and
-`smoke-test-production → release-notes-generator`.
+look worst and the optimizer look best. 17 of the 30 jobs depend on others, through 20 declared
+dependency edges: seven `build-X → test-X → deploy-X` chains (14 edges), `integration-test-suite`
+depending on three test jobs, `smoke-test-production` depending on two deploy jobs, and
+`smoke-test-production → release-notes-generator`. (An earlier version of this file said 17 edges;
+17 is the number of dependent jobs. Recounted from `jobs.json` on 2026-10-21.)
 
 This confirms `BUILD_PROMPT.md` Part 4.8.1 and contradicts report Appendix B, which describes 25
 jobs as 8 HIGH / 9 MEDIUM / 8 LOW with durations of 30 s to 4 minutes. The files agree with
@@ -82,7 +84,7 @@ Milestone 2 never implemented, is mandatory in version 2.
 | Baseline (FIFO) | 322.07 | 156.88 | 271.50 | 144.49 | 15.89 |
 | `plugin-results.json` | 322.43 | 140.88 | 44.88 | 163.50 | 228.31 |
 | `plugin-results-run2.json` | 344.35 | 158.92 | 51.27 | 188.57 | 246.30 |
-| **`plugin-results-run3.json`** | **407.49** | **212.31** | **353.34** | **201.36** | **28.12** |
+| **`plugin-results-run3.json`** | **407.49** | **212.31** | **353.34** | **201.37** | **28.12** |
 | `plugin-results-run4.json` | 328.21 | 143.02 | 39.08 | 169.42 | 232.94 |
 
 **Run 3 is not noise, and it is not being discarded.** Its HIGH-band wait of 353.34 s is *worse*

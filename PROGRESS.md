@@ -1829,8 +1829,45 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
       restarted in turn), and the register, figure and annexure builders in `scripts/report/`.
       `docs/testing/data/defects.csv` lists the 35 defects testing and review found, with evidence.
       They run after the evidence campaign.
-- [ ] **The full gate again, after D-067 and D-068,** with the stack rebuilt so that jenkins-dev
-      runs the new plugin and the backend container the new audit code.
+- [x] **The third full gate run (2026-10-21, at `b16eb17`) did not finish either.** 81 checks
+      passed and none failed: Phases 0 to 5, then Phase 6's frontend bars, browser flows,
+      screenshots and security-review checks. During the next browser check, Claude Code stopped it
+      for low memory while the session was idle, as it had the second run. The machine was restarted
+      before the next session.
+- [x] **D-070: the stack could run stale images and the gate would not notice (Phases 1, 3, 6).**
+      Found while preparing the chapter's evidence:
+      - **The defect:** the frontend container served a build from before three frontend commits.
+        The Queue page's held-jobs list was missing from it, and the stack system tests had passed
+        against it.
+      - **Three checks, one per phase:** jenkins-dev and its agents (Phase 1), the backend (Phase 3)
+        and the frontend (Phase 6). They compare content, not build times:
+        - the backend, the frontend and the agents through Docker's build cache;
+        - jenkins-dev by the classes its running plugin holds, against `plugin/target`'s `.hpi`.
+      - **`provenance: false` on every built image:** two cached builds of unchanged source had
+        given two image IDs.
+      - **`backend/.dockerignore`, new:** the 147 MB virtualenv and 76 local `.pyc` files no longer
+        reach the build.
+      - **Checks run:**
+        - before the rebuild, the backend, frontend and agents checks failed; after it, all three
+          passed in two consecutive runs;
+        - each failure path was made to fail (a changed backend file, a plugin source newer than the
+          `.hpi`, an `.hpi` with one altered class) and passed again once restored byte for byte;
+        - a fresh backend container holds 0 `.pyc` files, and the frontend's Queue page bundle has
+          the held-jobs list;
+        - Phase 1's five Compose checks still pass. The gate now has 89 checks.
+- [x] **Corrections found while preparing the testing chapter:**
+      - **Dependency edges:** `docs/m2-baseline.md` and `docs/report-updates.md` said Milestone 2's
+        workload declares 17 dependency edges. It declares 20, on 17 dependent jobs (recounted from
+        `jobs.json`).
+      - **A rounding slip:** `m2-baseline.md` printed run 3's MEDIUM wait as 201.36 s; it is
+        201.3653, so 201.37.
+      - **Line endings:** the report builders now write LF. A heredoc patch had turned `"\n"` into a
+        real newline (CLAUDE.md lesson).
+      - **Check:** `scripts/report/testing_figures.py` recomputed Milestone 2's five runs from its
+        result files. All 25 waits and makespans match `m2-baseline.md` to the hundredth, after the
+        correction.
+- [ ] **The full gate again, after D-067, D-068 and D-070,** on the rebuilt stack, which the gate
+      itself now checks.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not

@@ -32,6 +32,8 @@ from xml.etree import ElementTree
 REPO_ROOT = Path(__file__).resolve().parents[2]
 OUT = REPO_ROOT / "docs" / "testing"
 PHASE_6_MERGE = "31a725f"
+# CSV rows end in LF, as the repository stores text; the csv module's default is CRLF.
+LF = chr(10)
 CI_URL = "https://github.com/haiderali-dev/INTELLIGENT-CI-CD-ORCHESTRATOR-FYP/actions/runs/{run}"
 PHASE_NAMES = {
     "0": "Phase 0, repository foundation",
@@ -380,7 +382,7 @@ def write(register: Register) -> None:
     data = OUT / "data"
     data.mkdir(parents=True, exist_ok=True)
     with (data / "test-register.csv").open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=[f.name for f in fields(Row)])
+        writer = csv.DictWriter(handle, fieldnames=[f.name for f in fields(Row)], lineterminator=LF)
         writer.writeheader()
         for row in register.rows:
             writer.writerow(asdict(row))
@@ -389,7 +391,7 @@ def write(register: Register) -> None:
     for row in register.rows:
         by_suite[row.suite].append(row)
     with (data / "test-register-summary.csv").open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.writer(handle)
+        writer = csv.writer(handle, lineterminator=LF)
         writer.writerow(["suite", "level", "tests", "passed", "failed", "error", "skipped", "seconds", "ran_at", "ci"])
         for suite, rows in by_suite.items():
             counts = Counter(row.result for row in rows)
