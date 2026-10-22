@@ -9,7 +9,39 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ---
 
-## Phase 6
+## Phase 7
+
+### D-077 A new controller home gets every plugin: the entrypoint leaves the image's REF alone
+**Date:** 2026-10-23 · **Status:** accepted (Phase 7)
+
+**Found by:** starting the experiment profile's two controllers for the first time, for T7.6. Both
+came up with no agent executors and no `/dynamic-queue` (404), so the harness read them as stock
+Jenkins.
+- **The defect (DF-46):** `jenkins/controller/install-plugin-under-test.sh` (D-028) held the
+  plugin's path in a variable named `REF`. The stock image exports `REF=/usr/share/jenkins/ref`,
+  the folder `jenkins.sh` seeds a new home from, and assigning to an exported variable exports the
+  new value. So `jenkins.sh` seeded each new home with one file, the optimizer:
+  - its seed log lists a single INSTALLED line, and the home held 1 of the image's 80 plugins;
+  - the optimizer failed to load ("Plugin is missing: structs");
+  - configuration as code, itself one of the 80, was not installed, so the agent and accounts its
+    YAML defines did not exist.
+- **Why nothing caught it before:** the script came with T3.6 (2026-10-07). jenkins-dev's home was
+  first seeded on 2026-09-29, and seeding copies only what a home lacks, so jenkins-dev never
+  showed it. The experiment controllers' volumes were the first homes made since. Rebuilding the
+  dev stack on a new machine, or after losing its volume, would have hit the same failure.
+
+**The fix:** the variable is now `IMAGE_PLUGIN`, and the script explains why no variable there may
+be named `REF`.
+- **Guarded:** verify.py's Phase 3 check of the entrypoint now fails on any assignment to `REF`. Run
+  against the old script, taken from git, it fails.
+
+**Evidence (2026-10-23):**
+- After the rebuild, each new home holds all 80 plugins.
+- Both controllers report their arms, observe-only and optimized, with one executor each.
+- The smoke run completed on both.
+- The entrypoint check passes on the fixed script.
+
+---
 
 ### D-076 The plugin counts a build's own executor waits, and reports its version
 **Date:** 2026-10-23 · **Status:** accepted (Phase 7)
@@ -51,6 +83,8 @@ which `ApiJsonIT` caught on the first attempt.
   before) and 97 JenkinsRule tests passing, SpotBugs at 0 and Spotless clean.
 
 ---
+
+## Phase 6
 
 ### D-075 Known vulnerabilities in Vite's development server are fixed within the cooldown
 **Date:** 2026-10-22 · **Status:** accepted (hardening of Phases 1 to 6; Phase 6)

@@ -2032,10 +2032,14 @@ def check_publisher_http_version() -> Result:
 
 @check(3, "the controller reinstalls the plugin under test on start")
 def check_plugin_reinstall_entrypoint() -> Result:
-    """Guards D-028.
+    """Guards D-028 and DF-46.
 
     The plugin is always 2.0.0-SNAPSHOT, so Jenkins never treats an image copy as newer and a
     persistent home keeps the .hpi from its first boot. A fix can then appear not to work.
+
+    The stock image exports REF, the folder jenkins.sh seeds a new home from. The script once
+    assigned REF the plugin's own path, which exported it, so a fresh home received that one
+    plugin of the image's 80 and the controller came up without configuration as code.
     """
     script = REPO_ROOT / "jenkins" / "controller" / "install-plugin-under-test.sh"
     if not script.is_file():
@@ -2046,6 +2050,11 @@ def check_plugin_reinstall_entrypoint() -> Result:
         return fail("the script does not remove the .pinned marker, so the stale plugin wins")
     if "jenkins.sh" not in text:
         return fail("the script does not hand over to the stock entrypoint")
+    if re.search(r"^\s*(?:readonly\s+|export\s+|local\s+|declare\s+(?:-\w+\s+)*)?REF=", text, re.M):
+        return fail(
+            "the script assigns REF, the image's seed folder, so a new home gets only the plugin "
+            "under test (DF-46)"
+        )
 
     dockerfile = (REPO_ROOT / "jenkins" / "controller" / "Dockerfile").read_text(encoding="utf-8")
     if "install-plugin-under-test.sh" not in dockerfile:
@@ -2053,7 +2062,7 @@ def check_plugin_reinstall_entrypoint() -> Result:
     if "ENTRYPOINT" not in dockerfile:
         return fail("the Dockerfile sets no ENTRYPOINT, so the script never runs")
 
-    return ok("entrypoint replaces the plugin and execs jenkins.sh")
+    return ok("entrypoint replaces the plugin, leaves the image's REF alone, and execs jenkins.sh")
 
 
 @check(3, "a live plugin event reaches the backend")

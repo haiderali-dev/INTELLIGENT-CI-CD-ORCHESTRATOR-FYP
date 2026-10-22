@@ -2136,6 +2136,19 @@ runs, is a Needs human item.
         band's wait and the dependency violations agree with the testing chapter's independent
         recomputation (`docs/testing/data/m2-runs.csv`). The M2 runs appear only in a section of
         their own, never in a v2 figure.
+- [x] **The controller image, for T7.6: a new home gets every plugin (DF-46, D-077).** Evidence,
+      run on 2026-10-23:
+      - **DF-46:** the entrypoint held the plugin's path in `REF`, which the stock image exports as
+        the folder a new home is seeded from. So a new home got the optimizer alone: the
+        experiment controllers came up with 1 of 80 plugins, no configuration as code, no agent
+        and no `/dynamic-queue`. jenkins-dev's home predates the script, so it never showed there.
+      - **The fix:** the variable is `IMAGE_PLUGIN`, and verify.py's Phase 3 entrypoint check now
+        refuses any assignment to `REF`.
+      - **Checks:**
+        - After the rebuild, each new home holds its 80 plugins.
+        - Both controllers report their arms, with one executor each.
+        - The entrypoint check passes, and fails on the old script taken from git.
+        - Phase 1's `jenkins-dev and its agents run what the current source builds` passes.
 - [ ] T7.6 Smoke run: `freestyle-6` on 1 executor, 1 repetition, on both experiment instances.
 
 ## Decisions taken while building
