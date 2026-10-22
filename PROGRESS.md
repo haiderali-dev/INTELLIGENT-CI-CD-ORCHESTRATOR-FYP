@@ -1938,6 +1938,19 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
             failed the test meant for it, and both passed again once restored byte for byte;
           - the gate's check passes through them;
           - ruff and ruff format are clean.
+- [ ] **The testing chapter (Chapter 8), in progress; stopped at a usage limit on 2026-10-22.**
+      - **The draft:** `docs/testing/work-in-progress/chapter-8-draft.md`. All sections are written,
+        with the experiment results, defect analysis and limitations from real runs. 45
+        `[[PLACEHOLDERS]]` remain for numbers from the final evidence campaign.
+      - **Next steps,** in `docs/testing/work-in-progress/after-campaign-todo.md`:
+        1. a full gate at the final commit (run 5 was started at `8263a7e` and its result was not
+           recorded);
+        2. the full campaign at that same commit;
+        3. `system_load_test.py` and `recovery_test.py`;
+        4. the register, figures and annexure;
+        5. D-073 and the report items, re-checking E1's timings;
+        6. fill and assemble with `assemble_chapter.py`, then check the cited tests with
+           `check_cited_tests.py`.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
