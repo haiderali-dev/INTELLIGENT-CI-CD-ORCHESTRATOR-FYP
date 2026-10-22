@@ -2432,7 +2432,8 @@ Also run by CI on every push: [CI run 39728490681](https://github.com/haiderali-
 
 ## Phase acceptance gate (scripts/verify.py)
 
-89 tests: 89 passed. Ran at `8263a7e`, gate run 5.
+89 tests: 89 passed. Ran at `4f1bb36`, gate run 7.
+Also run by CI on every push: [CI run 39740961504](https://github.com/haiderali-dev/INTELLIGENT-CI-CD-ORCHESTRATOR-FYP/actions/runs/39740961504).
 
 | # | Test | What it checks | File | Phase | Added in | Result | Time (s) |
 | ---: | --- | --- | --- | :---: | --- | --- | ---: |
@@ -2441,12 +2442,12 @@ Also run by CI on every push: [CI run 39728490681](https://github.com/haiderali-
 | 3 | `phase 0: tracking documents exist` | all 4 present | `scripts/verify.py` | 0 | `d72774d` | passed | 0 |
 | 4 | `phase 0: legacy/m2-poc present` | plugin sources, harness and results all present | `scripts/verify.py` | 0 | `d72774d` | passed | 0 |
 | 5 | `phase 0: legacy/m2-poc unmodified against m2-final` | byte-identical to the tag, nothing added | `scripts/verify.py` | 0 | `d72774d` | passed | 0 |
-| 6 | `phase 0: no secrets tracked by Git` | 1094 tracked files, none matching 7 secret patterns | `scripts/verify.py` | 0 | `d72774d` | passed | 0 |
+| 6 | `phase 0: no secrets tracked by Git` | 1142 tracked files, none matching 7 secret patterns | `scripts/verify.py` | 0 | `d72774d` | passed | 0 |
 | 7 | `phase 0: .gitattributes sets LF for the required types` | all 7 types pinned to LF | `scripts/verify.py` | 0 | `d72774d` | passed | 0 |
 | 8 | `phase 0: legacy/ is exempt from line-ending normalisation` | `legacy/** -text` keeps the frozen copy byte for byte | `scripts/verify.py` | 0 | `d72774d` | passed | 0 |
 | 9 | `phase 0: CI workflow parses` | 6 jobs: detect, verify, plugin, backend, frontend, flows | `scripts/verify.py` | 0 | `d72774d` | passed | 0 |
 | 10 | `phase 0: M2 baseline figures match the legacy result files` | HIGH-band wait 271.50 s -> 39.08 s, as documented | `scripts/verify.py` | 0 | `d72774d` | passed | 0 |
-| 11 | `phase 0: no Jenkins script console call in our code` | 468 code files scanned, no reference | `scripts/verify.py` | 0 | `716581c` | passed | 0 |
+| 11 | `phase 0: no Jenkins script console call in our code` | 472 code files scanned, no reference | `scripts/verify.py` | 0 | `716581c` | passed | 0 |
 | 12 | `phase 1: Docker and Compose files exist` | all 11 present | `scripts/verify.py` | 1 | `84be066` | passed | 0 |
 | 13 | `phase 1: docker-compose.yml is valid and matches Part 4.2.3` | 10 services, 6 default, 4 profiled | `scripts/verify.py` | 1 | `84be066` | passed | 0 |
 | 14 | `phase 1: every published port is bound to loopback, and Jenkins keeps its safety checks` | 6 published ports, all on 127.0.0.1; no agent port; signatures checked | `scripts/verify.py` | 1 | `6d66e91` | passed | 0 |
@@ -2489,7 +2490,7 @@ Also run by CI on every push: [CI run 39728490681](https://github.com/haiderali-
 | 51 | `phase 3: the metrics endpoint exists and accepts what it cannot parse` | gated, constant-time, open to unknown fields, all four kinds handled | `scripts/verify.py` | 3 | `a0fada8` | passed | 0 |
 | 52 | `phase 3: the plugin publishes metrics over HTTP/1.1` | pinned to HTTP/1.1 and asserted by a test | `scripts/verify.py` | 3 | `a0fada8` | passed | 0 |
 | 53 | `phase 3: the controller reinstalls the plugin under test on start` | entrypoint replaces the plugin and execs jenkins.sh | `scripts/verify.py` | 3 | `a0fada8` | passed | 0 |
-| 54 | `phase 3: a live plugin event reaches the backend` | 374 published, 0 failed, 0 dropped | `scripts/verify.py` | 3 | `a0fada8` | passed | 0 |
+| 54 | `phase 3: a live plugin event reaches the backend` | 718 published, 0 failed, 0 dropped | `scripts/verify.py` | 3 | `a0fada8` | passed | 0 |
 | 55 | `phase 3: the WebSocket never takes its token from the URL` | auth by first frame, timed out, nothing read from the query string | `scripts/verify.py` | 3 | `e347d6c` | passed | 0 |
 | 56 | `phase 3: publishing to the hub cannot block the tracker` | synchronous, bounded, drops the oldest event | `scripts/verify.py` | 3 | `e347d6c` | passed | 0 |
 | 57 | `phase 3: the tracker polls on the interval 4.4.5 fixes` | 3 second interval, bounded tick, abandoned triggers time out | `scripts/verify.py` | 3 | `e347d6c` | passed | 0 |

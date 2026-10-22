@@ -262,7 +262,8 @@ def section_system(system: Path | None) -> list[str]:
         report = json.loads(load.read_text(encoding="utf-8"))
         rows = []
         for level in report["levels"]:
-            rows.append([f"{level['users']} users, paced", level["all"]["requests"], level["throughput_rps"],
+            rows.append([f"{level['users']} user{'' if level['users'] == 1 else 's'}, paced", level["all"]["requests"],
+                         level["throughput_rps"],
                          level["all"]["p50_ms"], level["all"]["p95_ms"], level["all"]["max_ms"],
                          ", ".join(f"{k}: {v}" for k, v in sorted(level["all"]["statuses"].items()))])
         stress = report["stress"]
@@ -282,9 +283,26 @@ def section_system(system: Path | None) -> list[str]:
     recovery = system / "recovery-test.json"
     if recovery.is_file():
         steps = json.loads(recovery.read_text(encoding="utf-8"))["steps"]
-        lines += ["### Recovery (`scripts/recovery_test.py`)", ""]
+        lines += ["### Recovery (`scripts/recovery_test.py`)", "",
+                  "One dependency restarted at a time, each waited out before the next; times in seconds.", ""]
+        rows = []
         for step in steps:
-            lines += [f"**{step['restarted']}**: " + "; ".join(f"{k.replace('_', ' ')} {v}" for k, v in step.items() if k != "restarted"), ""]
+            name = step["restarted"]
+            if name == "postgres":
+                meanwhile = "the backend reported its database down" if step["reported_down_after_restart"] else \
+                    "the database was back before the backend looked"
+                back, after = step["database_up_again_after_s"], f"a signed-in request answered {step['signed_in_request_after']}"
+            elif name == "backend":
+                meanwhile = "-"
+                back, after = step["live_again_after_s"], f"runs stored: {step['runs_before']} before, {step['runs_after']} after"
+            else:
+                meanwhile = (f"the backend reported Jenkins {step['jenkins_reported_while_restarting']}; the Queue API answered "
+                             f"{step['queue_api_while_restarting']}"
+                             + (f", ranking unavailable ({step['queue_unavailable_reason']})" if step["queue_said_unavailable"] else ""))
+                back, after = step["jenkins_up_again_after_s"], f"both agents online {step['agents_online_after_s']} s later"
+            rows.append([f"`{name}`", step["restart_command_s"], meanwhile, back, after, "passed" if step["passed"] else "**failed**"])
+        lines += table(["Restarted", "Restart took", "Meanwhile", "Back after", "Then", "Result"], rows,
+                       ["---", "---:", "---", "---:", "---", "---"])
     return lines
 
 

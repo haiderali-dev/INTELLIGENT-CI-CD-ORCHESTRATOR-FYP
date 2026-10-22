@@ -1990,15 +1990,33 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
         in 437 s, against 245 s in the evidence campaign, which ran on mains power.
       - **Its log is kept** (`docs/testing/evidence/gate-run-6-0285f30-stopped.log`). CLAUDE.md now
         says to start a gate or a measurement only on mains power. The gate runs again in full.
-- [ ] **The testing chapter (Chapter 8), in progress.**
-      - **Built:** the register of all 2,434 tests (Annexure B), the figures, Annexure A, and
-        `scripts/report/check_citations.py`, which checks every test the chapter cites against the
-        register (76 of 76 ran and passed).
-      - **The draft** (`docs/testing/work-in-progress/chapter-8-draft.md`) was reviewed line by line
-        against the data and the records. It now states that the independent security reviewer was
-        an AI agent, and that the fixes were checked in the main session, as the review's record says.
-      - **Next steps,** in `docs/testing/work-in-progress/after-campaign-todo.md`: gate run 7 on
-        mains power, the load and recovery tests, then fill and assemble the chapter.
+- [x] **The seventh full gate run (2026-10-22, at `4f1bb36`): 89 of 89, ALL CHECKS PASSED.** It ran
+      from 22:52 to 23:23 on mains power: Windows read mains as it started, and its battery report
+      records AC from 22:52:50 on. Its log is `docs/testing/evidence/gate-run-7-4f1bb36.log`.
+      - **Since the evidence campaign's commit,** the product's code changed only in the frontend's
+        Vite version (D-075); the rest is documentation and the report scripts.
+- [x] **The load and recovery tests ran on the stack** (23:23 to 23:26, on mains power; reports in
+      `.tmp/system`, tables in Annexure A.8).
+      - `scripts/system_load_test.py`: all 1,440 paced requests (1, 5 and 10 users) returned 200,
+        with medians of 26.5, 33.2 and 63.2 ms. Of 450 requests at once, 315 were answered and 135
+        refused with 429; none failed with a server error or a broken connection. 11 throwaway
+        accounts were made and deactivated.
+      - `scripts/recovery_test.py`: PostgreSQL, the backend and jenkins-dev, each restarted in turn,
+        all recovered by themselves. The backend kept all 100 runs, and while Jenkins restarted the
+        Queue API answered 200 with the ranking marked unavailable. 0 of 3 steps failed.
+- [x] **The testing chapter (Chapter 8)** is `docs/testing/chapter-8-software-testing.md`, with
+      Annexure A (`annexure-a-evidence.md`), Annexure B (`annexure-b-test-register.md`, every one of
+      the 2,434 tests) and their data and figures under `docs/testing/`.
+      - **Every number in it comes from a file a run wrote.** The draft was filled from the campaign
+        at `31eb935`, gate run 7's log, the load and recovery reports and the CI history (103 runs),
+        then assembled: 28 tables, 9 figures, no placeholder left. The draft and its fill tools are
+        in git history at `4f1bb36` (`docs/testing/work-in-progress/`), now removed.
+      - **Checks run:** `python scripts/report/check_citations.py`: 76 of the 76 tests the chapter
+        cites ran and passed, and 3 of 3 stated counts are right. Section references, figures and
+        image paths were checked, and Phase 0 passes.
+      - **Corrections made in review:** the independent security reviewer is disclosed as an AI
+        agent; the check that each fix's test fails without it is credited to the main session, as
+        the review's record says; two section references; and the aging finding's wording.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not

@@ -96,3 +96,9 @@ run,date,branch,commit,event,conclusion,title
 39726785641,2026-10-22,phase-6-hardening,e0c0c69,pull_request,failure,"Phase 6 hardening: every open defect in Phases 1 to 6 fixed, tested and gated"
 39728484869,2026-10-22,phase-6-hardening,31eb935,push,success,fix(docs): remove a work-in-progress script the script-console guard …
 39728490681,2026-10-22,phase-6-hardening,31eb935,pull_request,success,"Phase 6 hardening: every open defect in Phases 1 to 6 fixed, tested and gated"
+39733183452,2026-10-22,phase-6-hardening,0285f30,push,success,docs: what experiments E1 to E3 found about the report (D-073); DF-43…
+39733189078,2026-10-22,phase-6-hardening,0285f30,pull_request,success,"Phase 6 hardening: every open defect in Phases 1 to 6 fixed, tested and gated"
+39740037288,2026-10-22,phase-6-hardening,539643c,push,success,"docs(testing): the register of every test, figures, annexures, a cita…"
+39740045948,2026-10-22,phase-6-hardening,539643c,pull_request,success,"Phase 6 hardening: every open defect in Phases 1 to 6 fixed, tested and gated"
+39740955917,2026-10-22,phase-6-hardening,4f1bb36,push,success,docs(testing): the gate's checks carry their own commit; the remainin…
+39740961504,2026-10-22,phase-6-hardening,4f1bb36,pull_request,success,"Phase 6 hardening: every open defect in Phases 1 to 6 fixed, tested and gated"

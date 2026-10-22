@@ -44,7 +44,7 @@ The frontend-audit step exits 1 when `npm audit` finds a known vulnerability; he
 
 ## A.3 The acceptance gate
 
-Gate run 5, at commit `8263a7e`: `python scripts/verify.py --phase 6`, 89 checks, from its log `docs/testing/evidence/gate-run-5-8263a7e.log`. Result: **ALL CHECKS PASSED**.
+Gate run 7, at commit `4f1bb36`: `python scripts/verify.py --phase 6`, 89 checks, from its log `docs/testing/evidence/gate-run-7-4f1bb36.log`. Result: **ALL CHECKS PASSED**.
 
 | Phase | Check | Result | What it reported |
 | --- | --- | --- | --- |
@@ -53,12 +53,12 @@ Gate run 5, at commit `8263a7e`: `python scripts/verify.py --phase 6`, 89 checks
 | 0 | tracking documents exist | PASS | all 4 present |
 | 0 | legacy/m2-poc present | PASS | plugin sources, harness and results all present |
 | 0 | legacy/m2-poc unmodified against m2-final | PASS | byte-identical to the tag, nothing added |
-| 0 | no secrets tracked by Git | PASS | 1094 tracked files, none matching 7 secret patterns |
+| 0 | no secrets tracked by Git | PASS | 1142 tracked files, none matching 7 secret patterns |
 | 0 | .gitattributes sets LF for the required types | PASS | all 7 types pinned to LF |
 | 0 | legacy/ is exempt from line-ending normalisation | PASS | `legacy/** -text` keeps the frozen copy byte for byte |
 | 0 | CI workflow parses | PASS | 6 jobs: detect, verify, plugin, backend, frontend, flows |
 | 0 | M2 baseline figures match the legacy result files | PASS | HIGH-band wait 271.50 s -> 39.08 s, as documented |
-| 0 | no Jenkins script console call in our code | PASS | 468 code files scanned, no reference |
+| 0 | no Jenkins script console call in our code | PASS | 472 code files scanned, no reference |
 | 1 | Docker and Compose files exist | PASS | all 11 present |
 | 1 | docker-compose.yml is valid and matches Part 4.2.3 | PASS | 10 services, 6 default, 4 profiled |
 | 1 | every published port is bound to loopback, and Jenkins keeps its safety checks | PASS | 6 published ports, all on 127.0.0.1; no agent port; signatures checked |
@@ -101,7 +101,7 @@ Gate run 5, at commit `8263a7e`: `python scripts/verify.py --phase 6`, 89 checks
 | 3 | the metrics endpoint exists and accepts what it cannot parse | PASS | gated, constant-time, open to unknown fields, all four kinds handled |
 | 3 | the plugin publishes metrics over HTTP/1.1 | PASS | pinned to HTTP/1.1 and asserted by a test |
 | 3 | the controller reinstalls the plugin under test on start | PASS | entrypoint replaces the plugin and execs jenkins.sh |
-| 3 | a live plugin event reaches the backend | PASS | 374 published, 0 failed, 0 dropped |
+| 3 | a live plugin event reaches the backend | PASS | 718 published, 0 failed, 0 dropped |
 | 3 | the WebSocket never takes its token from the URL | PASS | auth by first frame, timed out, nothing read from the query string |
 | 3 | publishing to the hub cannot block the tracker | PASS | synchronous, bounded, drops the oldest event |
 | 3 | the tracker polls on the interval 4.4.5 fixes | PASS | 3 second interval, bounded tick, abandoned triggers time out |
@@ -140,7 +140,7 @@ Gate run 5, at commit `8263a7e`: `python scripts/verify.py --phase 6`, 89 checks
 
 ## A.4 Continuous integration
 
-97 runs of `.github/workflows/ci.yml` between 2026-10-07 and 2026-10-22: 83 passed, 7 failed, 7 cancelled by a newer push. Each failure is in the defect log (A.10).
+103 runs of `.github/workflows/ci.yml` between 2026-10-07 and 2026-10-22: 89 passed, 7 failed, 7 cancelled by a newer push. Each failure is in the defect log (A.10).
 
 | Run | Date | Branch | Commit | Event | Result |
 | --- | --- | --- | --- | --- | --- |
@@ -241,6 +241,12 @@ Gate run 5, at commit `8263a7e`: `python scripts/verify.py --phase 6`, 89 checks
 | [39726785641](https://github.com/haiderali-dev/INTELLIGENT-CI-CD-ORCHESTRATOR-FYP/actions/runs/39726785641) | 2026-10-22 | phase-6-hardening | `e0c0c69` | pull_request | failure |
 | [39728484869](https://github.com/haiderali-dev/INTELLIGENT-CI-CD-ORCHESTRATOR-FYP/actions/runs/39728484869) | 2026-10-22 | phase-6-hardening | `31eb935` | push | success |
 | [39728490681](https://github.com/haiderali-dev/INTELLIGENT-CI-CD-ORCHESTRATOR-FYP/actions/runs/39728490681) | 2026-10-22 | phase-6-hardening | `31eb935` | pull_request | success |
+| [39733183452](https://github.com/haiderali-dev/INTELLIGENT-CI-CD-ORCHESTRATOR-FYP/actions/runs/39733183452) | 2026-10-22 | phase-6-hardening | `0285f30` | push | success |
+| [39733189078](https://github.com/haiderali-dev/INTELLIGENT-CI-CD-ORCHESTRATOR-FYP/actions/runs/39733189078) | 2026-10-22 | phase-6-hardening | `0285f30` | pull_request | success |
+| [39740037288](https://github.com/haiderali-dev/INTELLIGENT-CI-CD-ORCHESTRATOR-FYP/actions/runs/39740037288) | 2026-10-22 | phase-6-hardening | `539643c` | push | success |
+| [39740045948](https://github.com/haiderali-dev/INTELLIGENT-CI-CD-ORCHESTRATOR-FYP/actions/runs/39740045948) | 2026-10-22 | phase-6-hardening | `539643c` | pull_request | success |
+| [39740955917](https://github.com/haiderali-dev/INTELLIGENT-CI-CD-ORCHESTRATOR-FYP/actions/runs/39740955917) | 2026-10-22 | phase-6-hardening | `4f1bb36` | push | success |
+| [39740961504](https://github.com/haiderali-dev/INTELLIGENT-CI-CD-ORCHESTRATOR-FYP/actions/runs/39740961504) | 2026-10-22 | phase-6-hardening | `4f1bb36` | pull_request | success |
 
 ## A.5 Coverage by module
 
@@ -689,7 +695,42 @@ Per-seed rows: `docs/testing/data/experiments/simulation-sustained-load.csv`.
 
 ## A.8 Load and recovery tests
 
-Not run.
+### Load and stress (`scripts/system_load_test.py`)
+
+| Run | Requests | Per second | p50 (ms) | p95 (ms) | Max (ms) | Statuses |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| 1 user, paced | 90 | 3.0 | 26.5 | 37.5 | 40.6 | 200: 90 |
+| 5 users, paced | 450 | 14.9 | 33.2 | 52.7 | 400.3 | 200: 450 |
+| 10 users, paced | 900 | 29.9 | 63.2 | 115.6 | 173.3 | 200: 900 |
+| 1 user, 30 threads at once | 450 | 139.3 | 201.7 | 417.8 | 704.6 | 200: 315, 429: 135 |
+
+| Users | Endpoint | Requests | p50 (ms) | p95 (ms) | Max (ms) |
+| ---: | --- | ---: | ---: | ---: | ---: |
+| 1 | `/api/analytics/runs` | 18 | 28.3 | 37.2 | 37.2 |
+| 1 | `/api/chains` | 18 | 27.1 | 39.5 | 39.5 |
+| 1 | `/api/queue` | 18 | 31.5 | 40.6 | 40.6 |
+| 1 | `/api/runs` | 18 | 22.6 | 36.7 | 36.7 |
+| 1 | `/api/services` | 18 | 25.1 | 37.3 | 37.3 |
+| 5 | `/api/analytics/runs` | 90 | 32.7 | 50.9 | 389.3 |
+| 5 | `/api/chains` | 90 | 28.8 | 47.3 | 399.5 |
+| 5 | `/api/queue` | 90 | 42.7 | 62.1 | 400.3 |
+| 5 | `/api/runs` | 90 | 30.1 | 52.3 | 378.2 |
+| 5 | `/api/services` | 90 | 33.9 | 52.7 | 388.0 |
+| 10 | `/api/analytics/runs` | 180 | 66.3 | 130.1 | 170.7 |
+| 10 | `/api/chains` | 180 | 55.3 | 110.4 | 154.5 |
+| 10 | `/api/queue` | 180 | 70.1 | 131.8 | 173.3 |
+| 10 | `/api/runs` | 180 | 60.7 | 116.8 | 143.9 |
+| 10 | `/api/services` | 180 | 58.6 | 115.4 | 166.7 |
+
+### Recovery (`scripts/recovery_test.py`)
+
+One dependency restarted at a time, each waited out before the next; times in seconds.
+
+| Restarted | Restart took | Meanwhile | Back after | Then | Result |
+| --- | ---: | --- | ---: | --- | --- |
+| `postgres` | 0.8 | the backend reported its database down | 0.6 | a signed-in request answered 200 | passed |
+| `backend` | 1.5 | - | 3.1 | runs stored: 100 before, 100 after | passed |
+| `jenkins-dev` | 1.0 | the backend reported Jenkins down; the Queue API answered 200, ranking unavailable (the plugin returned 503) | 9.4 | both agents online 2.1 s later | passed |
 
 ## A.9 Screenshots
 
