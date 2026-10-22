@@ -14,6 +14,8 @@
 # Captured Jenkins logs the T5.9 tests read. Ignoring them left the tests passing locally and
 # failing on a clean checkout.
 !backend/tests/data/failure_logs/*.log
+# The testing chapter's evidence: gate and test logs it cites.
+!docs/testing/evidence/*.log
 
 # --- Java / Maven ---
 target/

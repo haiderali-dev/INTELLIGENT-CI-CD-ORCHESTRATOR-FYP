@@ -1866,8 +1866,16 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
       - **Check:** `scripts/report/testing_figures.py` recomputed Milestone 2's five runs from its
         result files. All 25 waits and makespans match `m2-baseline.md` to the hundredth, after the
         correction.
-- [ ] **The full gate again, after D-067, D-068 and D-070,** on the rebuilt stack, which the gate
-      itself now checks.
+- [x] **The full gate, run 4 (2026-10-22, 05:20 to 05:56, at `0603d4e`): 89 of 89 passed, ALL
+      CHECKS PASSED, exit 0.** It ran after D-067, D-068 and D-070, on the rebuilt stack.
+      - **The three new image checks passed in Phases 1, 3 and 6.**
+      - **What differed from the commit:** only files no check reads (the report tools, the defect
+        log), and plugin files edited after Phase 2's build had finished.
+      - **Memory:** before Phase 6, the Docker VM's page cache was dropped to give Lighthouse room.
+        Free memory fell to 2.9 GB during the audits and recovered.
+      - **CI on `0603d4e`:** run 39700898376 passed.
+      - **Log:** `docs/testing/evidence/gate-run-4-0603d4e.log`. `.gitignore` now lets that folder's
+        logs in; `*.log` had excluded them, the trap DF-20 fell into.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
