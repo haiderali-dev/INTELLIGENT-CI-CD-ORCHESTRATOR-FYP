@@ -84,8 +84,8 @@ def test_analyze_and_report_work_on_a_results_folder(
     clock = FakeClock()
     fake = FakeController(clock)
     smoke = workload.load("freestyle-6")
-    harness.setup(fake, smoke, log=lambda _: None)  # type: ignore[arg-type]
-    folder = harness.run(  # type: ignore[arg-type]
+    harness.setup(fake, smoke, log=lambda _: None)
+    folder = harness.run(
         fake,
         smoke,
         controller="test",

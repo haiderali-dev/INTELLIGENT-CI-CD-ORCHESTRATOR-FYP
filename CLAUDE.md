@@ -94,6 +94,9 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
   real NUL byte. After any scripted edit, scan the file for bytes below 0x20 other than tab and
   newline. Repeated on 2026-10-21: `lineterminator="\n"`, patched through a heredoc, became a real
   newline inside the string. The byte scan cannot see that; `ast.parse` caught it. Use Edit.
+- An Edit with an empty `new_string` also deletes the line break after the match: removing a
+  trailing comment that way joined 25 lines (2026-10-23). To cut text out of a line, keep
+  `new_string` non-empty, or use a bytes-in, bytes-out script file; then `ast.parse`.
 - A Pipeline reports `building: false` and its result before `Finished: SUCCESS` is in the log.
   Wait on progressiveText's `X-More-Data`, never on `building`, before treating a log as whole
   (D-039).

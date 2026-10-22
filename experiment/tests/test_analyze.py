@@ -17,8 +17,8 @@ def one_run(tmp_path: Path) -> Path:
     clock = FakeClock()
     fake = FakeController(clock)
     smoke = workload.load("freestyle-6")
-    harness.setup(fake, smoke, log=lambda _: None)  # type: ignore[arg-type]
-    return harness.run(  # type: ignore[arg-type]
+    harness.setup(fake, smoke, log=lambda _: None)
+    return harness.run(
         fake,
         smoke,
         controller="test",

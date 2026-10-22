@@ -26,7 +26,6 @@ from typing import Any, Final, Protocol
 
 from experiment import results, templates
 from experiment.analyze import analyze
-from experiment.jenkins import JenkinsClient
 from experiment.workload import JobSpec, Workload
 
 #: observe-only: the plugin installed, ordering nothing (the control). optimized: the report's
@@ -63,6 +62,37 @@ class SystemClock:
         time.sleep(seconds)
 
 
+class Controller(Protocol):
+    """What the harness asks of a controller: ``jenkins.JenkinsClient``, or the tests' in-memory
+    controller (``tests/fake_jenkins.py``)."""
+
+    base_url: str
+
+    def jenkins_version(self) -> str | None: ...
+
+    def executors(self) -> dict[str, int]: ...
+
+    def busy(self) -> tuple[int, int]: ...
+
+    def dynamic_queue(self) -> dict[str, Any] | None: ...
+
+    def health(self) -> dict[str, Any] | None: ...
+
+    def recent_events(self) -> list[dict[str, Any]]: ...
+
+    def jobs(self) -> dict[str, str]: ...
+
+    def create_job(self, name: str, config_xml: str) -> None: ...
+
+    def delete_job(self, name: str) -> None: ...
+
+    def trigger(self, name: str) -> int | None: ...
+
+    def last_builds(self) -> dict[str, tuple[int, bool]]: ...
+
+    def build(self, name: str, number: int) -> dict[str, Any]: ...
+
+
 def arm_of(dynamic_queue: dict[str, Any] | None) -> str:
     """Which arm the controller runs, read from the configuration the plugin reports."""
     if dynamic_queue is None:
@@ -88,10 +118,10 @@ class SetupSummary:
 
 
 def setup(
-    client: JenkinsClient,
+    client: Controller,
     loaded: Workload,
     recreate: bool = False,
-    admin: JenkinsClient | None = None,
+    admin: Controller | None = None,
     log: Log = print,
 ) -> SetupSummary:
     """Create the workload's jobs that are missing. Existing ones are kept, never replaced.
@@ -138,7 +168,7 @@ def setup(
     return summary
 
 
-def check_jobs(client: JenkinsClient, loaded: Workload) -> None:
+def check_jobs(client: Controller, loaded: Workload) -> None:
     """Every job exists and was made from this version of the workload."""
     existing = client.jobs()
     for spec in loaded.jobs:
@@ -152,7 +182,7 @@ def check_jobs(client: JenkinsClient, loaded: Workload) -> None:
 
 
 def wait_idle(
-    client: JenkinsClient, clock: Clock, timeout_s: float = 600, poll_s: float = 2.0
+    client: Controller, clock: Clock, timeout_s: float = 600, poll_s: float = 2.0
 ) -> None:
     """Wait until no executor is busy and nothing is queued."""
     deadline = clock.monotonic() + timeout_s
@@ -196,7 +226,7 @@ def _key(event: dict[str, Any]) -> tuple[str, ...]:
 
 
 def run_pass(
-    client: JenkinsClient,
+    client: Controller,
     loaded: Workload,
     order: list[JobSpec],
     clock: Clock,
@@ -283,7 +313,7 @@ def pass_timeout(loaded: Workload) -> float:
 
 
 def warmup(
-    client: JenkinsClient,
+    client: Controller,
     loaded: Workload,
     passes: int,
     clock: Clock | None = None,
@@ -305,7 +335,7 @@ def warmup(
 
 
 def run(
-    client: JenkinsClient,
+    client: Controller,
     loaded: Workload,
     *,
     controller: str,

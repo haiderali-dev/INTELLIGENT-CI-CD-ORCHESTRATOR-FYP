@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import csv
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 
-from experiment import m2, report
+from experiment import m2, report, workload
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 #: The testing chapter's recomputation of the same five files (scripts/report/testing_figures.py),
@@ -57,18 +58,17 @@ def test_the_import_agrees_with_the_testing_chapters_recomputation(
 def test_the_reports_headline_run_is_the_one_the_report_printed(
     imported: list[dict[str, object]],
 ) -> None:
-    run4 = imported[-1]["kpis"]
+    stock, run4 = imported[0]["kpis"], imported[-1]["kpis"]
+    assert isinstance(stock, dict)
     assert isinstance(run4, dict)
     # docs/m2-baseline.md: the HIGH band's mean wait fell from 271.50 s to 39.08 s in run 4.
     assert run4["wait_s"]["by_level"]["HIGH"]["mean"] == pytest.approx(39.08, abs=0.01)
-    assert imported[0]["kpis"]["wait_s"]["by_level"]["HIGH"]["mean"] == pytest.approx(
-        271.50, abs=0.01
-    )  # type: ignore[index]
+    assert stock["wait_s"]["by_level"]["HIGH"]["mean"] == pytest.approx(271.50, abs=0.01)
 
 
 def test_milestone_2_never_enters_a_v2_aggregate(imported: list[dict[str, object]]) -> None:
     assert report.aggregate([]) == {}
-    table = report.table_md({}, imported, 0, [], report.datetime(2026, 10, 23, tzinfo=report.UTC))
+    table = report.table_md({}, imported, 0, [], datetime(2026, 10, 23, tzinfo=UTC))
     section = table.split("## Milestone 2")[1]
     assert section.count("| M2 dispatcher v1 |") == 4
     assert section.count("| M2 stock Jenkins |") == 1
@@ -81,4 +81,4 @@ def test_a_result_file_missing_a_workload_job_is_refused() -> None:
         "jobs": [{"name": "lint-auth-service", "startTime": 1, "duration": 1}],
     }
     with pytest.raises(ValueError, match="no build of"):
-        m2.m2_records(result, m2.load("freestyle-30"))
+        m2.m2_records(result, workload.load("freestyle-30"))

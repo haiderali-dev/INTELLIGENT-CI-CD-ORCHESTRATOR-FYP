@@ -2079,9 +2079,9 @@ runs, is a Needs human item.
         regression tests fail (5,700 ms for 700, 4,000 for 1,000); `ApiJsonIT` 11 passed;
         `mvn -B verify` BUILD SUCCESS: 125 unit tests (1 skipped, as before), 97 JenkinsRule tests,
         SpotBugs 0, Spotless clean.
-- [ ] T7.2 `python -m experiment` with `setup`, `warmup`, `run`, `analyze` and `report` commands,
-      using only the REST API and `/dynamic-queue/metrics`. Built and tested on 2026-10-23, not
-      yet run against a real controller (T7.6 does that):
+- [x] T7.2 `python -m experiment` with `setup`, `warmup`, `run`, `analyze` and `report` commands,
+      using only the REST API and `/dynamic-queue/metrics`. Built and tested on 2026-10-23, then
+      proved on both experiment controllers by T7.6:
       - **The package** (`experiment/`, standard library only, `experiment/README.md`):
         - `jenkins.py`, the REST client: CSRF crumb, Basic auth from the environment or `.env`,
           never printed;
@@ -2105,7 +2105,21 @@ runs, is a Needs human item.
       - **Checks:** `python -m pytest experiment/tests`, 116 passed on Python 3.14 and the backend's
         3.12. Among them, `setup`, `warmup` and `run` end to end against an in-memory controller
         (`tests/fake_jenkins.py`), both arms, `mixed-30` with node blocks, and a stock-Jenkins run
-        from REST alone. `ruff check`, `ruff format --check` and `mypy --strict` are clean.
+        from REST alone. `ruff check` and `ruff format --check` are clean.
+      - **A correction:** this entry first said `mypy --strict` was clean too. Run with the
+        backend's configuration over the tests as well, as Phase 7's gate check runs it, mypy found
+        17 errors, all in the tests:
+        - 25 `type: ignore` comments stood in for an interface, and two of them sat on the wrong
+          line. The harness now takes a `Controller` protocol, which the REST client and the
+          in-memory controller both meet, and the comments are gone.
+        - The rest were the tests' own typing: four values mypy could not type, a stand-in file
+          object where `HTTPError` takes a real one, a third misplaced `type: ignore`, and three
+          names used through modules that only re-export them.
+
+        mypy is now clean on all 24 files, and CI's Backend job runs it on the package.
+      - **On real Jenkins (T7.6):** `setup` created the six jobs on each controller through
+        `createItem`, and `run` triggered, polled and recorded them, all as the bot account.
+        `analyze` then worked from the files alone.
 - [x] T7.3 KPI calculations with unit tests built on hand-made event logs. Evidence, run on
       2026-10-23:
       - **Every KPI, from records:** Appendix F's waits (mean and maximum, overall and per band),
@@ -2149,7 +2163,56 @@ runs, is a Needs human item.
         - Both controllers report their arms, with one executor each.
         - The entrypoint check passes, and fails on the old script taken from git.
         - Phase 1's `jenkins-dev and its agents run what the current source builds` passes.
-- [ ] T7.6 Smoke run: `freestyle-6` on 1 executor, 1 repetition, on both experiment instances.
+- [x] T7.6 Smoke run: `freestyle-6` on 1 executor, 1 repetition, on both experiment instances.
+      Evidence, run on 2026-10-23 on mains power:
+      - **`python -m experiment smoke`** on the two new homes, so with no history: exit 0, and
+        "smoke: 0 dependency violation(s) across both controllers".
+        - observe-only: makespan 52.05 s; mean wait 18.98 s (HIGH 43.57, MEDIUM 21.56, LOW 2.82).
+        - optimized: makespan 52.29 s; mean wait 21.12 s (HIGH 27.42, MEDIUM 21.05, LOW 18.08).
+      - **Again through Phase 7's gate checks**, with warm history: makespans 51.41 s on both arms,
+        HIGH's mean wait 43.02 s observe-only against 26.87 s optimized, and 0 violations. The
+        recount from Jenkins' own build times agrees with the analysis.
+      - **The optimizer's order follows its scores.** It ran auth-service's build, test and deploy
+        (one dependency group, D = 1) before the two independent jobs, then `cleanup-old-builds`
+        before `build-payment-service`.
+        - That last step looks inverted in the recorded scores, 0.35 against 0.40, but each score
+          is recorded as its job leaves the queue.
+        - With both queued, T normalised over their similarity estimates gave 0.35 against 0.30.
+          Alone, payment took the neutral T, hence its 0.40.
+      - **Each run recorded** plugin 2.0.0-SNAPSHOT at build `80e0bb7`, Jenkins 2.568.3, one
+        executor, the workload's digest and the arm's configuration.
+        - On the optimized arm, the scheduler's overhead was a median of 0.77 ms per sort, with a
+          95th percentile of 2.81 ms.
+        - Observe-only never sorts, so it has no overhead to report.
+      - **Found on the way:** DF-46 (above).
+      - This is a six-job smoke run, not a measurement; the matrix is the Needs human item below.
+- [x] **Phase 7's checks in `verify.py`**, which now has 95 checks for phases 0 to 7. Evidence, run
+      on 2026-10-23:
+      - **The six, from the gate table:**
+        - the package's tests;
+        - ruff, ruff format and strict mypy on it;
+        - both experiment controllers and their agents running what the current source builds
+          (Phase 1's check, extended to them);
+        - the smoke run complete on both controllers;
+        - `results/latest.json` newer than its raw files, and holding its run's KPIs;
+        - zero dependency violations, counted by the analysis and again from `builds.json`.
+      - **Each check sets up what it asserts on:** the three smoke checks share one smoke run per
+        gate, which whichever runs first starts.
+      - **They fail when they should.** On a copy of the real runs, each of these fails its check,
+        13 of 13 cases as expected:
+        - a raw file rewritten after `latest.json`;
+        - `latest.json` naming another run, or holding other KPIs;
+        - an overlap only `builds.json` shows, and a violation both count;
+        - an unfinished run, the wrong arm, and a missing run;
+        - controllers that are not running.
+      - **Run one at a time,** all six passed against the running profile.
+- [ ] **Needs human: the full matrix (4.8.2)**, about 50 runs, listed in `experiment/README.md`.
+      - **Time:** each 30-job workload holds 315 s of work, so the matrix is several hours of
+        machine time on mains power. The controllers must restart between one and three executors.
+      - **Two arms need preparation first:**
+        - aging-off: the plugin controller's JCasC with the aging bonus and cap at `"0.0"`, restored
+          afterwards;
+        - stock: a controller image without the plugin, which no task has built yet.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not

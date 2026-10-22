@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import json
 import urllib.error
 import urllib.request
@@ -13,6 +14,9 @@ import pytest
 
 from experiment import jenkins
 from experiment.jenkins import Credentials, JenkinsClient, JenkinsError
+
+#: One canned answer: status, body (bytes, or JSON to encode), and headers.
+Answer = tuple[int, Any, dict[str, str]]
 
 
 class FakeResponse:
@@ -36,9 +40,7 @@ class FakeResponse:
 class FakeOpener:
     """Answers by (method, path); records every request it was given."""
 
-    def __init__(
-        self, answers: dict[tuple[str, str], list[tuple[int, Any, dict[str, str]]]]
-    ) -> None:
+    def __init__(self, answers: dict[tuple[str, str], list[Answer]]) -> None:
         self.answers = answers
         self.requests: list[urllib.request.Request] = []
 
@@ -53,12 +55,10 @@ class FakeOpener:
         return FakeResponse(status, data, headers)
 
 
-CRUMB = (200, {"crumbRequestField": "Jenkins-Crumb", "crumb": "c1"}, {})
+CRUMB: Answer = (200, {"crumbRequestField": "Jenkins-Crumb", "crumb": "c1"}, {})
 
 
-def client(
-    answers: dict[tuple[str, str], list[tuple[int, Any, dict[str, str]]]],
-) -> tuple[JenkinsClient, FakeOpener]:
+def client(answers: dict[tuple[str, str], list[Answer]]) -> tuple[JenkinsClient, FakeOpener]:
     opener = FakeOpener(answers)
     return JenkinsClient("http://jenkins", Credentials("bot", "s3cret"), opener=opener), opener
 
@@ -86,7 +86,7 @@ def test_a_post_carries_the_crumb_fetched_once() -> None:
 
 
 def test_a_stale_crumb_is_fetched_again_once() -> None:
-    fresh = (200, {"crumbRequestField": "Jenkins-Crumb", "crumb": "c2"}, {})
+    fresh: Answer = (200, {"crumbRequestField": "Jenkins-Crumb", "crumb": "c2"}, {})
     api, opener = client(
         {
             ("GET", "/crumbIssuer/api/json"): [CRUMB, fresh],
@@ -101,9 +101,8 @@ def test_a_stale_crumb_is_fetched_again_once() -> None:
     ) -> FakeResponse:
         if request.get_method() == "POST" and not refused:
             refused.append(request)
-            raise urllib.error.HTTPError(
-                request.full_url, 403, "Forbidden", Message(), _Body(b"No valid crumb was included")
-            )
+            body = io.BytesIO(b"No valid crumb was included")
+            raise urllib.error.HTTPError(request.full_url, 403, "Forbidden", Message(), body)
         return answer(request, timeout=timeout)
 
     opener.open = refuse_the_first_post  # type: ignore[method-assign]
@@ -112,17 +111,6 @@ def test_a_stale_crumb_is_fetched_again_once() -> None:
     assert refused[0].get_header("Jenkins-crumb") == "c1"
     assert [r.get_header("Jenkins-crumb") for r in retried] == ["c2"]
     assert retried[0].get_header("Content-type") == "application/xml; charset=utf-8"
-
-
-class _Body:
-    def __init__(self, data: bytes) -> None:
-        self.data = data
-
-    def read(self, *_: object) -> bytes:
-        return self.data
-
-    def close(self) -> None:
-        return None
 
 
 def test_without_a_crumb_issuer_a_post_goes_without_one() -> None:

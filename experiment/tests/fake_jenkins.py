@@ -123,7 +123,7 @@ class FakeController:
 
     def trigger(self, name: str) -> int:
         self._advance()
-        item = {"id": self._item(), "job": name, "entered": self.clock.now_ms()}
+        item: dict[str, Any] = {"id": self._item(), "job": name, "entered": self.clock.now_ms()}
         self.queue.append(item)
         self._event("QUEUE_ENTERED", item["entered"], item["id"], name, item["entered"])
         return int(item["id"])
