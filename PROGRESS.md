@@ -1948,6 +1948,16 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
         flows; 16 Lighthouse audits, all scoring 100; 3 stack system tests.
       - **Log:** `docs/testing/evidence/gate-run-5-8263a7e.log`. The commits since `8263a7e` change
         documentation only.
+- [x] **CI went red on two commits (`00c433b`, `e0c0c69`), and is fixed.**
+      - **The cause:** the Phase 0 script-console guard flagged
+        `docs/testing/work-in-progress/write_defects.py`, a copy of the defect log's generator that
+        quotes `/scriptText` in DF-02's description. It was committed at a usage limit without Phase
+        0 being run first.
+      - **The fix:** the copy is removed. The log itself is data, and the guard rightly does not
+        scan CSV.
+      - **Check:** `verify.py --phase 0` passes locally, 11 of 11.
+      - **The evidence campaign,** started at `e0c0c69`, was stopped and is run again at the fixed
+        commit, so that the commit it cites has a green CI.
 - [ ] **The testing chapter (Chapter 8), in progress; stopped at a usage limit on 2026-10-22.**
       - **The draft:** `docs/testing/work-in-progress/chapter-8-draft.md`. All sections are written,
         with the experiment results, defect analysis and limitations from real runs. 45
