@@ -70,6 +70,15 @@ def section_campaign(manifest: dict) -> list[str]:
         rows.append([step["name"], f"`{' '.join(Path(part).name if '/' in part or '\\\\' in part else part for part in step['command'])[:110]}`",
                      step["started"].replace("T", " ").replace("+00:00", " UTC"), step["seconds"], step["exit_code"], step.get("note", "")])
     lines += table(["Step", "Command", "Started", "Seconds", "Exit", "Note"], rows, ["---", "---", "---", "---:", "---:", "---"])
+    lines += ["", "The frontend-audit step exits 1 when `npm audit` finds a known vulnerability; here it found "
+              "Vite 8.3.2's development-server advisories, fixed after the campaign under D-075 (Section A.12).",
+              "", "**Two earlier runs, not cited.**", "",
+              "- **A rehearsal at `ac8305a`** ran the plugin and backend steps. Three backend steps failed during "
+              "a network outage on this machine, when DNS for GitHub and the model provider failed for about 15 "
+              "minutes, and passed when run again. `docs/testing/evidence/rehearsal-network-outage.txt` quotes "
+              "their errors. Its one skipped test was a placeholder, which led to DF-42 and to a new commit.",
+              "- **A run at `e0c0c69`** was stopped during its backend steps when CI turned out red on that "
+              "commit (DF-43). This campaign is its repeat at the fixed commit.", ""]
     return lines
 
 

@@ -1,0 +1,17 @@
+Excerpts from the evidence campaign's rehearsal at ac8305a, 2026-10-22: the three backend steps
+that failed during a network outage on the development machine (about 06:41 to 06:56).
+Full logs: .tmp/campaign/ac8305a/attempt-1-network-outage/ (kept locally, not committed).
+
+== backend-integration
+8 failed, 23 passed, 1 skipped, 1747 deselected in 514.12s (0:08:34)
+      2 ERROR: Error fetching remote repo 'origin'
+
+== backend-e2e
+10 failed, 3 passed, 1766 deselected in 387.05s (0:06:27)
+      1 fatal: unable to access 'https://github.com/haiderali-dev/payment-service.git/'
+      1 Could not resolve host: github.com
+
+== backend-live
+4 failed, 1775 deselected in 16.56s
+      4 llm_chain_exhausted            reasons=['openai/gpt-oss-120b: unavailable after 3 attempts', 'openai/gpt-oss-20b: unavailable after 3 attempts']
+

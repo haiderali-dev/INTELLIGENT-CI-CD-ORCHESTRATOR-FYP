@@ -1968,6 +1968,11 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
           system tests;
         - sample services: 12 and 7.
       - **One finding:** `npm audit` reported Vite's development-server advisories (D-075, below).
+      - **What the experiments found about the report is recorded in D-073**, with three items in
+        `docs/report-updates.md`: Section 6.6's overhead claim and its *h*, aging under sustained
+        load (Section 6.2), and the dependency edges behind Milestone 2's headline figure
+        (Chapter 12).
+      - **The defect log has 44 entries:** DF-43 (CI's catch) and DF-44 (Vite) are new.
 - [x] **D-075, Vite 8.3.2's development-server advisories (Phase 6).** Six advisories, one high,
       among them command execution through the editor launcher on Windows. The production build
       served by nginx was not exposed.

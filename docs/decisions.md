@@ -78,6 +78,52 @@ its file scan, and counts a skip as a failure.
 
 ---
 
+### D-073 What experiments E1 to E3 found about three of the report's claims
+**Date:** 2026-10-22 · **Status:** accepted (the testing chapter's experiments; no code change)
+
+The testing chapter ran three experiments in its evidence campaign at `31eb935`
+(`plugin/src/test/java/.../experiment/`, run on request only). Three of their findings bear on
+what the report says, and none is a defect in the code. Each is recorded here, as a conflict between
+the report and the built system, with its report change in `docs/report-updates.md`.
+
+**1. The plugin's cost (E1, inside a real Jenkins).** Report Section 6.6 says every operation
+completes "in microseconds to a fraction of a millisecond, so the plugin adds no measurable
+overhead", assuming *h*, the history an estimate examines, is at most 50. Measured:
+- **The routine pass bears the claim out.** With 30 items queued, a queue-maintenance pass took
+  0.20 ms with the optimizer off and 0.25 ms with it on (medians).
+- **The full rescore does not.** It took 2.1 ms at 30 items and 82 ms at 200. It runs when the queue
+  changes, and at most once a rescore interval otherwise.
+- **Section 6.6's *h* is the odd one out.** The code reads up to 50 builds of *every job on the
+  controller*, as report Section 6.5 says ("at most the last 50 builds per candidate job"), so *h*
+  grows with the number of jobs. The cost tracked queued items × history records.
+  `BUILD_PROMPT.md` 4.3.5's "up to `historyWindow` recent builds across all jobs" reads either way;
+  the code takes Section 6.5's reading.
+- **No code change.** Only Section 6.6's *h*, and its sentence on overhead, need correcting.
+
+**2. Aging under sustained load (E3, a simulation).** Report Section 6.2 gives the aging bonus the
+job of preventing starvation. Over two hours of random arrivals on one executor:
+- **The result:** with aging on and off, every mean wait agreed within 2% at each of four
+  utilisations, and the LOW band's longest wait at 95% utilisation was 1,253 s both ways.
+- **Why:** the bonus is the same for every band and caps at 0.15 after 15 minutes. Under load, the
+  long-waiting jobs of every band sit at the cap together, and 0.15 is less than the urgency gap
+  between LOW and HIGH (0.35).
+- **No code change:** CLAUDE.md fixes the formula to the report's.
+
+**3. Milestone 2's headline result (recomputed from its files, and E2).** Its HIGH band's wait fell
+from 271.5 s to 39.1 s.
+- **The broken edges:** the same run started a job before a job it depends on had finished on 19
+  of the workload's 20 dependency edges. Milestone 2 never measured this.
+- **What respecting dependencies costs:** in simulation on the same workload, no policy that
+  respects dependencies got the HIGH band below 155.9 s. Version 2's optimizer reached 176.7 s
+  with no edge broken, against FIFO's 271.5 s.
+
+**Also measured, and consistent with the report:** the algorithm alone (E1b) scored, sorted and
+heaped 200 items in 83 µs, and 3,200 in 1.6 ms, growing as O(n log n). The simulator was
+validated against Milestone 2's measured runs before it was used: FIFO within 0.1 s a band, and a
+replay of its plugin's order within 5 s a band.
+
+---
+
 ### D-072 The optimizer has a settings page, every setting on it does something, and Maven jobs are tested
 **Date:** 2026-10-22 · **Status:** accepted (hardening of Phases 1 to 6; Phase 2)
 
