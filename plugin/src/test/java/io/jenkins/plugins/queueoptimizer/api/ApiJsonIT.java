@@ -195,9 +195,20 @@ class ApiJsonIT {
                 "publishedMetricCount",
                 "failedMetricCount",
                 "pendingMetricCount",
-                "weightsSumToOne")) {
+                "weightsSumToOne",
+                // Which plugin a run measured, for the experiment's record (BUILD_PROMPT 4.8.3).
+                "pluginVersion",
+                "pluginBuild")) {
             assertTrue(health.has(field), "health field '" + field + "' missing");
         }
+        // Both come from the plugin's own manifest, which the test harness writes too (the.hpl).
+        String version = health.optString("pluginVersion");
+        assertTrue(
+                version.startsWith("2.") && !version.contains("private"),
+                "pluginVersion should be the plugin's version without the build note, got " + version);
+        assertTrue(
+                health.optString("pluginBuild").matches("[0-9a-f]{40}"),
+                "pluginBuild should be a commit, got " + health.get("pluginBuild"));
         assertTrue(health.getBoolean("enabled"));
         assertEquals(0, health.getLong("droppedMetricCount"));
         assertFalse(

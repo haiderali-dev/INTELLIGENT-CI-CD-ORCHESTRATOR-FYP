@@ -3,6 +3,7 @@ package io.jenkins.plugins.queueoptimizer.api;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
+import hudson.PluginWrapper;
 import hudson.model.Job;
 import hudson.model.Queue;
 import hudson.model.RootAction;
@@ -215,7 +216,53 @@ public class DynamicQueueApi implements RootAction {
                         + "," + pair("failedMetricCount", publisher.getFailedCount())
                         + "," + pair("pendingMetricCount", publisher.getPendingCount())
                         + "," + pair("weightsSumToOne", config.weightsSumToOne())
+                        + "," + nullablePair("pluginVersion", pluginVersion())
+                        + "," + nullablePair("pluginBuild", pluginBuild())
                         + "}");
+    }
+
+    /*
+     * Which plugin a run measured. The experiment records the version and the commit it was built
+     * from (BUILD_PROMPT 4.8.3), but the bot account cannot read the plugin manager, which needs more
+     * than Jenkins.READ, so the plugin reports both here, to the same readers as the rest of this
+     * endpoint. It is found by its short name: under the test harness its classes are not loaded by a
+     * plugin class loader, so a lookup by class finds nothing.
+     */
+
+    private static final String SHORT_NAME = "dynamic-queue-optimizer";
+
+    @CheckForNull
+    private static PluginWrapper thisPlugin() {
+        return Jenkins.get().getPluginManager().getPlugin(SHORT_NAME);
+    }
+
+    /**
+     * The version, without the "(private-commit-user)" note a development build carries: the commit is
+     * reported on its own, and the name of whoever built it is no business of the experiment's.
+     */
+    @CheckForNull
+    static String pluginVersion() {
+        PluginWrapper plugin = thisPlugin();
+        if (plugin == null) {
+            return null;
+        }
+        String version = plugin.getVersion();
+        int note = version.indexOf(" (");
+        return note < 0 ? version : version.substring(0, note);
+    }
+
+    /** The commit the plugin was built from, from its manifest's {@code Implementation-Build}. */
+    @CheckForNull
+    static String pluginBuild() {
+        PluginWrapper plugin = thisPlugin();
+        if (plugin == null || plugin.getManifest() == null) {
+            return null;
+        }
+        return plugin.getManifest().getMainAttributes().getValue("Implementation-Build");
+    }
+
+    private static String nullablePair(String key, @CheckForNull String value) {
+        return value == null ? MetricEvent.jsonEscape(key) + ":null" : pairString(key, value);
     }
 
     private static String renderItem(ScoredJob job, int rank, List<Queue.BuildableItem> buildable) {

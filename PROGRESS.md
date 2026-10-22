@@ -2067,6 +2067,18 @@ runs, is a Needs human item.
       - **Checks:** `python -m pytest experiment/tests`: 27 passed, under Python 3.14 and the
         backend's 3.12; `ruff check` and `ruff format --check` clean; `mypy --strict` clean. CI's
         Backend job now runs the package's ruff and pytest on every push.
+- [x] **The plugin, for T7.2: a build's own executor waits, and its version on
+      `/dynamic-queue/health` (D-076).** Evidence, run on 2026-10-23:
+      - **DF-45:** a build's node-block waits summed the job's earlier builds still in the
+        plugin's 500-event ring. Now a wait counts only if it is the build's own queue item, or a
+        node block queued after the build started. Nothing read the fields yet; the harness
+        recomputes every wait from raw events anyway.
+      - **`pluginVersion` and `pluginBuild` on `/dynamic-queue/health`:** every run must record
+        which plugin it measured (4.8.3), and the bot cannot read the plugin manager (403).
+      - **Checks:** `RunMetricsRecorderTest` 4 passed, and with the fix disabled its two
+        regression tests fail (5,700 ms for 700, 4,000 for 1,000); `ApiJsonIT` 11 passed;
+        `mvn -B verify` BUILD SUCCESS: 125 unit tests (1 skipped, as before), 97 JenkinsRule tests,
+        SpotBugs 0, Spotless clean.
 - [ ] T7.2 `python -m experiment` with `setup`, `warmup`, `run`, `analyze` and `report` commands,
       using only the REST API and `/dynamic-queue/metrics`.
 - [ ] T7.3 KPI calculations with unit tests built on hand-made event logs.

@@ -11,6 +11,47 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 6
 
+### D-076 The plugin counts a build's own executor waits, and reports its version
+**Date:** 2026-10-23 · **Status:** accepted (Phase 7)
+
+**Found by:** building the Phase 7 harness's Pipeline figures, which BUILD_PROMPT 4.8.4 asks for:
+the first node block's wait and the sum of all node-block waits.
+- **The defect (DF-45):** `RunMetricsRecorder` summed every QUEUE_LEFT event in its 500-event ring
+  that carried the job's name. The ring also holds the job's earlier builds, such as an experiment's
+  warm-up runs and earlier repetitions, so a build's waits included theirs.
+  `RunMetricsRecorderTest` shows it: without the fix, a freestyle build reports 5,700 ms for its
+  700, and a Pipeline 4,000 ms for its 1,000.
+- **Who read the fields:** nothing yet. The backend ignores them (only a comment in
+  `app/services/metrics.py` mentions them), so no figure in the product or the report was wrong.
+  The experiment would have been the first reader.
+
+**The fix:** a wait belongs to a build when it is the build's own queue item (`Run.getQueueId()`,
+how a freestyle job waits), or a node block that entered the queue after the build started (how a
+Pipeline waits).
+- **The harness does not rely on it:** it recomputes every wait from the raw events, matched to
+  each build the same way, so each figure can be checked against the rows it came from
+  (`experiment/records.py`).
+
+**And the plugin reports its version.** Every experiment run records the plugin version and the
+commit it was built from (BUILD_PROMPT 4.8.3), but the bot account cannot read the plugin manager,
+which answers it 403. So `/dynamic-queue/health` now gives both, to the same readers as the rest of
+the endpoint:
+- **`pluginVersion`:** the version without the "(private-commit-user)" note a development build
+  carries. The commit is reported on its own, and the user name is no business of the experiment's.
+- **`pluginBuild`:** the manifest's `Implementation-Build`, the commit.
+
+The plugin is found by its short name: under the test harness, a lookup by class finds nothing,
+which `ApiJsonIT` caught on the first attempt.
+
+**Evidence (2026-10-23):**
+- `RunMetricsRecorderTest`: 4 passed. With the fix disabled, the two tests that cover it fail as
+  above.
+- `ApiJsonIT.healthReportsCounters`: the version carries no build note, and the build is a commit.
+- `mvn -B verify`: BUILD SUCCESS, with 125 unit tests (1 skipped, the generated harness check, as
+  before) and 97 JenkinsRule tests passing, SpotBugs at 0 and Spotless clean.
+
+---
+
 ### D-075 Known vulnerabilities in Vite's development server are fixed within the cooldown
 **Date:** 2026-10-22 · **Status:** accepted (hardening of Phases 1 to 6; Phase 6)
 
