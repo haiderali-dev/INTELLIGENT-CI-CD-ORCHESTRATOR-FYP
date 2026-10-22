@@ -880,3 +880,23 @@ The ten most complex functions of each component:
 | Frontend | `runCardView` | `frontend/src/workspace/runCardModel.ts:60` | 12 | 25 | 87 | file |
 | Frontend | `QueueStatus` | `frontend/src/pages/QueuePage.tsx:156` | 10 | 24 | 92 | file |
 
+## A.14 Further figures
+
+The chapter shows its figures where it discusses them; these four complete the set. Each is drawn by `scripts/report/testing_figures.py` from the file named.
+
+![Test functions defined in the source, commit by commit, per component (merge commits left out)](figures/f02-test-growth.png)
+
+**Figure A.1: Test functions defined in the source, commit by commit, per component (merge commits left out)** (`data/test-growth.csv`)
+
+![The tests that ran in the evidence campaign, by the phase whose commit introduced each one](figures/f03-tests-by-phase.png)
+
+**Figure A.2: The tests that ran in the evidence campaign, by the phase whose commit introduced each one** (`data/test-register.csv`)
+
+![E2: the simulator against Milestone 2's measured runs, band by band](figures/f07-simulator-validation.png)
+
+**Figure A.3: E2: the simulator against Milestone 2's measured runs, band by band** (`data/experiments/simulation-m2-summary.csv`)
+
+![The plugin's and the backend's functions with branches: cyclomatic complexity against branch coverage, with those over 10 and under 80% covered named (the frontend's coverage is per file)](figures/f11-complexity-coverage.png)
+
+**Figure A.4: The plugin's and the backend's functions with branches: cyclomatic complexity against branch coverage, with those over 10 and under 80% covered named (the frontend's coverage is per file)** (`data/complexity-all.csv`)
+

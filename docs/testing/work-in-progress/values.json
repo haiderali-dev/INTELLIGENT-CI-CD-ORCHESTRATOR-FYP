@@ -1,11 +1,9 @@
 {
   "repo": "D:/FYP POC/CICD project - Copy",
+  "gate_log": "docs/testing/evidence/gate-run-5-8263a7e.log",
   "literal": {
     "COMMIT": "31eb935",
     "DATE": "22 October 2026",
-    "GATE_CHECKS": "89",
-    "GATE_COMMIT": "8263a7e",
-    "R_METRICS_CHECK": "Passed in gate run 5: 374 events published since jenkins-dev started, none failed or dropped",
     "R_SCHEMA_CI": "Passed in CI at `31eb935` (run 39728484869)",
     "NPM_AUDIT": "one high, in Vite 8.3.2's development server, fixed under D-075 (none after)",
     "SECURED_OPS": "38",

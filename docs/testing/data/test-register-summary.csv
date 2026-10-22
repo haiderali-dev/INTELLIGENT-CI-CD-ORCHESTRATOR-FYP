@@ -10,4 +10,4 @@ Frontend unit and component tests (Vitest),Unit and component,296,296,0,0,0,84.8
 Accessibility audits (Lighthouse in Playwright),System,17,17,0,0,0,95.4,31eb935,CI run 39728490681 (https://github.com/haiderali-dev/INTELLIGENT-CI-CD-ORCHESTRATOR-FYP/actions/runs/39728490681)
 System tests on the running stack (Playwright),System,3,3,0,0,0,41.5,31eb935,
 Sample services' own tests,Unit and integration,19,19,0,0,0,33.7,31eb935,
-Phase acceptance gate (scripts/verify.py),Acceptance,89,89,0,0,0,0.0,31eb935,CI run 39728490681 (https://github.com/haiderali-dev/INTELLIGENT-CI-CD-ORCHESTRATOR-FYP/actions/runs/39728490681)
+Phase acceptance gate (scripts/verify.py),Acceptance,89,89,0,0,0,0.0,8263a7e,

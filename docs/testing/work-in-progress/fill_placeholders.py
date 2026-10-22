@@ -60,6 +60,30 @@ def outcome(row: dict[str, str]) -> str:
 
 filled: dict[str, str] = dict(values["literal"])
 
+# --- The gate run the chapter cites, read from its log ---------------------------------------------
+gate_log = repo / values["gate_log"]
+gate_lines = gate_log.read_text(encoding="utf-8", errors="replace").splitlines()
+gate_run = re.match(r"gate-run-(\d+)-([0-9a-f]{7})", gate_log.name)
+assert gate_run, f"not a gate log's name: {gate_log.name}"
+assert any(line.strip() == "ALL CHECKS PASSED" for line in gate_lines) and not any(line.startswith("[FAIL]") for line in gate_lines), \
+    f"{gate_log.name} did not pass, so the chapter cannot cite it"
+
+
+def gate_detail(check: str) -> str:
+    return gate_lines[gate_lines.index(f"[PASS] {check}") + 1].strip()
+
+
+published = re.fullmatch(r"(\d+) published, (\d+) failed, (\d+) dropped", gate_detail("a live plugin event reaches the backend"))
+gate_e2e = re.fullmatch(r"(\d+) passed", gate_detail("pytest -m e2e passes on the Compose stack"))
+assert published and gate_e2e, "the gate log's metrics or end-to-end line has another form"
+filled.update(
+    GATE_RUN=gate_run.group(1), GATE_COMMIT=gate_run.group(2), GATE_E2E=gate_e2e.group(1),
+    GATE_CHECKS=str(sum(1 for line in gate_lines if line.startswith("[PASS] "))),
+    R_METRICS_CHECK=(f"Passed in gate run {gate_run.group(1)}: {published.group(1)} events published since jenkins-dev "
+                     "started, " + ("none failed or dropped" if published.group(2) == published.group(3) == "0"
+                                    else f"{published.group(2)} failed and {published.group(3)} dropped")),
+)
+
 # --- CI history and the Lighthouse audits ----------------------------------------------------------
 ci_rows = read_csv(DATA / "ci-runs.csv")
 ci = {conclusion: sum(1 for r in ci_rows if r["conclusion"] == conclusion) for conclusion in ("success", "failure", "cancelled")}
@@ -87,7 +111,8 @@ for row in summary:
 rows.append(["**All**", "", f"**{totals[0]:,}**", f"**{totals[1]:,}**", f"**{totals[2] + totals[3]}**", f"**{totals[4]}**",
              f"**{totals[5]:,.0f}**", ""])
 filled["SUITES_TABLE"] = (
-    "**Table {T:suites}: Every suite the evidence campaign ran** (at `" + values["literal"]["COMMIT"]
+    "**Table {T:suites}: Every suite in the register** (the evidence campaign at `" + values["literal"]["COMMIT"]
+    + "`, and the gate's checks from gate run " + filled["GATE_RUN"] + " at `" + filled["GATE_COMMIT"]
     + "`; every test, with its file, phase, commit and CI link, is in Annexure B)" + LF + LF
     + table(["Suite", "Level", "Tests", "Passed", "Failed", "Skipped", "Seconds", "Also in CI"], rows,
             ["---", "---", "---:", "---:", "---:", "---:", "---:", "---"]))

@@ -209,6 +209,7 @@ class Register:
         self.commit = manifest["commit"][:7]
         self.steps = {step["name"]: step for step in manifest["steps"]}
         self.rows: list[Row] = []
+        self.gate_run = ""
 
     def add(self, *, suite: str, level: str, technique: str, component: str, file: str, test: str,
             needle: str, description: str, result: str, time: float, ci_job: str | None) -> None:
@@ -351,7 +352,13 @@ class Register:
                     time=seconds(case), ci_job=None,
                 )
 
-    def gate(self, log: Path) -> None:
+    def gate(self, log: Path, ci_path: Path | None) -> None:
+        # The gate ran at its own commit, named in its log's file name (gate-run-<n>-<commit>.log),
+        # and CI's Phase 0 job at that commit is the one that also ran its Phase 0 checks.
+        named = re.match(r"gate-run-(\d+)-([0-9a-f]{7})", log.name)
+        gate_commit = named.group(2) if named else self.commit
+        self.gate_run = named.group(1) if named else ""
+        gate_ci = ci_links(ci_path, gate_commit)
         phase = "0"
         lines = log.read_text(encoding="utf-8", errors="replace").splitlines()
         for index, line in enumerate(lines):
@@ -371,6 +378,8 @@ class Register:
                 )
                 # The gate's phase is the check's own, not the commit that added it.
                 self.rows[-1].phase = phase
+                self.rows[-1].ran_at = gate_commit
+                self.rows[-1].ci = gate_ci.get("Phase checks", "") if phase == "0" else ""
 
 
 # --------------------------------------------------------------------------------------------------
@@ -405,7 +414,7 @@ def write(register: Register) -> None:
             writer.writerow([
                 suite, rows[0].level if len({r.level for r in rows}) == 1 else "mixed", len(rows),
                 counts["passed"], counts["failed"], counts["error"], counts["skipped"],
-                round(sum(row.seconds for row in rows), 1), register.commit, rows[0].ci,
+                round(sum(row.seconds for row in rows), 1), rows[0].ran_at, rows[0].ci,
             ])
 
     lines = [
@@ -416,14 +425,16 @@ def write(register: Register) -> None:
         "are in `data/test-register.csv`. *Test* is the name the runner reported, as the chapter cites "
         "it, and *What it checks* the test's own description where it has one. *Added in* is the commit "
         "that introduced the test and *Phase* that commit's phase (H: the hardening of Phases 1 to 6). "
-        "Every result is from the campaign's commit; under each suite is the CI run that also ran it, "
-        "where CI runs that suite.",
+        "Every result is from the campaign's commit, except the gate's checks, which are from the gate "
+        "run named under that suite. Under each suite is the CI run that also ran it, where CI runs "
+        "that suite.",
         "",
     ]
     for suite, rows in by_suite.items():
         counts = Counter(row.result for row in rows)
         verdict = ", ".join(f"{count} {result}" for result, count in counts.most_common())
-        lines += [f"## {suite}", "", f"{len(rows)} tests: {verdict}. Ran at `{register.commit}`."]
+        gate = f", gate run {register.gate_run}" if rows[0].file == "scripts/verify.py" and register.gate_run else ""
+        lines += [f"## {suite}", "", f"{len(rows)} tests: {verdict}. Ran at `{rows[0].ran_at}`{gate}."]
         if rows[0].ci:
             link = re.fullmatch(r"(CI run \d+) \((https://\S+)\)", rows[0].ci)
             lines.append(f"Also run by CI on every push: {f'[{link.group(1)}]({link.group(2)})' if link else rows[0].ci}.")
@@ -468,7 +479,7 @@ def main() -> int:
     register.frontend()
     register.lighthouse_audits()
     register.sample_services()
-    register.gate(args.gate)
+    register.gate(args.gate, args.ci)
     provenance.save()
     write(register)
 

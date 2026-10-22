@@ -378,6 +378,31 @@ def section_complexity() -> list[str]:
     return lines
 
 
+# The figures the chapter does not show, so that every one the runs produced is in the report:
+# (file, caption, the data it is drawn from).
+FURTHER_FIGURES = [
+    ("f02-test-growth", "Test functions defined in the source, commit by commit, per component (merge commits left out)",
+     "`data/test-growth.csv`"),
+    ("f03-tests-by-phase", "The tests that ran in the evidence campaign, by the phase whose commit introduced each one",
+     "`data/test-register.csv`"),
+    ("f07-simulator-validation", "E2: the simulator against Milestone 2's measured runs, band by band",
+     "`data/experiments/simulation-m2-summary.csv`"),
+    ("f11-complexity-coverage", "The plugin's and the backend's functions with branches: cyclomatic complexity against "
+     "branch coverage, with those over 10 and under 80% covered named (the frontend's coverage is per file)",
+     "`data/complexity-all.csv`"),
+]
+
+
+def section_figures() -> list[str]:
+    lines = ["## A.14 Further figures", "",
+             "The chapter shows its figures where it discusses them; these four complete the set. Each is drawn "
+             "by `scripts/report/testing_figures.py` from the file named.", ""]
+    for number, (name, caption, source) in enumerate(FURTHER_FIGURES, start=1):
+        if (DOCS / "figures" / f"{name}.png").is_file():
+            lines += [f"![{caption}](figures/{name}.png)", "", f"**Figure A.{number}: {caption}** ({source})", ""]
+    return lines
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("campaign", type=Path)
@@ -394,7 +419,7 @@ def main() -> int:
                     section_coverage(args.campaign), section_mutation(args.campaign), section_experiments(),
                     section_system(args.system), section_screenshots(), section_lighthouse(args.campaign),
                     section_defects(), section_security(), section_dependency_scans(args.campaign),
-                    section_complexity()):
+                    section_complexity(), section_figures()):
         lines += section
     # newline: LF, as the repository stores text; text mode on Windows would write CRLF.
     (DOCS / "annexure-a-evidence.md").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")

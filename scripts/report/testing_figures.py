@@ -340,7 +340,8 @@ def copy_experiments(campaign: Path) -> None:
     target = DATA / "experiments"
     target.mkdir(parents=True, exist_ok=True)
     for source in sorted(folder.glob("*")) if folder.is_dir() else []:
-        (target / source.name).write_bytes(source.read_bytes())
+        # The experiments run on Windows and write CRLF; the repository stores text with LF.
+        (target / source.name).write_bytes(source.read_bytes().replace(b"\r\n", b"\n"))
         print(f"data experiments/{source.name}")
 
 
@@ -364,7 +365,7 @@ def figure_suites() -> None:
     axis.set_xscale("log")
     axis.set_xlabel("Tests that ran (log scale)")
     axis.grid(axis="y", visible=False)
-    axis.set_title("Every suite, one campaign: tests that ran per suite")
+    axis.set_title("Every suite in the register: tests that ran per suite")
     save(figure, "f01-tests-per-suite")
 
 

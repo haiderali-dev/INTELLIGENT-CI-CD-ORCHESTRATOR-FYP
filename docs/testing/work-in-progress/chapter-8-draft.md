@@ -19,8 +19,8 @@ results, and Section 8.10 summarises.
 **The rule for evidence.** Every result in this chapter comes from a run that happened, at a commit
 that is named. One evidence campaign ran every suite once, at commit `[[COMMIT]]` on
 [[DATE]], and kept each runner's own report: JUnit XML, coverage data, the mutation report and the
-logs (`scripts/test_campaign.py`). The register in Annexure B is built from those reports and lists
-every test that ran (`scripts/report/test_register.py`). Where a figure comes from an earlier run, it
+logs (`scripts/test_campaign.py`). The register in Annexure B is built from those reports and the
+gate run's log, and lists every test that ran (`scripts/report/test_register.py`). Where a figure comes from an earlier run, it
 says so. Nothing is estimated. Anything not yet run is listed as not yet run in Section 8.9.4.
 
 **A rehearsal of the campaign, at the earlier commit `ac8305a`, is not cited as evidence.** It is
@@ -32,10 +32,11 @@ recorded all the same:
 Its logs are kept, and Annexure A.2 describes it.
 
 **The results in brief.**
-- **The evidence campaign** ran [[TOTAL_TESTS]] tests in [[N_SUITES]] suites: [[TOTAL_PASSED]]
-  passed, [[TOTAL_FAILED]] failed and [[TOTAL_SKIPPED]] skipped (Section 8.9.1; every test in
-  Annexure B).
-- **The acceptance gate** passed all 89 of its checks on the same code, run 5 (Section 8.6.3).
+- **The register of every test** holds [[TOTAL_TESTS]] tests in [[N_SUITES]] suites, from the
+  evidence campaign and the gate run: [[TOTAL_PASSED]] passed, [[TOTAL_FAILED]] failed and
+  [[TOTAL_SKIPPED]] skipped (Section 8.9.1; every test in Annexure B).
+- **The acceptance gate** passed all [[GATE_CHECKS]] of its checks in gate run [[GATE_RUN]], at
+  `[[GATE_COMMIT]]` (Sections 8.4.8 and 8.6.3).
 - **Coverage:**
   - the plugin, 93.2% of lines and 79.4% of branches;
   - the backend, [[BACKEND_COVERAGE_ALL]] of statements over all its suites;
@@ -246,8 +247,8 @@ Table {T:matrix} in Section 8.5.4.
 **Deliverables.** The test code; the gate checks; the evidence campaign's reports; the register of
 every test (Annexure B); the evidence and data (Annexure A); and this chapter.
 
-**Schedule.** Tests were written within each phase, from 28 September to 22 October 2026, and the
-evidence campaign ran on [[DATE]]. The Phase 7 experiment on real Jenkins, and the Phase 8 chatbot
+**Schedule.** Tests were written within each phase, from 28 September to 22 October 2026 (Annexure
+A.14, Figures A.1 and A.2), and the evidence campaign ran on [[DATE]]. The Phase 7 experiment on real Jenkins, and the Phase 8 chatbot
 evaluation with human-labelled answers, come later and are outside this chapter (Section 8.9.4).
 
 ### 8.3.6 Task 6: inspection of the plan
@@ -491,7 +492,8 @@ The setting is now in `backend/pyproject.toml`, so every later measurement is ri
 Each gap now has a test, listed in D-069.
 
 **Complexity and coverage together.** Cyclomatic complexity [25] was measured for every function
-with lizard, to see where an untested branch matters most:
+with lizard, to see where an untested branch matters most. Annexure A.14 plots each function's
+complexity against its branch coverage (Figure A.4):
 [[COMPLEXITY_TABLE]]
 
 ### 8.4.7 Mutation testing
@@ -554,12 +556,13 @@ Every component is also checked without running it, on every push (Table {T:stat
 | --- | --- | --- | --- | --- |
 | Plugin | SpotBugs | Bug patterns in the bytecode | 0 bug instances | the campaign's plugin build |
 | Plugin | Spotless | Formatting | clean | the campaign's plugin build |
-| Backend | Ruff, with its Bandit security rules, and its formatter | Lint, imports, naming, security patterns, format | clean | gate run 5 |
-| Backend | mypy, strict | Types | clean | gate run 5 |
-| Frontend | ESLint, TypeScript strict | Lint, types | clean | gate run 5 |
+| Backend | Ruff, with its Bandit security rules, and its formatter | Lint, imports, naming, security patterns, format | clean | gate run [[GATE_RUN]] |
+| Backend | mypy, strict | Types | clean | gate run [[GATE_RUN]] |
+| Frontend | ESLint, TypeScript strict | Lint, types | clean | gate run [[GATE_RUN]] |
 
-Gate run 5 ran on code identical to the campaign's; the commits between them change documentation
-only.
+Gate run [[GATE_RUN]] ran at `[[GATE_COMMIT]]`. Between the campaign's commit and that one, the
+product's code changed only in the frontend's Vite version, a development tool (D-075); every other
+change is documentation or the scripts that build this chapter's tables.
 
 ## 8.5 Black-box testing
 
@@ -783,7 +786,7 @@ They check:
 - that the backend reports its database, Jenkins and model provider;
 - since D-070, that every container runs what the current source builds.
 
-All passed in the gate run at `[[GATE_COMMIT]]`.
+All passed in gate run [[GATE_RUN]], at `[[GATE_COMMIT]]`.
 
 **Compliance.** The project's own rules are gate checks, not conventions:
 - no use of Jenkins' script console anywhere;
@@ -804,7 +807,7 @@ All passed in the gate run at `[[GATE_COMMIT]]`.
     - **In the evidence campaign it ran with the real model,** in the suite's live mode, which it
       takes whenever a model key is configured: [[N_BACKEND_E2E]] tests, [[R_BACKEND_E2E]].
     - **The gate runs it on replayed recordings of the model,** so that its verdict depends on
-      neither the model nor its quota. Gate run 5 passed 12, plus the failing-branch chain
+      neither the model nor its quota. Gate run [[GATE_RUN]] passed [[GATE_E2E]], plus the failing-branch chain
       separately.
   - **The stack's system tests** take a freestyle chain and a Pipeline from a sentence typed into
     the stack's own frontend to a build that succeeds on an agent, followed live on the run card. The
@@ -978,6 +981,7 @@ compare policies.
 each FIFO band's wait within 0.1 s. Replaying the order Milestone 2's plugin actually dispatched in,
 it reproduced that run's band waits within 5 s each (at most 4.0%), and its 19 broken edges. The measured plugin run took
 6 s longer overall than the replay: the dispatcher's own delays, which the simulator does not model.
+Annexure A.14 draws the comparison band by band (Figure A.3).
 
 **Table {T:e2}: Milestone 2's workload under each policy** (simulated; mean wait per band and
 makespan in seconds; estimates known)
@@ -1149,7 +1153,7 @@ cycle to the report's Appendix F. None of it has run. E2 and E3 bear on its desi
 
 [[SUITES_TABLE]]
 
-[[FIGURE f01-tests-per-suite {F:suites} | The tests the evidence campaign ran, by suite and outcome]]
+[[FIGURE f01-tests-per-suite {F:suites} | Every test in the register, by suite: the evidence campaign's and the gate run's]]
 
 ### 8.9.2 The defects testing found
 
@@ -1281,8 +1285,13 @@ That is the report's claim, with its cost stated.
 **Limits of what did run:**
 - **One machine.** Every local result comes from one Windows 11 machine with 16 GB of memory, with
   the stack under Docker Desktop. CI ran on GitHub's Ubuntu runners. The load figures (Section 8.7.1)
-  describe this machine; they are not capacity claims. Memory was tight: two full gate runs were
-  stopped by the development tool for low memory, and both were run again in full.
+  describe this machine; they are not capacity claims.
+  - **It is a laptop with little memory to spare.** Two full gate runs were stopped by the
+    development tool for low memory. A third, gate run 6, failed one check when the laptop went onto
+    battery, which halves its processor's speed, and was suspended for 22 minutes in the middle of
+    the run; its log is kept beside the others. Each was run again in full.
+  - **Every result this chapter cites ran on mains power,** as Windows' battery report shows for
+    the times of the evidence campaign, the gate run cited and the load and recovery tests.
 - **One browser.** The browser flows, audits and screenshots ran in Google Chrome only. Firefox and
   Safari were not tested.
 - **Independence.** The developers wrote the tests, with an AI coding assistant. Only the security
