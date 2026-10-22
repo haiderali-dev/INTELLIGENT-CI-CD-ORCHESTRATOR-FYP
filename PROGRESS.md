@@ -2044,6 +2044,36 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
       - **Annexure A and the chapter now point to the folder;** `check_citations.py` still finds
         76 of 76, and Phase 0 passes.
 
+## Phase 7: Experiment v2
+
+In progress on `phase-7-experiment`, branched from `main` at `422050f` (2026-10-23). The acceptance
+is the package's tests and a smoke run with zero dependency violations; the full matrix, about 50
+runs, is a Needs human item.
+
+- [x] T7.1 Workload files `freestyle-30`, `pipeline-30`, `mixed-30` and a small `freestyle-6` for
+      smoke tests (Part 4.8). Evidence, run on 2026-10-23:
+      - **The 30-job workloads are Milestone 2's 30 jobs exactly:** written from
+        `legacy/m2-poc/experiment/scripts/jobs.json`, read only, with its names, bands (6 LOW,
+        15 MEDIUM, 9 HIGH), durations and 20 dependency edges. `pipeline-30` holds them as Pipeline
+        jobs; `mixed-30` alternates the two types in Milestone 2's order, 15 of each.
+      - **`freestyle-6`** is six of those jobs, two LOW, three MEDIUM and one HIGH, with the chain
+        `build-auth-service`, `test-auth-service`, `deploy-auth-service` and its two edges.
+      - **Each workload names its jobs with its own prefix** (`fs30-`, `pl30-`, `mx30-`, `fs6-`),
+        because a Jenkins job name belongs to one job type, so all four fit on one controller.
+      - **`experiment/workload.py`** refuses a workload it cannot run (a duplicate or unsafe name,
+        an unknown type or band, a sleep outside 1 to 600 s, an unknown upstream, a cycle), digests
+        its content, and gives a run its order: LOW, then MEDIUM, then HIGH, each band in file
+        order, or a seeded shuffle.
+      - **Checks:** `python -m pytest experiment/tests`: 27 passed, under Python 3.14 and the
+        backend's 3.12; `ruff check` and `ruff format --check` clean; `mypy --strict` clean. CI's
+        Backend job now runs the package's ruff and pytest on every push.
+- [ ] T7.2 `python -m experiment` with `setup`, `warmup`, `run`, `analyze` and `report` commands,
+      using only the REST API and `/dynamic-queue/metrics`.
+- [ ] T7.3 KPI calculations with unit tests built on hand-made event logs.
+- [ ] T7.4 Chart and table generation, including `table_12_1.md` and CSV.
+- [ ] T7.5 Import the M2 results as the series "M2 dispatcher v1".
+- [ ] T7.6 Smoke run: `freestyle-6` on 1 executor, 1 repetition, on both experiment instances.
+
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
   installed and every Phase 2 test except T2.14 runs on JenkinsRule without it. Approved by the user.
