@@ -2046,9 +2046,10 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
 
 ## Phase 7: Experiment v2
 
-In progress on `phase-7-experiment`, branched from `main` at `422050f` (2026-10-23). The acceptance
-is the package's tests and a smoke run with zero dependency violations; the full matrix, about 50
-runs, is a Needs human item.
+On `phase-7-experiment`, branched from `main` at `422050f` (2026-10-23), in draft PR #14. T7.1 to
+T7.6 are done, and the phase gate passed 95 of 95 on `cd6b1e3` (gate run 9, 2026-10-23). The
+acceptance is the package's tests and a smoke run with zero dependency violations; the full matrix,
+about 50 runs, is a Needs human item and still open.
 
 - [x] T7.1 Workload files `freestyle-30`, `pipeline-30`, `mixed-30` and a small `freestyle-6` for
       smoke tests (Part 4.8). Evidence, run on 2026-10-23:
@@ -2206,6 +2207,42 @@ runs, is a Needs human item.
         - an unfinished run, the wrong arm, and a missing run;
         - controllers that are not running.
       - **Run one at a time,** all six passed against the running profile.
+- [x] **The eighth full gate run (2026-10-23, from 04:27, at `cd6b1e3`) was stopped in Phase 2.**
+      Claude Code stopped it, and the power log beside it, because the machine ran critically low on
+      memory with the full stack and the experiment profile up. 34 checks had passed and none had
+      failed; the next was `mvn -B verify`. Its log is kept
+      (`docs/testing/evidence/gate-run-8-cd6b1e3-stopped.log`).
+- [x] **The ninth full gate run (2026-10-23, at `cd6b1e3`): 95 of 95, ALL CHECKS PASSED, exit 0.**
+      The user ran it in Windows PowerShell, outside Claude Code, from about 10:30 to 10:59. It ran on
+      mains power: Windows logged its last power-source change at 01:51, gate run 8 read mains at
+      04:27, and Windows reads mains now. Its log is `docs/testing/evidence/gate-run-9-cd6b1e3.log`,
+      transcoded from PowerShell's UTF-16 to UTF-8, with the text unchanged.
+      - **The log, read in full in this session:** 95 checks for phases 0 to 7, 95 `[PASS]`, no
+        `[FAIL]`, no PowerShell error records, and `ALL CHECKS PASSED`. The exit code is from the
+        user's terminal.
+      - **Phase 7's six:**
+        - 116 package tests;
+        - ruff, ruff format and strict mypy clean;
+        - both controllers and their agents running the current build;
+        - the smoke run, 6 of 6 jobs built and analysed on each controller;
+        - `latest.json` written 2.6 ms after its last raw file;
+        - 0 dependency violations in both runs, from the plugin's events and from Jenkins' build
+          times.
+      - **Its suites:**
+        - plugin: 125 unit tests (1 skipped) and 97 integration tests;
+        - backend: the quality bars clean, 836 AI tests and 12 end-to-end tests;
+        - frontend: 296 tests, 12 browser flows, 16 Lighthouse audits (all 100 for accessibility)
+          and 3 stack system tests.
+      - **Checked again from the files in this session:**
+        - HEAD has been `cd6b1e3` since 04:27, and the working tree's only change was
+          `latest.json`, which the gate writes.
+        - The run's two smoke runs (`20261023T055802Z`, `20261023T055856Z`) are complete, with 6
+          of 6 jobs and 0 violations each.
+        - `latest.json` names the second, 2.6 ms after its `run.json`, with the same KPIs as its
+          `analysis.json`.
+      - **The command ran twice, back to back, and this run's log replaced the first's.** The first
+        ran from 09:57 to about 10:30. Its smoke runs (`20261023T052743Z`, `20261023T052839Z`) are
+        complete, with 6 of 6 jobs and 0 violations each. Its other results are not known.
 - [ ] **Needs human: the full matrix (4.8.2)**, about 50 runs, listed in `experiment/README.md`.
       - **Time:** each 30-job workload holds 315 s of work, so the matrix is several hours of
         machine time on mains power. The controllers must restart between one and three executors.
