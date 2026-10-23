@@ -9,6 +9,81 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ---
 
+## Phase 7
+
+### D-077 A new controller home gets every plugin: the entrypoint leaves the image's REF alone
+**Date:** 2026-10-23 · **Status:** accepted (Phase 7)
+
+**Found by:** starting the experiment profile's two controllers for the first time, for T7.6. Both
+came up with no agent executors and no `/dynamic-queue` (404), so the harness read them as stock
+Jenkins.
+- **The defect (DF-46):** `jenkins/controller/install-plugin-under-test.sh` (D-028) held the
+  plugin's path in a variable named `REF`. The stock image exports `REF=/usr/share/jenkins/ref`,
+  the folder `jenkins.sh` seeds a new home from, and assigning to an exported variable exports the
+  new value. So `jenkins.sh` seeded each new home with one file, the optimizer:
+  - its seed log lists a single INSTALLED line, and the home held 1 of the image's 80 plugins;
+  - the optimizer failed to load ("Plugin is missing: structs");
+  - configuration as code, itself one of the 80, was not installed, so the agent and accounts its
+    YAML defines did not exist.
+- **Why nothing caught it before:** the script came with T3.6 (2026-10-07). jenkins-dev's home was
+  first seeded on 2026-09-29, and seeding copies only what a home lacks, so jenkins-dev never
+  showed it. The experiment controllers' volumes were the first homes made since. Rebuilding the
+  dev stack on a new machine, or after losing its volume, would have hit the same failure.
+
+**The fix:** the variable is now `IMAGE_PLUGIN`, and the script explains why no variable there may
+be named `REF`.
+- **Guarded:** verify.py's Phase 3 check of the entrypoint now fails on any assignment to `REF`. Run
+  against the old script, taken from git, it fails.
+
+**Evidence (2026-10-23):**
+- After the rebuild, each new home holds all 80 plugins.
+- Both controllers report their arms, observe-only and optimized, with one executor each.
+- The smoke run completed on both.
+- The entrypoint check passes on the fixed script.
+
+---
+
+### D-076 The plugin counts a build's own executor waits, and reports its version
+**Date:** 2026-10-23 · **Status:** accepted (Phase 7)
+
+**Found by:** building the Phase 7 harness's Pipeline figures, which BUILD_PROMPT 4.8.4 asks for:
+the first node block's wait and the sum of all node-block waits.
+- **The defect (DF-45):** `RunMetricsRecorder` summed every QUEUE_LEFT event in its 500-event ring
+  that carried the job's name. The ring also holds the job's earlier builds, such as an experiment's
+  warm-up runs and earlier repetitions, so a build's waits included theirs.
+  `RunMetricsRecorderTest` shows it: without the fix, a freestyle build reports 5,700 ms for its
+  700, and a Pipeline 4,000 ms for its 1,000.
+- **Who read the fields:** nothing yet. The backend ignores them (only a comment in
+  `app/services/metrics.py` mentions them), so no figure in the product or the report was wrong.
+  The experiment would have been the first reader.
+
+**The fix:** a wait belongs to a build when it is the build's own queue item (`Run.getQueueId()`,
+how a freestyle job waits), or a node block that entered the queue after the build started (how a
+Pipeline waits).
+- **The harness does not rely on it:** it recomputes every wait from the raw events, matched to
+  each build the same way, so each figure can be checked against the rows it came from
+  (`experiment/records.py`).
+
+**And the plugin reports its version.** Every experiment run records the plugin version and the
+commit it was built from (BUILD_PROMPT 4.8.3), but the bot account cannot read the plugin manager,
+which answers it 403. So `/dynamic-queue/health` now gives both, to the same readers as the rest of
+the endpoint:
+- **`pluginVersion`:** the version without the "(private-commit-user)" note a development build
+  carries. The commit is reported on its own, and the user name is no business of the experiment's.
+- **`pluginBuild`:** the manifest's `Implementation-Build`, the commit.
+
+The plugin is found by its short name: under the test harness, a lookup by class finds nothing,
+which `ApiJsonIT` caught on the first attempt.
+
+**Evidence (2026-10-23):**
+- `RunMetricsRecorderTest`: 4 passed. With the fix disabled, the two tests that cover it fail as
+  above.
+- `ApiJsonIT.healthReportsCounters`: the version carries no build note, and the build is a commit.
+- `mvn -B verify`: BUILD SUCCESS, with 125 unit tests (1 skipped, the generated harness check, as
+  before) and 97 JenkinsRule tests passing, SpotBugs at 0 and Spotless clean.
+
+---
+
 ## Phase 6
 
 ### D-075 Known vulnerabilities in Vite's development server are fixed within the cooldown

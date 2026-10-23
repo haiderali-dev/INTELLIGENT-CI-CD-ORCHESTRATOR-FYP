@@ -1,0 +1,14 @@
+# The backend's ruff rules, applied to the experiment package as well, so code whose numbers go
+# into Chapter 12 meets the same bar as the application it measures (as eval/ruff.toml does).
+extend = "../backend/pyproject.toml"
+
+[lint.per-file-ignores]
+# The command-line entry point: its printed progress and summary are its user interface, the same
+# exception the backend makes for app/db/seed.py.
+"__main__.py" = ["T201"]
+# Tests build hand-made event logs and fixtures with long literals, and use made-up credentials,
+# as the backend's tests may.
+"tests/**" = ["E501", "S105", "S106", "S107"]
+
+[lint.isort]
+known-first-party = ["experiment"]

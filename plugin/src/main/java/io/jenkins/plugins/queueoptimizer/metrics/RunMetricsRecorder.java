@@ -8,6 +8,7 @@ import hudson.model.listeners.RunListener;
 import io.jenkins.plugins.queueoptimizer.config.OptimizerConfiguration;
 import io.jenkins.plugins.queueoptimizer.estimation.RecordedLabelAction;
 import io.jenkins.plugins.queueoptimizer.property.JobPriorityProperty;
+import java.util.List;
 
 /**
  * Records build starts and completions: result, duration, and for Pipeline runs the queue waiting
@@ -40,7 +41,11 @@ public class RunMetricsRecorder extends RunListener<Run<?, ?>> {
     @Override
     public void onCompleted(Run<?, ?> run, TaskListener listener) {
         Result result = run.getResult();
-        NodeBlockWaits waits = nodeBlockWaits(run.getParent().getFullName(), run.getNumber());
+        NodeBlockWaits waits = nodeBlockWaits(
+                MetricsPublisher.get().getRecent(Integer.MAX_VALUE),
+                run.getParent().getFullName(),
+                run.getQueueId(),
+                run.getStartTimeInMillis());
 
         MetricsPublisher.get()
                 .record(MetricEvent.of(MetricEvent.Kind.BUILD_COMPLETED)
@@ -67,18 +72,21 @@ public class RunMetricsRecorder extends RunListener<Run<?, ?>> {
     }
 
     /**
-     * Sums the node-block waits this run accumulated, from the recorder's recent events.
+     * Sums the executor waits of one build, from the recorder's recent events.
      *
      * <p>Reads the in-memory ring rather than keeping separate state, so there is one source of
-     * truth for a wait and no chance of the two disagreeing. For a freestyle job this finds the
-     * single queue event for the job itself, which is exactly the wait that matters there.
+     * truth for a wait and no chance of the two disagreeing. A wait belongs to this build when it is
+     * the build's own queue item ({@code queueId}, which is how a freestyle job waits) or a node
+     * block that entered the queue after the build started (which is how a Pipeline waits). The
+     * ring also holds earlier builds of the same job, and matching on the job name alone summed
+     * their waits into this one's (DF-45).
      */
-    private static NodeBlockWaits nodeBlockWaits(String jobName, int buildNumber) {
+    static NodeBlockWaits nodeBlockWaits(List<MetricEvent> events, String jobName, long queueId, long startMillis) {
         long total = 0;
         long first = -1;
         int count = 0;
 
-        for (MetricEvent event : MetricsPublisher.get().getRecent(Integer.MAX_VALUE)) {
+        for (MetricEvent event : events) {
             if (event.getKind() != MetricEvent.Kind.QUEUE_LEFT) {
                 continue;
             }
@@ -94,6 +102,9 @@ public class RunMetricsRecorder extends RunListener<Run<?, ?>> {
             if (Boolean.FALSE.equals(event.getFields().get("consumesExecutor"))) {
                 continue;
             }
+            if (!belongsToBuild(event, queueId, startMillis)) {
+                continue;
+            }
             long millis = waitMillis.longValue();
             if (first < 0) {
                 first = millis;
@@ -104,5 +115,17 @@ public class RunMetricsRecorder extends RunListener<Run<?, ?>> {
         return new NodeBlockWaits(Math.max(0, first), total, count);
     }
 
-    private record NodeBlockWaits(long first, long total, int count) {}
+    private static boolean belongsToBuild(MetricEvent event, long queueId, long startMillis) {
+        Object itemId = event.getFields().get("itemId");
+        if (itemId instanceof Number id && id.longValue() == queueId) {
+            return true;
+        }
+        Object since = event.getFields().get("inQueueSince");
+        return Boolean.TRUE.equals(event.getFields().get("isNodeBlock"))
+                && since instanceof Number queued
+                && queued.longValue() >= startMillis;
+    }
+
+    /** One build's executor waits: the first one, their sum, and how many there were. */
+    record NodeBlockWaits(long first, long total, int count) {}
 }

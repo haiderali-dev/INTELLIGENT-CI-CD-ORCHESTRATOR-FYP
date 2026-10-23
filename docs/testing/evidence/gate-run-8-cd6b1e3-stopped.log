@@ -1,0 +1,73 @@
+verify.py --phase 7   (95 checks)
+
+-- phase 0 ---------------------------------------------------------
+[PASS] skeleton folders exist
+       all 22 present
+[PASS] root documents exist
+       all 9 present
+[PASS] tracking documents exist
+       all 4 present
+[PASS] legacy/m2-poc present
+       plugin sources, harness and results all present
+[PASS] legacy/m2-poc unmodified against m2-final
+       byte-identical to the tag, nothing added
+[PASS] no secrets tracked by Git
+       1340 tracked files, none matching 7 secret patterns
+[PASS] .gitattributes sets LF for the required types
+       all 7 types pinned to LF
+[PASS] legacy/ is exempt from line-ending normalisation
+       `legacy/** -text` keeps the frozen copy byte for byte
+[PASS] CI workflow parses
+       6 jobs: detect, verify, plugin, backend, frontend, flows
+[PASS] M2 baseline figures match the legacy result files
+       HIGH-band wait 271.50 s -> 39.08 s, as documented
+[PASS] no Jenkins script console call in our code
+       561 code files scanned, no reference
+-- phase 1 ---------------------------------------------------------
+[PASS] Docker and Compose files exist
+       all 11 present
+[PASS] docker-compose.yml is valid and matches Part 4.2.3
+       10 services, 6 default, 4 profiled
+[PASS] every published port is bound to loopback, and Jenkins keeps its safety checks
+       6 published ports, all on 127.0.0.1; no agent port; signatures checked
+[PASS] Compose refuses to start rather than defaulting a secret
+       all 6 secrets fail loudly when unset
+[PASS] JCasC files are valid and the two arms differ only in optimizerEnabled
+       dev plus two arms differing only in optimizerEnabled
+[PASS] JCasC quotes every floating-point optimizer value, at Appendix D's values (D-017)
+       all 7 quoted, at the report's values, in 3 files
+[PASS] the controller image installs the built plugin
+       COPY present and the .hpi exists (91 KB)
+[PASS] controller plugins are pinned
+       16 plugins, all pinned
+[PASS] Docker is available
+       daemon 29.8.1
+[PASS] docker compose config validates
+       the merged configuration is valid
+[PASS] jenkins-dev and its agents run what the current source builds
+       jenkins-dev runs plugin/target's classes and files; both agents match their build
+[PASS] jenkins-dev answers with the bot token
+       authenticated as orchestrator-bot
+[PASS] controller runs zero executors
+       0, so all work goes to the labelled agents
+[PASS] both agents are online
+       2 agents online, 4 executors, linux on agent-1, agent-2
+[PASS] sample services are present and complete
+       2 services with build, test, deploy and a Dockerfile
+[PASS] both sample services' own tests pass
+       payment-service 12 passed; auth-service 7 passed
+[PASS] deploy scripts refuse production
+       both refuse production explicitly
+[PASS] shell scripts use LF endings
+       all sample-service shell scripts are LF
+[PASS] catalog validates
+       schema, production policy and structure all valid
+[PASS] reference configs were exported from Jenkins
+       3 configs, all carrying Jenkins' own plugin version stamps
+-- phase 2 ---------------------------------------------------------
+[PASS] every test named in Part 4.3.10 exists
+       all 17 present
+[PASS] integration tests are bound to the Maven lifecycle
+       integration-test and verify goals both bound
+[PASS] the scoring formula matches the report
+       U = 1.0/0.6/0.3 and weights 0.5/0.3/0.2 with aging 0.05 per 5 min, cap 0.15

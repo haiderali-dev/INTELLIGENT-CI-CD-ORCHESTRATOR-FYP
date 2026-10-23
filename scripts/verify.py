@@ -16,6 +16,7 @@ is ordered by phase then by registration order.
 from __future__ import annotations
 
 import argparse
+import functools
 import io
 import json
 import math
@@ -1063,15 +1064,15 @@ def _jar_entries(data: bytes) -> dict[str, int]:
         }
 
 
-def _jenkins_dev_runs_built_plugin() -> str | None:
-    """None when jenkins-dev runs the plugin classes plugin/target's .hpi holds, built from the
+def _controller_runs_built_plugin(service: str, container: str) -> str | None:
+    """None when the controller runs the plugin classes plugin/target's .hpi holds, built from the
     current source; otherwise why not.
 
     Docker's cache cannot answer for this image: every Maven build writes a new build time into the
     .hpi, so its bytes, and the image, change even when no class does. The classes are compared
     instead, in the plugin Jenkins expanded and is running, and so are the two files the image
-    copies from jenkins/controller."""
-    rebuild = "Rebuild: `docker compose build jenkins-dev`, then `docker compose up -d jenkins-dev`"
+    copies from jenkins/controller. jenkins-dev and both experiment controllers share the image."""
+    rebuild = f"Rebuild: `docker compose build {service}`, then `docker compose up -d {service}`"
     hpi = REPO_ROOT / "plugin" / "target" / "dynamic-queue-optimizer.hpi"
     if not hpi.is_file():
         return "plugin/target has no .hpi; run `cd plugin && mvn -B verify`"
@@ -1083,7 +1084,7 @@ def _jenkins_dev_runs_built_plugin() -> str | None:
 
     def container_file(path: str) -> bytes | None:
         result = subprocess.run(
-            ["docker", "exec", "orchestrator-jenkins-dev", "cat", path],
+            ["docker", "exec", container, "cat", path],
             capture_output=True,
             timeout=60,
             check=False,
@@ -1095,7 +1096,7 @@ def _jenkins_dev_runs_built_plugin() -> str | None:
         ("install-plugin-under-test.sh", "/usr/local/bin/install-plugin-under-test.sh"),
     ):
         if container_file(path) != (REPO_ROOT / "jenkins" / "controller" / name).read_bytes():
-            return f"jenkins-dev's image holds another jenkins/controller/{name}. {rebuild}"
+            return f"{service}'s image holds another jenkins/controller/{name}. {rebuild}"
 
     with zipfile.ZipFile(hpi) as outer:
         bundled = {
@@ -1105,18 +1106,18 @@ def _jenkins_dev_runs_built_plugin() -> str | None:
         }
         built = _jar_entries(outer.read("WEB-INF/lib/dynamic-queue-optimizer.jar"))
     lib = "/var/jenkins_home/plugins/dynamic-queue-optimizer/WEB-INF/lib"
-    listing = run(["docker", "exec", "orchestrator-jenkins-dev", "ls", lib], timeout=60)
+    listing = run(["docker", "exec", container, "ls", lib], timeout=60)
     if listing.returncode != 0:
-        return f"jenkins-dev has no expanded plugin to compare: {listing.stderr.strip()[:120]}"
+        return f"{service} has no expanded plugin to compare: {listing.stderr.strip()[:120]}"
     jar = container_file(f"{lib}/dynamic-queue-optimizer.jar")
     if not jar:
-        return "could not read the plugin jenkins-dev runs"
+        return f"could not read the plugin {service} runs"
     running = _jar_entries(jar)
     differ = sorted(n for n in built.keys() | running.keys() if built.get(n) != running.get(n))
     if differ or bundled != set(listing.stdout.split()):
         files = "1 file differs" if len(differ) == 1 else f"{len(differ)} files differ"
         what = f"{files} ({', '.join(differ[:3])})" if differ else "bundled jars differ"
-        return f"jenkins-dev runs a plugin unlike plugin/target's .hpi: {what}. {rebuild}"
+        return f"{service} runs a plugin unlike plugin/target's .hpi: {what}. {rebuild}"
     return None
 
 
@@ -1127,7 +1128,7 @@ def check_jenkins_images_current() -> Result:
     problems = [
         problem
         for problem in (
-            _jenkins_dev_runs_built_plugin(),
+            _controller_runs_built_plugin("jenkins-dev", "orchestrator-jenkins-dev"),
             _runs_current_build("agent-1", "orchestrator-agent-1"),
             _runs_current_build("agent-2", "orchestrator-agent-2"),
         )
@@ -2032,10 +2033,14 @@ def check_publisher_http_version() -> Result:
 
 @check(3, "the controller reinstalls the plugin under test on start")
 def check_plugin_reinstall_entrypoint() -> Result:
-    """Guards D-028.
+    """Guards D-028 and DF-46.
 
     The plugin is always 2.0.0-SNAPSHOT, so Jenkins never treats an image copy as newer and a
     persistent home keeps the .hpi from its first boot. A fix can then appear not to work.
+
+    The stock image exports REF, the folder jenkins.sh seeds a new home from. The script once
+    assigned REF the plugin's own path, which exported it, so a fresh home received that one
+    plugin of the image's 80 and the controller came up without configuration as code.
     """
     script = REPO_ROOT / "jenkins" / "controller" / "install-plugin-under-test.sh"
     if not script.is_file():
@@ -2046,6 +2051,11 @@ def check_plugin_reinstall_entrypoint() -> Result:
         return fail("the script does not remove the .pinned marker, so the stale plugin wins")
     if "jenkins.sh" not in text:
         return fail("the script does not hand over to the stock entrypoint")
+    if re.search(r"^\s*(?:readonly\s+|export\s+|local\s+|declare\s+(?:-\w+\s+)*)?REF=", text, re.M):
+        return fail(
+            "the script assigns REF, the image's seed folder, so a new home gets only the plugin "
+            "under test (DF-46)"
+        )
 
     dockerfile = (REPO_ROOT / "jenkins" / "controller" / "Dockerfile").read_text(encoding="utf-8")
     if "install-plugin-under-test.sh" not in dockerfile:
@@ -2053,7 +2063,7 @@ def check_plugin_reinstall_entrypoint() -> Result:
     if "ENTRYPOINT" not in dockerfile:
         return fail("the Dockerfile sets no ENTRYPOINT, so the script never runs")
 
-    return ok("entrypoint replaces the plugin and execs jenkins.sh")
+    return ok("entrypoint replaces the plugin, leaves the image's REF alone, and execs jenkins.sh")
 
 
 @check(3, "a live plugin event reaches the backend")
@@ -2670,24 +2680,29 @@ def check_eval_run() -> Result:
     return ok(f"metrics.json written; {scored} scored, {excluded} excluded pending review")
 
 
-@check(4, "the evaluation package passes ruff and strict mypy")
-def check_eval_quality() -> Result:
-    """Its numbers go into the report, so it meets the backend's bar (eval/ruff.toml extends it)."""
+def _package_quality(package: str) -> Result:
+    """ruff, ruff format and strict mypy on a package beside backend/, with the backend's settings."""
     runner = _uv_runner()
     if runner is None:
         return fail("uv is not installed; see docs/decisions.md D-010")
     backend = REPO_ROOT / "backend"
     stages = (
-        ("ruff check", ["python", "-m", "ruff", "check", "../eval"]),
-        ("ruff format --check", ["python", "-m", "ruff", "format", "--check", "../eval"]),
-        ("mypy", ["python", "-m", "mypy", "../eval", "--config-file", "pyproject.toml"]),
+        ("ruff check", ["python", "-m", "ruff", "check", f"../{package}"]),
+        ("ruff format --check", ["python", "-m", "ruff", "format", "--check", f"../{package}"]),
+        ("mypy", ["python", "-m", "mypy", f"../{package}", "--config-file", "pyproject.toml"]),
     )
     for label, command in stages:
         result = run([*runner, "run", "--no-sync", *command], cwd=backend, timeout=300)
         if result.returncode != 0:
             tail = [line for line in (result.stdout + result.stderr).splitlines() if line.strip()][-2:]
-            return fail(f"{label} failed on eval/: " + " / ".join(tail)[:200])
+            return fail(f"{label} failed on {package}/: " + " / ".join(tail)[:200])
     return ok("ruff, ruff format and strict mypy clean")
+
+
+@check(4, "the evaluation package passes ruff and strict mypy")
+def check_eval_quality() -> Result:
+    """Its numbers go into the report, so it meets the backend's bar (eval/ruff.toml extends it)."""
+    return _package_quality("eval")
 
 
 # ---------------------------------------------------------------------------
@@ -3470,7 +3485,206 @@ def check_ws_protocol_names() -> Result:
     return ok(f"{events} event types and {topics} topics, the same on both sides")
 
 
-IMPLEMENTED_PHASES = {0, 1, 2, 3, 4, 5, 6}
+# ---------------------------------------------------------------------------
+# Phase 7: the experiment harness
+#
+# The live checks need the Compose `experiment` profile, which `docker compose up -d` leaves
+# stopped: `docker compose --profile experiment up -d` starts it, one executor per agent.
+# ---------------------------------------------------------------------------
+
+EXPERIMENT_RESULTS = REPO_ROOT / "experiment" / "results"
+#: What a run writes before it is analysed (experiment/results.py, RAW_FILES).
+EXPERIMENT_RAW_FILES = ("run.json", "events.jsonl", "builds.json", "health.jsonl")
+#: Each experiment controller's Compose service, its agent's, its URL, and the arm JCasC sets.
+EXPERIMENT_CONTROLLERS = (
+    ("jenkins-baseline", "baseline-agent", "http://127.0.0.1:8085", "observe-only"),
+    ("jenkins-plugin", "plugin-agent", "http://127.0.0.1:8086", "optimized"),
+)
+
+
+@check(7, "the experiment package's tests pass")
+def check_experiment_tests() -> Result:
+    """Acceptance clause 1, and 1.6's bar for the package, in the backend's Python as CI runs it.
+    The harness's own tests drive an in-memory controller, so this needs no Jenkins."""
+    result, output = _pytest(["../experiment/tests", "-p", "no:cacheprovider"], timeout=600)
+    return _all_passed(result, output, "the experiment package's tests")
+
+
+@check(7, "the experiment package passes ruff and strict mypy")
+def check_experiment_quality() -> Result:
+    """Its figures go into Chapter 12, so it meets the backend's bar, as the evaluation package
+    does (experiment/ruff.toml extends the backend's settings)."""
+    return _package_quality("experiment")
+
+
+@check(7, "the experiment controllers and their agents run what the current source builds")
+def check_experiment_images_current() -> Result:
+    """Phase 1's check, for the experiment profile: a smoke run says nothing about this commit if
+    a controller runs an older plugin. DF-46 went unseen until these controllers first started."""
+    if not have("docker"):
+        return fail("blocked: Docker is not installed")
+    problems = [
+        problem
+        for service, agent, _url, _arm in EXPERIMENT_CONTROLLERS
+        for problem in (
+            _controller_runs_built_plugin(service, f"orchestrator-{service}"),
+            _runs_current_build(agent, f"orchestrator-{agent}"),
+        )
+        if problem
+    ]
+    if problems:
+        return fail("; ".join(problems))
+    return ok("both controllers run plugin/target's classes and files; both agents match a build")
+
+
+def _experiment_runs() -> list[Path]:
+    """Every run folder under experiment/results, oldest first (their names start with the time)."""
+    if not EXPERIMENT_RESULTS.is_dir():
+        return []
+    return sorted(path for path in EXPERIMENT_RESULTS.iterdir() if (path / "run.json").is_file())
+
+
+def _read_json(path: Path) -> Any:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+@functools.cache
+def _smoke() -> tuple[subprocess.CompletedProcess[str], tuple[Path, ...]] | str:
+    """T7.6, once per gate: `python -m experiment smoke`, freestyle-6 on one executor on each
+    experiment controller. The process and the run folders it wrote, or why it could not run.
+
+    Three checks assert on the smoke run, and each calls this: whichever comes first runs it, the
+    others read what it wrote, and any one of them run alone still sets up the state it asserts on.
+    """
+    down = [
+        service
+        for service, _agent, url, _arm in EXPERIMENT_CONTROLLERS
+        if _get(url + "/login")[0] != 200
+    ]
+    if down:
+        return (
+            f"{' and '.join(down)} not answering; start the experiment profile with "
+            "`docker compose --profile experiment up -d`"
+        )
+    runner = _uv_runner()
+    if runner is None:
+        return "uv is not installed; see docs/decisions.md D-010"
+    before = set(_experiment_runs())
+    command = [*runner, "run", "--no-sync", "--project", "backend", "python", "-m", "experiment"]
+    try:
+        result = run([*command, "smoke"], cwd=REPO_ROOT, timeout=2400)
+    except subprocess.TimeoutExpired:
+        return "the smoke run did not finish within 40 minutes"
+    return result, tuple(path for path in _experiment_runs() if path not in before)
+
+
+def _smoke_failure(result: subprocess.CompletedProcess[str], what: str) -> Result:
+    tail = [line for line in (result.stdout + result.stderr).splitlines() if line.strip()][-2:]
+    return fail(f"{what}: " + " / ".join(tail)[:300])
+
+
+@check(7, "the smoke run completes on both experiment controllers")
+def check_smoke_completed() -> Result:
+    """T7.6 and acceptance clause 2: freestyle-6, one executor, one repetition, on each controller
+    in the arm its configuration sets, with every job built and the run analysed."""
+    smoke = _smoke()
+    if isinstance(smoke, str):
+        return fail(smoke)
+    result, written = smoke
+    builds = set()
+    for service, _agent, url, arm in EXPERIMENT_CONTROLLERS:
+        mine = [folder for folder in written if _read_json(folder / "run.json").get("url") == url]
+        if len(mine) != 1:
+            return _smoke_failure(result, f"the smoke wrote {len(mine)} runs on {service}")
+        folder = mine[0]
+        meta = _read_json(folder / "run.json")
+        if not meta.get("complete") or not (folder / "analysis.json").is_file():
+            reason = meta.get("incompleteReason") or "it was not analysed"
+            return fail(f"{service}'s run {folder.name} did not complete: {reason}")
+        conditions = (meta["workload"]["name"], meta["executors"], meta["arm"])
+        if conditions != ("freestyle-6", 1, arm):
+            return fail(f"{service} ran {conditions}, not ('freestyle-6', 1, {arm!r})")
+        kpis = _read_json(folder / "analysis.json")["kpis"]
+        if kpis["jobs"] != 6 or kpis["succeeded"] != 6:
+            return fail(f"{service}: {kpis['succeeded']} of {kpis['jobs']} jobs succeeded, not 6")
+        builds.add(f"{meta['pluginVersion']} ({str(meta['pluginBuild'])[:7]})")
+    return ok(
+        "freestyle-6 on one executor, observe-only and optimized: 6 of 6 jobs built and analysed "
+        f"on each, plugin {', '.join(sorted(builds))}"
+    )
+
+
+@check(7, "results/latest.json is newer than its raw files")
+def check_latest_json() -> Result:
+    """Part 4.8.3: `run` analyses at its end and updates results/latest.json last. After the smoke
+    run, latest.json names the smoke's last run, was written after every raw file of that run,
+    and holds the KPIs of that run's analysis.json."""
+    smoke = _smoke()
+    if isinstance(smoke, str):
+        return fail(smoke)
+    _result, written = smoke
+    latest = EXPERIMENT_RESULTS / "latest.json"
+    if not latest.is_file():
+        return fail("experiment/results/latest.json does not exist after the smoke run")
+    data = _read_json(latest)
+    analysed = [folder for folder in written if (folder / "analysis.json").is_file()]
+    if not analysed or data.get("run") != analysed[-1].name:
+        return fail(f"latest.json names {data.get('run')!r}, not the smoke's last analysed run")
+    folder = analysed[-1]
+    stamp = latest.stat().st_mtime_ns
+    raw = max((folder / name).stat().st_mtime_ns for name in EXPERIMENT_RAW_FILES)
+    if raw >= stamp:
+        return fail(f"latest.json is not newer than the raw files of {folder.name}")
+    analysis = _read_json(folder / "analysis.json")
+    if data.get("kpis") != analysis["kpis"] or data.get("analyzedAt") != analysis["analyzedAt"]:
+        return fail(f"latest.json does not hold the KPIs of {folder.name}/analysis.json")
+    return ok(f"names {folder.name}, written {(stamp - raw) / 1e6:.1f} ms after its last raw file")
+
+
+def _violations_from_builds(folder: Path) -> tuple[int, int] | str:
+    """(violations, edges) counted from Jenkins' own build times in builds.json, apart from the
+    package's analysis: a downstream build that started before an upstream one had finished."""
+    spec = json.loads(_read_json(folder / "run.json")["workload"]["source"])
+    builds = _read_json(folder / "builds.json")
+    prefix = spec["prefix"]
+    violations = edges = 0
+    for job in spec["jobs"]:
+        for upstream in job["dependsOn"]:
+            down, up = builds.get(prefix + job["name"]), builds.get(prefix + upstream)
+            if not down or not up:
+                return f"{folder.name}/builds.json lacks {job['name']} or {upstream}"
+            edges += 1
+            if down["timestamp"] < up["timestamp"] + up["duration"]:
+                violations += 1
+    return violations, edges
+
+
+@check(7, "the smoke run's analysis reports zero dependency violations")
+def check_smoke_violations() -> Result:
+    """Acceptance clause 3. The analysis counts violations from the plugin's events; this counts
+    them again from Jenkins' own build times, and the two must agree."""
+    smoke = _smoke()
+    if isinstance(smoke, str):
+        return fail(smoke)
+    result, written = smoke
+    analysed = [folder for folder in written if (folder / "analysis.json").is_file()]
+    if len(analysed) != len(EXPERIMENT_CONTROLLERS):
+        return _smoke_failure(result, f"{len(analysed)} of 2 smoke runs were analysed")
+    edges = 0
+    for folder in analysed:
+        reported = int(_read_json(folder / "analysis.json")["kpis"]["dependency_violations"])
+        recounted = _violations_from_builds(folder)
+        if isinstance(recounted, str):
+            return fail(recounted)
+        if reported != recounted[0]:
+            return fail(f"{folder.name}: the analysis counts {reported}, builds.json {recounted[0]}")
+        if reported:
+            return fail(f"{folder.name}: {reported} dependency violation(s)")
+        edges += recounted[1]
+    return ok(f"0 in both runs, from the plugin's events and Jenkins' build times ({edges} edges)")
+
+
+IMPLEMENTED_PHASES = {0, 1, 2, 3, 4, 5, 6, 7}
 
 
 # ---------------------------------------------------------------------------

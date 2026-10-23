@@ -2044,6 +2044,213 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
       - **Annexure A and the chapter now point to the folder;** `check_citations.py` still finds
         76 of 76, and Phase 0 passes.
 
+## Phase 7: Experiment v2
+
+On `phase-7-experiment`, branched from `main` at `422050f` (2026-10-23), in draft PR #14. T7.1 to
+T7.6 are done, and the phase gate passed 95 of 95 on `cd6b1e3` (gate run 9, 2026-10-23). The
+acceptance is the package's tests and a smoke run with zero dependency violations; the full matrix,
+about 50 runs, is a Needs human item and still open.
+
+- [x] T7.1 Workload files `freestyle-30`, `pipeline-30`, `mixed-30` and a small `freestyle-6` for
+      smoke tests (Part 4.8). Evidence, run on 2026-10-23:
+      - **The 30-job workloads are Milestone 2's 30 jobs exactly:** written from
+        `legacy/m2-poc/experiment/scripts/jobs.json`, read only, with its names, bands (6 LOW,
+        15 MEDIUM, 9 HIGH), durations and 20 dependency edges. `pipeline-30` holds them as Pipeline
+        jobs; `mixed-30` alternates the two types in Milestone 2's order, 15 of each.
+      - **`freestyle-6`** is six of those jobs, two LOW, three MEDIUM and one HIGH, with the chain
+        `build-auth-service`, `test-auth-service`, `deploy-auth-service` and its two edges.
+      - **Each workload names its jobs with its own prefix** (`fs30-`, `pl30-`, `mx30-`, `fs6-`),
+        because a Jenkins job name belongs to one job type, so all four fit on one controller.
+      - **`experiment/workload.py`** refuses a workload it cannot run (a duplicate or unsafe name,
+        an unknown type or band, a sleep outside 1 to 600 s, an unknown upstream, a cycle), digests
+        its content, and gives a run its order: LOW, then MEDIUM, then HIGH, each band in file
+        order, or a seeded shuffle.
+      - **Checks:** `python -m pytest experiment/tests`: 27 passed, under Python 3.14 and the
+        backend's 3.12; `ruff check` and `ruff format --check` clean; `mypy --strict` clean. CI's
+        Backend job now runs the package's ruff and pytest on every push.
+- [x] **The plugin, for T7.2: a build's own executor waits, and its version on
+      `/dynamic-queue/health` (D-076).** Evidence, run on 2026-10-23:
+      - **DF-45:** a build's node-block waits summed the job's earlier builds still in the
+        plugin's 500-event ring. Now a wait counts only if it is the build's own queue item, or a
+        node block queued after the build started. Nothing read the fields yet; the harness
+        recomputes every wait from raw events anyway.
+      - **`pluginVersion` and `pluginBuild` on `/dynamic-queue/health`:** every run must record
+        which plugin it measured (4.8.3), and the bot cannot read the plugin manager (403).
+      - **Checks:** `RunMetricsRecorderTest` 4 passed, and with the fix disabled its two
+        regression tests fail (5,700 ms for 700, 4,000 for 1,000); `ApiJsonIT` 11 passed;
+        `mvn -B verify` BUILD SUCCESS: 125 unit tests (1 skipped, as before), 97 JenkinsRule tests,
+        SpotBugs 0, Spotless clean.
+- [x] T7.2 `python -m experiment` with `setup`, `warmup`, `run`, `analyze` and `report` commands,
+      using only the REST API and `/dynamic-queue/metrics`. Built and tested on 2026-10-23, then
+      proved on both experiment controllers by T7.6:
+      - **The package** (`experiment/`, standard library only, `experiment/README.md`):
+        - `jenkins.py`, the REST client: CSRF crumb, Basic auth from the environment or `.env`,
+          never printed;
+        - `templates.py`, jobs rendered from the reference exports;
+        - `harness.py`: `setup`, `warmup` and `run`;
+        - `records.py` and `kpis.py`: the figures, from raw events;
+        - `analyze.py`, `report.py` and `m2.py`;
+        - `__main__.py`: the five commands, and `smoke` for T7.6.
+      - **Part 4.8.3's rules are code:**
+        - jobs are created once, and `setup --recreate`, which needs the admin account, warns that
+          it wipes history;
+        - `run` always analyses, writes `results/<time>-.../` and updates `results/latest.json`
+          last;
+        - every run records the plugin version and build, Jenkins version, executors, the
+          workload itself and its digest, and the configuration in force.
+      - **A run refuses the wrong conditions:** the executor count, the arm, jobs not made from
+        this version of the workload, a busy controller. An unfinished run keeps its raw files and
+        is not analysed.
+      - **No script console anywhere:** the Phase 0 guard and
+        `test_experiment_harness_never_calls_the_script_console` both pass on `experiment/`.
+      - **Checks:** `python -m pytest experiment/tests`, 116 passed on Python 3.14 and the backend's
+        3.12. Among them, `setup`, `warmup` and `run` end to end against an in-memory controller
+        (`tests/fake_jenkins.py`), both arms, `mixed-30` with node blocks, and a stock-Jenkins run
+        from REST alone. `ruff check` and `ruff format --check` are clean.
+      - **A correction:** this entry first said `mypy --strict` was clean too. Run with the
+        backend's configuration over the tests as well, as Phase 7's gate check runs it, mypy found
+        17 errors, all in the tests:
+        - 25 `type: ignore` comments stood in for an interface, and two of them sat on the wrong
+          line. The harness now takes a `Controller` protocol, which the REST client and the
+          in-memory controller both meet, and the comments are gone.
+        - The rest were the tests' own typing: four values mypy could not type, a stand-in file
+          object where `HTTPError` takes a real one, a third misplaced `type: ignore`, and three
+          names used through modules that only re-export them.
+
+        mypy is now clean on all 24 files, and CI's Backend job runs it on the package.
+      - **On real Jenkins (T7.6):** `setup` created the six jobs on each controller through
+        `createItem`, and `run` triggered, polled and recorded them, all as the bot account.
+        `analyze` then worked from the files alone.
+- [x] T7.3 KPI calculations with unit tests built on hand-made event logs. Evidence, run on
+      2026-10-23:
+      - **Every KPI, from records:** Appendix F's waits (mean and maximum, overall and per band),
+        completion, makespan, throughput and utilisation, plus 4.8.4's dependency violations, the
+        longest LOW wait, the scheduler's overhead per cycle (from sampled health) and, for
+        Pipelines, the first node block's wait and their sum.
+      - **`experiment/tests/test_kpis.py`, 13 tests on a hand-made log:** three jobs, freestyle and
+        Pipeline, whose every figure was worked out by hand. The log also carries an earlier build's
+        events, which must not leak in, as the plugin's ring does.
+      - **The tests also cover:** a downstream started too early counts as a violation; a 95th
+        percentile stays within its data; a job, node block or completion that is missing is an
+        error, not a guess.
+- [x] T7.4 Chart and table generation, including `table_12_1.md` and CSV. Evidence, run on
+      2026-10-23:
+      - **`python -m experiment report`** writes `table_12_1.md`, `runs.csv` (one row per run) and
+        SVG charts (waits by band per condition, makespan, the longest LOW wait, dependency
+        violations, and Milestone 2's runs).
+      - **The table** gives one section per condition, the mean and standard deviation of each
+        figure with n beside it, and scheduling efficiency against observe-only, as Appendix F
+        defines it.
+      - **`experiment/tests/test_report.py`, 13 passed:** the aggregation, the efficiency formula,
+        the table, the CSV, the SVG, and a report built only from completed runs.
+- [x] T7.5 Import the M2 results as the series "M2 dispatcher v1". Evidence, run on 2026-10-23:
+      - **`experiment/m2.py`** recomputes Milestone 2's five result files (`legacy/`, read only)
+        with the v2 KPI code: its four plugin runs as "M2 dispatcher v1", and its stock-Jenkins
+        control apart as "M2 stock Jenkins".
+      - **`experiment/tests/test_m2.py`, 5 passed:** on all five runs, makespan, mean wait, each
+        band's wait and the dependency violations agree with the testing chapter's independent
+        recomputation (`docs/testing/data/m2-runs.csv`). The M2 runs appear only in a section of
+        their own, never in a v2 figure.
+- [x] **The controller image, for T7.6: a new home gets every plugin (DF-46, D-077).** Evidence,
+      run on 2026-10-23:
+      - **DF-46:** the entrypoint held the plugin's path in `REF`, which the stock image exports as
+        the folder a new home is seeded from. So a new home got the optimizer alone: the
+        experiment controllers came up with 1 of 80 plugins, no configuration as code, no agent
+        and no `/dynamic-queue`. jenkins-dev's home predates the script, so it never showed there.
+      - **The fix:** the variable is `IMAGE_PLUGIN`, and verify.py's Phase 3 entrypoint check now
+        refuses any assignment to `REF`.
+      - **Checks:**
+        - After the rebuild, each new home holds its 80 plugins.
+        - Both controllers report their arms, with one executor each.
+        - The entrypoint check passes, and fails on the old script taken from git.
+        - Phase 1's `jenkins-dev and its agents run what the current source builds` passes.
+- [x] T7.6 Smoke run: `freestyle-6` on 1 executor, 1 repetition, on both experiment instances.
+      Evidence, run on 2026-10-23 on mains power:
+      - **`python -m experiment smoke`** on the two new homes, so with no history: exit 0, and
+        "smoke: 0 dependency violation(s) across both controllers".
+        - observe-only: makespan 52.05 s; mean wait 18.98 s (HIGH 43.57, MEDIUM 21.56, LOW 2.82).
+        - optimized: makespan 52.29 s; mean wait 21.12 s (HIGH 27.42, MEDIUM 21.05, LOW 18.08).
+      - **Again through Phase 7's gate checks**, with warm history: makespans 51.41 s on both arms,
+        HIGH's mean wait 43.02 s observe-only against 26.87 s optimized, and 0 violations. The
+        recount from Jenkins' own build times agrees with the analysis.
+      - **The optimizer's order follows its scores.** It ran auth-service's build, test and deploy
+        (one dependency group, D = 1) before the two independent jobs, then `cleanup-old-builds`
+        before `build-payment-service`.
+        - That last step looks inverted in the recorded scores, 0.35 against 0.40, but each score
+          is recorded as its job leaves the queue.
+        - With both queued, T normalised over their similarity estimates gave 0.35 against 0.30.
+          Alone, payment took the neutral T, hence its 0.40.
+      - **Each run recorded** plugin 2.0.0-SNAPSHOT at build `80e0bb7`, Jenkins 2.568.3, one
+        executor, the workload's digest and the arm's configuration.
+        - On the optimized arm, the scheduler's overhead was a median of 0.77 ms per sort, with a
+          95th percentile of 2.81 ms.
+        - Observe-only never sorts, so it has no overhead to report.
+      - **Found on the way:** DF-46 (above).
+      - This is a six-job smoke run, not a measurement; the matrix is the Needs human item below.
+- [x] **Phase 7's checks in `verify.py`**, which now has 95 checks for phases 0 to 7. Evidence, run
+      on 2026-10-23:
+      - **The six, from the gate table:**
+        - the package's tests;
+        - ruff, ruff format and strict mypy on it;
+        - both experiment controllers and their agents running what the current source builds
+          (Phase 1's check, extended to them);
+        - the smoke run complete on both controllers;
+        - `results/latest.json` newer than its raw files, and holding its run's KPIs;
+        - zero dependency violations, counted by the analysis and again from `builds.json`.
+      - **Each check sets up what it asserts on:** the three smoke checks share one smoke run per
+        gate, which whichever runs first starts.
+      - **They fail when they should.** On a copy of the real runs, each of these fails its check,
+        13 of 13 cases as expected:
+        - a raw file rewritten after `latest.json`;
+        - `latest.json` naming another run, or holding other KPIs;
+        - an overlap only `builds.json` shows, and a violation both count;
+        - an unfinished run, the wrong arm, and a missing run;
+        - controllers that are not running.
+      - **Run one at a time,** all six passed against the running profile.
+- [x] **The eighth full gate run (2026-10-23, from 04:27, at `cd6b1e3`) was stopped in Phase 2.**
+      Claude Code stopped it, and the power log beside it, because the machine ran critically low on
+      memory with the full stack and the experiment profile up. 34 checks had passed and none had
+      failed; the next was `mvn -B verify`. Its log is kept
+      (`docs/testing/evidence/gate-run-8-cd6b1e3-stopped.log`).
+- [x] **The ninth full gate run (2026-10-23, at `cd6b1e3`): 95 of 95, ALL CHECKS PASSED, exit 0.**
+      The user ran it in Windows PowerShell, outside Claude Code, from about 10:30 to 10:59. It ran on
+      mains power: Windows logged its last power-source change at 01:51, gate run 8 read mains at
+      04:27, and Windows reads mains now. Its log is `docs/testing/evidence/gate-run-9-cd6b1e3.log`,
+      transcoded from PowerShell's UTF-16 to UTF-8, with the text unchanged.
+      - **The log, read in full in this session:** 95 checks for phases 0 to 7, 95 `[PASS]`, no
+        `[FAIL]`, no PowerShell error records, and `ALL CHECKS PASSED`. The exit code is from the
+        user's terminal.
+      - **Phase 7's six:**
+        - 116 package tests;
+        - ruff, ruff format and strict mypy clean;
+        - both controllers and their agents running the current build;
+        - the smoke run, 6 of 6 jobs built and analysed on each controller;
+        - `latest.json` written 2.6 ms after its last raw file;
+        - 0 dependency violations in both runs, from the plugin's events and from Jenkins' build
+          times.
+      - **Its suites:**
+        - plugin: 125 unit tests (1 skipped) and 97 integration tests;
+        - backend: the quality bars clean, 836 AI tests and 12 end-to-end tests;
+        - frontend: 296 tests, 12 browser flows, 16 Lighthouse audits (all 100 for accessibility)
+          and 3 stack system tests.
+      - **Checked again from the files in this session:**
+        - HEAD has been `cd6b1e3` since 04:27, and the working tree's only change was
+          `latest.json`, which the gate writes.
+        - The run's two smoke runs (`20261023T055802Z`, `20261023T055856Z`) are complete, with 6
+          of 6 jobs and 0 violations each.
+        - `latest.json` names the second, 2.6 ms after its `run.json`, with the same KPIs as its
+          `analysis.json`.
+      - **The command ran twice, back to back, and this run's log replaced the first's.** The first
+        ran from 09:57 to about 10:30. Its smoke runs (`20261023T052743Z`, `20261023T052839Z`) are
+        complete, with 6 of 6 jobs and 0 violations each. Its other results are not known.
+- [ ] **Needs human: the full matrix (4.8.2)**, about 50 runs, listed in `experiment/README.md`.
+      - **Time:** each 30-job workload holds 315 s of work, so the matrix is several hours of
+        machine time on mains power. The controllers must restart between one and three executors.
+      - **Two arms need preparation first:**
+        - aging-off: the plugin controller's JCasC with the aging bonus and cap at `"0.0"`, restored
+          afterwards;
+        - stock: a controller image without the plugin, which no task has built yet.
+
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
   installed and every Phase 2 test except T2.14 runs on JenkinsRule without it. Approved by the user.

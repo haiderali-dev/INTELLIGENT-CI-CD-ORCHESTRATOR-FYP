@@ -1,0 +1,14 @@
+{
+  "name": "freestyle-6",
+  "description": "A smoke workload: six of the freestyle-30 jobs, two LOW, three MEDIUM and one HIGH, including the chain build-auth-service, test-auth-service, deploy-auth-service, whose two dependency edges a run must not break (Part 4.8.1).",
+  "source": "legacy/m2-poc/experiment/scripts/jobs.json",
+  "prefix": "fs6-",
+  "jobs": [
+    {"name": "lint-auth-service", "type": "freestyle", "level": "LOW", "seconds": 5, "dependsOn": []},
+    {"name": "cleanup-old-builds", "type": "freestyle", "level": "LOW", "seconds": 6, "dependsOn": []},
+    {"name": "build-auth-service", "type": "freestyle", "level": "MEDIUM", "seconds": 10, "dependsOn": []},
+    {"name": "build-payment-service", "type": "freestyle", "level": "MEDIUM", "seconds": 10, "dependsOn": []},
+    {"name": "test-auth-service", "type": "freestyle", "level": "MEDIUM", "seconds": 12, "dependsOn": ["build-auth-service"]},
+    {"name": "deploy-auth-service", "type": "freestyle", "level": "HIGH", "seconds": 8, "dependsOn": ["test-auth-service"]}
+  ]
+}

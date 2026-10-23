@@ -103,6 +103,15 @@ jobs:
       # `live` needs a Groq key and `e2e` needs a running Jenkins. Neither belongs in CI.
       - run: uv run pytest -m "not live and not e2e"
         working-directory: backend
+      # Part 1.6: the experiment package's own lint, types and tests. It uses the standard library
+      # only, so the backend's environment, with its pinned tools and strict mypy, runs them.
+      - name: Experiment package (ruff, mypy and pytest)
+        run: |
+          uv run ruff check ../experiment
+          uv run ruff format --check ../experiment
+          uv run mypy ../experiment --config-file pyproject.toml
+          uv run python -m pytest ../experiment/tests -p no:cacheprovider
+        working-directory: backend
 
   frontend:
     name: Frontend
