@@ -2297,9 +2297,41 @@ The stock-Jenkins controller its sanity arm needs is on `phase-7-stock-jenkins` 
           here.
         - **pytest ran with `PYTEST_DEBUG_TEMPROOT` set to a scratch folder.** Gate run 9's pytest
           left a `pytest-current` link a normal process cannot read (CLAUDE.md).
-      - **Not run:** the full `verify.py --phase 7`, now 100 checks. It needs mains power and both
-        profiles up, and Claude Code stops long background runs when memory runs short. The smoke
-        runs' result folders stay local, and `latest.json` is not part of this change.
+      - **The full gate then passed:** gate run 10, below. The smoke runs' result folders stay
+        local, and `latest.json` is not part of this change.
+- [x] **The tenth full gate run (2026-10-23, at `c39618b`): 100 of 100, ALL CHECKS PASSED, exit 0.**
+      It ran from 21:59 to 22:33 in Claude Code, on mains power: Windows read mains as it started,
+      and logged no power-source change until 00:59. pytest used `PYTEST_DEBUG_TEMPROOT`, because
+      the stale `pytest-current` link was still in place (CLAUDE.md). Its log is
+      `docs/testing/evidence/gate-run-10-c39618b.log`.
+      - **D-078's five new checks passed in it.** The stock smoke run built 6 of 6 jobs with 0
+        dependency violations. Makespan and mean wait: stock 52.4 s and 19.2 s, observe-only 52.2 s
+        and 19.2 s, optimized 52.4 s and 21.2 s.
+- [x] **The pull request's review (2026-10-24).** An automated review of PR #15 named 23
+      candidate findings, then stopped at the usage limit before verifying them. Each was checked
+      here by hand.
+      - **Fixed, in `verify.py`:**
+        - a Compose service with the short form `build: ./dir` made the stock-image check crash;
+        - the stock image check passed for a stopped container, because `docker inspect` answers for
+          one; it now asks whether both containers run;
+        - its start hints said a bare `--profile stock up -d`, which the README warns against; they
+          now name the two services, as does `docker-compose.yml`'s usage line;
+        - the stock smoke check's docstring claimed a second source for its recount; on the stock
+          arm both counts rest on Jenkins' build times.
+      - **Recorded in D-078:**
+        - Pipeline workloads fail on stock Jenkins;
+        - the stock stage keeps tini as PID 1, and the optimizer stage does not;
+        - `report` shows the sanity run in a condition of its own.
+      - **Left as they are:** the rest are thoroughness gaps in the new checks' parsing of Compose
+        forms this file does not use, or predate the pull request. Among the latter: comments in
+        the backend that still call `jenkins-baseline` plugin-free.
+      - **Checks after the fixes:**
+        - the four changed or affected checks pass;
+        - the 16 file faults still fail their checks (19 of 19 as expected);
+        - a short-form `build:` no longer crashes the image check;
+        - a stopped container, `orchestrator-agent-1` while the matrix had the default stack
+          down, fails the stock image check;
+        - pyflakes is clean on `verify.py`.
 - [ ] **Needs human: the full matrix (4.8.2)**, about 50 runs, listed in `experiment/README.md`.
       - **Time:** each 30-job workload holds 315 s of work, so the matrix is several hours of
         machine time on mains power. The controllers must restart between one and three executors.

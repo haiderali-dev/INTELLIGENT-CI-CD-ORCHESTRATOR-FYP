@@ -74,6 +74,18 @@ pull request is approved
   runs the same jobs. Stock Jenkins accepted all six with `createItem` and stored them without it,
   logging nothing. No job's dependencies are enforced there, as in observe-only.
 
+**Three more limits, found reviewing the pull request (2026-10-24).**
+- **Freestyle only.** A Pipeline job's script names the plugin's `dynamicQueuePriority` option,
+  which stock Jenkins cannot resolve, so `pipeline-30` and `mixed-30` fail there. The sanity run
+  is `freestyle-30`, so nothing in the matrix needs them.
+- **Process supervision differs.** The stock stage keeps the base image's tini as PID 1, while the
+  optimizer stage's entrypoint `exec`s `jenkins.sh`, so Java is PID 1 there, as it always was. This
+  touches signal handling and zombie reaping, not scheduling.
+- **The report shows the sanity run alone.** `report` groups runs by condition, group included, so
+  the `sanity` run is not set beside observe-only automatically. Compare it with the `main` group's
+  freestyle-30, 1-executor observe-only runs, which share its workload, executors, history and
+  order.
+
 **What it changes in verify.py (95 checks to 100).**
 - **Phase 1:**
   - The Compose check now reads "matches Part 4.2.3 and D-078". It requires the `stock` profile,

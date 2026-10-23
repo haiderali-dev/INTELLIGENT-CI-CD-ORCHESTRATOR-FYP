@@ -1140,10 +1140,16 @@ def check_stock_image_stage() -> Result:
     doc, error = _load_yaml(REPO_ROOT / "docker-compose.yml")
     if error:
         return fail(f"docker-compose.yml: {error}")
-    targets = {
-        name: (node.get("build") or {}).get("target")
+    # A short-form `build: ./dir` is a string, and names no Dockerfile of ours.
+    builds = {
+        name: node.get("build")
         for name, node in (doc.get("services") or {}).items()
-        if (node.get("build") or {}).get("dockerfile") == "jenkins/controller/Dockerfile"
+        if isinstance(node.get("build"), dict)
+    }
+    targets = {
+        name: build.get("target")
+        for name, build in builds.items()
+        if build.get("dockerfile") == "jenkins/controller/Dockerfile"
     }
     wrong = sorted(
         name
@@ -3731,6 +3737,8 @@ EXPERIMENT_CONTROLLERS = (
 #: The stock-Jenkins controller of the Compose `stock` profile (D-078): its service, its agent's
 #: and its URL. Its arm is always stock.
 STOCK_CONTROLLER = ("jenkins-stock", "stock-agent", "http://127.0.0.1:8088")
+#: How to start it: by its two services, since a bare `up -d` also recreates the default stack's.
+STOCK_START = "`docker compose --profile stock up -d jenkins-stock stock-agent`"
 #: The plugin under test, by the short name Jenkins knows it by.
 OPTIMIZER = "dynamic-queue-optimizer"
 #: Every run folder this gate's smoke runs wrote, in the order they ran.
@@ -3937,6 +3945,16 @@ def check_stock_images_current() -> Result:
     if not have("docker"):
         return fail("blocked: Docker is not installed")
     service, agent, _url = STOCK_CONTROLLER
+    # `docker inspect` answers for a stopped container too, so ask whether each one runs.
+    stopped = [
+        container
+        for container in (f"orchestrator-{service}", f"orchestrator-{agent}")
+        if run(["docker", "inspect", "--format", "{{.State.Running}}", container], timeout=60)
+        .stdout.strip()
+        != "true"
+    ]
+    if stopped:
+        return fail(f"{' and '.join(stopped)} not running; start them with {STOCK_START}")
     problems = [
         problem
         for problem in (
@@ -3946,9 +3964,7 @@ def check_stock_images_current() -> Result:
         if problem
     ]
     if problems:
-        down = any(problem.endswith("is not running") for problem in problems)
-        hint = "; start it with `docker compose --profile stock up -d`" if down else ""
-        return fail("; ".join(problems) + hint)
+        return fail("; ".join(problems))
     return ok(
         "jenkins-stock runs the stock stage the current source builds; its agent matches a build"
     )
@@ -3985,15 +4001,13 @@ def check_stock_without_optimizer() -> Result:
     service, _agent, stock_url = STOCK_CONTROLLER
     plugin_service, _plugin_agent, plugin_url, _arm = EXPERIMENT_CONTROLLERS[1]
     versions: dict[str, str | None] = {}
-    for name, url, profile in (
-        (service, stock_url, "stock"),
-        (plugin_service, plugin_url, "experiment"),
+    for name, url, start in (
+        (service, stock_url, STOCK_START),
+        (plugin_service, plugin_url, "`docker compose --profile experiment up -d`"),
     ):
         status, _body, headers = _get(url + "/login")
         if status != 200:
-            return fail(
-                f"{name} not answering; start it with `docker compose --profile {profile} up -d`"
-            )
+            return fail(f"{name} not answering; start it with {start}")
         versions[name] = headers.get("x-jenkins")
     if versions[service] != versions[plugin_service]:
         return fail(
@@ -4058,10 +4072,7 @@ def _stock_smoke() -> tuple[subprocess.CompletedProcess[str], tuple[Path, ...]] 
     could not run."""
     service, _agent, url = STOCK_CONTROLLER
     if _get(url + "/login")[0] != 200:
-        return (
-            f"{service} not answering; start the stock profile with "
-            "`docker compose --profile stock up -d`"
-        )
+        return f"{service} not answering; start it with {STOCK_START}"
     return _run_experiment(["smoke", "--controller", "stock"], timeout=1200)
 
 
@@ -4071,7 +4082,9 @@ def check_stock_smoke() -> Result:
     jenkins-stock and analysed into the same figures, from the same version of the workload. A
     stock run has no plugin events: the harness's trigger times stand in for the queue's entry
     times, and Jenkins' own build times give the rest. Dependency violations are counted again from
-    builds.json and must agree with the analysis."""
+    builds.json and must agree with the analysis. With no events, both counts rest on the same
+    build times, so on this arm the recount checks the analysis's arithmetic, not a second
+    source."""
     smoke = _smoke()
     if isinstance(smoke, str):
         return fail(smoke)
