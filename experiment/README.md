@@ -12,6 +12,7 @@ python -m experiment run    --controller plugin --workload freestyle-30 --execut
 python -m experiment analyze experiment/results/<run folder>
 python -m experiment report [--out <folder>]
 python -m experiment smoke    # T7.6: freestyle-6, 1 executor, 1 repetition, on both controllers
+python -m experiment smoke --controller stock    # the same on the stock-Jenkins controller
 ```
 
 It needs Python 3.12 or later and nothing else. The bot's password and, for `--recreate` only,
@@ -27,18 +28,73 @@ agent each and separate Jenkins homes, so neither sees the other's history:
 | --- | --- | --- | --- |
 | `baseline` | http://127.0.0.1:8085 | `jenkins/casc/experiment-baseline.yaml` | observe-only: the plugin installed, ordering nothing |
 | `plugin` | http://127.0.0.1:8086 | `jenkins/casc/experiment-plugin.yaml` | optimized: the report's algorithm |
+| `stock` | http://127.0.0.1:8088 | `jenkins/casc/experiment-stock.yaml` | stock: Jenkins without the plugin (the `stock` profile) |
 
 The executor count is set when the controllers start: `AGENT_EXECUTORS=3 docker compose --profile
 experiment up -d --force-recreate jenkins-baseline jenkins-plugin`. A run checks it, with the arm,
 before it starts, and refuses if either is not what was asked for.
 
-Two arms of the matrix need a controller prepared by hand, and a run detects both from the
-configuration in force:
+A run detects the arm from the configuration in force. Two arms of the matrix need a controller
+prepared first:
 
 - **aging-off** (the aging ablation): the `plugin` controller with `agingBonusPerInterval` and
   `agingCap` set to `"0.0"` in its configuration file, quoted (D-017). Restore them afterwards.
-- **stock** (the sanity run): Jenkins without the plugin. The Compose image always installs it,
-  so this arm needs a controller built without it, which does not exist yet.
+  While they are changed, Phase 1's JCasC checks fail, as they should: commit nothing and run no
+  gate until the file is restored.
+- **stock** (the sanity run): the `stock` controller below, which has no plugin at all.
+
+## The stock-Jenkins controller (D-078)
+
+The sanity run needs Jenkins without the plugin, to test the assumption the observe-only control
+rests on: that the plugin, installed and recording but not ordering, schedules as Jenkins does
+without it. `jenkins-stock` is that controller:
+- its image is the controller image's `stock` stage, the one the others' image is built on: the
+  same Jenkins and plugins, without the optimizer;
+- its configuration is `experiment-baseline.yaml` without the optimizer's block;
+- it has its own agent, `stock-agent`, and its own home, `jenkins-stock-home`.
+
+It sits in a Compose profile of its own, so `--profile experiment` starts no more than before. It
+takes about 0.5 GB of memory, and 80 MB for its agent.
+
+```
+# Build it, and again whenever jenkins/controller/ or jenkins/agent/ changes. It needs no .hpi.
+docker compose build jenkins-stock stock-agent
+
+# Start it: healthy in about 30 s on this machine.
+docker compose --profile stock up -d --wait jenkins-stock stock-agent
+
+# Check it: freestyle-6 on one executor; the run must report the stock arm.
+python -m experiment smoke --controller stock
+
+# The sanity run of the matrix: freestyle-30, one executor, warm history, one repetition.
+python -m experiment setup  --controller stock --workload freestyle-30
+python -m experiment warmup --controller stock --workload freestyle-30 --passes 3
+python -m experiment run    --controller stock --workload freestyle-30 --executors 1 --group sanity --repetition 1 --arm stock --history warm
+
+# Stop it. The containers and the home stay.
+docker compose --profile stock stop jenkins-stock stock-agent
+
+# Remove the containers. The named volumes, and with them its build history, stay.
+docker compose --profile stock rm -f jenkins-stock stock-agent
+```
+
+**Start it by its two service names.** A bare `docker compose --profile stock up -d` starts the
+default stack as well, and recreates any of its services whose image has changed.
+
+**Never remove its volumes:** `docker compose down -v` and `docker volume rm` are forbidden here
+(rule 1.5).
+
+`verify.py --phase 7` checks it with three checks, so a Phase 7 gate needs both profiles running:
+`docker compose --profile experiment --profile stock up -d`.
+
+**Comparing it with observe-only.** A stock run has no plugin events, so each job's queue entry is
+the time the harness sent its trigger request, not the plugin's `inQueueSince`. Its waits and
+makespan therefore include that request's latency and any offset between the host's clock and the
+controller's: milliseconds, against waits of tens of seconds. Jenkins' own build start and end
+times are measured alike in every arm, so compare on those first.
+
+Stock Jenkins cannot load the plugin's job property, which every arm's jobs carry. It accepts the
+jobs and stores them without it, so nothing enforces their dependencies there, as in observe-only.
 
 ## The matrix (Part 4.8.2)
 

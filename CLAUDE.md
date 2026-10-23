@@ -54,6 +54,13 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
   2026-10-14, 2026-10-16 and 2026-10-23 (run 8, with the experiment profile up); run 9 then passed
   in the user's own PowerShell window. Windows PowerShell's `*>` writes UTF-16, so transcode such a
   log to UTF-8 before keeping it in `docs/testing/evidence/`.
+- Run gates from a normal window, not an Administrator one. Gate run 9's pytest (2026-10-23, 10:57)
+  left `%LOCALAPPDATA%\Temp\pytest-of-haide\pytest-current`, a link a normal process cannot read.
+  Every non-elevated pytest then fails with `PermissionError` on it, before running a test.
+  - **To remove it:** from an Administrator prompt,
+    `cmd /c rmdir "%LOCALAPPDATA%\Temp\pytest-of-haide\pytest-current"`. That removes the link,
+    not the folder it points to.
+  - **Until then:** set `PYTEST_DEBUG_TEMPROOT` to another folder.
 - Docker Desktop does not start with Windows here. Launch
   `%LOCALAPPDATA%/Programs/DockerDesktop/Docker Desktop.exe` and wait for `docker info` to succeed
   (about 30 s) before any Phase 1 or Phase 3+ acceptance check.
@@ -68,9 +75,9 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
   the sandbox off.
 - Jenkins LTS baseline is pinned to 2.568.3. The report's Appendix E says 2.541.x and must be updated.
 - Build order was Phase 0 → 2 → 1 → 3..8, because JenkinsRule needs no Docker. Phases 0-6 are done
-  (Phase 6 merged as PR #11; hardened on `phase-6-hardening`, 2026-10-18 to 2026-10-22). Phase 7's
-  tasks and gate are done on `phase-7-experiment` (draft PR #14, 2026-10-23); its full matrix
-  needs a human.
+  (Phase 6 merged as PR #11; hardened on `phase-6-hardening`, 2026-10-18 to 2026-10-22). Phase 7
+  merged as PR #14 (`3fcaf81`, 2026-10-23). The stock-Jenkins controller for its sanity arm is on
+  `phase-7-stock-jenkins` (D-078), and its full matrix needs a human.
 - Docker here uses the containerd image store, so a container's `Image` field names the index its
   image arrived in. Compare a container with Compose's `com.docker.compose.image` label instead.
   Provenance attestations are off in `docker-compose.yml`, because they gave every build a new ID

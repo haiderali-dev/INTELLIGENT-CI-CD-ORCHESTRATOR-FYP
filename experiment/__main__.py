@@ -7,10 +7,12 @@
     python -m experiment analyze experiment/results/<run folder>
     python -m experiment report [--out experiment/report]
     python -m experiment smoke                  T7.6: freestyle-6, 1 executor, both controllers
+    python -m experiment smoke --controller stock    the same on the stock-Jenkins controller
 
 The controllers are the Compose ``experiment`` profile's: ``baseline`` (8085, observe-only) and
-``plugin`` (8086, optimized), or any other with ``--url``. experiment/README.md describes the
-matrix and how to prepare each arm.
+``plugin`` (8086, optimized); the ``stock`` profile's ``stock`` (8088, Jenkins without the
+plugin); or any other with ``--url``. experiment/README.md describes the matrix and how to prepare
+each arm.
 """
 
 from __future__ import annotations
@@ -32,8 +34,10 @@ from experiment.jenkins import (
 from experiment.workload import WorkloadError
 
 SMOKE_WORKLOAD = "freestyle-6"
-#: The smoke run's arms, one per controller: the control, and the optimizer.
-SMOKE_ARMS = {"baseline": "observe-only", "plugin": "optimized"}
+#: The arm each controller must report for a smoke run: the control, the optimizer, no plugin.
+SMOKE_ARMS = {"baseline": "observe-only", "plugin": "optimized", "stock": "stock"}
+#: The controllers a smoke run uses unless told otherwise: T7.6's two.
+SMOKE_DEFAULT = ("baseline", "plugin")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -100,10 +104,12 @@ def _report(args: argparse.Namespace) -> int:
 
 
 def _smoke(args: argparse.Namespace) -> int:
-    """T7.6: freestyle-6, one executor, one repetition, on both controllers, after setup."""
+    """T7.6: freestyle-6, one executor, one repetition, on each controller, after setup. Without
+    ``--controller``, on both experiment controllers."""
     loaded = workload.load(SMOKE_WORKLOAD)
+    controllers = args.controller or list(SMOKE_DEFAULT)
     violations = 0
-    for controller, arm in SMOKE_ARMS.items():
+    for controller in controllers:
         client = JenkinsClient(
             CONTROLLERS[controller], credentials(BOT_USER, "JENKINS_BOT_PASSWORD")
         )
@@ -115,12 +121,12 @@ def _smoke(args: argparse.Namespace) -> int:
             executors=1,
             group="smoke",
             repetition=args.repetition,
-            expect_arm=arm,
+            expect_arm=SMOKE_ARMS[controller],
         )
         analysis = results.read_json(folder / "analysis.json")
         violations += int(analysis["kpis"]["dependency_violations"])
         print(folder)
-    print(f"smoke: {violations} dependency violation(s) across both controllers")
+    print(f"smoke: {violations} dependency violation(s) across {', '.join(controllers)}")
     return 0 if violations == 0 else 1
 
 
@@ -170,6 +176,12 @@ def _parser() -> argparse.ArgumentParser:
     out.set_defaults(handler=_report)
 
     smoke = commands.add_parser("smoke", help="T7.6: freestyle-6 on both controllers")
+    smoke.add_argument(
+        "--controller",
+        action="append",
+        choices=sorted(SMOKE_ARMS),
+        help="run on this controller instead; repeat for more (default: baseline and plugin)",
+    )
     smoke.add_argument("--repetition", type=int, default=1)
     smoke.set_defaults(handler=_smoke)
     return parser

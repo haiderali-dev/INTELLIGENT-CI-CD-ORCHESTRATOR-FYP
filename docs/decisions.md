@@ -11,6 +11,114 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 7
 
+### D-078 A stock-Jenkins controller for the sanity arm: the controller image without the optimizer
+**Date:** 2026-10-23 · **Status:** proposed (Phase 7, branch `phase-7-stock-jenkins`), until its
+pull request is approved
+
+**The need.** Part 4.8.2's matrix ends with one sanity run: freestyle-30 on one executor, warm, on
+"stock Jenkins, no plugin". Part 4.8's baseline arm is the plugin installed with
+`optimizerEnabled = false` (observe-only), "plus one stock-Jenkins sanity run".
+- **Why the baseline stays observe-only:** both arms then share one measurement path, the plugin's
+  own events. Milestone 2's baseline was Jenkins without the plugin, so any difference between its
+  arms could have come from the instrumentation rather than the scheduling.
+- **What the sanity run is for:** observe-only rests on one assumption: that the plugin, installed
+  and recording but not ordering, schedules as Jenkins does without it. Only Jenkins without the
+  plugin can test that.
+- **Why no existing controller could serve:** the controller image always installed the plugin,
+  and its entrypoint reinstalls it on every start (D-028), so removing it from a home would not
+  survive a restart. Every JCasC file also configures the optimizer, and with the plugin absent,
+  configuration as code finds no configurator for that block and refuses to start Jenkins.
+- **Why it is recorded here:** Part 4.2.3 names the Compose services: six by default, and an
+  `experiment` profile of two controllers with one agent each. A third controller departs from it.
+
+**The decision.**
+- **One image, two stages.** `jenkins/controller/Dockerfile`'s `stock` stage is the pinned Jenkins
+  LTS with plugins.txt's plugins, the configuration folders and environment, and the base image's
+  own entrypoint (tini, then `jenkins.sh`). The `optimizer` stage is built from it, and adds only
+  the plugin, the script that reinstalls it, and that script as the entrypoint.
+  - Every existing controller builds the last stage, as before. `jenkins-stock` alone builds
+    `stock`.
+  - So the stock controller differs from the others by the plugin alone, by construction rather
+    than by keeping two files in step: the same Jenkins 2.568.3, and the same 79 plugins at the same
+    versions.
+  - The optimizer image's content did not change. Every file in its seed folder (owner, mode and
+    size), the install script, the entrypoint, the user and the ports match the image the
+    one-stage Dockerfile built. The one difference is the `.hpi`'s build stamp, from a later Maven
+    build of the same source.
+- **One configuration file.** `jenkins/casc/experiment-stock.yaml` is `experiment-baseline.yaml`
+  without the `dynamicQueueOptimizer` block, and with its own agent (`stock-agent`), URL and
+  system message.
+- **One Compose profile, `stock`.** It holds `jenkins-stock` (127.0.0.1:8088) and `stock-agent`,
+  with the named volumes `jenkins-stock-home` and `stock-agent-work`.
+  - **Its own profile:** `--profile experiment` starts nothing more than it did, so the stock
+    controller's memory is spent only when asked for: about 0.5 GB, and 80 MB for its agent. This
+    machine has stopped gate runs for low memory before.
+  - **Port 8088:** 8087 is jenkins-dev's, and the sample services use 9001 and 9002.
+  - **Shared with the other controllers:** the secrets, `AGENT_EXECUTORS`, and Compose's default
+    network, on which each controller reaches only the agent its own JCasC names.
+- **The harness.**
+  - `--controller stock` now names the controller.
+  - `smoke --controller stock` runs T7.6's smoke workload on it. `smoke` alone still runs T7.6's
+    two controllers.
+  - Nothing else was needed: since T7.2, the harness reads a controller with no `/dynamic-queue` as
+    the stock arm and analyses its runs from REST alone.
+
+**Two things the sanity comparison must allow for.**
+- **The stock arm measures queue entry differently.** A stock run has no plugin events. Each job's
+  queue entry is when the harness sent its trigger request, not the plugin's `inQueueSince`; build
+  start and end come from Jenkins in every arm. So the stock arm's waits and makespan include the
+  request's latency and any offset between the host's clock and the controller's, milliseconds
+  against waits of tens of seconds. Compare it with observe-only first on what both measure alike:
+  Jenkins' own build start and end times.
+- **Stock Jenkins drops the plugin's job property.** The harness's jobs carry it, since every arm
+  runs the same jobs. Stock Jenkins accepted all six with `createItem` and stored them without it,
+  logging nothing. No job's dependencies are enforced there, as in observe-only.
+
+**What it changes in verify.py (95 checks to 100).**
+- **Phase 1:**
+  - The Compose check now reads "matches Part 4.2.3 and D-078". It requires the `stock` profile,
+    port 8088, and the stock controller's own home, configuration and agent; no two controllers may
+    share a home, and no two services a port. Today it reports 12 services, 6 default and 6
+    profiled.
+  - The file list counts 12. The loopback check counts 7 ports.
+  - **New:** the stock JCasC is the baseline's without the optimizer.
+  - **New:** the Dockerfile's optimizer stage adds only the plugin, and Compose builds the stock
+    stage for `jenkins-stock` alone.
+- **Phase 7:**
+  - **Three new checks,** which need the stock profile running:
+    - the stock controller and its agent run the current build;
+    - the optimizer is in neither its image, its home nor its plugin manager, and `/dynamic-queue`
+      does not exist, while Jenkins and every other plugin match `jenkins-plugin`'s, where the
+      optimizer is active;
+    - its smoke run completes, is analysed into the same figures from the same version of the
+      workload, and its dependency violations agree with a recount from `builds.json`.
+  - **`latest.json`'s check** now expects the last run the gate analysed, so it passes whichever of
+    the two smoke runs came last.
+- **What the gate now needs running:** both profiles, so
+  `docker compose --profile experiment --profile stock up -d`.
+
+**Evidence (2026-10-23, on battery power, so short runs only; PROGRESS.md has the detail):**
+- **`jenkins-stock`:**
+  - healthy in 28 s, with no SEVERE line;
+  - 79 plugins and no optimizer in its image and its home;
+  - `/dynamic-queue` answers 404;
+  - its agent is online with one executor.
+- **The three existing controllers** were recreated on the two-stage image, and the plugin loaded on
+  each.
+- **`verify.py --phase 1`:** 33 of 33.
+- **Phase 7's nine checks, in one process and in the gate's order:** 9 of 9. Freestyle-6's
+  makespan and mean wait: stock 52.5 s and 18.7 s, observe-only 52.3 s and 18.5 s, optimized
+  52.2 s and 20.5 s.
+- **The new and changed checks fail when they should:** 16 of 16 faults in copied files, and 8 of 8
+  live cases.
+- **The experiment package:** 120 tests, ruff and strict mypy clean.
+- **Not yet run:** the full `verify.py --phase 7`, which needs mains power.
+
+**Not changed:** BUILD_PROMPT.md, which this record departs from; the plugin; the three existing
+JCasC files; and how every existing controller behaves.
+
+---
+
 ### D-077 A new controller home gets every plugin: the entrypoint leaves the image's REF alone
 **Date:** 2026-10-23 · **Status:** accepted (Phase 7)
 
