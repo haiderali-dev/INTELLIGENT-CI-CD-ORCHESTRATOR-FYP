@@ -2421,6 +2421,33 @@ zero dependency violations. Since then:
         - the default stack and the stock controller were stopped for the runs and started again
           after;
         - the experiment controllers were returned to 1 executor.
+- [x] **The eleventh full gate run (2026-10-24, at `8f7c244`, PR #17's branch after merging PR #16):
+      100 of 100, ALL CHECKS PASSED, exit 0.** It ran from 14:54:40 to 15:29:48 in Claude Code. Its
+      log is `docs/testing/evidence/gate-run-11-8f7c244.log`, kept with LF line endings and the text
+      unchanged.
+      - **Before it:**
+        - `jenkins-dev` was rebuilt and recreated with the fixed plugin. Its `/dynamic-queue/health`
+          then reported build `c01e744`.
+        - The `.hpi` was rebuilt, since switching branches for the re-run had touched the plugin
+          sources' timestamps, with the content unchanged since `c01e744`.
+        - The image checks then passed for `jenkins-dev`, both experiment controllers and the stock
+          controller.
+      - **Power:** it started on mains, but Windows logged two spells on battery inside it, with no
+        sleep. Each fell in a phase whose checks are pass or fail, which battery can only slow:
+        - 15:08:01 to 15:08:27, in Phase 3;
+        - 15:20:01 to 15:26:20, in Phase 6.
+
+        The plugin's build and tests (Phase 2, done by 15:04) and the smoke runs (Phase 7, from
+        15:26:57) ran on mains.
+      - **What it covered:**
+        - `mvn -B verify`: 125 unit tests (1 skipped) and 100 integration tests, among them D-080's
+          three;
+        - the experiment package's tests, now with DF-47's;
+        - the smoke run on plugin build `c01e744`: 6 of 6 jobs and 0 violations on each controller;
+        - D-078's stock checks.
+      - pytest used `PYTEST_DEBUG_TEMPROOT`, because the stale `pytest-current` link is still in
+        place (CLAUDE.md).
+      - CI passed on `8f7c244`: all six jobs in the push and the pull-request runs.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not

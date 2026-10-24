@@ -87,6 +87,7 @@ deadlock against its outer one.
     and took an executor 2.8 to 2.9 s after its upstream ended.
   - **Random order:** 2 and 1 violations remain, against 5 and 2. All three are this record's
     limit, a freestyle downstream that took an idle executor before its upstream was queued.
+- **The full gate on the fix, after merging PR #16:** gate run 11 at `8f7c244`, 100 of 100.
 
 ---
 
