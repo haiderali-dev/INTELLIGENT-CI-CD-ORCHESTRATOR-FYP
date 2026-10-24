@@ -109,6 +109,13 @@ each one attaches to Jenkins.
       satisfied.** Milestone 2 counted a missing upstream as satisfied, which is the opposite of safe.
       State also that a declared cycle never blocks at runtime; it is rejected by form validation and
       by the backend, and reported through the API.
+- [ ] **Section 6.4: the gate holds a Pipeline until its work starts (D-080).** It checks a Pipeline's
+      first node block as it checks the job, and never its later ones, so a run is not stopped
+      mid-build.
+      - **State its limit:** a downstream that takes an executor before its upstream has been
+        requested at all is not held, since no gate in the queue can wait for an unrequested build.
+      - **Why the system never meets it:** a freestyle chain is triggered one job at a time, each
+        by the one before.
 - [ ] **Sections 6.5 and 6.6: the estimator's history and the plugin's cost, as built and as
       measured (D-073; Chapter 8, experiment E1).** Three sentences disagree with the
       implementation or with each other:

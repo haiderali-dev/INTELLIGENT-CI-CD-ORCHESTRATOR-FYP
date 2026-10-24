@@ -76,8 +76,9 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
 - Jenkins LTS baseline is pinned to 2.568.3. The report's Appendix E says 2.541.x and must be updated.
 - Build order was Phase 0 → 2 → 1 → 3..8, because JenkinsRule needs no Docker. Phases 0-6 are done
   (Phase 6 merged as PR #11; hardened on `phase-6-hardening`, 2026-10-18 to 2026-10-22). Phase 7
-  merged as PR #14 (`3fcaf81`, 2026-10-23). The stock-Jenkins controller for its sanity arm is on
-  `phase-7-stock-jenkins` (D-078), and its full matrix needs a human.
+  merged as PR #14 (`3fcaf81`, 2026-10-23). Then came the stock-Jenkins controller (PR #15, D-078),
+  the full matrix with DF-47's fix (PR #16, D-079), and the gate's fix for Pipelines (PR #17,
+  D-080).
 - Docker here uses the containerd image store, so a container's `Image` field names the index its
   image arrived in. Compare a container with Compose's `com.docker.compose.image` label instead.
   Provenance attestations are off in `docker-compose.yml`, because they gave every build a new ID
@@ -85,6 +86,10 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
 
 ## Lessons (add one line whenever a mistake repeats)
 - Pipeline queue items are placeholder tasks; resolve the job with getOwnerTask().
+- A Pipeline run starts when its flyweight leaves the queue, within milliseconds and before any
+  executor is involved; its work is its node blocks. Never time, count or gate a Pipeline by its
+  run's start. It went wrong three times: test timing (D-015), the violation count (DF-47) and the
+  dependency gate (DF-48).
 - The M2 job property field is `priority`; v2 renames it to `level` for @Symbol and keeps an XStream
   alias, so old config.xml still loads. Do not "fix" this back.
 - Report Appendix C prints the pre-inheritance score (0.633); the effective score after group

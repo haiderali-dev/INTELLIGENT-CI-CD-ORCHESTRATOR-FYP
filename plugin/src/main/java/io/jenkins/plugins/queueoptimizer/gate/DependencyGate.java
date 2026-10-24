@@ -29,10 +29,13 @@ import jenkins.model.Jenkins;
  * <p>Three rules keep the gate from doing harm:
  *
  * <ul>
- *   <li><b>Node blocks are never gated.</b> A Pipeline {@code node} block belongs to a run already
- *       in progress, whose dependencies were satisfied when the run started. Blocking it mid-build
- *       would hold an executor for a constraint that no longer applies, and could deadlock a run
- *       against itself.
+ *   <li><b>A Pipeline is held until its work starts, and never after.</b> Its flyweight task is
+ *       checked as the job. So is each of its node blocks, until the first of them has an executor
+ *       ({@link NodeBlockWorkTracker}). The flyweight leaves the queue within milliseconds, so a
+ *       Pipeline queued a moment before its upstream would otherwise begin its work while that
+ *       upstream still waited in the queue (DF-48, D-080). After that, its node blocks are never
+ *       gated. Holding one mid-build would keep an executor for a constraint that no longer
+ *       applies, and a nested {@code node} block could deadlock its own run.
  *   <li><b>An unknown upstream never blocks.</b> It is reported as unresolved instead. Milestone 2
  *       did the inverse and treated a missing upstream as satisfied, which let a downstream job run
  *       as though its producer had succeeded; this reports the problem without ever silently
@@ -67,7 +70,8 @@ public class DependencyGate extends QueueTaskDispatcher {
             // Observe-only: the experiment's baseline arm must see stock Jenkins semantics.
             return null;
         }
-        if (JobResolver.isNodeBlock(item)) {
+        if (JobResolver.isNodeBlock(item) && NodeBlockWorkTracker.get().hasStartedWork(item)) {
+            // Mid-build: the run's work has begun, so nothing upstream can be protected any more.
             return null;
         }
         Optional<Job<?, ?>> resolved = JobResolver.resolve(item);

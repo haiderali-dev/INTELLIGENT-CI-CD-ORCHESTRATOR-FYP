@@ -2049,8 +2049,10 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
 Built on `phase-7-experiment`, branched from `main` at `422050f` (2026-10-23), and merged into
 `main` as PR #14 (`3fcaf81`, 2026-10-23). T7.1 to T7.6 are done, and the phase gate passed 95 of 95
 on `cd6b1e3` (gate run 9, 2026-10-23). The acceptance is the package's tests and a smoke run with
-zero dependency violations; the full matrix, about 50 runs, is a Needs human item and still open.
-The stock-Jenkins controller its sanity arm needs is on `phase-7-stock-jenkins` (D-078).
+zero dependency violations. Since then:
+- the stock-Jenkins controller for the sanity arm (D-078, PR #15);
+- the full matrix, 53 runs, with DF-47's fix to the violation count (D-079, PR #16);
+- DF-48's fix to the dependency gate, and its re-run (D-080, PR #17).
 
 - [x] T7.1 Workload files `freestyle-30`, `pipeline-30`, `mixed-30` and a small `freestyle-6` for
       smoke tests (Part 4.8). Evidence, run on 2026-10-23:
@@ -2365,8 +2367,87 @@ The stock-Jenkins controller its sanity arm needs is on `phase-7-stock-jenkins` 
       - **Open, for the user to decide:** on pipeline-30 with 3 executors, the optimizer let
         `release-notes-generator` start 61 to 66 s before `smoke-test-production` ended, in all
         three runs (D-079). The plugin's gate is not investigated here.
+        - **Since then (2026-10-24):** fixed as DF-48 (D-080), in the next entry, and confirmed by
+          a targeted re-run.
       - **Not done:** Chapter 12 itself. `docs/report-updates.md` already lists Table 12.1 and the
         new KPIs.
+- [x] **The dependency gate holds a Pipeline's first node block (DF-48, D-080)**, on
+      `phase-7-pipeline-gate`, approved by the user on 2026-10-24. Evidence, run on 2026-10-24:
+      - **Found by the matrix:** on pipeline-30 with three executors, the optimized arm let
+        `release-notes-generator` run before its upstream had even started, in all three
+        repetitions.
+        - The gate checked a Pipeline only as its flyweight. That left the queue 6 to 22 ms after
+          it was queued, a second before its upstream was.
+        - Its node block, never gated, then took an executor while the upstream waited in the
+          queue.
+      - **The fix:** a node block is held like its job until its run's work begins, and never after
+        (`NodeBlockWorkTracker`).
+      - **Checks:**
+        - the new `DependencyGateIT` test failed before the fix ("took an executor while its
+          upstream was still queued") and passes after;
+        - two more keep the old behaviour for a run already doing its work, with sequential and with
+          nested node blocks, and both fail against a gate that holds every node block;
+        - `DependencyGateIT`: 10 passed;
+        - `mvn -B verify`: BUILD SUCCESS, 125 unit tests (1 skipped, as before) and 100 integration
+          tests, SpotBugs 0, Spotless clean.
+      - **The re-run on real Jenkins:** in the next entry.
+- [x] **The targeted re-run after DF-48's fix: 10 of 10 runs**, approved by the user on 2026-10-24.
+      It ran 13:36 to 14:11, on mains power, on experiment controllers running plugin build
+      `c01e744`. Kept in `docs/experiment/gate-fix-rerun-2026-10-24/`.
+      - **What it ran:** pipeline-30 on 3 executors (3 repetitions) and random order (mixed-30 on 3
+        executors, seeds 1 and 2), both arms. Fresh jobs were set up and warmed with three passes.
+        The groups are `main-rerun` and `random-order-rerun`, apart from the matrix's.
+      - **The optimized arm's violations:**
+
+        | Condition | Matrix | Re-run |
+        | --- | --- | --- |
+        | pipeline-30, per run | 1, 1, 1 | 0, 0, 0 |
+        | Random order, seed 1 | 5 | 2 |
+        | Random order, seed 2 | 2 | 1 |
+
+      - **The fixed edge:** in all three pipeline-30 runs, `release-notes-generator`'s node block
+        took an executor 2.8 to 2.9 s after `smoke-test-production` ended. In the matrix it had run
+        at 15.5 to 17 s, before its upstream had started.
+      - **The three left are D-080's limit:** freestyle downstreams in random order took an idle
+        executor 132 to 1,040 ms before their upstream was queued at all, on the same three edges
+        as in the matrix.
+      - **Unchanged:** observe-only counted as before (3, 3, 3; 14 and 10).
+      - **Scheduling efficiency, pipeline-30 on 3 executors:** mean wait +9.6%, HIGH +24.2%,
+        makespan -3.8%. The matrix had +9.7%, +17.0% and -3.9%.
+      - **The analysis:** the harness of PR #16's branch, so with DF-47's fix. Re-analysing the
+        kept raw files with it reproduces their KPIs, 10 of 10.
+      - **The conditions:**
+        - Windows logged no power-source change and no sleep;
+        - the default stack and the stock controller were stopped for the runs and started again
+          after;
+        - the experiment controllers were returned to 1 executor.
+- [x] **The eleventh full gate run (2026-10-24, at `8f7c244`, PR #17's branch after merging PR #16):
+      100 of 100, ALL CHECKS PASSED, exit 0.** It ran from 14:54:40 to 15:29:48 in Claude Code. Its
+      log is `docs/testing/evidence/gate-run-11-8f7c244.log`, kept with LF line endings and the text
+      unchanged.
+      - **Before it:**
+        - `jenkins-dev` was rebuilt and recreated with the fixed plugin. Its `/dynamic-queue/health`
+          then reported build `c01e744`.
+        - The `.hpi` was rebuilt, since switching branches for the re-run had touched the plugin
+          sources' timestamps, with the content unchanged since `c01e744`.
+        - The image checks then passed for `jenkins-dev`, both experiment controllers and the stock
+          controller.
+      - **Power:** it started on mains, but Windows logged two spells on battery inside it, with no
+        sleep. Each fell in a phase whose checks are pass or fail, which battery can only slow:
+        - 15:08:01 to 15:08:27, in Phase 3;
+        - 15:20:01 to 15:26:20, in Phase 6.
+
+        The plugin's build and tests (Phase 2, done by 15:04) and the smoke runs (Phase 7, from
+        15:26:57) ran on mains.
+      - **What it covered:**
+        - `mvn -B verify`: 125 unit tests (1 skipped) and 100 integration tests, among them D-080's
+          three;
+        - the experiment package's tests, now with DF-47's;
+        - the smoke run on plugin build `c01e744`: 6 of 6 jobs and 0 violations on each controller;
+        - D-078's stock checks.
+      - pytest used `PYTEST_DEBUG_TEMPROOT`, because the stale `pytest-current` link is still in
+        place (CLAUDE.md).
+      - CI passed on `8f7c244`: all six jobs in the push and the pull-request runs.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not

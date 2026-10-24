@@ -2,21 +2,32 @@ package io.jenkins.plugins.queueoptimizer.gate;
 
 import static io.jenkins.plugins.queueoptimizer.QueueTestSupport.assertAllDispatchedBefore;
 import static io.jenkins.plugins.queueoptimizer.QueueTestSupport.waitUntilAllComplete;
+import static io.jenkins.plugins.queueoptimizer.QueueTestSupport.waitUntilNodeBlocksBuildable;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import hudson.Launcher;
+import hudson.model.AbstractBuild;
+import hudson.model.BuildListener;
 import hudson.model.FreeStyleProject;
+import hudson.model.Job;
 import hudson.model.Queue;
 import hudson.model.queue.CauseOfBlockage;
 import io.jenkins.plugins.queueoptimizer.DispatchRecorder;
 import io.jenkins.plugins.queueoptimizer.property.JobPriorityProperty;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.SleepBuilder;
+import org.jvnet.hudson.test.TestBuilder;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /**
@@ -167,6 +178,199 @@ class DependencyGateIT {
         project.addProperty(new JobPriorityProperty("MEDIUM", "self-dep"));
 
         j.buildAndAssertSuccess(project);
+    }
+
+    @Test
+    @DisplayName("a Pipeline queued before its upstream still waits for it, at its node block")
+    void pipelineQueuedBeforeItsUpstreamWaitsAtItsNodeBlock(JenkinsRule j) throws Exception {
+        // Phase 7's matrix, pipeline-30 on three executors, all three repetitions. The fixed
+        // LOW, MEDIUM, HIGH order queues release-notes-generator (MEDIUM) a second before its
+        // upstream smoke-test-production (HIGH). When the downstream's flyweight passed the gate,
+        // nothing it depends on was queued or building, so its run started. Its node block, which
+        // the gate never holds, then took the next free executor while the upstream sat in the
+        // queue held for its own producers, and the downstream ran a minute before the upstream.
+        //
+        // The same states here, one at a time, so nothing races:
+        //   1. one executor, which the producer takes and keeps until the test releases it;
+        //   2. the downstream, a Pipeline, is queued: nothing it depends on is queued or
+        //      building, so its run starts and its node block waits for an executor;
+        //   3. its upstream is queued, and the gate holds it, since its producer is building;
+        //   4. a second executor appears while the upstream is still held.
+        // The downstream's node block must not take that executor: its upstream is queued.
+        j.jenkins.setNumExecutors(1);
+        DispatchRecorder dispatches = DispatchRecorder.attach(j);
+        HeldUntilReleased.latch = new CountDownLatch(1);
+
+        FreeStyleProject producer = j.createFreeStyleProject("gate-producer");
+        producer.addProperty(new JobPriorityProperty("LOW", ""));
+        producer.getBuildersList().add(new HeldUntilReleased());
+
+        FreeStyleProject upstream = j.createFreeStyleProject("gate-upstream");
+        upstream.addProperty(new JobPriorityProperty("HIGH", "gate-producer"));
+
+        WorkflowJob downstream = j.jenkins.createProject(WorkflowJob.class, "gate-pl-downstream");
+        downstream.setDefinition(new CpsFlowDefinition("node { echo 'work' }", true));
+        downstream.addProperty(new JobPriorityProperty("MEDIUM", "gate-upstream"));
+
+        try {
+            producer.scheduleBuild2(0);
+            waitUntilBuilding(j, "gate-producer");
+
+            downstream.scheduleBuild2(0);
+            waitUntilNodeBlocksBuildable(j, 1);
+
+            upstream.scheduleBuild2(0);
+            waitForBlockage(j, "gate-upstream");
+
+            j.jenkins.setNumExecutors(2);
+            CauseOfBlockage held = waitForNodeBlockHeldOrDispatched(j, dispatches, "gate-pl-downstream");
+            DependencyGate.UpstreamRunning running = assertInstanceOf(
+                    DependencyGate.UpstreamRunning.class,
+                    held,
+                    "the downstream's node block should wait for its queued upstream, as a freestyle "
+                            + "job's queue item does");
+            org.junit.jupiter.api.Assertions.assertEquals("gate-upstream", running.getUpstreamName());
+        } finally {
+            HeldUntilReleased.latch.countDown();
+        }
+
+        waitUntilAllComplete(j, List.of("gate-producer", "gate-upstream", "gate-pl-downstream"));
+        assertAllDispatchedBefore(
+                dispatches,
+                List.of("gate-upstream"),
+                List.of("gate-pl-downstream"),
+                "A Pipeline queued before its upstream must still run after it.");
+    }
+
+    @Test
+    @DisplayName("a Pipeline already doing its work is not held at its next node block")
+    void workingPipelineIsNotHeldAtItsNextNodeBlock(JenkinsRule j) throws Exception {
+        // The other half of DF-48's fix. Once a node block of a run has had an executor, the run's
+        // later node blocks are never held, as no node block was before. The upstream is queued
+        // only after the downstream's first node block has run, so a gate that held every node
+        // block would stop the run halfway, with nothing left to protect.
+        assertFinishesWhileItsUpstreamIsHeld(
+                j, "node { echo 'first' }\nsleep(time: 5, unit: 'SECONDS')\nnode { echo 'second' }", 2);
+    }
+
+    @Test
+    @DisplayName("a nested node block is not held while its outer block keeps an executor")
+    void nestedNodeBlockIsNotHeld(JenkinsRule j) throws Exception {
+        // The deadlock the node-block rule exists to prevent. The outer block keeps an executor
+        // while the inner one waits, so an inner block held for its upstream would keep that
+        // executor from all other work. Three executors: the producer, the outer block, the inner.
+        assertFinishesWhileItsUpstreamIsHeld(j, "node { sleep(time: 5, unit: 'SECONDS'); node { echo 'inner' } }", 3);
+    }
+
+    /**
+     * Runs a Pipeline whose upstream is queued, and held for its producer, only once the Pipeline's
+     * first node block has an executor. Asserts that the Pipeline still finishes while its upstream
+     * waits.
+     */
+    private static void assertFinishesWhileItsUpstreamIsHeld(JenkinsRule j, String script, int executors)
+            throws Exception {
+        j.jenkins.setNumExecutors(executors);
+        DispatchRecorder dispatches = DispatchRecorder.attach(j);
+        HeldUntilReleased.latch = new CountDownLatch(1);
+
+        FreeStyleProject producer = j.createFreeStyleProject("work-producer");
+        producer.getBuildersList().add(new HeldUntilReleased());
+
+        FreeStyleProject upstream = j.createFreeStyleProject("work-upstream");
+        upstream.addProperty(new JobPriorityProperty("HIGH", "work-producer"));
+
+        WorkflowJob downstream = j.jenkins.createProject(WorkflowJob.class, "work-pl-downstream");
+        downstream.setDefinition(new CpsFlowDefinition(script, true));
+        downstream.addProperty(new JobPriorityProperty("MEDIUM", "work-upstream"));
+
+        try {
+            producer.scheduleBuild2(0);
+            waitUntilBuilding(j, "work-producer");
+
+            downstream.scheduleBuild2(0);
+            waitUntilDispatched(j, dispatches, "work-pl-downstream");
+
+            upstream.scheduleBuild2(0);
+            waitForBlockage(j, "work-upstream");
+            org.junit.jupiter.api.Assertions.assertEquals(
+                    1L,
+                    dispatches.order().stream()
+                            .filter("work-pl-downstream"::equals)
+                            .count(),
+                    "the upstream must be queued before the downstream's next node block is, or this "
+                            + "test proves nothing");
+
+            WorkflowRun run = downstream.getLastBuild();
+            assertNotNull(run);
+            long deadline = System.currentTimeMillis() + 60_000;
+            while (run.isBuilding() && System.currentTimeMillis() < deadline) {
+                j.jenkins.getQueue().maintain();
+                Thread.sleep(50);
+            }
+            assertTrue(
+                    !run.isBuilding(),
+                    "the downstream's later node block was held mid-build; observed dispatch order: "
+                            + dispatches.order());
+            j.assertBuildStatusSuccess(run);
+            assertTrue(upstream.getLastBuild() == null, "the upstream should still be held for its producer");
+        } finally {
+            HeldUntilReleased.latch.countDown();
+        }
+
+        waitUntilAllComplete(j, List.of("work-producer", "work-upstream", "work-pl-downstream"));
+    }
+
+    /** Waits until the named job's work has been dispatched to an executor at least once. */
+    private static void waitUntilDispatched(JenkinsRule j, DispatchRecorder dispatches, String jobName)
+            throws Exception {
+        long deadline = System.currentTimeMillis() + 60_000;
+        while (System.currentTimeMillis() < deadline) {
+            j.jenkins.getQueue().maintain();
+            if (dispatches.positionOf(jobName) >= 0) {
+                return;
+            }
+            Thread.sleep(50);
+        }
+        fail("timed out waiting for " + jobName + "'s work to be dispatched");
+    }
+
+    /**
+     * Waits until the named Pipeline's node block either reports a cause of blockage, which it
+     * returns, or is dispatched to an executor, which fails the test at once.
+     */
+    private static CauseOfBlockage waitForNodeBlockHeldOrDispatched(
+            JenkinsRule j, DispatchRecorder dispatches, String jobName) throws Exception {
+        long deadline = System.currentTimeMillis() + 60_000;
+        while (System.currentTimeMillis() < deadline) {
+            j.jenkins.getQueue().maintain();
+            if (dispatches.positionOf(jobName) >= 0) {
+                fail(jobName + "'s node block took an executor while its upstream was still queued; "
+                        + "observed dispatch order: " + dispatches.order());
+            }
+            for (Queue.Item item : j.jenkins.getQueue().getItems()) {
+                boolean ownNodeBlock = !(item.task instanceof Job)
+                        && item.task.getOwnerTask() instanceof Job<?, ?> owner
+                        && owner.getFullName().equals(jobName);
+                if (ownNodeBlock && item.getCauseOfBlockage() instanceof DependencyGate.UpstreamRunning held) {
+                    return held;
+                }
+            }
+            Thread.sleep(50);
+        }
+        fail("timed out waiting for " + jobName + "'s node block to be held or dispatched");
+        return null;
+    }
+
+    /** Keeps a freestyle build running until the test counts the latch down. */
+    private static final class HeldUntilReleased extends TestBuilder {
+
+        static volatile CountDownLatch latch = new CountDownLatch(1);
+
+        @Override
+        public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
+                throws InterruptedException {
+            return latch.await(90, TimeUnit.SECONDS);
+        }
     }
 
     private static void waitUntilBuilding(JenkinsRule j, String jobName) throws Exception {

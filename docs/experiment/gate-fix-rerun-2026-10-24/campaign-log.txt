@@ -1,0 +1,52 @@
+13:35:59 CAMPAIGN since 2026-10-24T08:35:59+00:00: 25 steps, 0 done
+13:35:59 STEP 1/25 stop-default-stack: stop the default stack and the staged sample services
+13:36:06 DONE 1/25 stop-default-stack in 6 s
+13:36:06 STEP 2/25 stock-stop: stop the stock controller, which nothing here needs
+13:36:07 DONE 2/25 stock-stop in 1 s
+13:36:07 STEP 3/25 executors-3: both experiment controllers on 3 executors
+13:36:25 DONE 3/25 executors-3 in 18 s
+13:36:25 STEP 4/25 plugin-build: both controllers run the fixed plugin, build c01e744
+13:36:25 DONE 4/25 plugin-build in 0 s
+13:36:25 STEP 5/25 setup-pipeline-30: set up pipeline-30 on baseline and plugin
+13:36:30 DONE 5/25 setup-pipeline-30 in 5 s
+13:36:30 STEP 6/25 warmup-pipeline-30-1: warm-up pass 1 of 3, pipeline-30, on baseline and plugin
+13:38:45 DONE 6/25 warmup-pipeline-30-1 in 135 s
+13:38:45 STEP 7/25 warmup-pipeline-30-2: warm-up pass 2 of 3, pipeline-30, on baseline and plugin
+13:40:52 DONE 7/25 warmup-pipeline-30-2 in 127 s
+13:40:52 STEP 8/25 warmup-pipeline-30-3: warm-up pass 3 of 3, pipeline-30, on baseline and plugin
+13:42:58 DONE 8/25 warmup-pipeline-30-3 in 126 s
+13:42:58 STEP 9/25 setup-mixed-30: set up mixed-30 on baseline and plugin
+13:43:03 DONE 9/25 setup-mixed-30 in 5 s
+13:43:03 STEP 10/25 warmup-mixed-30-1: warm-up pass 1 of 3, mixed-30, on baseline and plugin
+13:45:10 DONE 10/25 warmup-mixed-30-1 in 127 s
+13:45:10 STEP 11/25 warmup-mixed-30-2: warm-up pass 2 of 3, mixed-30, on baseline and plugin
+13:47:12 DONE 11/25 warmup-mixed-30-2 in 122 s
+13:47:12 STEP 12/25 warmup-mixed-30-3: warm-up pass 3 of 3, mixed-30, on baseline and plugin
+13:49:15 DONE 12/25 warmup-mixed-30-3 in 122 s
+13:49:15 STEP 13/25 main-rerun-pipeline-30-3x-observe-only-r1: main-rerun: pipeline-30, 3 executor(s), observe-only, repetition 1
+13:51:19 DONE 13/25 main-rerun-pipeline-30-3x-observe-only-r1 in 125 s: 20261024T084916Z-main-rerun-pipeline-30-observe-only-3x-r1: makespan 120.154 s, mean wait 50.502 s, 3 violation(s)
+13:51:20 STEP 14/25 main-rerun-pipeline-30-3x-optimized-r1: main-rerun: pipeline-30, 3 executor(s), optimized, repetition 1
+13:53:32 DONE 14/25 main-rerun-pipeline-30-3x-optimized-r1 in 132 s: 20261024T085121Z-main-rerun-pipeline-30-optimized-3x-r1: makespan 128.253 s, mean wait 45.766 s, 0 violation(s)
+13:53:32 STEP 15/25 main-rerun-pipeline-30-3x-observe-only-r2: main-rerun: pipeline-30, 3 executor(s), observe-only, repetition 2
+13:55:37 DONE 15/25 main-rerun-pipeline-30-3x-observe-only-r2 in 125 s: 20261024T085333Z-main-rerun-pipeline-30-observe-only-3x-r2: makespan 120.127 s, mean wait 50.5 s, 3 violation(s)
+13:55:37 STEP 16/25 main-rerun-pipeline-30-3x-optimized-r2: main-rerun: pipeline-30, 3 executor(s), optimized, repetition 2
+13:57:44 DONE 16/25 main-rerun-pipeline-30-3x-optimized-r2 in 128 s: 20261024T085538Z-main-rerun-pipeline-30-optimized-3x-r2: makespan 122.785 s, mean wait 45.504 s, 0 violation(s)
+13:57:45 STEP 17/25 main-rerun-pipeline-30-3x-observe-only-r3: main-rerun: pipeline-30, 3 executor(s), observe-only, repetition 3
+13:59:49 DONE 17/25 main-rerun-pipeline-30-3x-observe-only-r3 in 125 s: 20261024T085745Z-main-rerun-pipeline-30-observe-only-3x-r3: makespan 120.061 s, mean wait 50.483 s, 3 violation(s)
+13:59:49 STEP 18/25 main-rerun-pipeline-30-3x-optimized-r3: main-rerun: pipeline-30, 3 executor(s), optimized, repetition 3
+14:01:56 DONE 18/25 main-rerun-pipeline-30-3x-optimized-r3 in 127 s: 20261024T085950Z-main-rerun-pipeline-30-optimized-3x-r3: makespan 122.866 s, mean wait 45.625 s, 0 violation(s)
+14:01:57 STEP 19/25 random-order-rerun-mixed-30-3x-observe-only-seed1: random-order-rerun: mixed-30, 3 executor(s), observe-only, seed 1
+14:03:55 DONE 19/25 random-order-rerun-mixed-30-3x-observe-only-seed1 in 118 s: 20261024T090157Z-random-order-rerun-mixed-30-observe-only-3x-r1: makespan 114.195 s, mean wait 46.877 s, 14 violation(s)
+14:03:55 STEP 20/25 random-order-rerun-mixed-30-3x-optimized-seed1: random-order-rerun: mixed-30, 3 executor(s), optimized, seed 1
+14:06:02 DONE 20/25 random-order-rerun-mixed-30-3x-optimized-seed1 in 127 s: 20261024T090356Z-random-order-rerun-mixed-30-optimized-3x-r1: makespan 122.73 s, mean wait 47.979 s, 2 violation(s)
+14:06:02 STEP 21/25 random-order-rerun-mixed-30-3x-observe-only-seed2: random-order-rerun: mixed-30, 3 executor(s), observe-only, seed 2
+14:07:57 DONE 21/25 random-order-rerun-mixed-30-3x-observe-only-seed2 in 115 s: 20261024T090603Z-random-order-rerun-mixed-30-observe-only-3x-r1: makespan 110.845 s, mean wait 46.977 s, 10 violation(s)
+14:07:57 STEP 22/25 random-order-rerun-mixed-30-3x-optimized-seed2: random-order-rerun: mixed-30, 3 executor(s), optimized, seed 2
+14:10:02 DONE 22/25 random-order-rerun-mixed-30-3x-optimized-seed2 in 125 s: 20261024T090758Z-random-order-rerun-mixed-30-optimized-3x-r1: makespan 121.01 s, mean wait 45.721 s, 1 violation(s)
+14:10:02 STEP 23/25 executors-1: both experiment controllers back on 1 executor
+14:10:23 DONE 23/25 executors-1 in 22 s
+14:10:23 STEP 24/25 restore-stack: start the default stack and the staged services
+14:10:57 DONE 24/25 restore-stack in 34 s
+14:10:57 STEP 25/25 stock-start-end: the stock controller up again
+14:11:10 DONE 25/25 stock-start-end in 13 s
+14:11:10 CAMPAIGN COMPLETE
