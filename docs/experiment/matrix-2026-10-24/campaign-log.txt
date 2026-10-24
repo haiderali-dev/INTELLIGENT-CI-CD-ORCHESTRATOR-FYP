@@ -1,0 +1,160 @@
+03:46:46 CAMPAIGN since 2026-10-23T22:46:46+00:00: 79 steps, 0 done
+03:46:46 STEP 1/79 stop-default-stack: stop the default stack and the staged sample services
+03:46:52 DONE 1/79 stop-default-stack in 6 s
+03:46:52 STEP 2/79 executors-1: both experiment controllers on 1 executor
+03:47:12 DONE 2/79 executors-1 in 20 s
+03:47:12 STEP 3/79 stock-start: the stock controller up, for its set-up and warm-up
+03:47:14 DONE 3/79 stock-start in 2 s
+03:47:14 STEP 4/79 setup-freestyle-30: set up freestyle-30 on baseline and plugin
+03:47:21 DONE 4/79 setup-freestyle-30 in 6 s
+03:47:21 STEP 5/79 setup-pipeline-30: set up pipeline-30 on baseline and plugin
+03:47:27 DONE 5/79 setup-pipeline-30 in 6 s
+03:47:27 STEP 6/79 setup-mixed-30: set up mixed-30 on baseline and plugin
+03:47:32 DONE 6/79 setup-mixed-30 in 6 s
+03:47:32 STEP 7/79 setup-stock: set up freestyle-30 on stock
+03:47:35 DONE 7/79 setup-stock in 3 s
+03:47:35 STEP 8/79 warmup-freestyle-30-1: warm-up pass 1 of 3, freestyle-30, on baseline, plugin, stock
+03:52:56 DONE 8/79 warmup-freestyle-30-1 in 321 s
+03:52:56 STEP 9/79 warmup-freestyle-30-2: warm-up pass 2 of 3, freestyle-30, on baseline, plugin, stock
+03:58:15 DONE 9/79 warmup-freestyle-30-2 in 319 s
+03:58:15 STEP 10/79 warmup-freestyle-30-3: warm-up pass 3 of 3, freestyle-30, on baseline, plugin, stock
+04:03:34 DONE 10/79 warmup-freestyle-30-3 in 319 s
+04:03:34 STEP 11/79 warmup-pipeline-30-1: warm-up pass 1 of 3, pipeline-30, on baseline, plugin
+04:09:26 DONE 11/79 warmup-pipeline-30-1 in 353 s
+04:09:26 STEP 12/79 warmup-pipeline-30-2: warm-up pass 2 of 3, pipeline-30, on baseline, plugin
+04:15:10 DONE 12/79 warmup-pipeline-30-2 in 343 s
+04:15:10 STEP 13/79 warmup-pipeline-30-3: warm-up pass 3 of 3, pipeline-30, on baseline, plugin
+04:20:54 DONE 13/79 warmup-pipeline-30-3 in 344 s
+04:20:54 STEP 14/79 warmup-mixed-30-1: warm-up pass 1 of 3, mixed-30, on baseline, plugin
+04:26:25 DONE 14/79 warmup-mixed-30-1 in 331 s
+04:26:25 STEP 15/79 warmup-mixed-30-2: warm-up pass 2 of 3, mixed-30, on baseline, plugin
+04:31:56 DONE 15/79 warmup-mixed-30-2 in 331 s
+04:31:56 STEP 16/79 warmup-mixed-30-3: warm-up pass 3 of 3, mixed-30, on baseline, plugin
+04:37:27 DONE 16/79 warmup-mixed-30-3 in 331 s
+04:37:27 STEP 17/79 stock-stop: stop the stock controller until its sanity run
+04:37:28 DONE 17/79 stock-stop in 1 s
+04:37:29 STEP 18/79 main-freestyle-30-1x-observe-only-r1: main: freestyle-30, 1 executor(s), observe-only, repetition 1
+04:42:50 DONE 18/79 main-freestyle-30-1x-observe-only-r1 in 322 s: 20261023T233730Z-main-freestyle-30-observe-only-1x-r1: makespan 316.778 s, mean wait 153.281 s, 1 violation(s)
+04:42:51 STEP 19/79 main-freestyle-30-1x-optimized-r1: main: freestyle-30, 1 executor(s), optimized, repetition 1
+04:48:12 DONE 19/79 main-freestyle-30-1x-optimized-r1 in 322 s: 20261023T234251Z-main-freestyle-30-optimized-1x-r1: makespan 317.065 s, mean wait 150.789 s, 0 violation(s)
+04:48:12 STEP 20/79 main-freestyle-30-1x-observe-only-r2: main: freestyle-30, 1 executor(s), observe-only, repetition 2
+04:53:33 DONE 20/79 main-freestyle-30-1x-observe-only-r2 in 321 s: 20261023T234813Z-main-freestyle-30-observe-only-1x-r2: makespan 316.742 s, mean wait 153.287 s, 1 violation(s)
+04:53:33 STEP 21/79 main-freestyle-30-1x-optimized-r2: main: freestyle-30, 1 executor(s), optimized, repetition 2
+04:58:54 DONE 21/79 main-freestyle-30-1x-optimized-r2 in 321 s: 20261023T235334Z-main-freestyle-30-optimized-1x-r2: makespan 316.879 s, mean wait 149.934 s, 0 violation(s)
+04:58:54 STEP 22/79 main-freestyle-30-1x-observe-only-r3: main: freestyle-30, 1 executor(s), observe-only, repetition 3
+05:04:15 DONE 22/79 main-freestyle-30-1x-observe-only-r3 in 321 s: 20261023T235855Z-main-freestyle-30-observe-only-1x-r3: makespan 316.736 s, mean wait 153.274 s, 1 violation(s)
+05:04:15 STEP 23/79 main-freestyle-30-1x-optimized-r3: main: freestyle-30, 1 executor(s), optimized, repetition 3
+05:09:36 DONE 23/79 main-freestyle-30-1x-optimized-r3 in 321 s: 20261024T000416Z-main-freestyle-30-optimized-1x-r3: makespan 316.877 s, mean wait 149.925 s, 0 violation(s)
+05:09:36 STEP 24/79 main-pipeline-30-1x-observe-only-r1: main: pipeline-30, 1 executor(s), observe-only, repetition 1
+05:15:21 DONE 24/79 main-pipeline-30-1x-observe-only-r1 in 346 s: 20261024T000937Z-main-pipeline-30-observe-only-1x-r1: makespan 341.186 s, mean wait 165.461 s, 20 violation(s)
+05:15:22 STEP 25/79 main-pipeline-30-1x-optimized-r1: main: pipeline-30, 1 executor(s), optimized, repetition 1
+05:21:07 DONE 25/79 main-pipeline-30-1x-optimized-r1 in 346 s: 20261024T001523Z-main-pipeline-30-optimized-1x-r1: makespan 341.891 s, mean wait 161.276 s, 1 violation(s)
+05:21:08 STEP 26/79 main-pipeline-30-1x-observe-only-r2: main: pipeline-30, 1 executor(s), observe-only, repetition 2
+05:26:52 DONE 26/79 main-pipeline-30-1x-observe-only-r2 in 345 s: 20261024T002108Z-main-pipeline-30-observe-only-1x-r2: makespan 340.595 s, mean wait 165.221 s, 20 violation(s)
+05:26:52 STEP 27/79 main-pipeline-30-1x-optimized-r2: main: pipeline-30, 1 executor(s), optimized, repetition 2
+05:32:41 DONE 27/79 main-pipeline-30-1x-optimized-r2 in 348 s: 20261024T002653Z-main-pipeline-30-optimized-1x-r2: makespan 344.004 s, mean wait 161.727 s, 1 violation(s)
+05:32:41 STEP 28/79 main-pipeline-30-1x-observe-only-r3: main: pipeline-30, 1 executor(s), observe-only, repetition 3
+05:38:40 DONE 28/79 main-pipeline-30-1x-observe-only-r3 in 360 s: 20261024T003242Z-main-pipeline-30-observe-only-1x-r3: makespan 354.899 s, mean wait 172.131 s, 20 violation(s)
+05:38:41 STEP 29/79 main-pipeline-30-1x-optimized-r3: main: pipeline-30, 1 executor(s), optimized, repetition 3
+05:44:38 DONE 29/79 main-pipeline-30-1x-optimized-r3 in 358 s: 20261024T003841Z-main-pipeline-30-optimized-1x-r3: makespan 353.485 s, mean wait 166.694 s, 1 violation(s)
+05:44:39 STEP 30/79 main-mixed-30-1x-observe-only-r1: main: mixed-30, 1 executor(s), observe-only, repetition 1
+05:50:16 DONE 30/79 main-mixed-30-1x-observe-only-r1 in 338 s: 20261024T004440Z-main-mixed-30-observe-only-1x-r1: makespan 333.157 s, mean wait 159.954 s, 11 violation(s)
+05:50:17 STEP 31/79 main-mixed-30-1x-optimized-r1: main: mixed-30, 1 executor(s), optimized, repetition 1
+05:55:50 DONE 31/79 main-mixed-30-1x-optimized-r1 in 333 s: 20261024T005018Z-main-mixed-30-optimized-1x-r1: makespan 329.387 s, mean wait 156.312 s, 0 violation(s)
+05:55:50 STEP 32/79 main-mixed-30-1x-observe-only-r2: main: mixed-30, 1 executor(s), observe-only, repetition 2
+06:01:23 DONE 32/79 main-mixed-30-1x-observe-only-r2 in 333 s: 20261024T005551Z-main-mixed-30-observe-only-1x-r2: makespan 329.138 s, mean wait 158.987 s, 11 violation(s)
+06:01:23 STEP 33/79 main-mixed-30-1x-optimized-r2: main: mixed-30, 1 executor(s), optimized, repetition 2
+06:06:57 DONE 33/79 main-mixed-30-1x-optimized-r2 in 334 s: 20261024T010124Z-main-mixed-30-optimized-1x-r2: makespan 329.686 s, mean wait 156.559 s, 0 violation(s)
+06:06:57 STEP 34/79 main-mixed-30-1x-observe-only-r3: main: mixed-30, 1 executor(s), observe-only, repetition 3
+06:12:31 DONE 34/79 main-mixed-30-1x-observe-only-r3 in 334 s: 20261024T010658Z-main-mixed-30-observe-only-1x-r3: makespan 329.096 s, mean wait 158.51 s, 11 violation(s)
+06:12:31 STEP 35/79 main-mixed-30-1x-optimized-r3: main: mixed-30, 1 executor(s), optimized, repetition 3
+06:18:05 DONE 35/79 main-mixed-30-1x-optimized-r3 in 334 s: 20261024T011232Z-main-mixed-30-optimized-1x-r3: makespan 330.292 s, mean wait 156.774 s, 0 violation(s)
+06:18:05 STEP 36/79 aging-ablation-freestyle-30-1x-optimized-r1: aging-ablation: freestyle-30, 1 executor(s), optimized, repetition 1
+06:23:26 DONE 36/79 aging-ablation-freestyle-30-1x-optimized-r1 in 321 s: 20261024T011806Z-aging-ablation-freestyle-30-optimized-1x-r1: makespan 316.866 s, mean wait 149.945 s, 0 violation(s)
+06:23:27 STEP 37/79 aging-ablation-freestyle-30-1x-optimized-r2: aging-ablation: freestyle-30, 1 executor(s), optimized, repetition 2
+06:28:48 DONE 37/79 aging-ablation-freestyle-30-1x-optimized-r2 in 322 s: 20261024T012327Z-aging-ablation-freestyle-30-optimized-1x-r2: makespan 316.888 s, mean wait 149.95 s, 0 violation(s)
+06:28:48 STEP 38/79 aging-ablation-freestyle-30-1x-optimized-r3: aging-ablation: freestyle-30, 1 executor(s), optimized, repetition 3
+06:34:09 DONE 38/79 aging-ablation-freestyle-30-1x-optimized-r3 in 321 s: 20261024T012849Z-aging-ablation-freestyle-30-optimized-1x-r3: makespan 316.974 s, mean wait 149.952 s, 0 violation(s)
+06:34:09 STEP 39/79 aging-off: plugin controller: aging bonus and cap at 0.0
+06:34:23 DONE 39/79 aging-off in 14 s
+06:34:23 STEP 40/79 aging-ablation-freestyle-30-1x-aging-off-r1: aging-ablation: freestyle-30, 1 executor(s), aging-off, repetition 1
+06:39:47 DONE 40/79 aging-ablation-freestyle-30-1x-aging-off-r1 in 324 s: 20261024T013425Z-aging-ablation-freestyle-30-aging-off-1x-r1: makespan 318.554 s, mean wait 150.668 s, 0 violation(s)
+06:39:47 STEP 41/79 aging-ablation-freestyle-30-1x-aging-off-r2: aging-ablation: freestyle-30, 1 executor(s), aging-off, repetition 2
+06:45:08 DONE 41/79 aging-ablation-freestyle-30-1x-aging-off-r2 in 322 s: 20261024T013948Z-aging-ablation-freestyle-30-aging-off-1x-r2: makespan 317.155 s, mean wait 150.107 s, 0 violation(s)
+06:45:09 STEP 42/79 aging-ablation-freestyle-30-1x-aging-off-r3: aging-ablation: freestyle-30, 1 executor(s), aging-off, repetition 3
+06:50:30 DONE 42/79 aging-ablation-freestyle-30-1x-aging-off-r3 in 322 s: 20261024T014510Z-aging-ablation-freestyle-30-aging-off-1x-r3: makespan 317.089 s, mean wait 150.056 s, 0 violation(s)
+06:50:30 STEP 43/79 aging-on: plugin controller: its configuration file restored
+06:50:43 DONE 43/79 aging-on in 12 s
+06:50:43 STEP 44/79 stock-start-sanity: the stock controller up for its sanity run
+06:50:56 DONE 44/79 stock-start-sanity in 13 s
+06:50:56 STEP 45/79 sanity-freestyle-30-1x-stock-r1: sanity: freestyle-30, 1 executor(s), stock, repetition 1
+06:56:18 DONE 45/79 sanity-freestyle-30-1x-stock-r1 in 322 s: 20261024T015057Z-sanity-freestyle-30-stock-1x-r1: makespan 317.906 s, mean wait 153.941 s, 1 violation(s)
+06:56:18 STEP 46/79 stock-stop-sanity: stop the stock controller
+06:56:19 DONE 46/79 stock-stop-sanity in 1 s
+06:56:19 STEP 47/79 executors-3: both experiment controllers on 3 executors
+06:56:36 DONE 47/79 executors-3 in 17 s
+06:56:36 STEP 48/79 main-freestyle-30-3x-observe-only-r1: main: freestyle-30, 3 executor(s), observe-only, repetition 1
+06:58:35 DONE 48/79 main-freestyle-30-3x-observe-only-r1 in 119 s: 20261024T015638Z-main-freestyle-30-observe-only-3x-r1: makespan 113.312 s, mean wait 47.132 s, 3 violation(s)
+06:58:35 STEP 49/79 main-freestyle-30-3x-optimized-r1: main: freestyle-30, 3 executor(s), optimized, repetition 1
+07:00:39 DONE 49/79 main-freestyle-30-3x-optimized-r1 in 124 s: 20261024T015836Z-main-freestyle-30-optimized-3x-r1: makespan 119.413 s, mean wait 45.586 s, 0 violation(s)
+07:00:39 STEP 50/79 main-freestyle-30-3x-observe-only-r2: main: freestyle-30, 3 executor(s), observe-only, repetition 2
+07:02:35 DONE 50/79 main-freestyle-30-3x-observe-only-r2 in 117 s: 20261024T020040Z-main-freestyle-30-observe-only-3x-r2: makespan 112.704 s, mean wait 46.782 s, 3 violation(s)
+07:02:35 STEP 51/79 main-freestyle-30-3x-optimized-r2: main: freestyle-30, 3 executor(s), optimized, repetition 2
+07:04:34 DONE 51/79 main-freestyle-30-3x-optimized-r2 in 119 s: 20261024T020236Z-main-freestyle-30-optimized-3x-r2: makespan 114.704 s, mean wait 42.732 s, 0 violation(s)
+07:04:35 STEP 52/79 main-freestyle-30-3x-observe-only-r3: main: freestyle-30, 3 executor(s), observe-only, repetition 3
+07:06:31 DONE 52/79 main-freestyle-30-3x-observe-only-r3 in 117 s: 20261024T020436Z-main-freestyle-30-observe-only-3x-r3: makespan 112.705 s, mean wait 46.758 s, 3 violation(s)
+07:06:32 STEP 53/79 main-freestyle-30-3x-optimized-r3: main: freestyle-30, 3 executor(s), optimized, repetition 3
+07:08:31 DONE 53/79 main-freestyle-30-3x-optimized-r3 in 119 s: 20261024T020632Z-main-freestyle-30-optimized-3x-r3: makespan 114.704 s, mean wait 42.758 s, 0 violation(s)
+07:08:31 STEP 54/79 main-pipeline-30-3x-observe-only-r1: main: pipeline-30, 3 executor(s), observe-only, repetition 1
+07:10:41 DONE 54/79 main-pipeline-30-3x-observe-only-r1 in 130 s: 20261024T020832Z-main-pipeline-30-observe-only-3x-r1: makespan 126.0 s, mean wait 57.653 s, 20 violation(s)
+07:10:41 STEP 55/79 main-pipeline-30-3x-optimized-r1: main: pipeline-30, 3 executor(s), optimized, repetition 1
+07:12:56 DONE 55/79 main-pipeline-30-3x-optimized-r1 in 135 s: 20261024T021042Z-main-pipeline-30-optimized-3x-r1: makespan 130.302 s, mean wait 53.966 s, 1 violation(s)
+07:12:56 STEP 56/79 main-pipeline-30-3x-observe-only-r2: main: pipeline-30, 3 executor(s), observe-only, repetition 2
+07:15:01 DONE 56/79 main-pipeline-30-3x-observe-only-r2 in 125 s: 20261024T021257Z-main-pipeline-30-observe-only-3x-r2: makespan 120.667 s, mean wait 50.794 s, 20 violation(s)
+07:15:01 STEP 57/79 main-pipeline-30-3x-optimized-r2: main: pipeline-30, 3 executor(s), optimized, repetition 2
+07:17:11 DONE 57/79 main-pipeline-30-3x-optimized-r2 in 130 s: 20261024T021502Z-main-pipeline-30-optimized-3x-r2: makespan 125.595 s, mean wait 44.854 s, 1 violation(s)
+07:17:11 STEP 58/79 main-pipeline-30-3x-observe-only-r3: main: pipeline-30, 3 executor(s), observe-only, repetition 3
+07:19:16 DONE 58/79 main-pipeline-30-3x-observe-only-r3 in 125 s: 20261024T021712Z-main-pipeline-30-observe-only-3x-r3: makespan 120.4 s, mean wait 50.576 s, 20 violation(s)
+07:19:16 STEP 59/79 main-pipeline-30-3x-optimized-r3: main: pipeline-30, 3 executor(s), optimized, repetition 3
+07:21:25 DONE 59/79 main-pipeline-30-3x-optimized-r3 in 129 s: 20261024T021917Z-main-pipeline-30-optimized-3x-r3: makespan 125.459 s, mean wait 44.848 s, 1 violation(s)
+07:21:25 STEP 60/79 main-mixed-30-3x-observe-only-r1: main: mixed-30, 3 executor(s), observe-only, repetition 1
+07:23:20 DONE 60/79 main-mixed-30-3x-observe-only-r1 in 115 s: 20261024T022126Z-main-mixed-30-observe-only-3x-r1: makespan 110.96 s, mean wait 47.832 s, 11 violation(s)
+07:23:20 STEP 61/79 main-mixed-30-3x-optimized-r1: main: mixed-30, 3 executor(s), optimized, repetition 1
+07:25:25 DONE 61/79 main-mixed-30-3x-optimized-r1 in 125 s: 20261024T022321Z-main-mixed-30-optimized-3x-r1: makespan 120.242 s, mean wait 44.688 s, 0 violation(s)
+07:25:25 STEP 62/79 main-mixed-30-3x-observe-only-r2: main: mixed-30, 3 executor(s), observe-only, repetition 2
+07:27:22 DONE 62/79 main-mixed-30-3x-observe-only-r2 in 117 s: 20261024T022526Z-main-mixed-30-observe-only-3x-r2: makespan 112.624 s, mean wait 48.15 s, 11 violation(s)
+07:27:22 STEP 63/79 main-mixed-30-3x-optimized-r2: main: mixed-30, 3 executor(s), optimized, repetition 2
+07:29:31 DONE 63/79 main-mixed-30-3x-optimized-r2 in 129 s: 20261024T022723Z-main-mixed-30-optimized-3x-r2: makespan 125.334 s, mean wait 48.605 s, 0 violation(s)
+07:29:31 STEP 64/79 main-mixed-30-3x-observe-only-r3: main: mixed-30, 3 executor(s), observe-only, repetition 3
+07:31:26 DONE 64/79 main-mixed-30-3x-observe-only-r3 in 115 s: 20261024T022932Z-main-mixed-30-observe-only-3x-r3: makespan 110.945 s, mean wait 47.865 s, 11 violation(s)
+07:31:26 STEP 65/79 main-mixed-30-3x-optimized-r3: main: mixed-30, 3 executor(s), optimized, repetition 3
+07:33:32 DONE 65/79 main-mixed-30-3x-optimized-r3 in 126 s: 20261024T023127Z-main-mixed-30-optimized-3x-r3: makespan 121.151 s, mean wait 44.459 s, 0 violation(s)
+07:33:32 STEP 66/79 random-order-mixed-30-3x-observe-only-seed1: random-order: mixed-30, 3 executor(s), observe-only, seed 1
+07:35:30 DONE 66/79 random-order-mixed-30-3x-observe-only-seed1 in 118 s: 20261024T023333Z-random-order-mixed-30-observe-only-3x-r1: makespan 113.245 s, mean wait 46.95 s, 20 violation(s)
+07:35:30 STEP 67/79 random-order-mixed-30-3x-optimized-seed1: random-order: mixed-30, 3 executor(s), optimized, seed 1
+07:37:36 DONE 67/79 random-order-mixed-30-3x-optimized-seed1 in 126 s: 20261024T023531Z-random-order-mixed-30-optimized-3x-r1: makespan 121.677 s, mean wait 48.022 s, 6 violation(s)
+07:37:36 STEP 68/79 random-order-mixed-30-3x-observe-only-seed2: random-order: mixed-30, 3 executor(s), observe-only, seed 2
+07:39:32 DONE 68/79 random-order-mixed-30-3x-observe-only-seed2 in 116 s: 20261024T023737Z-random-order-mixed-30-observe-only-3x-r1: makespan 112.223 s, mean wait 47.127 s, 16 violation(s)
+07:39:32 STEP 69/79 random-order-mixed-30-3x-optimized-seed2: random-order: mixed-30, 3 executor(s), optimized, seed 2
+07:41:36 DONE 69/79 random-order-mixed-30-3x-optimized-seed2 in 125 s: 20261024T023933Z-random-order-mixed-30-optimized-3x-r1: makespan 120.768 s, mean wait 45.737 s, 4 violation(s)
+07:41:36 STEP 70/79 executors-1-again: both experiment controllers back on 1 executor
+07:41:53 DONE 70/79 executors-1-again in 17 s
+07:41:54 STEP 71/79 cold-start-freestyle-30-1x-observe-only-r1: cold-start: freestyle-30, 1 executor(s), observe-only, repetition 1
+07:47:42 DONE 71/79 cold-start-freestyle-30-1x-observe-only-r1 in 349 s: 20261024T024222Z-cold-start-freestyle-30-observe-only-1x-r1: makespan 316.979 s, mean wait 153.528 s, 1 violation(s)
+07:47:42 STEP 72/79 cold-start-freestyle-30-1x-optimized-r1: cold-start: freestyle-30, 1 executor(s), optimized, repetition 1
+07:53:28 DONE 72/79 cold-start-freestyle-30-1x-optimized-r1 in 346 s: 20261024T024808Z-cold-start-freestyle-30-optimized-1x-r1: makespan 317.06 s, mean wait 150.285 s, 0 violation(s)
+07:53:28 STEP 73/79 cold-start-freestyle-30-1x-observe-only-r2: cold-start: freestyle-30, 1 executor(s), observe-only, repetition 2
+07:58:56 DONE 73/79 cold-start-freestyle-30-1x-observe-only-r2 in 328 s: 20261024T025337Z-cold-start-freestyle-30-observe-only-1x-r2: makespan 316.411 s, mean wait 153.111 s, 1 violation(s)
+07:58:57 STEP 74/79 cold-start-freestyle-30-1x-optimized-r2: cold-start: freestyle-30, 1 executor(s), optimized, repetition 2
+08:04:25 DONE 74/79 cold-start-freestyle-30-1x-optimized-r2 in 329 s: 20261024T025905Z-cold-start-freestyle-30-optimized-1x-r2: makespan 316.415 s, mean wait 149.781 s, 0 violation(s)
+08:04:25 STEP 75/79 cold-start-freestyle-30-1x-observe-only-r3: cold-start: freestyle-30, 1 executor(s), observe-only, repetition 3
+08:09:53 DONE 75/79 cold-start-freestyle-30-1x-observe-only-r3 in 328 s: 20261024T030434Z-cold-start-freestyle-30-observe-only-1x-r3: makespan 316.311 s, mean wait 153.044 s, 1 violation(s)
+08:09:53 STEP 76/79 cold-start-freestyle-30-1x-optimized-r3: cold-start: freestyle-30, 1 executor(s), optimized, repetition 3
+08:15:20 DONE 76/79 cold-start-freestyle-30-1x-optimized-r3 in 328 s: 20261024T031001Z-cold-start-freestyle-30-optimized-1x-r3: makespan 316.346 s, mean wait 149.742 s, 0 violation(s)
+08:15:20 STEP 77/79 report: python -m experiment report
+08:15:21 DONE 77/79 report in 0 s
+08:15:21 STEP 78/79 restore-stack: start the default stack, the staged services and stock
+08:15:48 DONE 78/79 restore-stack in 28 s
+08:15:48 STEP 79/79 stock-start-end: the stock controller up again
+08:16:02 DONE 79/79 stock-start-end in 13 s
+08:16:02 CAMPAIGN COMPLETE

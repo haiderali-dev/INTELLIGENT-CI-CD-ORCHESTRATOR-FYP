@@ -33,10 +33,14 @@ def run_kpis(
     makespan_ms = max(r.finished_ms for r in records) - min(r.submitted_ms for r in records)
     waits = [r.wait_ms for r in records]
     low = [r.wait_ms for r in records if r.level == "LOW"]
+    # A downstream starts when its work takes an executor: for a Pipeline, its first node block,
+    # since the run itself starts the moment its flyweight leaves the queue (D-015).
     violated = [
         [up, down]
         for up, down in edges
-        if up in by_name and down in by_name and by_name[down].started_ms < by_name[up].finished_ms
+        if up in by_name
+        and down in by_name
+        and by_name[down].work_started_ms < by_name[up].finished_ms
     ]
     busy_ms = sum(r.busy_ms for r in records)
     return {

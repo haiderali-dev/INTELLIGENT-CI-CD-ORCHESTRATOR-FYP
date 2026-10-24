@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="360" viewBox="0 0 720 360" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<rect width="720" height="360" fill="#ffffff"/>
+<text x="64" y="24" font-size="15" font-weight="600" fill="#1f2328">Milestone 2's runs, recomputed: mean wait by band (M2 dispatcher v1 and its control)</text>
+<line x1="64" y1="288.0" x2="704" y2="288.0" stroke="#d8dee4"/>
+<text x="58" y="292.0" font-size="11" text-anchor="end" fill="#57606a">0</text>
+<line x1="64" y1="228.0" x2="704" y2="228.0" stroke="#d8dee4"/>
+<text x="58" y="232.0" font-size="11" text-anchor="end" fill="#57606a">100</text>
+<line x1="64" y1="168.0" x2="704" y2="168.0" stroke="#d8dee4"/>
+<text x="58" y="172.0" font-size="11" text-anchor="end" fill="#57606a">200</text>
+<line x1="64" y1="108.0" x2="704" y2="108.0" stroke="#d8dee4"/>
+<text x="58" y="112.0" font-size="11" text-anchor="end" fill="#57606a">300</text>
+<line x1="64" y1="48.0" x2="704" y2="48.0" stroke="#d8dee4"/>
+<text x="58" y="52.0" font-size="11" text-anchor="end" fill="#57606a">400</text>
+<text x="14" y="168.0" font-size="12" fill="#57606a" transform="rotate(-90 14 168.0)" text-anchor="middle">Seconds</text>
+<rect x="77.8" y="125.1" width="32.1" height="162.9" rx="2" fill="#2a78d6"><title>HIGH, stock Jenkins: 271.5</title></rect>
+<rect x="111.9" y="201.3" width="32.1" height="86.7" rx="2" fill="#eb6834"><title>MEDIUM, stock Jenkins: 144.49</title></rect>
+<rect x="146.1" y="278.5" width="32.1" height="9.5" rx="2" fill="#1baf7a"><title>LOW, stock Jenkins: 15.89</title></rect>
+<text x="128.0" y="306" font-size="12" text-anchor="middle" fill="#1f2328">stock Jenkins</text>
+<rect x="205.8" y="261.1" width="32.1" height="26.9" rx="2" fill="#2a78d6"><title>HIGH, run 1: 44.88</title></rect>
+<rect x="239.9" y="189.9" width="32.1" height="98.1" rx="2" fill="#eb6834"><title>MEDIUM, run 1: 163.5</title></rect>
+<rect x="274.1" y="151.0" width="32.1" height="137.0" rx="2" fill="#1baf7a"><title>LOW, run 1: 228.31</title></rect>
+<text x="256.0" y="306" font-size="12" text-anchor="middle" fill="#1f2328">run 1</text>
+<rect x="333.8" y="257.2" width="32.1" height="30.8" rx="2" fill="#2a78d6"><title>HIGH, run 2: 51.27</title></rect>
+<rect x="367.9" y="174.9" width="32.1" height="113.1" rx="2" fill="#eb6834"><title>MEDIUM, run 2: 188.57</title></rect>
+<rect x="402.1" y="140.2" width="32.1" height="147.8" rx="2" fill="#1baf7a"><title>LOW, run 2: 246.3</title></rect>
+<text x="384.0" y="306" font-size="12" text-anchor="middle" fill="#1f2328">run 2</text>
+<rect x="461.8" y="76.0" width="32.1" height="212.0" rx="2" fill="#2a78d6"><title>HIGH, run 3: 353.34</title></rect>
+<rect x="495.9" y="167.2" width="32.1" height="120.8" rx="2" fill="#eb6834"><title>MEDIUM, run 3: 201.37</title></rect>
+<rect x="530.1" y="271.1" width="32.1" height="16.9" rx="2" fill="#1baf7a"><title>LOW, run 3: 28.12</title></rect>
+<text x="512.0" y="306" font-size="12" text-anchor="middle" fill="#1f2328">run 3</text>
+<rect x="589.8" y="264.6" width="32.1" height="23.4" rx="2" fill="#2a78d6"><title>HIGH, run 4: 39.08</title></rect>
+<rect x="623.9" y="186.3" width="32.1" height="101.7" rx="2" fill="#eb6834"><title>MEDIUM, run 4: 169.42</title></rect>
+<rect x="658.1" y="148.2" width="32.1" height="139.8" rx="2" fill="#1baf7a"><title>LOW, run 4: 232.94</title></rect>
+<text x="640.0" y="306" font-size="12" text-anchor="middle" fill="#1f2328">run 4</text>
+<line x1="64" y1="288" x2="704" y2="288" stroke="#57606a"/>
+<rect x="64.0" y="334" width="12" height="12" rx="2" fill="#2a78d6"/>
+<text x="81.0" y="344" font-size="12" fill="#1f2328">HIGH</text>
+<rect x="122.0" y="334" width="12" height="12" rx="2" fill="#eb6834"/>
+<text x="139.0" y="344" font-size="12" fill="#1f2328">MEDIUM</text>
+<rect x="194.0" y="334" width="12" height="12" rx="2" fill="#1baf7a"/>
+<text x="211.0" y="344" font-size="12" fill="#1f2328">LOW</text>
+</svg>
