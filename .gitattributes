@@ -44,3 +44,6 @@ Dockerfile  text eol=lf
 frontend/src/api/generated.ts linguist-generated=true
 package-lock.json             linguist-generated=true
 uv.lock                       linguist-generated=true
+
+# The experiment matrix's raw runs are kept byte for byte too, so SHA256SUMS still matches.
+docs/experiment/*/runs/** -text

@@ -2352,6 +2352,36 @@ The stock-Jenkins controller its sanity arm needs is on `phase-7-stock-jenkins` 
         - `mvn -B verify`: BUILD SUCCESS, 125 unit tests (1 skipped, as before) and 100 integration
           tests, SpotBugs 0, Spotless clean.
       - **The re-run on real Jenkins:** in the next entry.
+- [x] **The targeted re-run after DF-48's fix: 10 of 10 runs**, approved by the user on 2026-10-24.
+      It ran 13:36 to 14:11, on mains power, on experiment controllers running plugin build
+      `c01e744`. Kept in `docs/experiment/gate-fix-rerun-2026-10-24/`.
+      - **What it ran:** pipeline-30 on 3 executors (3 repetitions) and random order (mixed-30 on 3
+        executors, seeds 1 and 2), both arms. Fresh jobs were set up and warmed with three passes.
+        The groups are `main-rerun` and `random-order-rerun`, apart from the matrix's.
+      - **The optimized arm's violations:**
+
+        | Condition | Matrix | Re-run |
+        | --- | --- | --- |
+        | pipeline-30, per run | 1, 1, 1 | 0, 0, 0 |
+        | Random order, seed 1 | 5 | 2 |
+        | Random order, seed 2 | 2 | 1 |
+
+      - **The fixed edge:** in all three pipeline-30 runs, `release-notes-generator`'s node block
+        took an executor 2.8 to 2.9 s after `smoke-test-production` ended. In the matrix it had run
+        at 15.5 to 17 s, before its upstream had started.
+      - **The three left are D-080's limit:** freestyle downstreams in random order took an idle
+        executor 132 to 1,040 ms before their upstream was queued at all, on the same three edges
+        as in the matrix.
+      - **Unchanged:** observe-only counted as before (3, 3, 3; 14 and 10).
+      - **Scheduling efficiency, pipeline-30 on 3 executors:** mean wait +9.6%, HIGH +24.2%,
+        makespan -3.8%. The matrix had +9.7%, +17.0% and -3.9%.
+      - **The analysis:** the harness of PR #16's branch, so with DF-47's fix. Re-analysing the
+        kept raw files with it reproduces their KPIs, 10 of 10.
+      - **The conditions:**
+        - Windows logged no power-source change and no sleep;
+        - the default stack and the stock controller were stopped for the runs and started again
+          after;
+        - the experiment controllers were returned to 1 executor.
 - [ ] **Needs human: the full matrix (4.8.2)**, about 50 runs, listed in `experiment/README.md`.
       - **Time:** each 30-job workload holds 315 s of work, so the matrix is several hours of
         machine time on mains power. The controllers must restart between one and three executors.

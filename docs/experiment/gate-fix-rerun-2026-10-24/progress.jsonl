@@ -1,0 +1,25 @@
+{"id": "stop-default-stack", "status": "done", "at": "2026-10-24T08:36:06+00:00", "seconds": 6.2, "detail": ""}
+{"id": "stock-stop", "status": "done", "at": "2026-10-24T08:36:07+00:00", "seconds": 1.1, "detail": ""}
+{"id": "executors-3", "status": "done", "at": "2026-10-24T08:36:25+00:00", "seconds": 18.0, "detail": ""}
+{"id": "plugin-build", "status": "done", "at": "2026-10-24T08:36:25+00:00", "seconds": 0.2, "detail": ""}
+{"id": "setup-pipeline-30", "status": "done", "at": "2026-10-24T08:36:30+00:00", "seconds": 5.5, "detail": ""}
+{"id": "warmup-pipeline-30-1", "status": "done", "at": "2026-10-24T08:38:45+00:00", "seconds": 135.1, "detail": ""}
+{"id": "warmup-pipeline-30-2", "status": "done", "at": "2026-10-24T08:40:52+00:00", "seconds": 126.8, "detail": ""}
+{"id": "warmup-pipeline-30-3", "status": "done", "at": "2026-10-24T08:42:58+00:00", "seconds": 125.5, "detail": ""}
+{"id": "setup-mixed-30", "status": "done", "at": "2026-10-24T08:43:03+00:00", "seconds": 5.3, "detail": ""}
+{"id": "warmup-mixed-30-1", "status": "done", "at": "2026-10-24T08:45:10+00:00", "seconds": 126.7, "detail": ""}
+{"id": "warmup-mixed-30-2", "status": "done", "at": "2026-10-24T08:47:12+00:00", "seconds": 122.5, "detail": ""}
+{"id": "warmup-mixed-30-3", "status": "done", "at": "2026-10-24T08:49:15+00:00", "seconds": 122.4, "detail": ""}
+{"id": "main-rerun-pipeline-30-3x-observe-only-r1", "status": "done", "at": "2026-10-24T08:51:19+00:00", "seconds": 124.5, "detail": "20261024T084916Z-main-rerun-pipeline-30-observe-only-3x-r1: makespan 120.154 s, mean wait 50.502 s, 3 violation(s)"}
+{"id": "main-rerun-pipeline-30-3x-optimized-r1", "status": "done", "at": "2026-10-24T08:53:32+00:00", "seconds": 132.4, "detail": "20261024T085121Z-main-rerun-pipeline-30-optimized-3x-r1: makespan 128.253 s, mean wait 45.766 s, 0 violation(s)"}
+{"id": "main-rerun-pipeline-30-3x-observe-only-r2", "status": "done", "at": "2026-10-24T08:55:37+00:00", "seconds": 125.0, "detail": "20261024T085333Z-main-rerun-pipeline-30-observe-only-3x-r2: makespan 120.127 s, mean wait 50.5 s, 3 violation(s)"}
+{"id": "main-rerun-pipeline-30-3x-optimized-r2", "status": "done", "at": "2026-10-24T08:57:44+00:00", "seconds": 127.5, "detail": "20261024T085538Z-main-rerun-pipeline-30-optimized-3x-r2: makespan 122.785 s, mean wait 45.504 s, 0 violation(s)"}
+{"id": "main-rerun-pipeline-30-3x-observe-only-r3", "status": "done", "at": "2026-10-24T08:59:49+00:00", "seconds": 124.8, "detail": "20261024T085745Z-main-rerun-pipeline-30-observe-only-3x-r3: makespan 120.061 s, mean wait 50.483 s, 3 violation(s)"}
+{"id": "main-rerun-pipeline-30-3x-optimized-r3", "status": "done", "at": "2026-10-24T09:01:56+00:00", "seconds": 127.3, "detail": "20261024T085950Z-main-rerun-pipeline-30-optimized-3x-r3: makespan 122.866 s, mean wait 45.625 s, 0 violation(s)"}
+{"id": "random-order-rerun-mixed-30-3x-observe-only-seed1", "status": "done", "at": "2026-10-24T09:03:55+00:00", "seconds": 118.5, "detail": "20261024T090157Z-random-order-rerun-mixed-30-observe-only-3x-r1: makespan 114.195 s, mean wait 46.877 s, 14 violation(s)"}
+{"id": "random-order-rerun-mixed-30-3x-optimized-seed1", "status": "done", "at": "2026-10-24T09:06:02+00:00", "seconds": 127.1, "detail": "20261024T090356Z-random-order-rerun-mixed-30-optimized-3x-r1: makespan 122.73 s, mean wait 47.979 s, 2 violation(s)"}
+{"id": "random-order-rerun-mixed-30-3x-observe-only-seed2", "status": "done", "at": "2026-10-24T09:07:57+00:00", "seconds": 114.9, "detail": "20261024T090603Z-random-order-rerun-mixed-30-observe-only-3x-r1: makespan 110.845 s, mean wait 46.977 s, 10 violation(s)"}
+{"id": "random-order-rerun-mixed-30-3x-optimized-seed2", "status": "done", "at": "2026-10-24T09:10:02+00:00", "seconds": 124.8, "detail": "20261024T090758Z-random-order-rerun-mixed-30-optimized-3x-r1: makespan 121.01 s, mean wait 45.721 s, 1 violation(s)"}
+{"id": "executors-1", "status": "done", "at": "2026-10-24T09:10:23+00:00", "seconds": 21.8, "detail": ""}
+{"id": "restore-stack", "status": "done", "at": "2026-10-24T09:10:57+00:00", "seconds": 33.5, "detail": ""}
+{"id": "stock-start-end", "status": "done", "at": "2026-10-24T09:11:10+00:00", "seconds": 13.2, "detail": ""}

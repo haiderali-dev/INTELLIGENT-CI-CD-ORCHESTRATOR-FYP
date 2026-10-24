@@ -81,6 +81,12 @@ deadlock against its outer one.
   every node block.
 - **`mvn -B verify`:** BUILD SUCCESS: 125 unit tests (1 skipped, as before) and 100 integration
   tests, SpotBugs 0, Spotless clean.
+- **On real Jenkins, the targeted re-run** (`docs/experiment/gate-fix-rerun-2026-10-24/`):
+  - **pipeline-30 on 3 executors, plugin build `c01e744`:** the optimized arm had 0 violations in
+    each of three runs, against 1 in each before. `release-notes-generator`'s node block now waits,
+    and took an executor 2.8 to 2.9 s after its upstream ended.
+  - **Random order:** 2 and 1 violations remain, against 5 and 2. All three are this record's
+    limit, a freestyle downstream that took an idle executor before its upstream was queued.
 
 ---
 
