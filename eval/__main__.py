@@ -1,10 +1,13 @@
-"""``python -m eval``: run a parser over a dataset, or write the report.
+"""``python -m eval``: build a dataset, run a parser over one, or write the report.
 
 Run with the backend's environment, which has the dependencies::
 
+    uv run --project backend python -m eval build
+    uv run --project backend python -m eval check --file eval/datasets/eval-v1.jsonl
     uv run --project backend python -m eval run --parser rules --file eval/datasets/sample.jsonl
-    uv run --project backend python -m eval run --parser groq:openai/gpt-oss-120b --file ...
-    uv run --project backend python -m eval check --file eval/datasets/sample.jsonl
+    uv run --project backend python -m eval run --parser groq:openai/gpt-oss-120b
+        --file eval/datasets/eval-v1.jsonl --split test --include-unreviewed   (one line)
+    uv run --project backend python -m eval e2e --parser groq:openai/gpt-oss-120b
     uv run --project backend python -m eval report
 """
 
@@ -19,17 +22,22 @@ from pathlib import Path
 
 try:
     from app.ai.prompting import load_prompt
+    from app.generation.planner import MAX_REPAIRS
     from app.services.catalog import Catalog
 except ImportError as exc:  # pragma: no cover - a usage error, not a code path
     raise SystemExit(
         f"{exc}. Run with the backend's environment:\n  uv run --project backend python -m eval ..."
     ) from exc
 
-from eval.dataset import DatasetError, load_dataset, overlap_with_examples
+from eval import curation
+from eval.dataset import DatasetError, card_path, load_dataset, overlap_with_examples
 from eval.report import write_report
-from eval.runner import REPO_ROOT, RunConfig, default_out_dir, run
+from eval.runner import REPO_ROOT, SUBSETS, RunConfig, default_out_dir, run
 
 CATALOG = REPO_ROOT / "catalog" / "services.yaml"
+DATASETS = REPO_ROOT / "eval" / "datasets"
+V1_SOURCE = DATASETS / "eval-v1.source.yaml"
+V1 = DATASETS / "eval-v1.jsonl"
 
 
 def _groq_key() -> str | None:
@@ -44,18 +52,50 @@ def _groq_key() -> str | None:
     return None
 
 
+def _examples() -> list[str]:
+    return [example.user for example in load_prompt().examples]
+
+
 def _check(path: Path) -> int:
     dataset = load_dataset(path)
     print(
         f"{len(dataset.items)} item(s): {len(dataset.scorable)} reviewed, "
         f"{len(dataset.needs_review)} awaiting review"
     )
+    if dataset.machine_labelled:
+        print("  labels: written by Claude Code, not reviewed by a person (D-081)")
     for warning in dataset.warnings:
         print(f"  warning: {warning}")
-    clash = overlap_with_examples(dataset, [example.user for example in load_prompt().examples])
+    clash = overlap_with_examples(dataset, _examples())
     if clash:
         print(f"  ERROR: these items repeat a few-shot example in the prompt: {clash}")
         return 1
+    return 0
+
+
+def _build(source: Path, out: Path, *, check_only: bool) -> int:
+    report = curation.build(source, CATALOG, example_texts=_examples())
+    jsonl = curation.render_jsonl(report.items)
+    if check_only:
+        card = card_path(out)
+        same = (
+            out.is_file()
+            and out.read_bytes() == jsonl
+            and card.is_file()
+            and card.read_bytes() == curation.render_card(report.card)
+        )
+        print(f"{out.name} {'matches' if same else 'does NOT match'} a rebuild from {source.name}")
+        return 0 if same else 1
+    card = curation.write(report, out)
+    splits = report.card["splits"]
+    print(
+        f"wrote {out.relative_to(REPO_ROOT)} ({report.card['items']} items: "
+        f"{splits['dev']['items']} dev, {splits['test']['items']} test; "
+        f"{report.card['ablation']} in the ablation subset, {report.card['e2e']} end-to-end) "
+        f"and {card.relative_to(REPO_ROOT)}"
+    )
+    for left, right, similarity in report.near_duplicates:
+        print(f"  near-duplicate across splits: {left} and {right} ({similarity})")
     return 0
 
 
@@ -63,19 +103,34 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m eval")
     commands = parser.add_subparsers(dest="command", required=True)
 
+    build_cmd = commands.add_parser("build", help="build a curated dataset from its source")
+    build_cmd.add_argument("--source", type=Path, default=V1_SOURCE)
+    build_cmd.add_argument("--out", type=Path, default=V1)
+    build_cmd.add_argument(
+        "--check", action="store_true", help="only check that the files match a rebuild"
+    )
+
     run_cmd = commands.add_parser("run", help="score one parser on a dataset")
     run_cmd.add_argument("--parser", required=True, help="rules, fake, or groq:<model>")
     run_cmd.add_argument("--file", required=True, type=Path)
     run_cmd.add_argument("--out", type=Path, help="results directory (default: per configuration)")
+    run_cmd.add_argument("--split", choices=("dev", "test"), help="score one split only")
+    run_cmd.add_argument(
+        "--subset", choices=SUBSETS, help="4.9's ablation subset, or the e2e sample"
+    )
     run_cmd.add_argument(
         "--include-unreviewed",
         action="store_true",
-        help="also score items marked needs_review; the output is stamped not-for-reporting",
+        help="also score items marked needs_review; the output says who labelled them",
     )
     run_cmd.add_argument(
         "--no-examples", action="store_true", help="4.9 ablation: no few-shot examples"
     )
     run_cmd.add_argument("--no-enums", action="store_true", help="4.9 ablation: no catalog enums")
+    run_cmd.add_argument("--no-repair", action="store_true", help="4.9 ablation: no repair loop")
+    run_cmd.add_argument(
+        "--no-plans", action="store_true", help="skip plan validity (model runs plan by default)"
+    )
     run_cmd.add_argument(
         "--fresh", action="store_true", help="discard saved progress and start over"
     )
@@ -83,11 +138,21 @@ def main(argv: list[str] | None = None) -> int:
     check_cmd = commands.add_parser("check", help="validate a dataset without running anything")
     check_cmd.add_argument("--file", required=True, type=Path)
 
+    e2e_cmd = commands.add_parser("e2e", help="4.9's 20-command sample against jenkins-dev")
+    e2e_cmd.add_argument("--parser", required=True, help="groq:<model>, or replay")
+    e2e_cmd.add_argument("--file", type=Path, default=V1)
+    e2e_cmd.add_argument(
+        "--fresh", action="store_true", help="discard saved progress and start over"
+    )
+
     commands.add_parser("report", help="write report.json and report.md from finished runs")
 
     args = parser.parse_args(argv)
 
     try:
+        if args.command == "build":
+            return _build(args.source, args.out, check_only=args.check)
+
         if args.command == "check":
             return _check(args.file)
 
@@ -96,9 +161,26 @@ def main(argv: list[str] | None = None) -> int:
             print(f"wrote {json_path.relative_to(REPO_ROOT)} and {md_path.relative_to(REPO_ROOT)}")
             return 0
 
+        if args.command == "e2e":
+            from eval.e2e import E2EConfig, run_e2e
+
+            report = asyncio.run(
+                run_e2e(
+                    E2EConfig(parser=args.parser, dataset=args.file.resolve(), fresh=args.fresh),
+                    groq_key=_groq_key(),
+                )
+            )
+            summary = report["summary"]
+            print(
+                f"{summary['succeeded']} of {summary['n']} command(s) succeeded end to end; "
+                f"metrics: {report['path']}"
+            )
+            return 0 if report["run"]["complete"] else 3
+
         dataset = load_dataset(args.file)
         if _check(args.file) != 0:
             return 1
+        max_repairs = 0 if args.no_repair else MAX_REPAIRS
         # Resolved, so a relative --out works from any directory and prints cleanly below.
         out_dir = (
             args.out.resolve()
@@ -108,6 +190,9 @@ def main(argv: list[str] | None = None) -> int:
                 args.file,
                 include_examples=not args.no_examples,
                 include_enums=not args.no_enums,
+                split=args.split,
+                subset=args.subset,
+                max_repairs=max_repairs,
             )
         )
         config = RunConfig(
@@ -118,9 +203,13 @@ def main(argv: list[str] | None = None) -> int:
             include_examples=not args.no_examples,
             include_enums=not args.no_enums,
             fresh=args.fresh,
+            split=args.split,
+            subset=args.subset,
+            max_repairs=max_repairs,
+            plans=not args.no_plans,
         )
         report = asyncio.run(run(config, dataset, Catalog(CATALOG), groq_key=_groq_key()))
-    except DatasetError as exc:
+    except (DatasetError, curation.CurationError) as exc:
         print(f"dataset error: {exc}", file=sys.stderr)
         return 2
 
@@ -130,10 +219,19 @@ def main(argv: list[str] | None = None) -> int:
         f"action accuracy {metrics['action_accuracy']}, "
         f"behaviour accuracy {metrics['behavior_accuracy']}"
     )
+    if report.get("plans"):
+        plans = report["plans"]
+        print(
+            f"plans: {plans['n']} of {plans['plannable_items']} planned by the model, valid "
+            f"before repair {plans['valid_before_repair']}, after {plans['valid_after_repair']}"
+        )
     if "warning" in report:
         print(f"note: {report['warning']}")
+    if not report["run"]["complete"]:
+        print(f"incomplete: {report['run']['stopped_reason']}")
     print(f"metrics: {(out_dir / 'metrics.json').relative_to(REPO_ROOT)}")
-    return 0
+    # 3: stopped for quota, so a campaign script can tell "come back later" from "broken".
+    return 0 if report["run"]["complete"] else 3
 
 
 if __name__ == "__main__":

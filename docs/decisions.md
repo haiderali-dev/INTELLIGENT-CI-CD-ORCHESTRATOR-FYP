@@ -9,6 +9,53 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ---
 
+## Phase 8
+
+### D-081 The evaluation dataset is written and labelled by Claude Code, and says so everywhere
+**Date:** 2026-10-24 · **Status:** accepted (Phase 8), at the project owner's instruction
+
+**The conflict.** Part 4.9 says: "Humans write and label every gold answer. Claude Code may draft
+at most 30 items, each marked `needs_review: true`; they are excluded from scoring until a human
+clears the flag." On 2026-10-24 the project owner wrote: "I don't have a ready-made dataset, and
+I cannot obtain one myself. You will need to search online for a suitable dataset or create one.
+You must handle all the necessary work, including online research, dataset creation, validation,
+and preparation of the evaluation data." Under 4.9 as written nothing could then ever be scored,
+because nobody can clear a flag. The owner's instruction is the higher source here.
+
+**The search** found no public dataset for this task (`eval/datasets/eval-v1.card.md` section 2).
+The nearest, DeployIntentD (Wijesinghe et al., 2025), has no public release.
+
+**What was done:** `eval-v1`, 250 items in 4.9's mix and split.
+- **The messages:** 205 written for it. Nine are 4.6.5's commands and 21 Phase 4's drafts, both
+  verbatim and in the development split. Eight are human-written out-of-scope queries from CLINC150
+  (CC BY 3.0) and seven injection payloads from deepset/prompt-injections (Apache-2.0), all
+  verbatim.
+- **The labels:** every gold label by Claude Code, applying twelve stated rules. The builder checks
+  every label against them in code that does not import the backend's validator or policy.
+- **Freezing:** it was frozen, with its checksum in git, before any parser was run on it.
+
+**Kept from 4.9, so the deviation cannot spread:**
+- **Nothing claims a review.** Every item says `labeled_by: claude-code` and `needs_review: true`,
+  and the loader refuses one that claims a review.
+- **Machine labels need a card.** They load only from a dataset whose card declares
+  `labels: machine` and whose checksum matches the file. So they cannot be mixed into a
+  human-labelled set, and an edit that skips the builder is refused.
+- **Scoring them is a choice made on the command line.** It needs `--include-unreviewed`, and every
+  such run is stamped `labels: machine`.
+- **The provenance travels with the numbers.** The report, the Analytics page and Chapter 12 print
+  it beside every figure.
+- **Drafts are unchanged.** The 30-draft cap still applies to them, and they stay unreportable.
+
+**Not done, and still open:** a person reviewing the labels (PROGRESS.md, Needs human). Section 9 of
+the datasheet says how. Until then the results measure agreement with one author's labels, and the
+report's limitations must say so.
+
+**Disclosure for the report:** the dataset, its labels and the harness that scores them were made
+by an AI assistant, and the evaluation of the system's AI component used labels from an AI. That
+belongs in the limitations and AI-disclosure sections (`docs/report-updates.md`).
+
+---
+
 ## Phase 7
 
 ### D-080 A Pipeline's first node block waits for its upstream, as a whole job does

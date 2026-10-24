@@ -11,10 +11,18 @@ gold label nobody checked would be passed off as ground truth in the report.
 ``split`` (dev or test) is not in 4.9's field list but 4.9 requires the split itself -- 100
 development, 150 test -- and Appendix E restricts prompt tuning to the development split, which is
 only enforceable if each item says which it is in.
+
+**Machine-labelled datasets (D-081).** ``eval-v1`` was written and labelled by Claude Code at the
+project owner's instruction, because no person was available to label it. Its items say
+``labeled_by: claude-code`` and, like drafts, can never claim a review. They are allowed only in a
+dataset whose card (``<name>.card.json``) declares machine labels and whose checksum matches the
+file, so they cannot be slipped into a human-labelled set, and an edit that bypasses the builder is
+refused. The 30-draft cap still applies to drafts.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 from collections import Counter
 from dataclasses import dataclass, field
@@ -54,6 +62,9 @@ INTENT_FIELDS: Final = (
 )
 DRAFT_LABELER: Final = "claude-code-draft"
 MAX_DRAFTS: Final = 30
+# D-081: an item Claude Code wrote and labelled for a machine-labelled dataset.
+MACHINE_LABELER: Final = "claude-code"
+UNREVIEWABLE: Final = (DRAFT_LABELER, MACHINE_LABELER)
 
 
 class DatasetError(ValueError):
@@ -72,6 +83,13 @@ class Item:
     labeled_by: str
     needs_review: bool
     split: str = "dev"
+    #: Where the message came from; the card lists every source and its licence.
+    source: str = ""
+    #: In 4.9's 75-item ablation subset.
+    ablation: bool = False
+    #: In the 20-command end-to-end sample, and the assistant it runs through.
+    e2e: bool = False
+    assistant: str | None = None
 
     @property
     def scorable(self) -> bool:
@@ -84,6 +102,8 @@ class Dataset:
     path: Path
     items: tuple[Item, ...]
     warnings: tuple[str, ...] = field(default_factory=tuple)
+    #: ``<name>.card.json``, when the dataset has one.
+    card: dict[str, Any] | None = None
 
     @property
     def scorable(self) -> tuple[Item, ...]:
@@ -92,6 +112,11 @@ class Dataset:
     @property
     def needs_review(self) -> tuple[Item, ...]:
         return tuple(item for item in self.items if item.needs_review)
+
+    @property
+    def machine_labelled(self) -> bool:
+        """Whether the card declares that a machine, not a person, wrote the gold labels."""
+        return self.card is not None and self.card.get("labels") == "machine"
 
 
 def _require(condition: bool, line: int, message: str) -> None:
@@ -126,14 +151,21 @@ def parse_item(raw: dict[str, Any], line: int) -> Item:
     unknown = set(gold) - set(INTENT_FIELDS) - {"confidence"}
     _require(not unknown, line, f"gold_intent has unknown fields {sorted(unknown)}")
 
-    # The rule that matters most: a draft cannot claim to be reviewed.
-    if raw["labeled_by"] == DRAFT_LABELER:
+    # The rule that matters most: a draft cannot claim to be reviewed, and nor can an item Claude
+    # Code labelled for a machine-labelled dataset.
+    if raw["labeled_by"] in UNREVIEWABLE:
         _require(
             raw["needs_review"] is True,
             line,
             "an item drafted by Claude Code must keep needs_review: true until a human reviews "
             "it and changes labeled_by",
         )
+    assistant = raw.get("assistant")
+    _require(
+        assistant in (None, "freestyle", "pipeline"),
+        line,
+        "assistant must be freestyle or pipeline",
+    )
 
     return Item(
         id=str(raw["id"]),
@@ -146,16 +178,55 @@ def parse_item(raw: dict[str, Any], line: int) -> Item:
         labeled_by=str(raw["labeled_by"]),
         needs_review=raw["needs_review"],
         split=split,
+        source=str(raw.get("source", "")),
+        ablation=raw.get("ablation") is True,
+        e2e=raw.get("e2e") is True,
+        assistant=assistant,
     )
+
+
+def card_path(path: Path) -> Path:
+    """Where a dataset's card lives: ``<name>.card.json`` beside it."""
+    return path.with_name(path.stem + ".card.json")
+
+
+def _load_card(path: Path, data: bytes, items: list[Item]) -> dict[str, Any] | None:
+    """The dataset's card, checked against the file, or None when there is none.
+
+    Machine-labelled items need one: the card is what puts their provenance beside every figure.
+    """
+    location = card_path(path)
+    machine = [item.id for item in items if item.labeled_by == MACHINE_LABELER]
+    if not location.is_file():
+        if machine:
+            raise DatasetError(
+                f"{len(machine)} item(s) are labelled {MACHINE_LABELER!r}, which needs a card "
+                f"({location.name}) declaring machine labels (D-081)"
+            )
+        return None
+    try:
+        card: dict[str, Any] = json.loads(location.read_text(encoding="utf-8"))
+    except ValueError as exc:
+        raise DatasetError(f"{location.name} is not valid JSON ({exc})") from exc
+    if machine and card.get("labels") != "machine":
+        raise DatasetError(f"{location.name} must declare labels: machine for {machine[0]}")
+    digest = hashlib.sha256(data).hexdigest()
+    if card.get("sha256") != digest:
+        raise DatasetError(
+            f"{path.name} does not match the checksum in {location.name}: it was edited without "
+            "rebuilding. Change the source and run `python -m eval build` instead."
+        )
+    return card
 
 
 def load_dataset(path: Path) -> Dataset:
     if not path.is_file():
         raise DatasetError(f"{path} does not exist")
 
+    data = path.read_bytes()
     items: list[Item] = []
     seen: set[str] = set()
-    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+    for number, line in enumerate(data.decode("utf-8").splitlines(), start=1):
         if not line.strip():
             continue
         try:
@@ -173,7 +244,8 @@ def load_dataset(path: Path) -> Dataset:
             f"{drafts} items are labeled {DRAFT_LABELER!r}; 4.9 allows at most {MAX_DRAFTS}"
         )
 
-    return Dataset(path=path, items=tuple(items), warnings=tuple(_mix_warnings(items)))
+    card = _load_card(path, data, items)
+    return Dataset(path=path, items=tuple(items), warnings=tuple(_mix_warnings(items)), card=card)
 
 
 def _mix_warnings(items: list[Item]) -> list[str]:

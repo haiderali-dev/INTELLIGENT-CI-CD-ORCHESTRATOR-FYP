@@ -1,8 +1,8 @@
 # Progress
 
-Updated: 2026-10-17 · Current phase: 6 (all tasks done; acceptance met; the gate passed 78 of 78 on
-`ff70254`) ·
-Branch: phase-6-frontend
+Updated: 2026-10-25 · Current phase: 8 (in progress). Phases 0 to 7 are merged into `main`, the
+last as PR #17 (`0937f9e`), whose gate passed 100 of 100 (gate run 11) ·
+Branch: phase-8-evaluation
 
 ## Needs human
 - [x] **Create the two sample-service GitHub repositories**, push them, create the
@@ -62,6 +62,11 @@ Branch: phase-6-frontend
       design is approved"), with no changes. D-052 is now accepted; T6.3 onward may build screens.
 - [ ] **Label and review the evaluation gold answers** (Phase 8). At most 30 drafted items, each
       marked `needs_review: true` and excluded from scoring until a human clears the flag.
+      - **2026-10-24, D-081:** the project owner had no dataset and no labeller, and asked Claude
+        Code to create one. `eval/datasets/eval-v1.jsonl` (250 items) is labelled by Claude Code,
+        every item `needs_review: true`. Its results are reported as machine-labelled.
+      - **A person's review is still open.** `eval/datasets/eval-v1.card.md` section 9 says how.
+        A reviewed item becomes `labels: human` on the next build.
       - **220 more candidates wait in `eval/datasets/candidates.jsonl`** (2026-10-23), labelled
         `assistant-authored-candidate`, every one `needs_review: true`. They reached `main` in
         `sample.jsonl` (`e0e3929`) and broke CI: their `train` and `validation` splits are not the
@@ -2448,6 +2453,48 @@ zero dependency violations. Since then:
       - pytest used `PYTEST_DEBUG_TEMPROOT`, because the stale `pytest-current` link is still in
         place (CLAUDE.md).
       - CI passed on `8f7c244`: all six jobs in the push and the pull-request runs.
+
+## Phase 8: Evaluation, report tooling and demo tooling
+
+Built on `phase-8-evaluation`, branched from `main` at `0937f9e` (2026-10-24).
+
+- [ ] T8.1 Evaluation runner: splits, quota-aware throttling, resumable cache, comparisons and
+      ablations (Part 4.9). In progress. Done so far, run on 2026-10-25:
+      - **The dataset, `eval-v1` (D-081):** 250 items, 100 dev and 150 test, in 4.9's exact mix,
+        written and labelled by Claude Code at the project owner's instruction. No public dataset
+        fits the task (`eval/datasets/eval-v1.card.md`, section 2).
+        - **Sources:** eight out-of-scope items are CLINC150's (CC BY 3.0) and seven injections
+          deepset/prompt-injections' (Apache-2.0), verbatim.
+        - **Provenance:** every item says `labeled_by: claude-code`, `needs_review: true`.
+        - **Built, not edited:** `python -m eval build` makes the JSONL from
+          `eval-v1.source.yaml`, with the splits, the 75-item ablation subset and the 20-item
+          end-to-end sample, from one seed.
+      - **What the build checks** (`eval/curation.py`):
+        - every gold label against the datasheet's twelve rules, without the backend's own
+          validator or policy;
+        - no repeated text, no few-shot example, no near-duplicates across the splits.
+        - **What it found:** a case-only duplicate (`p011` and `c007`) and nine cross-split
+          near-duplicate pairs. All were reworded before any parser had been run.
+      - **The runner:**
+        - `--split`, `--subset ablation|e2e` and `--no-repair`;
+        - plan validity before and after repair, on the gold intents (`plans.jsonl`);
+        - a model's latency is its answering call's own time, and waits for quota are kept
+          apart;
+        - live calls are paced from Groq's own rate-limit headers, so a cached rerun spends
+          nothing;
+        - runs on machine labels are stamped `labels: machine`.
+        `eval/e2e.py` runs the end-to-end sample through T5.8's stack.
+      - **Checks:**
+        - `python -m pytest tests/test_eval.py`: 89 passed;
+        - `ruff check`, `ruff format --check` and `mypy --strict` on `eval/`: clean;
+        - `python -m eval build`: 250 items, checksum `31559fed…`.
+      - **Not done yet:** the live runs, the ablations and the end-to-end sample.
+- [ ] T8.2 Evaluation report generator for the Analytics page and the report.
+- [ ] T8.3 `scripts/report/appendix_c.py` and `scripts/report/versions.py`.
+- [ ] T8.4 `docs/report-updates.md` completed with every required change (Part 4.10).
+- [ ] T8.5 `scripts/demo_reset.py` snapshot and restore; `LLM_MODE=replay` demo fixtures;
+      `docs/demo-script.md`.
+- [ ] T8.6 Phase 8 checks in `verify.py`.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
