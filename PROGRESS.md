@@ -2341,14 +2341,32 @@ The stock-Jenkins controller its sanity arm needs is on `phase-7-stock-jenkins` 
       - **Checks:**
         - the new test in `test_kpis.py` failed before the fix and passes after;
         - the package: 121 passed; ruff, ruff format and strict mypy clean.
-- [ ] **Needs human: the full matrix (4.8.2)**, about 50 runs, listed in `experiment/README.md`.
-      - **Time:** each 30-job workload holds 315 s of work, so the matrix is several hours of
-        machine time on mains power. The controllers must restart between one and three executors.
-      - **Two arms need preparation first:**
-        - aging-off: the plugin controller's JCasC with the aging bonus and cap at `"0.0"`, restored
-          afterwards;
-        - stock: the `stock` profile's controller (D-078), started with
-          `docker compose --profile stock up -d --wait jenkins-stock stock-agent`.
+- [x] **The full matrix (4.8.2): 53 of 53 measured runs complete**, at the user's request
+      (2026-10-23, "Run the full experiment matrix"). Run on 2026-10-24, 03:46 to 08:16, by
+      `matrix_campaign.py`, at `19fc287`.
+      - **Kept in `docs/experiment/matrix-2026-10-24/`:**
+        - every run's raw files, byte for byte, with `SHA256SUMS`;
+        - the report (`table_12_1.md`, `runs.csv`, the charts);
+        - the campaign's log, and the script that ran it.
+      - **The conditions:**
+        - mains power before every measured run;
+        - Windows logged no power-source change and no sleep;
+        - Modern Standby twice, with each 1-executor freestyle-30 run still taking 321 to 322 s;
+        - the default stack stopped, and started again at the end;
+        - `experiment-plugin.yaml`'s aging values changed for the ablation, then restored and
+          checked against git.
+      - **Analysed twice:** once as each run ended, and again after DF-47's fix to the violation
+        count (D-079). The README's recompute commands reproduce the kept KPIs, 53 of 53.
+      - **Headline, optimized against observe-only (main group):**
+        - HIGH's mean wait 17 to 34% lower, and the overall mean wait 1.6 to 9.7% lower;
+        - makespan +0.2 to -9.6%;
+        - aging off changes freestyle-30's mean wait by 0.2%;
+        - stock Jenkins is within 0.5% of observe-only.
+      - **Open, for the user to decide:** on pipeline-30 with 3 executors, the optimizer let
+        `release-notes-generator` start 61 to 66 s before `smoke-test-production` ended, in all
+        three runs (D-079). The plugin's gate is not investigated here.
+      - **Not done:** Chapter 12 itself. `docs/report-updates.md` already lists Table 12.1 and the
+        new KPIs.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not

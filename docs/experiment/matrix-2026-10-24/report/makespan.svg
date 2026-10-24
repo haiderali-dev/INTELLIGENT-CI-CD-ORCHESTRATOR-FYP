@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="360" viewBox="0 0 720 360" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<rect width="720" height="360" fill="#ffffff"/>
+<text x="64" y="24" font-size="15" font-weight="600" fill="#1f2328">Makespan by condition</text>
+<line x1="64" y1="288.0" x2="704" y2="288.0" stroke="#d8dee4"/>
+<text x="58" y="292.0" font-size="11" text-anchor="end" fill="#57606a">0</text>
+<line x1="64" y1="228.0" x2="704" y2="228.0" stroke="#d8dee4"/>
+<text x="58" y="232.0" font-size="11" text-anchor="end" fill="#57606a">100</text>
+<line x1="64" y1="168.0" x2="704" y2="168.0" stroke="#d8dee4"/>
+<text x="58" y="172.0" font-size="11" text-anchor="end" fill="#57606a">200</text>
+<line x1="64" y1="108.0" x2="704" y2="108.0" stroke="#d8dee4"/>
+<text x="58" y="112.0" font-size="11" text-anchor="end" fill="#57606a">300</text>
+<line x1="64" y1="48.0" x2="704" y2="48.0" stroke="#d8dee4"/>
+<text x="58" y="52.0" font-size="11" text-anchor="end" fill="#57606a">400</text>
+<text x="14" y="168.0" font-size="12" fill="#57606a" transform="rotate(-90 14 168.0)" text-anchor="middle">Seconds</text>
+<rect x="69.9" y="97.9" width="7.8" height="190.1" rx="2" fill="#2a78d6"><title>observe-only, freestyle-30 1x: 316.75</title></rect>
+<line x1="73.8" y1="97.9" x2="73.8" y2="98.0" stroke="#1f2328" stroke-width="1.2"/>
+<rect x="79.8" y="97.8" width="7.8" height="190.2" rx="2" fill="#eb6834"><title>optimized, freestyle-30 1x: 316.94</title></rect>
+<line x1="83.7" y1="97.8" x2="83.7" y2="97.9" stroke="#1f2328" stroke-width="1.2"/>
+<text x="88.6" y="306" font-size="12" text-anchor="middle" fill="#1f2328">freestyle-30 1x</text>
+<rect x="119.2" y="220.3" width="7.8" height="67.7" rx="2" fill="#2a78d6"><title>observe-only, freestyle-30 3x: 112.91</title></rect>
+<line x1="123.1" y1="220.0" x2="123.1" y2="220.5" stroke="#1f2328" stroke-width="1.2"/>
+<rect x="129.0" y="218.2" width="7.8" height="69.8" rx="2" fill="#eb6834"><title>optimized, freestyle-30 3x: 116.27</title></rect>
+<line x1="132.9" y1="216.6" x2="132.9" y2="219.9" stroke="#1f2328" stroke-width="1.2"/>
+<text x="137.8" y="306" font-size="12" text-anchor="middle" fill="#1f2328">freestyle-30 3x</text>
+<rect x="168.4" y="89.7" width="7.8" height="198.3" rx="2" fill="#2a78d6"><title>observe-only, mixed-30 1x: 330.46</title></rect>
+<line x1="172.3" y1="88.3" x2="172.3" y2="91.1" stroke="#1f2328" stroke-width="1.2"/>
+<rect x="178.2" y="90.1" width="7.8" height="197.9" rx="2" fill="#eb6834"><title>optimized, mixed-30 1x: 329.79</title></rect>
+<line x1="182.2" y1="89.9" x2="182.2" y2="90.4" stroke="#1f2328" stroke-width="1.2"/>
+<text x="187.1" y="306" font-size="12" text-anchor="middle" fill="#1f2328">mixed-30 1x</text>
+<rect x="217.6" y="221.1" width="7.8" height="66.9" rx="2" fill="#2a78d6"><title>observe-only, mixed-30 3x: 111.51</title></rect>
+<line x1="221.5" y1="220.5" x2="221.5" y2="221.7" stroke="#1f2328" stroke-width="1.2"/>
+<rect x="227.5" y="214.7" width="7.8" height="73.3" rx="2" fill="#eb6834"><title>optimized, mixed-30 3x: 122.24</title></rect>
+<line x1="231.4" y1="213.0" x2="231.4" y2="216.3" stroke="#1f2328" stroke-width="1.2"/>
+<text x="236.3" y="306" font-size="12" text-anchor="middle" fill="#1f2328">mixed-30 3x</text>
+<rect x="266.8" y="80.7" width="7.8" height="207.3" rx="2" fill="#2a78d6"><title>observe-only, pipeline-30 1x: 345.56</title></rect>
+<line x1="270.8" y1="75.8" x2="270.8" y2="85.5" stroke="#1f2328" stroke-width="1.2"/>
+<rect x="276.7" y="80.1" width="7.8" height="207.9" rx="2" fill="#eb6834"><title>optimized, pipeline-30 1x: 346.46</title></rect>
+<line x1="280.6" y1="76.4" x2="280.6" y2="83.8" stroke="#1f2328" stroke-width="1.2"/>
+<text x="285.5" y="306" font-size="12" text-anchor="middle" fill="#1f2328">pipeline-30 1x</text>
+<rect x="316.1" y="214.6" width="7.8" height="73.4" rx="2" fill="#2a78d6"><title>observe-only, pipeline-30 3x: 122.36</title></rect>
+<line x1="320.0" y1="212.7" x2="320.0" y2="216.5" stroke="#1f2328" stroke-width="1.2"/>
+<rect x="325.9" y="211.7" width="7.8" height="76.3" rx="2" fill="#eb6834"><title>optimized, pipeline-30 3x: 127.12</title></rect>
+<line x1="329.8" y1="210.1" x2="329.8" y2="213.4" stroke="#1f2328" stroke-width="1.2"/>
+<text x="334.8" y="306" font-size="12" text-anchor="middle" fill="#1f2328">pipeline-30 3x</text>
+<rect x="365.3" y="98.1" width="7.8" height="189.9" rx="2" fill="#2a78d6"><title>observe-only, freestyle-30 1x: 316.57</title></rect>
+<line x1="369.2" y1="97.8" x2="369.2" y2="98.3" stroke="#1f2328" stroke-width="1.2"/>
+<rect x="375.2" y="98.0" width="7.8" height="190.0" rx="2" fill="#eb6834"><title>optimized, freestyle-30 1x: 316.61</title></rect>
+<line x1="379.1" y1="97.8" x2="379.1" y2="98.3" stroke="#1f2328" stroke-width="1.2"/>
+<text x="384.0" y="306" font-size="12" text-anchor="middle" fill="#1f2328">freestyle-30 1x</text>
+<rect x="414.5" y="220.1" width="7.8" height="67.9" rx="2" fill="#2a78d6"><title>observe-only, mixed-30 3x seed 1: 113.25</title></rect>
+<rect x="424.4" y="215.0" width="7.8" height="73.0" rx="2" fill="#eb6834"><title>optimized, mixed-30 3x seed 1: 121.68</title></rect>
+<text x="433.2" y="306" font-size="12" text-anchor="middle" fill="#1f2328">mixed-30 3x seed 1</text>
+<rect x="463.8" y="220.7" width="7.8" height="67.3" rx="2" fill="#2a78d6"><title>observe-only, mixed-30 3x seed 2: 112.22</title></rect>
+<rect x="473.6" y="215.5" width="7.8" height="72.5" rx="2" fill="#eb6834"><title>optimized, mixed-30 3x seed 2: 120.77</title></rect>
+<text x="482.5" y="306" font-size="12" text-anchor="middle" fill="#1f2328">mixed-30 3x seed 2</text>
+<rect x="522.8" y="97.9" width="7.8" height="190.1" rx="2" fill="#eb6834"><title>optimized, freestyle-30 1x: 316.91</title></rect>
+<line x1="526.8" y1="97.8" x2="526.8" y2="97.9" stroke="#1f2328" stroke-width="1.2"/>
+<rect x="532.7" y="97.4" width="7.8" height="190.6" rx="2" fill="#1baf7a"><title>aging-off, freestyle-30 1x: 317.6</title></rect>
+<line x1="536.6" y1="96.9" x2="536.6" y2="97.9" stroke="#1f2328" stroke-width="1.2"/>
+<text x="531.7" y="306" font-size="12" text-anchor="middle" fill="#1f2328">freestyle-30 1x</text>
+<rect x="591.8" y="97.3" width="7.8" height="190.7" rx="2" fill="#eda100"><title>stock, freestyle-30 1x: 317.91</title></rect>
+<text x="580.9" y="306" font-size="12" text-anchor="middle" fill="#1f2328">freestyle-30 1x</text>
+<rect x="611.5" y="256.8" width="7.8" height="31.2" rx="2" fill="#2a78d6"><title>observe-only, freestyle-6 1x: 52.05</title></rect>
+<rect x="621.3" y="256.6" width="7.8" height="31.4" rx="2" fill="#eb6834"><title>optimized, freestyle-6 1x: 52.29</title></rect>
+<rect x="641.0" y="255.5" width="7.8" height="32.5" rx="2" fill="#eda100"><title>stock, freestyle-6 1x: 54.14</title></rect>
+<text x="630.2" y="306" font-size="12" text-anchor="middle" fill="#1f2328">freestyle-6 1x</text>
+<rect x="660.7" y="256.7" width="7.8" height="31.3" rx="2" fill="#2a78d6"><title>observe-only, freestyle-6 1x: 52.18</title></rect>
+<line x1="664.6" y1="256.2" x2="664.6" y2="257.1" stroke="#1f2328" stroke-width="1.2"/>
+<rect x="670.5" y="256.7" width="7.8" height="31.3" rx="2" fill="#eb6834"><title>optimized, freestyle-6 1x: 52.24</title></rect>
+<line x1="674.5" y1="256.1" x2="674.5" y2="257.2" stroke="#1f2328" stroke-width="1.2"/>
+<rect x="690.2" y="256.5" width="7.8" height="31.5" rx="2" fill="#eda100"><title>stock, freestyle-6 1x: 52.45</title></rect>
+<line x1="694.2" y1="256.5" x2="694.2" y2="256.6" stroke="#1f2328" stroke-width="1.2"/>
+<text x="679.4" y="306" font-size="12" text-anchor="middle" fill="#1f2328">freestyle-6 1x</text>
+<line x1="64" y1="288" x2="704" y2="288" stroke="#57606a"/>
+<rect x="64.0" y="334" width="12" height="12" rx="2" fill="#2a78d6"/>
+<text x="81.0" y="344" font-size="12" fill="#1f2328">observe-only</text>
+<rect x="178.0" y="334" width="12" height="12" rx="2" fill="#eb6834"/>
+<text x="195.0" y="344" font-size="12" fill="#1f2328">optimized</text>
+<rect x="271.0" y="334" width="12" height="12" rx="2" fill="#1baf7a"/>
+<text x="288.0" y="344" font-size="12" fill="#1f2328">aging-off</text>
+<rect x="364.0" y="334" width="12" height="12" rx="2" fill="#eda100"/>
+<text x="381.0" y="344" font-size="12" fill="#1f2328">stock</text>
+</svg>
