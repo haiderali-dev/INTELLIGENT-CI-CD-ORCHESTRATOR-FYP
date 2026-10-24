@@ -178,6 +178,19 @@ def test_a_downstream_started_before_its_upstream_finished_is_a_violation() -> N
     assert result["violated_edges"] == [["b", "c"]]
 
 
+def test_a_pipeline_whose_work_waits_for_its_upstream_is_not_a_violation() -> None:
+    """A Pipeline run starts when its flyweight leaves the queue, before any executor is involved
+    (D-015). Its work starts when its first node block takes one. Here c's run starts at 12.0 s,
+    before b ends at 16.5 s, but its node block waits until 16.7 s: c ran after b."""
+    log = run_log(c_starts_at=T0 + 12_000)
+    for event in log:
+        if event["kind"] == "QUEUE_LEFT" and event["itemId"] == 104:
+            event.update(timestamp=T0 + 16_700, waitMillis=T0 + 16_700 - event["inQueueSince"])
+    late = records.records_from_events(HAND, log, BUILDS)
+    result = kpis.run_kpis(late, HAND.edges, executors=1)
+    assert (result["dependency_violations"], result["violated_edges"]) == (0, [])
+
+
 def test_utilization_divides_by_every_executor() -> None:
     result = kpis.run_kpis(list(hand_records().values()), HAND.edges, executors=2)
     assert result["utilization"] == round(23_200 / (2 * 25_400), 4)

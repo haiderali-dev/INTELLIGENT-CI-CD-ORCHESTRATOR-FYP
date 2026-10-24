@@ -2332,6 +2332,15 @@ The stock-Jenkins controller its sanity arm needs is on `phase-7-stock-jenkins` 
         - a stopped container, `orchestrator-agent-1` while the matrix had the default stack
           down, fails the stock image check;
         - pyflakes is clean on `verify.py`.
+- [x] **A Pipeline's dependency violations are judged by when its work starts (DF-47, D-079).**
+      Evidence, run on 2026-10-24:
+      - **Found by the matrix:** every pipeline-30 observe-only run counted all 20 edges as
+        violated. `kpis.py` compared a Pipeline's run start, when its flyweight left the queue, with
+        its upstream's end.
+      - **The fix:** compare the moment its work took an executor, `work_started_ms`.
+      - **Checks:**
+        - the new test in `test_kpis.py` failed before the fix and passes after;
+        - the package: 121 passed; ruff, ruff format and strict mypy clean.
 - [ ] **Needs human: the full matrix (4.8.2)**, about 50 runs, listed in `experiment/README.md`.
       - **Time:** each 30-job workload holds 315 s of work, so the matrix is several hours of
         machine time on mains power. The controllers must restart between one and three executors.
