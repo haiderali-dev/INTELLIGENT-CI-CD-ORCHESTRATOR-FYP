@@ -11,6 +11,79 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 7
 
+### D-080 A Pipeline's first node block waits for its upstream, as a whole job does
+**Date:** 2026-10-24 · **Status:** accepted (Phase 7), approved by the user
+
+**Found by:** the Part 4.8.2 matrix, which left it open. On pipeline-30 with three executors, the
+optimized arm let `release-notes-generator` run before its upstream, `smoke-test-production`, had
+started. It did so in all three repetitions.
+- **The records, alike in all three runs:**
+  - **The order:** the fixed order queues LOW, then MEDIUM, then HIGH, so the downstream (MEDIUM)
+    was queued about a second before its upstream (HIGH).
+  - **The downstream:** its flyweight left the queue 6 to 22 ms after it was queued. Its node block
+    waited 11 to 15 s, took an executor at 15.5 to 17.0 s with a score of 1.0, and ended by 21.8 s.
+  - **The upstream:** held for its own upstreams, it ran from 63 to 83 s.
+
+  Jenkins' build times and the plugin's events agree. The edge is Milestone 2's own, from
+  `jobs.json`.
+- **The defect (DF-48):** `DependencyGate` checked a Pipeline once, as its flyweight task, and
+  never checked its node blocks.
+  - The flyweight needs no executor, so it leaves the queue within milliseconds. If no upstream is
+    queued or building at that moment, the run starts. Its node block then takes the next free
+    executor, whatever its upstream is doing.
+  - A freestyle job is safe in the same position: its item waits in the queue, and the gate is asked
+    again on every pass.
+  - The exemption assumed that "dependencies were satisfied when the run started". Here they had
+    not yet been requested.
+- **Why it showed on three executors only:**
+  - Group inheritance lifted the waiting node block to its held upstream chain's best score, 1.0,
+    so it took the first executor that came free.
+  - On one executor its node block happened to wait past its upstream's end, so those runs counted
+    0 by chance, not because the gate held it.
+- **How much of the matrix it explains:** 7 of the optimized arm's 10 violations, the 3 above and 4
+  in random order.
+  - The other 3, all in random order, were freestyle downstreams that took an idle executor 0.1 to
+    1.0 s before their upstream was queued at all.
+  - No gate in the queue can wait for a build that nobody has requested yet.
+
+**The fix:** the gate holds a Pipeline's node block as it holds the job, until the run's work
+begins, that is, until one of its node blocks has had an executor. After that, its node blocks are
+never held, as before. So a run is never stopped mid-build, and a nested `node` block cannot
+deadlock against its outer one.
+- **`NodeBlockWorkTracker`:** a queue listener. It records a run when one of its node blocks
+  leaves the queue for an executor, and forgets the run when it is finalized.
+  - It finds a node block's run through core's `SubTask#getOwnerExecutable()`, which the Pipeline
+    placeholder task implements, so the plugin needs no new dependency.
+- **The record is in memory.** After a restart, a run that started before the tracker existed
+  counts as working, which is how every node block was treated before.
+- **Not changed:**
+  - the gate's rules for unknown, self, failed and finished upstreams;
+  - the observe-only arm, which the gate leaves alone;
+  - scoring.
+- **A limit that stays:** a downstream that takes an executor before its upstream is requested at
+  all still runs first. The backend never meets it. A freestyle chain triggers only its first job,
+  and each later job is triggered by the one before it when that succeeds (4.6.4,
+  `app/services/chains.py`).
+
+**Guarded, in `DependencyGateIT`:**
+- **`pipelineQueuedBeforeItsUpstreamWaitsAtItsNodeBlock`** steps through the matrix's states one at
+  a time, with a build held on a latch rather than a sleep. Without the fix it fails:
+  "gate-pl-downstream's node block took an executor while its upstream was still queued".
+- **Two tests keep the old behaviour where it matters:**
+  - a run already doing its work is not held at its next node block;
+  - a nested node block is not held while its outer block keeps an executor.
+
+  Both fail against a gate that holds every node block.
+
+**Evidence (2026-10-24):**
+- **`DependencyGateIT`:** 10 passed. The new test failed before the fix.
+- **The two tests that keep the old behaviour** failed, as they should, against a gate holding
+  every node block.
+- **`mvn -B verify`:** BUILD SUCCESS: 125 unit tests (1 skipped, as before) and 100 integration
+  tests, SpotBugs 0, Spotless clean.
+
+---
+
 ### D-078 A stock-Jenkins controller for the sanity arm: the controller image without the optimizer
 **Date:** 2026-10-23 · **Status:** proposed (Phase 7, branch `phase-7-stock-jenkins`), until its
 pull request is approved

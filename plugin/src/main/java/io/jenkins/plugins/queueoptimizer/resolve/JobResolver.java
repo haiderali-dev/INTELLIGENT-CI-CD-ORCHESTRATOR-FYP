@@ -70,9 +70,9 @@ public final class JobResolver {
     /**
      * True when this item is a Pipeline node block rather than a whole job.
      *
-     * <p>The distinction decides gating. Blocking a node block of a run already in progress would
-     * hold an executor hostage mid-build for a dependency the run has already satisfied, so
-     * {@code DependencyGate} gates whole jobs only.
+     * <p>The distinction decides gating. {@code DependencyGate} holds a node block like its job until
+     * the run's work has begun (D-080). After that it never does: blocking a node block mid-build
+     * would hold an executor hostage for a dependency the run no longer depends on.
      */
     public static boolean isNodeBlock(@NonNull Queue.Item item) {
         return !(item.task instanceof Job);

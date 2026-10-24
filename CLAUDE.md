@@ -85,6 +85,10 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
 
 ## Lessons (add one line whenever a mistake repeats)
 - Pipeline queue items are placeholder tasks; resolve the job with getOwnerTask().
+- A Pipeline run starts when its flyweight leaves the queue, within milliseconds and before any
+  executor is involved; its work is its node blocks. Never time, count or gate a Pipeline by its
+  run's start. It went wrong three times: test timing (D-015), the violation count (DF-47) and the
+  dependency gate (DF-48).
 - The M2 job property field is `priority`; v2 renames it to `level` for @Symbol and keeps an XStream
   alias, so old config.xml still loads. Do not "fix" this back.
 - Report Appendix C prints the pre-inheritance score (0.633); the effective score after group

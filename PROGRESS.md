@@ -2332,6 +2332,26 @@ The stock-Jenkins controller its sanity arm needs is on `phase-7-stock-jenkins` 
         - a stopped container, `orchestrator-agent-1` while the matrix had the default stack
           down, fails the stock image check;
         - pyflakes is clean on `verify.py`.
+- [x] **The dependency gate holds a Pipeline's first node block (DF-48, D-080)**, on
+      `phase-7-pipeline-gate`, approved by the user on 2026-10-24. Evidence, run on 2026-10-24:
+      - **Found by the matrix:** on pipeline-30 with three executors, the optimized arm let
+        `release-notes-generator` run before its upstream had even started, in all three
+        repetitions.
+        - The gate checked a Pipeline only as its flyweight. That left the queue 6 to 22 ms after
+          it was queued, a second before its upstream was.
+        - Its node block, never gated, then took an executor while the upstream waited in the
+          queue.
+      - **The fix:** a node block is held like its job until its run's work begins, and never after
+        (`NodeBlockWorkTracker`).
+      - **Checks:**
+        - the new `DependencyGateIT` test failed before the fix ("took an executor while its
+          upstream was still queued") and passes after;
+        - two more keep the old behaviour for a run already doing its work, with sequential and with
+          nested node blocks, and both fail against a gate that holds every node block;
+        - `DependencyGateIT`: 10 passed;
+        - `mvn -B verify`: BUILD SUCCESS, 125 unit tests (1 skipped, as before) and 100 integration
+          tests, SpotBugs 0, Spotless clean.
+      - **The re-run on real Jenkins:** in the next entry.
 - [ ] **Needs human: the full matrix (4.8.2)**, about 50 runs, listed in `experiment/README.md`.
       - **Time:** each 30-job workload holds 315 s of work, so the matrix is several hours of
         machine time on mains power. The controllers must restart between one and three executors.
