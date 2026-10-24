@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="360" viewBox="0 0 720 360" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<rect width="720" height="360" fill="#ffffff"/>
+<text x="64" y="24" font-size="15" font-weight="600" fill="#1f2328">Mean wait by band: freestyle-30 1x (aging-ablation)</text>
+<line x1="64" y1="288.0" x2="704" y2="288.0" stroke="#d8dee4"/>
+<text x="58" y="292.0" font-size="11" text-anchor="end" fill="#57606a">0</text>
+<line x1="64" y1="240.0" x2="704" y2="240.0" stroke="#d8dee4"/>
+<text x="58" y="244.0" font-size="11" text-anchor="end" fill="#57606a">50</text>
+<line x1="64" y1="192.0" x2="704" y2="192.0" stroke="#d8dee4"/>
+<text x="58" y="196.0" font-size="11" text-anchor="end" fill="#57606a">100</text>
+<line x1="64" y1="144.0" x2="704" y2="144.0" stroke="#d8dee4"/>
+<text x="58" y="148.0" font-size="11" text-anchor="end" fill="#57606a">150</text>
+<line x1="64" y1="96.0" x2="704" y2="96.0" stroke="#d8dee4"/>
+<text x="58" y="100.0" font-size="11" text-anchor="end" fill="#57606a">200</text>
+<line x1="64" y1="48.0" x2="704" y2="48.0" stroke="#d8dee4"/>
+<text x="58" y="52.0" font-size="11" text-anchor="end" fill="#57606a">250</text>
+<text x="14" y="168.0" font-size="12" fill="#57606a" transform="rotate(-90 14 168.0)" text-anchor="middle">Seconds</text>
+<rect x="135.7" y="121.4" width="34.0" height="166.6" rx="2" fill="#2a78d6"><title>optimized, HIGH: 173.53</title></rect>
+<line x1="152.7" y1="121.4" x2="152.7" y2="121.4" stroke="#1f2328" stroke-width="1.2"/>
+<rect x="171.7" y="121.1" width="34.0" height="166.9" rx="2" fill="#eb6834"><title>aging-off, HIGH: 173.84</title></rect>
+<line x1="188.7" y1="120.8" x2="188.7" y2="121.4" stroke="#1f2328" stroke-width="1.2"/>
+<text x="170.7" y="306" font-size="12" text-anchor="middle" fill="#1f2328">HIGH</text>
+<rect x="349.0" y="186.1" width="34.0" height="101.9" rx="2" fill="#2a78d6"><title>optimized, MEDIUM: 106.12</title></rect>
+<line x1="366.0" y1="186.1" x2="366.0" y2="186.1" stroke="#1f2328" stroke-width="1.2"/>
+<rect x="385.0" y="185.8" width="34.0" height="102.2" rx="2" fill="#eb6834"><title>aging-off, MEDIUM: 106.41</title></rect>
+<line x1="402.0" y1="185.5" x2="402.0" y2="186.1" stroke="#1f2328" stroke-width="1.2"/>
+<text x="384.0" y="306" font-size="12" text-anchor="middle" fill="#1f2328">MEDIUM</text>
+<rect x="562.3" y="72.8" width="34.0" height="215.2" rx="2" fill="#2a78d6"><title>optimized, LOW: 224.15</title></rect>
+<line x1="579.3" y1="72.8" x2="579.3" y2="72.9" stroke="#1f2328" stroke-width="1.2"/>
+<rect x="598.3" y="72.4" width="34.0" height="215.6" rx="2" fill="#eb6834"><title>aging-off, LOW: 224.59</title></rect>
+<line x1="615.3" y1="71.9" x2="615.3" y2="72.8" stroke="#1f2328" stroke-width="1.2"/>
+<text x="597.3" y="306" font-size="12" text-anchor="middle" fill="#1f2328">LOW</text>
+<line x1="64" y1="288" x2="704" y2="288" stroke="#57606a"/>
+<rect x="64.0" y="334" width="12" height="12" rx="2" fill="#2a78d6"/>
+<text x="81.0" y="344" font-size="12" fill="#1f2328">optimized</text>
+<rect x="157.0" y="334" width="12" height="12" rx="2" fill="#eb6834"/>
+<text x="174.0" y="344" font-size="12" fill="#1f2328">aging-off</text>
+</svg>

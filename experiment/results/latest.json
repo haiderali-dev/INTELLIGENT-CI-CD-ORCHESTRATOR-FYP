@@ -1,66 +1,66 @@
 {
-  "run": "20261023T055856Z-smoke-freestyle-6-optimized-1x-r1",
-  "analyzedAt": "2026-10-23T05:59:48+00:00",
+  "run": "20261024T031001Z-cold-start-freestyle-30-optimized-1x-r3",
+  "analyzedAt": "2026-10-24T03:17:14+00:00",
   "condition": {
-    "group": "smoke",
-    "workload": "freestyle-6",
+    "group": "cold-start",
+    "workload": "freestyle-30",
     "executors": 1,
-    "history": "warm",
+    "history": "fresh",
     "order": "fixed",
     "arm": "optimized",
-    "repetition": 1,
+    "repetition": 3,
     "controller": "plugin",
     "jenkinsVersion": "2.568.3",
     "pluginVersion": "2.0.0-SNAPSHOT",
-    "pluginBuild": "80e0bb74fcb8c6d95e84ea03015b5d2e4ac14916"
+    "pluginBuild": "cd6b1e3d3657b77b5dcaa4bdbfe602deef395ea8"
   },
-  "jobs": 6,
-  "succeeded": 6,
+  "jobs": 30,
+  "succeeded": 30,
   "dependencyViolations": 0,
-  "meanWaitSeconds": 20.535,
-  "makespanSeconds": 51.427,
+  "meanWaitSeconds": 149.742,
+  "makespanSeconds": 316.346,
   "kpis": {
-    "jobs": 6,
-    "succeeded": 6,
+    "jobs": 30,
+    "succeeded": 30,
     "wait_s": {
-      "jobs": 6,
-      "mean": 20.535,
-      "max": 41.19,
+      "jobs": 30,
+      "mean": 149.742,
+      "max": 290.986,
       "by_level": {
         "HIGH": {
-          "jobs": 1,
-          "mean": 26.9,
-          "max": 26.9
+          "jobs": 9,
+          "mean": 177.633,
+          "max": 235.184
         },
         "MEDIUM": {
-          "jobs": 3,
-          "mean": 20.347,
-          "max": 41.19
+          "jobs": 15,
+          "mean": 103.296,
+          "max": 231.677
         },
         "LOW": {
-          "jobs": 2,
-          "mean": 17.634,
-          "max": 35.25
+          "jobs": 6,
+          "mean": 224.024,
+          "max": 290.986
         }
       }
     },
     "completion_s": {
-      "jobs": 6,
-      "mean": 29.066,
-      "max": 51.22
+      "jobs": 30,
+      "mean": 160.267,
+      "max": 316.01
     },
-    "makespan_s": 51.427,
-    "throughput_per_min": 7.0,
-    "utilization": 0.9953,
+    "makespan_s": 316.346,
+    "throughput_per_min": 5.69,
+    "utilization": 0.998,
     "dependency_violations": 0,
     "violated_edges": [],
-    "max_low_wait_s": 35.25,
+    "max_low_wait_s": 290.986,
     "node_block_wait_s": null,
     "scheduler_overhead_ms": {
-      "samples": 14,
-      "median": 1.0026,
-      "p95": 3.2291,
-      "max": 4.0098
+      "samples": 79,
+      "median": 0.4643,
+      "p95": 1.93,
+      "max": 6.7369
     }
   }
 }

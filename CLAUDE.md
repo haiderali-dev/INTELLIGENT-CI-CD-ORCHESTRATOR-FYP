@@ -76,8 +76,9 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
 - Jenkins LTS baseline is pinned to 2.568.3. The report's Appendix E says 2.541.x and must be updated.
 - Build order was Phase 0 → 2 → 1 → 3..8, because JenkinsRule needs no Docker. Phases 0-6 are done
   (Phase 6 merged as PR #11; hardened on `phase-6-hardening`, 2026-10-18 to 2026-10-22). Phase 7
-  merged as PR #14 (`3fcaf81`, 2026-10-23). The stock-Jenkins controller for its sanity arm is on
-  `phase-7-stock-jenkins` (D-078), and its full matrix needs a human.
+  merged as PR #14 (`3fcaf81`, 2026-10-23). Then came the stock-Jenkins controller (PR #15, D-078),
+  the full matrix with DF-47's fix (PR #16, D-079), and the gate's fix for Pipelines (PR #17,
+  D-080).
 - Docker here uses the containerd image store, so a container's `Image` field names the index its
   image arrived in. Compare a container with Compose's `com.docker.compose.image` label instead.
   Provenance attestations are off in `docker-compose.yml`, because they gave every build a new ID

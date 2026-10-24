@@ -90,9 +90,46 @@ deadlock against its outer one.
 
 ---
 
+### D-079 A dependency violation is judged by when the downstream's work starts
+**Date:** 2026-10-24 · **Status:** accepted (Phase 7)
+
+**Found by:** the matrix (Part 4.8.2). Every pipeline-30 observe-only run counted all 20 of its
+edges as violated, and every mixed-30 one all 11 of its Pipeline edges.
+- **The defect (DF-47):** `experiment/kpis.py` compared a downstream's `started_ms` with its
+  upstream's end. For a Pipeline that is when the run started, which is when its flyweight left the
+  queue, before any executor took its work (D-015). So any Pipeline queued behind its upstream
+  "started" early.
+- **The fix:** the comparison uses `work_started_ms`, when the work took an executor. For a
+  freestyle job the two are the same moment; for a Pipeline it is its first node block.
+- **Guarded:** a new test in `test_kpis.py` has a Pipeline run start before its upstream ends while
+  its node block waits until after. It fails without the fix.
+
+**Effect:** `analyze` recomputes every figure from a run's raw files, so the matrix's 53 runs were
+analysed again. Freestyle runs did not change. 19 Pipeline and mixed runs did:
+- **Observe-only:** 20 or 11 violations fell to 2 or 3 on one executor, and 3 to 10 on three.
+  These are real: plain arrival order enforces no dependencies.
+- **Optimized, main group:**
+  - **pipeline-30 on one executor:** 1 fell to 0.
+  - **pipeline-30 on three executors:** 1 remains in each of the three runs, and it is real. It is
+    always `smoke-test-production` to `release-notes-generator`: the downstream's node block took an
+    executor 61 to 66 s before its upstream ended, with the optimizer on.
+  - **An open finding about the plugin's dependency gate:** for Pipeline jobs on several
+    executors, it does not cover this case. It is not investigated here. Freestyle and mixed-30
+    runs on three executors show no violation.
+    - **Since then (2026-10-24):** investigated, and fixed as DF-48 (D-080).
+- **Random order:** 5 and 2 remain on the optimized arm. They are real too: in a shuffled order a
+  downstream can be queued before its upstream exists, and the gate holds a job only while an
+  upstream is queued or building.
+  - **Corrected by D-080:** 4 of these 7 were DF-48's gap at the node block, which the fix
+    closes. 3 are the limit above.
+
+The smoke run and verify.py's recount from `builds.json` use freestyle-6 only, so neither was
+affected.
+
+---
+
 ### D-078 A stock-Jenkins controller for the sanity arm: the controller image without the optimizer
-**Date:** 2026-10-23 · **Status:** proposed (Phase 7, branch `phase-7-stock-jenkins`), until its
-pull request is approved
+**Date:** 2026-10-23 · **Status:** accepted (Phase 7), merged as PR #15
 
 **The need.** Part 4.8.2's matrix ends with one sanity run: freestyle-30 on one executor, warm, on
 "stock Jenkins, no plugin". Part 4.8's baseline arm is the plugin installed with

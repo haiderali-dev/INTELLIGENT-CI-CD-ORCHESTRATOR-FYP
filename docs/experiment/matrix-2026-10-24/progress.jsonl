@@ -1,0 +1,79 @@
+{"id": "stop-default-stack", "status": "done", "at": "2026-10-23T22:46:52+00:00", "seconds": 5.5, "detail": ""}
+{"id": "executors-1", "status": "done", "at": "2026-10-23T22:47:12+00:00", "seconds": 20.4, "detail": ""}
+{"id": "stock-start", "status": "done", "at": "2026-10-23T22:47:14+00:00", "seconds": 1.8, "detail": ""}
+{"id": "setup-freestyle-30", "status": "done", "at": "2026-10-23T22:47:21+00:00", "seconds": 6.4, "detail": ""}
+{"id": "setup-pipeline-30", "status": "done", "at": "2026-10-23T22:47:27+00:00", "seconds": 6.1, "detail": ""}
+{"id": "setup-mixed-30", "status": "done", "at": "2026-10-23T22:47:32+00:00", "seconds": 5.6, "detail": ""}
+{"id": "setup-stock", "status": "done", "at": "2026-10-23T22:47:35+00:00", "seconds": 2.9, "detail": ""}
+{"id": "warmup-freestyle-30-1", "status": "done", "at": "2026-10-23T22:52:56+00:00", "seconds": 321.0, "detail": ""}
+{"id": "warmup-freestyle-30-2", "status": "done", "at": "2026-10-23T22:58:15+00:00", "seconds": 318.7, "detail": ""}
+{"id": "warmup-freestyle-30-3", "status": "done", "at": "2026-10-23T23:03:34+00:00", "seconds": 318.9, "detail": ""}
+{"id": "warmup-pipeline-30-1", "status": "done", "at": "2026-10-23T23:09:26+00:00", "seconds": 352.6, "detail": ""}
+{"id": "warmup-pipeline-30-2", "status": "done", "at": "2026-10-23T23:15:10+00:00", "seconds": 343.5, "detail": ""}
+{"id": "warmup-pipeline-30-3", "status": "done", "at": "2026-10-23T23:20:54+00:00", "seconds": 343.7, "detail": ""}
+{"id": "warmup-mixed-30-1", "status": "done", "at": "2026-10-23T23:26:25+00:00", "seconds": 331.4, "detail": ""}
+{"id": "warmup-mixed-30-2", "status": "done", "at": "2026-10-23T23:31:56+00:00", "seconds": 331.2, "detail": ""}
+{"id": "warmup-mixed-30-3", "status": "done", "at": "2026-10-23T23:37:27+00:00", "seconds": 331.2, "detail": ""}
+{"id": "stock-stop", "status": "done", "at": "2026-10-23T23:37:28+00:00", "seconds": 1.1, "detail": ""}
+{"id": "main-freestyle-30-1x-observe-only-r1", "status": "done", "at": "2026-10-23T23:42:50+00:00", "seconds": 321.9, "detail": "20261023T233730Z-main-freestyle-30-observe-only-1x-r1: makespan 316.778 s, mean wait 153.281 s, 1 violation(s)"}
+{"id": "main-freestyle-30-1x-optimized-r1", "status": "done", "at": "2026-10-23T23:48:12+00:00", "seconds": 321.7, "detail": "20261023T234251Z-main-freestyle-30-optimized-1x-r1: makespan 317.065 s, mean wait 150.789 s, 0 violation(s)"}
+{"id": "main-freestyle-30-1x-observe-only-r2", "status": "done", "at": "2026-10-23T23:53:33+00:00", "seconds": 320.8, "detail": "20261023T234813Z-main-freestyle-30-observe-only-1x-r2: makespan 316.742 s, mean wait 153.287 s, 1 violation(s)"}
+{"id": "main-freestyle-30-1x-optimized-r2", "status": "done", "at": "2026-10-23T23:58:54+00:00", "seconds": 321.3, "detail": "20261023T235334Z-main-freestyle-30-optimized-1x-r2: makespan 316.879 s, mean wait 149.934 s, 0 violation(s)"}
+{"id": "main-freestyle-30-1x-observe-only-r3", "status": "done", "at": "2026-10-24T00:04:15+00:00", "seconds": 320.7, "detail": "20261023T235855Z-main-freestyle-30-observe-only-1x-r3: makespan 316.736 s, mean wait 153.274 s, 1 violation(s)"}
+{"id": "main-freestyle-30-1x-optimized-r3", "status": "done", "at": "2026-10-24T00:09:36+00:00", "seconds": 320.8, "detail": "20261024T000416Z-main-freestyle-30-optimized-1x-r3: makespan 316.877 s, mean wait 149.925 s, 0 violation(s)"}
+{"id": "main-pipeline-30-1x-observe-only-r1", "status": "done", "at": "2026-10-24T00:15:21+00:00", "seconds": 345.9, "detail": "20261024T000937Z-main-pipeline-30-observe-only-1x-r1: makespan 341.186 s, mean wait 165.461 s, 20 violation(s)"}
+{"id": "main-pipeline-30-1x-optimized-r1", "status": "done", "at": "2026-10-24T00:21:07+00:00", "seconds": 345.7, "detail": "20261024T001523Z-main-pipeline-30-optimized-1x-r1: makespan 341.891 s, mean wait 161.276 s, 1 violation(s)"}
+{"id": "main-pipeline-30-1x-observe-only-r2", "status": "done", "at": "2026-10-24T00:26:52+00:00", "seconds": 344.9, "detail": "20261024T002108Z-main-pipeline-30-observe-only-1x-r2: makespan 340.595 s, mean wait 165.221 s, 20 violation(s)"}
+{"id": "main-pipeline-30-1x-optimized-r2", "status": "done", "at": "2026-10-24T00:32:41+00:00", "seconds": 347.5, "detail": "20261024T002653Z-main-pipeline-30-optimized-1x-r2: makespan 344.004 s, mean wait 161.727 s, 1 violation(s)"}
+{"id": "main-pipeline-30-1x-observe-only-r3", "status": "done", "at": "2026-10-24T00:38:40+00:00", "seconds": 359.7, "detail": "20261024T003242Z-main-pipeline-30-observe-only-1x-r3: makespan 354.899 s, mean wait 172.131 s, 20 violation(s)"}
+{"id": "main-pipeline-30-1x-optimized-r3", "status": "done", "at": "2026-10-24T00:44:38+00:00", "seconds": 358.2, "detail": "20261024T003841Z-main-pipeline-30-optimized-1x-r3: makespan 353.485 s, mean wait 166.694 s, 1 violation(s)"}
+{"id": "main-mixed-30-1x-observe-only-r1", "status": "done", "at": "2026-10-24T00:50:16+00:00", "seconds": 338.0, "detail": "20261024T004440Z-main-mixed-30-observe-only-1x-r1: makespan 333.157 s, mean wait 159.954 s, 11 violation(s)"}
+{"id": "main-mixed-30-1x-optimized-r1", "status": "done", "at": "2026-10-24T00:55:50+00:00", "seconds": 333.1, "detail": "20261024T005018Z-main-mixed-30-optimized-1x-r1: makespan 329.387 s, mean wait 156.312 s, 0 violation(s)"}
+{"id": "main-mixed-30-1x-observe-only-r2", "status": "done", "at": "2026-10-24T01:01:23+00:00", "seconds": 333.3, "detail": "20261024T005551Z-main-mixed-30-observe-only-1x-r2: makespan 329.138 s, mean wait 158.987 s, 11 violation(s)"}
+{"id": "main-mixed-30-1x-optimized-r2", "status": "done", "at": "2026-10-24T01:06:57+00:00", "seconds": 334.2, "detail": "20261024T010124Z-main-mixed-30-optimized-1x-r2: makespan 329.686 s, mean wait 156.559 s, 0 violation(s)"}
+{"id": "main-mixed-30-1x-observe-only-r3", "status": "done", "at": "2026-10-24T01:12:31+00:00", "seconds": 333.8, "detail": "20261024T010658Z-main-mixed-30-observe-only-1x-r3: makespan 329.096 s, mean wait 158.51 s, 11 violation(s)"}
+{"id": "main-mixed-30-1x-optimized-r3", "status": "done", "at": "2026-10-24T01:18:05+00:00", "seconds": 334.1, "detail": "20261024T011232Z-main-mixed-30-optimized-1x-r3: makespan 330.292 s, mean wait 156.774 s, 0 violation(s)"}
+{"id": "aging-ablation-freestyle-30-1x-optimized-r1", "status": "done", "at": "2026-10-24T01:23:26+00:00", "seconds": 321.3, "detail": "20261024T011806Z-aging-ablation-freestyle-30-optimized-1x-r1: makespan 316.866 s, mean wait 149.945 s, 0 violation(s)"}
+{"id": "aging-ablation-freestyle-30-1x-optimized-r2", "status": "done", "at": "2026-10-24T01:28:48+00:00", "seconds": 321.5, "detail": "20261024T012327Z-aging-ablation-freestyle-30-optimized-1x-r2: makespan 316.888 s, mean wait 149.95 s, 0 violation(s)"}
+{"id": "aging-ablation-freestyle-30-1x-optimized-r3", "status": "done", "at": "2026-10-24T01:34:09+00:00", "seconds": 321.4, "detail": "20261024T012849Z-aging-ablation-freestyle-30-optimized-1x-r3: makespan 316.974 s, mean wait 149.952 s, 0 violation(s)"}
+{"id": "aging-off", "status": "done", "at": "2026-10-24T01:34:23+00:00", "seconds": 13.6, "detail": ""}
+{"id": "aging-ablation-freestyle-30-1x-aging-off-r1", "status": "done", "at": "2026-10-24T01:39:47+00:00", "seconds": 324.2, "detail": "20261024T013425Z-aging-ablation-freestyle-30-aging-off-1x-r1: makespan 318.554 s, mean wait 150.668 s, 0 violation(s)"}
+{"id": "aging-ablation-freestyle-30-1x-aging-off-r2", "status": "done", "at": "2026-10-24T01:45:08+00:00", "seconds": 321.5, "detail": "20261024T013948Z-aging-ablation-freestyle-30-aging-off-1x-r2: makespan 317.155 s, mean wait 150.107 s, 0 violation(s)"}
+{"id": "aging-ablation-freestyle-30-1x-aging-off-r3", "status": "done", "at": "2026-10-24T01:50:30+00:00", "seconds": 321.9, "detail": "20261024T014510Z-aging-ablation-freestyle-30-aging-off-1x-r3: makespan 317.089 s, mean wait 150.056 s, 0 violation(s)"}
+{"id": "aging-on", "status": "done", "at": "2026-10-24T01:50:43+00:00", "seconds": 12.5, "detail": ""}
+{"id": "stock-start-sanity", "status": "done", "at": "2026-10-24T01:50:56+00:00", "seconds": 13.1, "detail": ""}
+{"id": "sanity-freestyle-30-1x-stock-r1", "status": "done", "at": "2026-10-24T01:56:18+00:00", "seconds": 322.2, "detail": "20261024T015057Z-sanity-freestyle-30-stock-1x-r1: makespan 317.906 s, mean wait 153.941 s, 1 violation(s)"}
+{"id": "stock-stop-sanity", "status": "done", "at": "2026-10-24T01:56:19+00:00", "seconds": 0.8, "detail": ""}
+{"id": "executors-3", "status": "done", "at": "2026-10-24T01:56:36+00:00", "seconds": 17.0, "detail": ""}
+{"id": "main-freestyle-30-3x-observe-only-r1", "status": "done", "at": "2026-10-24T01:58:35+00:00", "seconds": 118.7, "detail": "20261024T015638Z-main-freestyle-30-observe-only-3x-r1: makespan 113.312 s, mean wait 47.132 s, 3 violation(s)"}
+{"id": "main-freestyle-30-3x-optimized-r1", "status": "done", "at": "2026-10-24T02:00:39+00:00", "seconds": 123.9, "detail": "20261024T015836Z-main-freestyle-30-optimized-3x-r1: makespan 119.413 s, mean wait 45.586 s, 0 violation(s)"}
+{"id": "main-freestyle-30-3x-observe-only-r2", "status": "done", "at": "2026-10-24T02:02:35+00:00", "seconds": 116.5, "detail": "20261024T020040Z-main-freestyle-30-observe-only-3x-r2: makespan 112.704 s, mean wait 46.782 s, 3 violation(s)"}
+{"id": "main-freestyle-30-3x-optimized-r2", "status": "done", "at": "2026-10-24T02:04:34+00:00", "seconds": 119.3, "detail": "20261024T020236Z-main-freestyle-30-optimized-3x-r2: makespan 114.704 s, mean wait 42.732 s, 0 violation(s)"}
+{"id": "main-freestyle-30-3x-observe-only-r3", "status": "done", "at": "2026-10-24T02:06:31+00:00", "seconds": 116.9, "detail": "20261024T020436Z-main-freestyle-30-observe-only-3x-r3: makespan 112.705 s, mean wait 46.758 s, 3 violation(s)"}
+{"id": "main-freestyle-30-3x-optimized-r3", "status": "done", "at": "2026-10-24T02:08:31+00:00", "seconds": 119.4, "detail": "20261024T020632Z-main-freestyle-30-optimized-3x-r3: makespan 114.704 s, mean wait 42.758 s, 0 violation(s)"}
+{"id": "main-pipeline-30-3x-observe-only-r1", "status": "done", "at": "2026-10-24T02:10:41+00:00", "seconds": 130.0, "detail": "20261024T020832Z-main-pipeline-30-observe-only-3x-r1: makespan 126.0 s, mean wait 57.653 s, 20 violation(s)"}
+{"id": "main-pipeline-30-3x-optimized-r1", "status": "done", "at": "2026-10-24T02:12:56+00:00", "seconds": 135.0, "detail": "20261024T021042Z-main-pipeline-30-optimized-3x-r1: makespan 130.302 s, mean wait 53.966 s, 1 violation(s)"}
+{"id": "main-pipeline-30-3x-observe-only-r2", "status": "done", "at": "2026-10-24T02:15:01+00:00", "seconds": 125.0, "detail": "20261024T021257Z-main-pipeline-30-observe-only-3x-r2: makespan 120.667 s, mean wait 50.794 s, 20 violation(s)"}
+{"id": "main-pipeline-30-3x-optimized-r2", "status": "done", "at": "2026-10-24T02:17:11+00:00", "seconds": 129.9, "detail": "20261024T021502Z-main-pipeline-30-optimized-3x-r2: makespan 125.595 s, mean wait 44.854 s, 1 violation(s)"}
+{"id": "main-pipeline-30-3x-observe-only-r3", "status": "done", "at": "2026-10-24T02:19:16+00:00", "seconds": 125.1, "detail": "20261024T021712Z-main-pipeline-30-observe-only-3x-r3: makespan 120.4 s, mean wait 50.576 s, 20 violation(s)"}
+{"id": "main-pipeline-30-3x-optimized-r3", "status": "done", "at": "2026-10-24T02:21:25+00:00", "seconds": 129.5, "detail": "20261024T021917Z-main-pipeline-30-optimized-3x-r3: makespan 125.459 s, mean wait 44.848 s, 1 violation(s)"}
+{"id": "main-mixed-30-3x-observe-only-r1", "status": "done", "at": "2026-10-24T02:23:20+00:00", "seconds": 114.8, "detail": "20261024T022126Z-main-mixed-30-observe-only-3x-r1: makespan 110.96 s, mean wait 47.832 s, 11 violation(s)"}
+{"id": "main-mixed-30-3x-optimized-r1", "status": "done", "at": "2026-10-24T02:25:25+00:00", "seconds": 124.8, "detail": "20261024T022321Z-main-mixed-30-optimized-3x-r1: makespan 120.242 s, mean wait 44.688 s, 0 violation(s)"}
+{"id": "main-mixed-30-3x-observe-only-r2", "status": "done", "at": "2026-10-24T02:27:22+00:00", "seconds": 117.0, "detail": "20261024T022526Z-main-mixed-30-observe-only-3x-r2: makespan 112.624 s, mean wait 48.15 s, 11 violation(s)"}
+{"id": "main-mixed-30-3x-optimized-r2", "status": "done", "at": "2026-10-24T02:29:31+00:00", "seconds": 129.4, "detail": "20261024T022723Z-main-mixed-30-optimized-3x-r2: makespan 125.334 s, mean wait 48.605 s, 0 violation(s)"}
+{"id": "main-mixed-30-3x-observe-only-r3", "status": "done", "at": "2026-10-24T02:31:26+00:00", "seconds": 114.8, "detail": "20261024T022932Z-main-mixed-30-observe-only-3x-r3: makespan 110.945 s, mean wait 47.865 s, 11 violation(s)"}
+{"id": "main-mixed-30-3x-optimized-r3", "status": "done", "at": "2026-10-24T02:33:32+00:00", "seconds": 125.9, "detail": "20261024T023127Z-main-mixed-30-optimized-3x-r3: makespan 121.151 s, mean wait 44.459 s, 0 violation(s)"}
+{"id": "random-order-mixed-30-3x-observe-only-seed1", "status": "done", "at": "2026-10-24T02:35:30+00:00", "seconds": 118.0, "detail": "20261024T023333Z-random-order-mixed-30-observe-only-3x-r1: makespan 113.245 s, mean wait 46.95 s, 20 violation(s)"}
+{"id": "random-order-mixed-30-3x-optimized-seed1", "status": "done", "at": "2026-10-24T02:37:36+00:00", "seconds": 126.1, "detail": "20261024T023531Z-random-order-mixed-30-optimized-3x-r1: makespan 121.677 s, mean wait 48.022 s, 6 violation(s)"}
+{"id": "random-order-mixed-30-3x-observe-only-seed2", "status": "done", "at": "2026-10-24T02:39:32+00:00", "seconds": 115.9, "detail": "20261024T023737Z-random-order-mixed-30-observe-only-3x-r1: makespan 112.223 s, mean wait 47.127 s, 16 violation(s)"}
+{"id": "random-order-mixed-30-3x-optimized-seed2", "status": "done", "at": "2026-10-24T02:41:36+00:00", "seconds": 124.5, "detail": "20261024T023933Z-random-order-mixed-30-optimized-3x-r1: makespan 120.768 s, mean wait 45.737 s, 4 violation(s)"}
+{"id": "executors-1-again", "status": "done", "at": "2026-10-24T02:41:53+00:00", "seconds": 17.0, "detail": ""}
+{"id": "cold-start-freestyle-30-1x-observe-only-r1", "status": "done", "at": "2026-10-24T02:47:42+00:00", "seconds": 348.7, "detail": "20261024T024222Z-cold-start-freestyle-30-observe-only-1x-r1: makespan 316.979 s, mean wait 153.528 s, 1 violation(s)"}
+{"id": "cold-start-freestyle-30-1x-optimized-r1", "status": "done", "at": "2026-10-24T02:53:28+00:00", "seconds": 345.9, "detail": "20261024T024808Z-cold-start-freestyle-30-optimized-1x-r1: makespan 317.06 s, mean wait 150.285 s, 0 violation(s)"}
+{"id": "cold-start-freestyle-30-1x-observe-only-r2", "status": "done", "at": "2026-10-24T02:58:56+00:00", "seconds": 328.2, "detail": "20261024T025337Z-cold-start-freestyle-30-observe-only-1x-r2: makespan 316.411 s, mean wait 153.111 s, 1 violation(s)"}
+{"id": "cold-start-freestyle-30-1x-optimized-r2", "status": "done", "at": "2026-10-24T03:04:25+00:00", "seconds": 329.0, "detail": "20261024T025905Z-cold-start-freestyle-30-optimized-1x-r2: makespan 316.415 s, mean wait 149.781 s, 0 violation(s)"}
+{"id": "cold-start-freestyle-30-1x-observe-only-r3", "status": "done", "at": "2026-10-24T03:09:53+00:00", "seconds": 327.5, "detail": "20261024T030434Z-cold-start-freestyle-30-observe-only-1x-r3: makespan 316.311 s, mean wait 153.044 s, 1 violation(s)"}
+{"id": "cold-start-freestyle-30-1x-optimized-r3", "status": "done", "at": "2026-10-24T03:15:20+00:00", "seconds": 327.6, "detail": "20261024T031001Z-cold-start-freestyle-30-optimized-1x-r3: makespan 316.346 s, mean wait 149.742 s, 0 violation(s)"}
+{"id": "report", "status": "done", "at": "2026-10-24T03:15:21+00:00", "seconds": 0.2, "detail": ""}
+{"id": "restore-stack", "status": "done", "at": "2026-10-24T03:15:48+00:00", "seconds": 28.0, "detail": ""}
+{"id": "stock-start-end", "status": "done", "at": "2026-10-24T03:16:02+00:00", "seconds": 13.2, "detail": ""}
