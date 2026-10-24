@@ -4,11 +4,15 @@
 # agent-2, backend (8000) and frontend (5173); an `experiment` profile adding jenkins-baseline
 # (8085), jenkins-plugin (8086) and one agent each; named volumes for the Jenkins homes and the
 # PostgreSQL data; healthchecks on PostgreSQL, Jenkins and the backend, with the backend waiting for
-# PostgreSQL to be healthy.
+# PostgreSQL to be healthy. A `stock` profile adds jenkins-stock (8088), Jenkins without the
+# optimizer, and its agent, for the experiment's stock-Jenkins arm (docs/decisions.md D-078).
 #
 # Usage:
 #     docker compose up -d                      the default stack
 #     docker compose --profile experiment up -d  the two experiment controllers
+#     docker compose --profile stock up -d jenkins-stock stock-agent
+#                                                the stock-Jenkins controller, named, since a
+#                                                bare `up -d` recreates the default stack's too
 #     docker compose --profile frontend up -d    adds the frontend once Phase 6 has built it
 #
 # Secrets come from .env, which is gitignored. Copy .env.example and fill it in first; the
@@ -18,13 +22,16 @@
 name: orchestrator
 
 # ---------------------------------------------------------------------------
-# Shared fragments. The three Jenkins controllers differ only in port, JCasC
-# file and volume, so the common parts are defined once.
+# Shared fragments. The Jenkins controllers differ only in port, JCasC file and
+# volume, and jenkins-stock in its image's stage, so the common parts are
+# defined once.
 # ---------------------------------------------------------------------------
 x-jenkins-common: &jenkins-common
-  build:
+  build: &jenkins-build
     # Repository root: the controller image needs plugin/target/*.hpi as well as
-    # jenkins/controller/.
+    # jenkins/controller/. With no target, Compose builds the Dockerfile's last
+    # stage, the controller with the optimizer; jenkins-stock alone asks for the
+    # `stock` stage (D-078).
     context: .
     dockerfile: jenkins/controller/Dockerfile
     # No provenance attestation on any image here. They are local and never pushed, and the
@@ -277,6 +284,44 @@ services:
       - plugin-agent-work:/home/jenkins/agent
       - /var/run/docker.sock:/var/run/docker.sock
 
+  # -------------------------------------------------------------------------
+  # Stock profile: Jenkins without the optimizer, and one agent (D-078).
+  #
+  # The stock-Jenkins arm of Part 4.8.2, its sanity run. The image is the
+  # Dockerfile's `stock` stage, the one the other controllers' image is built on,
+  # so the plugin is the only difference; the configuration is the baseline's
+  # without the optimizer's block. A profile of its own, so the experiment
+  # profile starts nothing more than it did.
+  # -------------------------------------------------------------------------
+  jenkins-stock:
+    <<: *jenkins-common
+    build:
+      <<: *jenkins-build
+      target: stock
+    profiles: ["stock"]
+    container_name: orchestrator-jenkins-stock
+    environment:
+      <<: *jenkins-env
+      CASC_JENKINS_CONFIG: /var/jenkins_conf/jenkins.yaml
+      AGENT_EXECUTORS: ${AGENT_EXECUTORS:-1}
+    volumes:
+      - jenkins-stock-home:/var/jenkins_home
+      - ./jenkins/casc/experiment-stock.yaml:/var/jenkins_conf/jenkins.yaml:ro
+      - ./.secrets:/run/secrets/casc:ro
+    ports:
+      - "127.0.0.1:8088:8080"
+    depends_on:
+      stock-agent:
+        condition: service_started
+
+  stock-agent:
+    <<: *agent-common
+    profiles: ["stock"]
+    container_name: orchestrator-stock-agent
+    volumes:
+      - stock-agent-work:/home/jenkins/agent
+      - /var/run/docker.sock:/var/run/docker.sock
+
 # ---------------------------------------------------------------------------
 # Named volumes. Never removed by tooling: `docker compose down -v` and
 # `docker volume rm` are both forbidden by rule 1.5 because they destroy the
@@ -287,7 +332,9 @@ volumes:
   jenkins-dev-home:
   jenkins-baseline-home:
   jenkins-plugin-home:
+  jenkins-stock-home:
   agent-1-work:
   agent-2-work:
   baseline-agent-work:
   plugin-agent-work:
+  stock-agent-work:

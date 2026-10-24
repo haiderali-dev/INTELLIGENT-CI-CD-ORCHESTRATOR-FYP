@@ -183,6 +183,12 @@ each one attaches to Jenkins.
       executors each, the controller running zero builds, three repetitions reported as mean and
       standard deviation, and the baseline arm being the same plugin with `optimizerEnabled = false`
       plus one stock-Jenkins sanity run. The full comparison is in `docs/decisions.md` D-012.
+      - **The sanity run's controller (D-078):** a third controller from the same image, without the
+        plugin: the same Jenkins and plugins, and the baseline's configuration without the
+        optimizer's block.
+      - **How its waits are measured:** it has no plugin events, so each job's queue entry is the
+        harness's trigger time; build start and end come from Jenkins, as in every arm. Say so
+        beside its figures.
 - [ ] **Appendix C, pp. 85–86 [84–85]: regenerate from `scripts/report/appendix_c.py`.** Add a column
       so the table shows *both* the base score and the effective score after group inheritance. The
       current single-column table gives `integration-tests-api` 0.633 while the prose says the group

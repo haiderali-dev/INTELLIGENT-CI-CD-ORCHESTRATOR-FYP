@@ -16,6 +16,7 @@ is ordered by phase then by registration order.
 from __future__ import annotations
 
 import argparse
+import copy
 import functools
 import io
 import json
@@ -691,6 +692,7 @@ DOCKER_FILES = [
     "jenkins/casc/dev.yaml",
     "jenkins/casc/experiment-baseline.yaml",
     "jenkins/casc/experiment-plugin.yaml",
+    "jenkins/casc/experiment-stock.yaml",
     "backend/Dockerfile",
     "frontend/Dockerfile",
     "frontend/nginx.conf",
@@ -707,6 +709,8 @@ COMPOSE_REQUIRED_SECRETS = [
 ]
 
 CASC_FILES = ("dev.yaml", "experiment-baseline.yaml", "experiment-plugin.yaml")
+#: The stock-Jenkins arm's configuration (D-078): the baseline's, without the optimizer's block.
+STOCK_CASC = "experiment-stock.yaml"
 
 
 def _load_yaml(path: Path) -> tuple[Any, str | None]:
@@ -729,8 +733,12 @@ def check_docker_files_exist() -> Result:
     return ok(f"all {len(DOCKER_FILES)} present")
 
 
-@check(1, "docker-compose.yml is valid and matches Part 4.2.3")
+@check(1, "docker-compose.yml is valid and matches Part 4.2.3 and D-078")
 def check_compose_shape() -> Result:
+    """Part 4.2.3's services, ports, healthchecks and volumes, and D-078's `stock` profile: the
+    stock-Jenkins controller and its agent, started only when asked for, with a configuration, an
+    agent, a home and a port of their own. No two controllers share a home, so no arm can read
+    another's build history, and no two services publish the same port."""
     path = REPO_ROOT / "docker-compose.yml"
     if not path.is_file():
         return fail("docker-compose.yml does not exist")
@@ -751,6 +759,9 @@ def check_compose_shape() -> Result:
     for name in ("jenkins-baseline", "jenkins-plugin"):
         if name not in profiled:
             problems.append(f"{name} should sit behind the experiment profile")
+    for name in ("jenkins-stock", "stock-agent"):
+        if (services.get(name) or {}).get("profiles") != ["stock"]:
+            problems.append(f"{name} should sit behind the stock profile alone (D-078)")
 
     published = {
         name: " ".join(str(p) for p in node.get("ports", [])) for name, node in services.items()
@@ -760,9 +771,36 @@ def check_compose_shape() -> Result:
         ("backend", "8000"),
         ("jenkins-baseline", "8085"),
         ("jenkins-plugin", "8086"),
+        ("jenkins-stock", "8088"),
     ):
         if port not in published.get(name, ""):
             problems.append(f"{name} does not publish {port}")
+    host_ports: list[str] = []
+    for node in services.values():
+        for port in node.get("ports") or []:
+            parts = str(port.get("published") if isinstance(port, dict) else port).split(":")
+            host_ports.append(parts[-2] if len(parts) > 1 else parts[0])
+    clashing = sorted({port for port in host_ports if host_ports.count(port) > 1})
+    if clashing:
+        problems.append("more than one service publishes " + ", ".join(clashing))
+
+    homes: dict[str, str] = {}
+    for name, node in services.items():
+        for volume in node.get("volumes") or []:
+            source, _, target = str(volume).partition(":")
+            if target.split(":")[0] == "/var/jenkins_home":
+                homes[name] = source
+    shared = sorted({home for home in homes.values() if list(homes.values()).count(home) > 1})
+    if shared:
+        problems.append("controllers share a Jenkins home: " + ", ".join(shared))
+    if homes.get("jenkins-stock") != "jenkins-stock-home":
+        problems.append("jenkins-stock does not keep its home in the volume jenkins-stock-home")
+    stock = services.get("jenkins-stock") or {}
+    casc = "./jenkins/casc/experiment-stock.yaml:/var/jenkins_conf/jenkins.yaml:ro"
+    if casc not in [str(volume) for volume in stock.get("volumes") or []]:
+        problems.append("jenkins-stock does not mount jenkins/casc/experiment-stock.yaml read-only")
+    if "stock-agent" not in (stock.get("depends_on") or {}):
+        problems.append("jenkins-stock does not start its own agent, stock-agent")
 
     for name in ("postgres", "jenkins-dev", "backend"):
         if "healthcheck" not in services.get(name, {}):
@@ -775,7 +813,7 @@ def check_compose_shape() -> Result:
     ):
         problems.append("backend does not wait for postgres to be healthy")
 
-    for volume in ("postgres-data", "jenkins-dev-home"):
+    for volume in ("postgres-data", "jenkins-dev-home", "jenkins-stock-home", "stock-agent-work"):
         if volume not in (doc.get("volumes") or {}):
             problems.append(f"named volume {volume} is missing")
 
@@ -920,6 +958,81 @@ def check_casc_quotes_floats() -> Result:
     return ok(f"all {len(APPENDIX_D_FLOATS)} quoted, at the report's values, in {len(CASC_FILES)} files")
 
 
+def _casc_without_identity(doc: Any) -> Any:
+    """A JCasC document without what names its controller (the system message, the agent's name
+    and host, the URL) and without the optimizer's block: what two experiment arms must share."""
+    shared = copy.deepcopy(doc)
+    jenkins = shared.get("jenkins") or {}
+    jenkins.pop("systemMessage", None)
+    for node in jenkins.get("nodes") or []:
+        permanent = node.get("permanent") or {}
+        permanent.pop("name", None)
+        ((permanent.get("launcher") or {}).get("ssh") or {}).pop("host", None)
+    unclassified = shared.get("unclassified") or {}
+    (unclassified.get("location") or {}).pop("url", None)
+    unclassified.pop("dynamicQueueOptimizer", None)
+    return shared
+
+
+def _differences(a: Any, b: Any, path: str = "") -> list[str]:
+    """The dotted paths at which two parsed YAML documents differ."""
+    if isinstance(a, dict) and isinstance(b, dict):
+        return [
+            difference
+            for key in sorted(set(a) | set(b), key=str)
+            for difference in _differences(a.get(key), b.get(key), f"{path}.{key}".lstrip("."))
+        ]
+    if isinstance(a, list) and isinstance(b, list) and len(a) == len(b):
+        return [
+            difference
+            for index, (x, y) in enumerate(zip(a, b, strict=True))
+            for difference in _differences(x, y, f"{path}[{index}]")
+        ]
+    return [] if a == b else [path or "the whole document"]
+
+
+@check(1, "the stock arm's JCasC is the baseline's without the optimizer (D-078)")
+def check_stock_casc() -> Result:
+    """The stock-Jenkins arm must differ from the observe-only arm by the plugin alone. So its file
+    is experiment-baseline.yaml without the dynamicQueueOptimizer block, which Jenkins refuses to
+    start with when the plugin is absent, and with its own agent, URL and system message."""
+    casc = REPO_ROOT / "jenkins" / "casc"
+    docs: dict[str, Any] = {}
+    for name in ("experiment-baseline.yaml", STOCK_CASC):
+        if not (casc / name).is_file():
+            return fail(f"missing jenkins/casc/{name}")
+        doc, error = _load_yaml(casc / name)
+        if error:
+            return fail(f"{name}: {error}")
+        docs[name] = doc
+    stock = docs[STOCK_CASC]
+    if "dynamicQueueOptimizer" in (stock.get("unclassified") or {}):
+        return fail(f"{STOCK_CASC} configures the optimizer, which the stock controller lacks")
+    agents = [
+        (
+            (node.get("permanent") or {}).get("name"),
+            (((node.get("permanent") or {}).get("launcher") or {}).get("ssh") or {}).get("host"),
+        )
+        for node in (stock.get("jenkins") or {}).get("nodes") or []
+    ]
+    if agents != [("stock-agent", "stock-agent")]:
+        return fail(
+            f"{STOCK_CASC} must define one agent, stock-agent at host stock-agent: {agents}"
+        )
+    url = ((stock.get("unclassified") or {}).get("location") or {}).get("url")
+    if url != "http://localhost:8088/":
+        return fail(f"{STOCK_CASC} gives its URL as {url!r}, not http://localhost:8088/")
+    differing = _differences(
+        _casc_without_identity(docs["experiment-baseline.yaml"]), _casc_without_identity(stock)
+    )
+    if differing:
+        return fail(
+            f"{STOCK_CASC} differs from experiment-baseline.yaml beyond its identity and the "
+            "optimizer, in " + ", ".join(differing[:4])
+        )
+    return ok("experiment-baseline.yaml without the optimizer's block, with its own agent and URL")
+
+
 @check(1, "the controller image installs the built plugin")
 def check_controller_installs_plugin() -> Result:
     dockerfile = REPO_ROOT / "jenkins" / "controller" / "Dockerfile"
@@ -935,6 +1048,123 @@ def check_controller_installs_plugin() -> Result:
     if not hpi.is_file():
         return fail("plugin/target/*.hpi is missing; run `cd plugin && mvn -B verify` first")
     return ok(f"COPY present and the .hpi exists ({hpi.stat().st_size // 1024} KB)")
+
+
+def _dockerfile_stages(text: str) -> list[tuple[str, list[str]]]:
+    """Each stage's FROM instruction and the instructions after it, with comments, blank lines and
+    line continuations removed and runs of spaces closed up."""
+    instructions: list[str] = []
+    current = ""
+    # chr(92) is the backslash that continues an instruction on the next line.
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        current = f"{current} {stripped.removesuffix(chr(92))}"
+        if not stripped.endswith(chr(92)):
+            instructions.append(" ".join(current.split()))
+            current = ""
+    stages: list[tuple[str, list[str]]] = []
+    for instruction in instructions:
+        if instruction.upper().startswith("FROM "):
+            stages.append((instruction, []))
+        elif stages:
+            stages[-1][1].append(instruction)
+    return stages
+
+
+#: All the optimizer stage may do on top of the stock stage: install the plugin and the script
+#: that reinstalls it on every start, and make that script the entrypoint. Each instruction but
+#: the first must be there.
+OPTIMIZER_STAGE = {
+    "a USER switch": re.compile(r"USER (root|jenkins)"),
+    "the plugin's COPY": re.compile(
+        r"COPY (--chown=jenkins:jenkins )?plugin/target/dynamic-queue-optimizer\.hpi "
+        r"/usr/share/jenkins/ref/plugins/dynamic-queue-optimizer\.jpi"
+    ),
+    "the install script's COPY": re.compile(
+        r"COPY jenkins/controller/install-plugin-under-test\.sh "
+        r"/usr/local/bin/install-plugin-under-test\.sh"
+    ),
+    "the install script's chmod": re.compile(
+        r"RUN chmod \+x /usr/local/bin/install-plugin-under-test\.sh"
+    ),
+    "the install script as ENTRYPOINT": re.compile(
+        r'ENTRYPOINT \["/usr/local/bin/install-plugin-under-test\.sh"\]'
+    ),
+}
+
+
+@check(1, "the stock controller's image is the controller image without the plugin (D-078)")
+def check_stock_image_stage() -> Result:
+    """jenkins/controller/Dockerfile builds a `stock` stage, Jenkins and the pinned plugins, then
+    the optimizer stage on top of it. The stock stage must not touch the plugin, and the optimizer
+    stage may add only the plugin, its install script and the entrypoint, so the stock controller
+    differs from the others by the plugin alone. Compose builds the stock stage for jenkins-stock
+    and for no other controller."""
+    dockerfile = REPO_ROOT / "jenkins" / "controller" / "Dockerfile"
+    if not dockerfile.is_file():
+        return fail("jenkins/controller/Dockerfile does not exist")
+    stages = _dockerfile_stages(dockerfile.read_text(encoding="utf-8"))
+    froms = [instruction.lower().split() for instruction, _ in stages]
+    if (
+        len(stages) != 2
+        or not froms[0][1].startswith("jenkins/jenkins:")
+        or froms[0][2:] != ["as", "stock"]
+        or froms[1] != ["from", "stock", "as", "optimizer"]
+    ):
+        return fail(
+            "expected two stages, `FROM jenkins/jenkins:<tag> AS stock` and "
+            f"`FROM stock AS optimizer`, not: {' | '.join(i for i, _ in stages)[:160]}"
+        )
+    touching = [
+        instruction
+        for instruction in stages[0][1]
+        if "dynamic-queue-optimizer" in instruction or "install-plugin-under-test" in instruction
+    ]
+    if touching:
+        return fail(f"the stock stage touches the plugin: {touching[0][:100]}")
+    added = stages[1][1]
+    allowed = OPTIMIZER_STAGE.values()
+    extra = [i for i in added if not any(pattern.fullmatch(i) for pattern in allowed)]
+    if extra:
+        return fail(f"the optimizer stage adds more than the plugin: {extra[0][:100]}")
+    missing = [
+        what
+        for what, pattern in list(OPTIMIZER_STAGE.items())[1:]
+        if not any(pattern.fullmatch(i) for i in added)
+    ]
+    if missing:
+        return fail(f"the optimizer stage lacks {', '.join(missing)}")
+
+    doc, error = _load_yaml(REPO_ROOT / "docker-compose.yml")
+    if error:
+        return fail(f"docker-compose.yml: {error}")
+    # A short-form `build: ./dir` is a string, and names no Dockerfile of ours.
+    builds = {
+        name: node.get("build")
+        for name, node in (doc.get("services") or {}).items()
+        if isinstance(node.get("build"), dict)
+    }
+    targets = {
+        name: build.get("target")
+        for name, build in builds.items()
+        if build.get("dockerfile") == "jenkins/controller/Dockerfile"
+    }
+    wrong = sorted(
+        name
+        for name, target in targets.items()
+        if (target != "stock" if name == "jenkins-stock" else target not in (None, "optimizer"))
+    )
+    if "jenkins-stock" not in targets or wrong:
+        return fail(
+            "jenkins-stock alone must build the stock stage; "
+            + (f"wrong target on {', '.join(wrong)}" if wrong else "jenkins-stock is missing")
+        )
+    return ok(
+        "stock, then the optimizer stage adding only the plugin and its entrypoint; jenkins-stock "
+        f"builds stock, the other {len(targets) - 1} controllers the optimizer stage"
+    )
 
 
 @check(1, "controller plugins are pinned")
@@ -1158,13 +1388,15 @@ def _env_file() -> dict[str, str]:
     return values
 
 
-def _jenkins_get(path: str, user: str, secret: str, timeout: int = 30) -> tuple[int, str]:
-    """One authenticated GET against the dev controller."""
+def _jenkins_get(
+    path: str, user: str, secret: str, timeout: int = 30, base: str = "http://localhost:8087"
+) -> tuple[int, str]:
+    """One authenticated GET against a controller: the dev controller, unless given another."""
     import base64
     import urllib.error
     import urllib.request
 
-    url = "http://localhost:8087" + path
+    url = base + path
     request = urllib.request.Request(url)
     token = base64.b64encode(f"{user}:{secret}".encode()).decode("ascii")
     request.add_header("Authorization", f"Basic {token}")
@@ -3489,7 +3721,9 @@ def check_ws_protocol_names() -> Result:
 # Phase 7: the experiment harness
 #
 # The live checks need the Compose `experiment` profile, which `docker compose up -d` leaves
-# stopped: `docker compose --profile experiment up -d` starts it, one executor per agent.
+# stopped: `docker compose --profile experiment up -d` starts it, one executor per agent. The
+# stock-Jenkins checks (D-078) need the `stock` profile as well: `docker compose --profile stock
+# up -d`.
 # ---------------------------------------------------------------------------
 
 EXPERIMENT_RESULTS = REPO_ROOT / "experiment" / "results"
@@ -3500,6 +3734,15 @@ EXPERIMENT_CONTROLLERS = (
     ("jenkins-baseline", "baseline-agent", "http://127.0.0.1:8085", "observe-only"),
     ("jenkins-plugin", "plugin-agent", "http://127.0.0.1:8086", "optimized"),
 )
+#: The stock-Jenkins controller of the Compose `stock` profile (D-078): its service, its agent's
+#: and its URL. Its arm is always stock.
+STOCK_CONTROLLER = ("jenkins-stock", "stock-agent", "http://127.0.0.1:8088")
+#: How to start it: by its two services, since a bare `up -d` also recreates the default stack's.
+STOCK_START = "`docker compose --profile stock up -d jenkins-stock stock-agent`"
+#: The plugin under test, by the short name Jenkins knows it by.
+OPTIMIZER = "dynamic-queue-optimizer"
+#: Every run folder this gate's smoke runs wrote, in the order they ran.
+_GATE_RUNS: list[Path] = []
 
 
 @check(7, "the experiment package's tests pass")
@@ -3548,6 +3791,25 @@ def _read_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _run_experiment(
+    arguments: list[str], timeout: int
+) -> tuple[subprocess.CompletedProcess[str], tuple[Path, ...]] | str:
+    """`python -m experiment <arguments>` in the backend's Python: the process and the run folders
+    it wrote, which join _GATE_RUNS, or why it could not run."""
+    runner = _uv_runner()
+    if runner is None:
+        return "uv is not installed; see docs/decisions.md D-010"
+    before = set(_experiment_runs())
+    command = [*runner, "run", "--no-sync", "--project", "backend", "python", "-m", "experiment"]
+    try:
+        result = run([*command, *arguments], cwd=REPO_ROOT, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return f"`python -m experiment {' '.join(arguments)}` did not finish in {timeout // 60} min"
+    written = tuple(path for path in _experiment_runs() if path not in before)
+    _GATE_RUNS.extend(written)
+    return result, written
+
+
 @functools.cache
 def _smoke() -> tuple[subprocess.CompletedProcess[str], tuple[Path, ...]] | str:
     """T7.6, once per gate: `python -m experiment smoke`, freestyle-6 on one executor on each
@@ -3566,16 +3828,7 @@ def _smoke() -> tuple[subprocess.CompletedProcess[str], tuple[Path, ...]] | str:
             f"{' and '.join(down)} not answering; start the experiment profile with "
             "`docker compose --profile experiment up -d`"
         )
-    runner = _uv_runner()
-    if runner is None:
-        return "uv is not installed; see docs/decisions.md D-010"
-    before = set(_experiment_runs())
-    command = [*runner, "run", "--no-sync", "--project", "backend", "python", "-m", "experiment"]
-    try:
-        result = run([*command, "smoke"], cwd=REPO_ROOT, timeout=2400)
-    except subprocess.TimeoutExpired:
-        return "the smoke run did not finish within 40 minutes"
-    return result, tuple(path for path in _experiment_runs() if path not in before)
+    return _run_experiment(["smoke"], timeout=2400)
 
 
 def _smoke_failure(result: subprocess.CompletedProcess[str], what: str) -> Result:
@@ -3617,19 +3870,20 @@ def check_smoke_completed() -> Result:
 @check(7, "results/latest.json is newer than its raw files")
 def check_latest_json() -> Result:
     """Part 4.8.3: `run` analyses at its end and updates results/latest.json last. After the smoke
-    run, latest.json names the smoke's last run, was written after every raw file of that run,
-    and holds the KPIs of that run's analysis.json."""
+    run, latest.json names the last run this gate analysed, was written after every raw file of
+    that run, and holds the KPIs of that run's analysis.json. That run is the smoke's last, unless
+    the stock controller's smoke run (D-078) has run since: whichever ran last, latest.json must
+    name it, so the order the checks run in does not matter."""
     smoke = _smoke()
     if isinstance(smoke, str):
         return fail(smoke)
-    _result, written = smoke
     latest = EXPERIMENT_RESULTS / "latest.json"
     if not latest.is_file():
         return fail("experiment/results/latest.json does not exist after the smoke run")
     data = _read_json(latest)
-    analysed = [folder for folder in written if (folder / "analysis.json").is_file()]
+    analysed = [folder for folder in _GATE_RUNS if (folder / "analysis.json").is_file()]
     if not analysed or data.get("run") != analysed[-1].name:
-        return fail(f"latest.json names {data.get('run')!r}, not the smoke's last analysed run")
+        return fail(f"latest.json names {data.get('run')!r}, not the last run this gate analysed")
     folder = analysed[-1]
     stamp = latest.stat().st_mtime_ns
     raw = max((folder / name).stat().st_mtime_ns for name in EXPERIMENT_RAW_FILES)
@@ -3682,6 +3936,210 @@ def check_smoke_violations() -> Result:
             return fail(f"{folder.name}: {reported} dependency violation(s)")
         edges += recounted[1]
     return ok(f"0 in both runs, from the plugin's events and Jenkins' build times ({edges} edges)")
+
+
+@check(7, "the stock controller and its agent run what the current source builds (D-078)")
+def check_stock_images_current() -> Result:
+    """Phase 1's check, for the stock profile. The stock stage holds no .hpi, so Docker's build
+    cache alone tells a current image from a stale one."""
+    if not have("docker"):
+        return fail("blocked: Docker is not installed")
+    service, agent, _url = STOCK_CONTROLLER
+    # `docker inspect` answers for a stopped container too, so ask whether each one runs.
+    stopped = [
+        container
+        for container in (f"orchestrator-{service}", f"orchestrator-{agent}")
+        if run(["docker", "inspect", "--format", "{{.State.Running}}", container], timeout=60)
+        .stdout.strip()
+        != "true"
+    ]
+    if stopped:
+        return fail(f"{' and '.join(stopped)} not running; start them with {STOCK_START}")
+    problems = [
+        problem
+        for problem in (
+            _runs_current_build(service, f"orchestrator-{service}"),
+            _runs_current_build(agent, f"orchestrator-{agent}"),
+        )
+        if problem
+    ]
+    if problems:
+        return fail("; ".join(problems))
+    return ok(
+        "jenkins-stock runs the stock stage the current source builds; its agent matches a build"
+    )
+
+
+def _plugins_on(url: str, password: str) -> dict[str, tuple[str, bool]] | str:
+    """Every plugin a controller's plugin manager lists, with its version and whether it is active,
+    or why the list could not be read. The bot is refused the plugin manager (D-076), so this is
+    read as the admin account. It is a GET: nothing is changed."""
+    status, body = _jenkins_get(
+        "/pluginManager/api/json?tree=plugins[shortName,version,active]",
+        "admin",
+        password,
+        base=url,
+    )
+    if status != 200:
+        return f"{url}/pluginManager answered {status}"
+    return {
+        str(plugin["shortName"]): (str(plugin["version"]), bool(plugin["active"]))
+        for plugin in json.loads(body)["plugins"]
+    }
+
+
+@check(7, "the stock controller runs Jenkins without the optimizer, the plugin controller with it")
+def check_stock_without_optimizer() -> Result:
+    """D-078. On jenkins-stock the optimizer is in neither the image nor the home, its plugin
+    manager does not list it, and /dynamic-queue does not exist. Every other plugin, at the same
+    version, and Jenkins itself are jenkins-plugin's, where the optimizer is active and the arm is
+    optimized. So the plugin is the one difference between the two controllers."""
+    env = _env_file()
+    admin, bot = env.get("JENKINS_ADMIN_PASSWORD"), env.get("JENKINS_BOT_PASSWORD")
+    if not admin or not bot:
+        return fail("JENKINS_ADMIN_PASSWORD and JENKINS_BOT_PASSWORD must be set in .env")
+    service, _agent, stock_url = STOCK_CONTROLLER
+    plugin_service, _plugin_agent, plugin_url, _arm = EXPERIMENT_CONTROLLERS[1]
+    versions: dict[str, str | None] = {}
+    for name, url, start in (
+        (service, stock_url, STOCK_START),
+        (plugin_service, plugin_url, "`docker compose --profile experiment up -d`"),
+    ):
+        status, _body, headers = _get(url + "/login")
+        if status != 200:
+            return fail(f"{name} not answering; start it with {start}")
+        versions[name] = headers.get("x-jenkins")
+    if versions[service] != versions[plugin_service]:
+        return fail(
+            f"Jenkins {versions[service]} on {service}, "
+            f"{versions[plugin_service]} on {plugin_service}"
+        )
+
+    for folder in ("/usr/share/jenkins/ref/plugins", "/var/jenkins_home/plugins"):
+        listing = run(["docker", "exec", f"orchestrator-{service}", "ls", folder], timeout=60)
+        if listing.returncode != 0:
+            return fail(f"could not list {folder} on {service}: {listing.stderr.strip()[:120]}")
+        if any(entry.startswith(OPTIMIZER) for entry in listing.stdout.split()):
+            return fail(f"{service} has the optimizer in {folder}")
+
+    stock_plugins = _plugins_on(stock_url, admin)
+    if isinstance(stock_plugins, str):
+        return fail(stock_plugins)
+    plugin_plugins = _plugins_on(plugin_url, admin)
+    if isinstance(plugin_plugins, str):
+        return fail(plugin_plugins)
+    if OPTIMIZER in stock_plugins:
+        return fail(f"{service}'s plugin manager lists the optimizer")
+    if plugin_plugins.get(OPTIMIZER, ("", False))[1] is not True:
+        return fail(f"the optimizer is not active on {plugin_service}")
+    others = {name: found for name, found in plugin_plugins.items() if name != OPTIMIZER}
+    differing = sorted(
+        name
+        for name in stock_plugins.keys() | others.keys()
+        if stock_plugins.get(name) != others.get(name)
+    )
+    if differing:
+        return fail(
+            f"{service}'s plugins differ from {plugin_service}'s beyond the optimizer: "
+            + ", ".join(differing[:4])
+        )
+
+    status, _body = _jenkins_get("/dynamic-queue/health", "orchestrator-bot", bot, base=stock_url)
+    if status != 404:
+        return fail(f"{service}'s /dynamic-queue/health answered {status}, not 404")
+    status, body = _jenkins_get("/dynamic-queue/api/json", "orchestrator-bot", bot, base=plugin_url)
+    if status != 200:
+        return fail(f"{plugin_service}'s /dynamic-queue/api/json answered {status}")
+    config = json.loads(body)["configuration"]
+    enabled = bool(config["optimizerEnabled"])
+    bonus, cap = float(config["agingBonusPerInterval"]), float(config["agingCap"])
+    if not (enabled and bonus > 0 and cap > 0):
+        return fail(
+            f"{plugin_service} is not the optimized arm: optimizerEnabled {enabled}, aging "
+            f"{bonus} per interval, cap {cap}"
+        )
+    return ok(
+        f"{service}: no optimizer in its image, its home or its plugin manager, and no "
+        f"/dynamic-queue; its {len(stock_plugins)} plugins and Jenkins {versions[service]} are "
+        f"{plugin_service}'s, where the optimizer is active and the arm optimized"
+    )
+
+
+@functools.cache
+def _stock_smoke() -> tuple[subprocess.CompletedProcess[str], tuple[Path, ...]] | str:
+    """D-078, once per gate: `python -m experiment smoke --controller stock`, freestyle-6 on one
+    executor on the stock-Jenkins controller. The process and the run folder it wrote, or why it
+    could not run."""
+    service, _agent, url = STOCK_CONTROLLER
+    if _get(url + "/login")[0] != 200:
+        return f"{service} not answering; start it with {STOCK_START}"
+    return _run_experiment(["smoke", "--controller", "stock"], timeout=1200)
+
+
+@check(7, "the stock controller runs the smoke workload, with figures comparable to the others'")
+def check_stock_smoke() -> Result:
+    """D-078: the experiment controllers' smoke workload, freestyle-6 on one executor, run on
+    jenkins-stock and analysed into the same figures, from the same version of the workload. A
+    stock run has no plugin events: the harness's trigger times stand in for the queue's entry
+    times, and Jenkins' own build times give the rest. Dependency violations are counted again from
+    builds.json and must agree with the analysis. With no events, both counts rest on the same
+    build times, so on this arm the recount checks the analysis's arithmetic, not a second
+    source."""
+    smoke = _smoke()
+    if isinstance(smoke, str):
+        return fail(smoke)
+    stock = _stock_smoke()
+    if isinstance(stock, str):
+        return fail(stock)
+    result, written = stock
+    service, _agent, url = STOCK_CONTROLLER
+    mine = [folder for folder in written if _read_json(folder / "run.json").get("url") == url]
+    if len(mine) != 1:
+        return _smoke_failure(result, f"the stock smoke wrote {len(mine)} runs on {service}")
+    folder = mine[0]
+    meta = _read_json(folder / "run.json")
+    if not meta.get("complete") or not (folder / "analysis.json").is_file():
+        reason = meta.get("incompleteReason") or "it was not analysed"
+        return fail(f"{service}'s run {folder.name} did not complete: {reason}")
+    conditions = (meta["workload"]["name"], meta["executors"], meta["arm"])
+    if conditions != ("freestyle-6", 1, "stock"):
+        return fail(f"{service} ran {conditions}, not ('freestyle-6', 1, 'stock')")
+    if meta.get("pluginVersion") is not None or meta.get("configuration") is not None:
+        return fail(f"{folder.name} recorded a plugin, so the controller was not stock")
+    kpis = _read_json(folder / "analysis.json")["kpis"]
+    if kpis["jobs"] != 6 or kpis["succeeded"] != 6:
+        return fail(f"{service}: {kpis['succeeded']} of {kpis['jobs']} jobs succeeded, not 6")
+
+    compared = {"stock": kpis}
+    for other in smoke[1]:
+        if not (other / "analysis.json").is_file():
+            continue
+        other_meta = _read_json(other / "run.json")
+        if other_meta["workload"]["digest"] != meta["workload"]["digest"]:
+            return fail(f"{folder.name} ran another version of freestyle-6 than {other.name}")
+        other_kpis = _read_json(other / "analysis.json")["kpis"]
+        if set(other_kpis) != set(kpis):
+            return fail(f"{folder.name} has other figures than {other.name}")
+        compared[other_meta["arm"]] = other_kpis
+    if len(compared) != 1 + len(EXPERIMENT_CONTROLLERS):
+        return fail(f"only {len(compared) - 1} of the experiment controllers' runs to compare with")
+
+    recounted = _violations_from_builds(folder)
+    if isinstance(recounted, str):
+        return fail(recounted)
+    if recounted[0] != kpis["dependency_violations"]:
+        return fail(
+            f"{folder.name}: the analysis counts {kpis['dependency_violations']} dependency "
+            f"violation(s), builds.json {recounted[0]}"
+        )
+    figures = "; ".join(
+        f"{arm} {found['makespan_s']:.1f} s and {found['wait_s']['mean']:.1f} s"
+        for arm, found in compared.items()
+    )
+    return ok(
+        f"freestyle-6 on one executor: 6 of 6 jobs on {service}, {recounted[0]} dependency "
+        f"violation(s) by the analysis and by builds.json; makespan and mean wait: {figures}"
+    )
 
 
 IMPLEMENTED_PHASES = {0, 1, 2, 3, 4, 5, 6, 7}

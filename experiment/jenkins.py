@@ -26,8 +26,13 @@ from pathlib import Path
 from typing import Any, Final, Protocol
 
 REPO_ROOT: Final = Path(__file__).resolve().parents[1]
-#: The two experiment controllers of the Compose ``experiment`` profile (BUILD_PROMPT 4.2.3).
-CONTROLLERS: Final = {"baseline": "http://127.0.0.1:8085", "plugin": "http://127.0.0.1:8086"}
+#: The two experiment controllers of the Compose ``experiment`` profile (BUILD_PROMPT 4.2.3), and
+#: the ``stock`` profile's Jenkins without the plugin, for the stock arm (docs/decisions.md D-078).
+CONTROLLERS: Final = {
+    "baseline": "http://127.0.0.1:8085",
+    "plugin": "http://127.0.0.1:8086",
+    "stock": "http://127.0.0.1:8088",
+}
 BOT_USER: Final = "orchestrator-bot"
 ADMIN_USER: Final = "admin"
 #: The plugin keeps its last 500 events; asking for more returns 500.

@@ -2046,10 +2046,11 @@ The audit of 2026-10-18 listed them. Each item below ends with the check that ra
 
 ## Phase 7: Experiment v2
 
-On `phase-7-experiment`, branched from `main` at `422050f` (2026-10-23), in draft PR #14. T7.1 to
-T7.6 are done, and the phase gate passed 95 of 95 on `cd6b1e3` (gate run 9, 2026-10-23). The
-acceptance is the package's tests and a smoke run with zero dependency violations; the full matrix,
-about 50 runs, is a Needs human item and still open.
+Built on `phase-7-experiment`, branched from `main` at `422050f` (2026-10-23), and merged into
+`main` as PR #14 (`3fcaf81`, 2026-10-23). T7.1 to T7.6 are done, and the phase gate passed 95 of 95
+on `cd6b1e3` (gate run 9, 2026-10-23). The acceptance is the package's tests and a smoke run with
+zero dependency violations; the full matrix, about 50 runs, is a Needs human item and still open.
+The stock-Jenkins controller its sanity arm needs is on `phase-7-stock-jenkins` (D-078).
 
 - [x] T7.1 Workload files `freestyle-30`, `pipeline-30`, `mixed-30` and a small `freestyle-6` for
       smoke tests (Part 4.8). Evidence, run on 2026-10-23:
@@ -2243,13 +2244,102 @@ about 50 runs, is a Needs human item and still open.
       - **The command ran twice, back to back, and this run's log replaced the first's.** The first
         ran from 09:57 to about 10:30. Its smoke runs (`20261023T052743Z`, `20261023T052839Z`) are
         complete, with 6 of 6 jobs and 0 violations each. Its other results are not known.
+- [x] **The stock-Jenkins controller for the matrix's sanity arm (D-078)**, on
+      `phase-7-stock-jenkins`. Evidence, run on 2026-10-23, on battery power throughout
+      (`BatteryStatus` 1), which is why the full gate has not run here (below):
+      - **What it is:**
+        - **The image:** `jenkins/controller/Dockerfile` now has two stages. `stock` is Jenkins and
+          the pinned plugins; the optimizer stage is built from it and adds only the plugin and its
+          entrypoint.
+        - **The controller:** `jenkins-stock` runs the stock stage, in a Compose `stock` profile of
+          its own (127.0.0.1:8088), with `stock-agent` and the volumes `jenkins-stock-home` and
+          `stock-agent-work`.
+        - **Its configuration:** `jenkins/casc/experiment-stock.yaml` is the baseline's without the
+          optimizer's block.
+        - **The harness:** `--controller stock`, and `smoke --controller stock`.
+      - **The images:**
+        - **Stock:** 79 plugins, no optimizer, no install script, and the base image's entrypoint.
+        - **Optimizer, after the change:** every seed file (owner, mode and size), the install
+          script, `plugins.txt`, the entrypoint, the user and the ports match the image the
+          one-stage Dockerfile built, 87 entries. The one exception is the `.hpi`'s 2-byte build
+          stamp, from a later Maven build of the same source.
+      - **The controllers:**
+        - **`jenkins-stock`:**
+          - started and healthy in 28 s, "fully up and running", with no SEVERE line;
+          - its home holds 79 plugins and no optimizer, and `/dynamic-queue` answers 404;
+          - Jenkins 2.568.3, with `stock-agent` online with one executor.
+        - **The three existing controllers** were recreated on the rebuilt image. The plugin
+          loaded on each: baseline observe-only, plugin optimized.
+      - **Checks:**
+        - **The package:** 120 passed, 4 of them new; ruff, ruff format and strict mypy clean (24
+          files).
+        - **Phases 0 and 1:** `verify.py --phase 1`, 33 of 33, including the changed Compose check
+          (12 services, 6 default, 6 profiled) and two new ones: the stock JCasC, and the
+          Dockerfile's stages and build targets.
+        - **Phase 7, all nine checks in one process, in the gate's order:** 9 of 9.
+          - The stock controller runs the current build.
+          - Its 79 plugins and Jenkins are `jenkins-plugin`'s, where the optimizer is active.
+          - Its smoke run built 6 of 6 jobs with 0 dependency violations, by the analysis and by
+            `builds.json`. Makespan and mean wait: stock 52.5 s and 18.7 s, observe-only 52.3 s
+            and 18.5 s, optimized 52.2 s and 20.5 s.
+          - `latest.json`'s check named the optimized run before the stock smoke and the stock run
+            after it, so the order of checks no longer matters.
+        - **They fail when they should.** On damaged copies, 16 of 16 static faults fail their
+          check. Live, 8 of 8: the stock checks pointed at `jenkins-plugin` or `jenkins-baseline`,
+          an agent not running, and five damaged copies of real runs.
+      - **Stock Jenkins and the harness's jobs:** `createItem` accepted all six and stored them
+        without the plugin's job property, logging nothing. Their dependencies go unenforced there,
+        as in observe-only.
+      - **Two things fixed on the way, neither in the product:**
+        - **The `.hpi` was rebuilt** (`mvn -B -o package -DskipTests`). Moving `main` to `3fcaf81`
+          rewrote `DynamicQueueApi.java` with the same content but a new time, so the image checks
+          said the source was newer than the `.hpi`. `plugin/` is identical between `cd6b1e3` and
+          here.
+        - **pytest ran with `PYTEST_DEBUG_TEMPROOT` set to a scratch folder.** Gate run 9's pytest
+          left a `pytest-current` link a normal process cannot read (CLAUDE.md).
+      - **The full gate then passed:** gate run 10, below. The smoke runs' result folders stay
+        local, and `latest.json` is not part of this change.
+- [x] **The tenth full gate run (2026-10-23, at `c39618b`): 100 of 100, ALL CHECKS PASSED, exit 0.**
+      It ran from 21:59 to 22:33 in Claude Code, on mains power: Windows read mains as it started,
+      and logged no power-source change until 00:59. pytest used `PYTEST_DEBUG_TEMPROOT`, because
+      the stale `pytest-current` link was still in place (CLAUDE.md). Its log is
+      `docs/testing/evidence/gate-run-10-c39618b.log`.
+      - **D-078's five new checks passed in it.** The stock smoke run built 6 of 6 jobs with 0
+        dependency violations. Makespan and mean wait: stock 52.4 s and 19.2 s, observe-only 52.2 s
+        and 19.2 s, optimized 52.4 s and 21.2 s.
+- [x] **The pull request's review (2026-10-24).** An automated review of PR #15 named 23
+      candidate findings, then stopped at the usage limit before verifying them. Each was checked
+      here by hand.
+      - **Fixed, in `verify.py`:**
+        - a Compose service with the short form `build: ./dir` made the stock-image check crash;
+        - the stock image check passed for a stopped container, because `docker inspect` answers for
+          one; it now asks whether both containers run;
+        - its start hints said a bare `--profile stock up -d`, which the README warns against; they
+          now name the two services, as does `docker-compose.yml`'s usage line;
+        - the stock smoke check's docstring claimed a second source for its recount; on the stock
+          arm both counts rest on Jenkins' build times.
+      - **Recorded in D-078:**
+        - Pipeline workloads fail on stock Jenkins;
+        - the stock stage keeps tini as PID 1, and the optimizer stage does not;
+        - `report` shows the sanity run in a condition of its own.
+      - **Left as they are:** the rest are thoroughness gaps in the new checks' parsing of Compose
+        forms this file does not use, or predate the pull request. Among the latter: comments in
+        the backend that still call `jenkins-baseline` plugin-free.
+      - **Checks after the fixes:**
+        - the four changed or affected checks pass;
+        - the 16 file faults still fail their checks (19 of 19 as expected);
+        - a short-form `build:` no longer crashes the image check;
+        - a stopped container, `orchestrator-agent-1` while the matrix had the default stack
+          down, fails the stock image check;
+        - pyflakes is clean on `verify.py`.
 - [ ] **Needs human: the full matrix (4.8.2)**, about 50 runs, listed in `experiment/README.md`.
       - **Time:** each 30-job workload holds 315 s of work, so the matrix is several hours of
         machine time on mains power. The controllers must restart between one and three executors.
       - **Two arms need preparation first:**
         - aging-off: the plugin controller's JCasC with the aging bonus and cap at `"0.0"`, restored
           afterwards;
-        - stock: a controller image without the plugin, which no task has built yet.
+        - stock: the `stock` profile's controller (D-078), started with
+          `docker compose --profile stock up -d --wait jenkins-stock stock-agent`.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
