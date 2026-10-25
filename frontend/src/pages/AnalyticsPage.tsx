@@ -17,6 +17,7 @@ import { DataTable, type Column } from "@/components/DataTable";
 import { PageHeader } from "@/components/PageHeader";
 import { Empty, Loading, LoadFailed, PageSection } from "@/components/PageStates";
 import { formatDuration, formatPercent, formatWhen, parseApiTime } from "@/lib/format";
+import { ChatbotEvaluation } from "@/pages/ChatbotEvaluation";
 import { useLiveEvent } from "@/ws/liveEventsContext";
 
 /** The most experiments listed at once; the API's own page size. */
@@ -43,14 +44,7 @@ export function AnalyticsPage({ item }: { item: Pick<NavItem, "label" | "descrip
       <PageHeader title={item.label} description={item.description} />
       <RunStatistics />
       <Experiments />
-      <PageSection title="Chatbot evaluation" className="border-t border-rule">
-        <Empty>
-          <p>
-            No evaluation results can be shown yet. The evaluation runner writes them, and the
-            backend does not serve them to this page so far.
-          </p>
-        </Empty>
-      </PageSection>
+      <ChatbotEvaluation />
     </>
   );
 }

@@ -112,6 +112,16 @@ jobs:
           uv run mypy ../experiment --config-file pyproject.toml
           uv run python -m pytest ../experiment/tests -p no:cacheprovider
         working-directory: backend
+      # Part 4.9: the evaluation package's own lint and types, and its dataset rebuilt from the
+      # source byte for byte, because it is generated and never edited (D-081). Its tests run with
+      # the backend's, above.
+      - name: Evaluation package (ruff, mypy and the dataset rebuild)
+        run: |
+          uv run ruff check ../eval
+          uv run ruff format --check ../eval
+          uv run mypy ../eval --config-file pyproject.toml
+          cd .. && uv run --project backend python -m eval build --check
+        working-directory: backend
 
   frontend:
     name: Frontend

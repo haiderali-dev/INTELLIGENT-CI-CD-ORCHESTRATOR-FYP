@@ -170,7 +170,7 @@ POLICY_RULES: tuple[PolicyRule, ...] = (
 @router.get("/admin/users", response_model=UserPage, summary="All users")
 async def list_users(
     admin: AdminUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     limit: Annotated[int | None, Query(ge=1, le=MAX_PAGE_SIZE)] = None,
     offset: Annotated[int | None, Query(ge=0)] = None,
 ) -> UserPage:
@@ -195,7 +195,7 @@ async def list_users(
 async def create_user(
     payload: CreateUserRequest,
     admin: AdminUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
 ) -> AdminUserResponse:
     email = payload.email.strip().lower()
     existing = await session.scalar(select(User).where(User.email == email))
@@ -234,7 +234,7 @@ async def update_user(
     user_id: str,
     payload: UpdateUserRequest,
     admin: AdminUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
 ) -> AdminUserResponse:
     """Change a user's role, or activate and deactivate them.
 
@@ -288,7 +288,7 @@ async def update_user(
 @router.get("/admin/audit", response_model=AuditPage, summary="The audit log")
 async def list_audit(
     admin: AdminUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     action: Annotated[str | None, Query(max_length=64)] = None,
     actor_id: Annotated[str | None, Query(max_length=64)] = None,
     limit: Annotated[int | None, Query(ge=1, le=MAX_PAGE_SIZE)] = None,
@@ -381,7 +381,7 @@ async def reset_password(
     user_id: str,
     payload: ResetPasswordRequest,
     admin: AdminUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
 ) -> AdminUserResponse:
     """The way back for someone who forgot their password: the sign-in page tells them to ask an
     administrator (found in T6.3, when no endpoint let one help).

@@ -9,6 +9,115 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ---
 
+## Phase 8
+
+### D-083 Commit request transactions before sending successful responses
+**Date:** 2026-10-25 · **Status:** fixed during the final gate review
+
+**Found by gate run 13.** The Pipeline browser flow generated a validated plan with HTTP 201,
+then immediately reloaded its conversation. That HTTP 200 still contained only the original
+intent, so the preview remained empty and the browser timed out. The saved trace is under
+`docs/testing/evidence/raw/gate-run-13-preview/`; temporary authentication values are redacted.
+
+**Cause.** Every `Depends(get_db)` used FastAPI's default request scope. Its generator committed
+after the response had been sent. A follow-up request could therefore read uncommitted state.
+Ordinary `ASGITransport` tests buffered the response and dependency cleanup, hiding the race.
+
+**Fix.** Every request session, including authentication subdependencies, now uses
+`Depends(get_db, scope="function")`. Sessions still commit once on success and roll back on
+failure, but cleanup completes before response bytes are sent. Using one scope consistently
+also preserves FastAPI's shared session cache within each request. Streaming explanation code
+already records later calls through a session of its own.
+
+**Evidence.** `tests/test_transaction_visibility.py` observes the real ASGI response-start
+boundary from a separate database connection. Before the fix it saw a 201 with no committed row,
+and a failed commit still returned 201. Both regressions now pass, as does a guard covering every
+registered session dependency (including nested routers). Backend lint, formatting and mypy pass;
+the full offline suite passes 1,805 tests, with 52 live/integration/end-to-end tests deselected.
+The exact live Pipeline flow passed against the rebuilt backend in 17.4 seconds, versus the
+original eight-minute timeout. The complete replay demo then passed both tests in 347.07 seconds,
+including deploys and the intentional failure. Its log is archived as
+`docs/testing/evidence/demo-replay-after-transaction-fix.log`. Gate run 14 then passed all 108
+checks, exit 0; its output and exit-status record are archived under `docs/testing/evidence/`.
+Separate agent DNS failures remain documented rather than hidden by test retries.
+
+### D-082 Keep incomplete evaluation work and measured failures visible
+**Date:** 2026-10-25 · **Status:** decided during Phase 8 completion
+
+**Found on resuming.** The campaign's `finished()` treated `gave_up: true` as success, so a failed
+step could be skipped forever. Thread exceptions did not reach the parent, and the campaign
+returned zero even with unfinished work. Attempt numbering by file count could overwrite a log
+after a gap. The script also hardcoded this checkout and unconditionally called Windows APIs.
+
+**Fix.** Only successful steps count as finished. A failed step is eligible on the next run;
+workers propagate their outcomes, old log numbers are preserved, paths derive from the script,
+and the Windows wake lock is conditional and released on exit. `--stop-on-quota` saves progress
+and returns 3 when quota prevents completion. The default still waits for the provider's retry
+time, as the existing campaign did.
+
+**Report integrity.** A regenerated report alone does not establish that its measurements are
+complete. The Phase 8 gate now checks the specified models, all 150 test attempts per model,
+the plan sample, all four 75-item ablation configurations, and a completed 20-command live run.
+It accepts measured model/build failures without relabelling them as successes. Parser errors
+are excluded from accuracy denominators by the existing scorer; reports and Analytics now say
+that explicitly, and show rejected ablation responses as well as rejected test responses.
+Chapter 12 preserves incomplete markers rather than rendering partial measurements as complete.
+Archived report regeneration uses the frozen dataset card beside the runs, validates its checksum
+against run metadata, and accepts older Windows path separators. A later review of the working
+dataset cannot change an archived report's provenance.
+
+**Evidence.** `docs/evaluation/eval-v1-2026-10-25/` preserves all required measurements. The live
+sample succeeded on 18 of 20 commands; two generated jobs failed sample-service formatting
+checks, with console logs retained. Extra development runs stopped for quota and are marked
+incomplete. The dataset's machine-label provenance remains D-081; no review is claimed.
+Regression tests cover campaign recovery, failure propagation, evidence preservation and gate
+completeness in `backend/tests/test_eval_campaign.py`.
+
+### D-081 The evaluation dataset is written and labelled by Claude Code, and says so everywhere
+**Date:** 2026-10-24 · **Status:** accepted (Phase 8), at the project owner's instruction
+
+**The conflict.** Part 4.9 says: "Humans write and label every gold answer. Claude Code may draft
+at most 30 items, each marked `needs_review: true`; they are excluded from scoring until a human
+clears the flag." On 2026-10-24 the project owner wrote: "I don't have a ready-made dataset, and
+I cannot obtain one myself. You will need to search online for a suitable dataset or create one.
+You must handle all the necessary work, including online research, dataset creation, validation,
+and preparation of the evaluation data." Under 4.9 as written nothing could then ever be scored,
+because nobody can clear a flag. The owner's instruction is the higher source here.
+
+**The search** found no public dataset for this task (`eval/datasets/eval-v1.card.md` section 2).
+The nearest, DeployIntentD (Wijesinghe et al., 2025), has no public release.
+
+**What was done:** `eval-v1`, 250 items in 4.9's mix and split.
+- **The messages:** 205 written for it. Nine are 4.6.5's commands and 21 Phase 4's drafts, both
+  verbatim and in the development split. Eight are human-written out-of-scope queries from CLINC150
+  (CC BY 3.0) and seven injection payloads from deepset/prompt-injections (Apache-2.0), all
+  verbatim.
+- **The labels:** every gold label by Claude Code, applying twelve stated rules. The builder checks
+  every label against them in code that does not import the backend's validator or policy.
+- **Freezing:** it was frozen, with its checksum in git, before any parser was run on it.
+
+**Kept from 4.9, so the deviation cannot spread:**
+- **Nothing claims a review.** Every item says `labeled_by: claude-code` and `needs_review: true`,
+  and the loader refuses one that claims a review.
+- **Machine labels need a card.** They load only from a dataset whose card declares
+  `labels: machine` and whose checksum matches the file. So they cannot be mixed into a
+  human-labelled set, and an edit that skips the builder is refused.
+- **Scoring them is a choice made on the command line.** It needs `--include-unreviewed`, and every
+  such run is stamped `labels: machine`.
+- **The provenance travels with the numbers.** The report, the Analytics page and Chapter 12 print
+  it beside every figure.
+- **Drafts are unchanged.** The 30-draft cap still applies to them, and they stay unreportable.
+
+**Not done, and still open:** a person reviewing the labels (PROGRESS.md, Needs human). Section 9 of
+the datasheet says how. Until then the results measure agreement with one author's labels, and the
+report's limitations must say so.
+
+**Disclosure for the report:** the dataset, its labels and the harness that scores them were made
+by an AI assistant, and the evaluation of the system's AI component used labels from an AI. That
+belongs in the limitations and AI-disclosure sections (`docs/report-updates.md`).
+
+---
+
 ## Phase 7
 
 ### D-080 A Pipeline's first node block waits for its upstream, as a whole job does

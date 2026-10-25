@@ -60,6 +60,15 @@ DEVELOPER_PASSWORD = _required("E2E_DEVELOPER_PASSWORD")
 WORKDIR = Path(tempfile.mkdtemp(prefix="orchestrator-browser-"))
 atexit.register(shutil.rmtree, WORKDIR, ignore_errors=True)
 
+
+def _archived_evaluation() -> str:
+    """The archived evaluation report, so the Analytics page shows the same figures on every
+    machine and in CI, never whatever a local eval/results happens to hold."""
+    archive = Path(__file__).resolve().parent.parent / "docs" / "evaluation"
+    reports = sorted(archive.glob("*/report/report.json"))
+    return str(reports[-1] if reports else WORKDIR / "no-evaluation-report.json")
+
+
 # Before anything from `app` is imported, so the settings every module reads are these. Each one
 # that could carry a secret is set, which keeps a local .env from supplying it.
 os.environ.update(
@@ -76,6 +85,7 @@ os.environ.update(
         "SEED_ADMIN_EMAIL": ADMIN_EMAIL,
         "SEED_ADMIN_PASSWORD": ADMIN_PASSWORD,
         "FRONTEND_ORIGIN": FRONTEND_ORIGIN,
+        "EVALUATION_REPORT_PATH": _archived_evaluation(),
     }
 )
 

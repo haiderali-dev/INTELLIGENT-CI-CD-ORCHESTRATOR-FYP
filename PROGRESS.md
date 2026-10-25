@@ -1,10 +1,13 @@
 # Progress
 
-Updated: 2026-10-17 · Current phase: 6 (all tasks done; acceptance met; the gate passed 78 of 78 on
-`ff70254`) ·
-Branch: phase-6-frontend
+Updated: 2026-10-25 · Current phase: 8 (acceptance passed; ready for review). Phases 0 to 7 are merged into `main`, the
+last as PR #17 (`0937f9e`), whose gate passed 100 of 100 (gate run 11) ·
+Branch: phase-8-evaluation
 
 ## Needs human
+- [ ] **Review and merge Phase 8**: [draft PR #18](https://github.com/haiderali-dev/INTELLIGENT-CI-CD-ORCHESTRATOR-FYP/pull/18)
+      targets `main`. Gate run 14 passed all 108 checks on the implementation now committed as
+      `2c7d595`; `docs/final-audit-phase-8.md` records the evidence and remaining human work.
 - [x] **Create the two sample-service GitHub repositories**, push them, create the
       `demo/failing-tests` branch, and put the URLs in `catalog/services.yaml`. Blocks T1.8's
       `git ls-remote` check and the Phase 5 failing-branch acceptance test.
@@ -62,6 +65,11 @@ Branch: phase-6-frontend
       design is approved"), with no changes. D-052 is now accepted; T6.3 onward may build screens.
 - [ ] **Label and review the evaluation gold answers** (Phase 8). At most 30 drafted items, each
       marked `needs_review: true` and excluded from scoring until a human clears the flag.
+      - **2026-10-24, D-081:** the project owner had no dataset and no labeller, and asked Claude
+        Code to create one. `eval/datasets/eval-v1.jsonl` (250 items) is labelled by Claude Code,
+        every item `needs_review: true`. Its results are reported as machine-labelled.
+      - **A person's review is still open.** `eval/datasets/eval-v1.card.md` section 9 says how.
+        A reviewed item becomes `labels: human` on the next build.
       - **220 more candidates wait in `eval/datasets/candidates.jsonl`** (2026-10-23), labelled
         `assistant-authored-candidate`, every one `needs_review: true`. They reached `main` in
         `sample.jsonl` (`e0e3929`) and broke CI: their `train` and `validation` splits are not the
@@ -73,8 +81,19 @@ Branch: phase-6-frontend
         `pytest tests/test_eval.py`: 43 passed; verify.py's Phase 4 checks "drafted evaluation
         items stay capped and unreviewed" (30 drafts) and "the evaluation command writes a metrics
         file" (0 scored, 30 excluded pending review) pass; Phase 0 passes.
-- [ ] **Schedule the long runs:** the full experiment matrix, about 50 runs (Phase 7), and the final
-      live chatbot evaluation (Phase 8).
+- [x] **Schedule the long runs:** the full experiment matrix (Phase 7) and required final live
+      chatbot evaluation (Phase 8). The matrix is archived under `docs/experiment/`; on
+      2026-10-25 all four test comparisons, all primary-model ablations and the 20-command live
+      sample finished. Evaluation evidence: `docs/evaluation/eval-v1-2026-10-25/`.
+      Additional GPT-OSS-120B and Qwen development runs remain quota-deferred, with saved progress.
+- [ ] **Run the usability study** (Phase 8, BUILD_PROMPT Part 3). It needs real users. Each user
+      completes the demo script's tasks (`docs/demo-script.md`) unaided while someone times them
+      and notes where they hesitate. Added by the final audit (2026-10-25): the spec lists it, but
+      it was missing here.
+- [ ] **Rehearse the demo** (Phase 8). Follow `docs/demo-script.md` from a fresh
+      `scripts/demo_reset.py restore`, on the presenting machine, with the network the demo will
+      have. `tests/test_demo_script.py` proves every step replays (2026-10-25: 2 passed). Only the
+      team can rehearse the telling. Added by the final audit.
 - [ ] **Supply the report's Word source**, or confirm the PDF is the only copy. Only
       `INTELLIGENT CI-CD ORCHESTRATOR FYP Report.pdf` was provided, so `docs/report-updates.md`
       tracks changes as a checklist rather than editing the document.
@@ -2449,6 +2468,176 @@ zero dependency violations. Since then:
         place (CLAUDE.md).
       - CI passed on `8f7c244`: all six jobs in the push and the pull-request runs.
 
+## Phase 8: Evaluation, report tooling and demo tooling
+
+Built on `phase-8-evaluation`, branched from `main` at `0937f9e` (2026-10-24).
+
+- [x] T8.1 Evaluation runner: splits, quota-aware throttling, resumable cache, comparisons and
+      ablations (Part 4.9). Required measurements completed on 2026-10-25:
+      - **The dataset, `eval-v1` (D-081):** 250 items, 100 dev and 150 test, in 4.9's exact mix,
+        written and labelled by Claude Code at the project owner's instruction. No public dataset
+        fits the task (`eval/datasets/eval-v1.card.md`, section 2).
+        - **Sources:** eight out-of-scope items are CLINC150's (CC BY 3.0) and seven injections
+          deepset/prompt-injections' (Apache-2.0), verbatim.
+        - **Provenance:** every item says `labeled_by: claude-code`, `needs_review: true`.
+        - **Built, not edited:** `python -m eval build` makes the JSONL from
+          `eval-v1.source.yaml`, with the splits, the 75-item ablation subset and the 20-item
+          end-to-end sample, from one seed.
+      - **What the build checks** (`eval/curation.py`):
+        - every gold label against the datasheet's twelve rules, without the backend's own
+          validator or policy;
+        - no repeated text, no few-shot example, no near-duplicates across the splits.
+        - **What it found:** a case-only duplicate (`p011` and `c007`) and nine cross-split
+          near-duplicate pairs. All were reworded before any parser had been run.
+      - **The runner:**
+        - `--split`, `--subset ablation|e2e` and `--no-repair`;
+        - plan validity before and after repair, on the gold intents (`plans.jsonl`);
+        - a model's latency is its answering call's own time, and waits for quota are kept
+          apart;
+        - live calls are paced from Groq's own rate-limit headers, so a cached rerun spends
+          nothing;
+        - runs on machine labels are stamped `labels: machine`.
+        `eval/e2e.py` runs the end-to-end sample through T5.8's stack.
+      - **Checks:**
+        - `python -m pytest tests/test_eval.py`: 89 passed;
+        - `ruff check`, `ruff format --check` and `mypy --strict` on `eval/`: clean;
+        - `python -m eval build`: 250 items, checksum `31559fed…`.
+      - **Required live runs are complete**, with raw evidence and generated reports archived in
+        `docs/evaluation/eval-v1-2026-10-25/`:
+        - rules plus GPT-OSS-120B, GPT-OSS-20B and Qwen on the 150-item test split;
+        - all four primary-model configurations on the 75-item ablation subset;
+        - 74 generating test items planned per model (20 distinct requests per model);
+        - the 20-command sample against real Jenkins: 18 succeeded, nine per assistant. Both
+          failures were payment-service formatting checks; the console logs are archived.
+      - **Commands run this session:** the campaign with `--stop-on-quota` finished no-enums,
+        no-repair and full ablations; `python -m eval report --results
+        docs/evaluation/eval-v1-2026-10-25/runs --out
+        docs/evaluation/eval-v1-2026-10-25/report` regenerated the archive. The generated JSON
+        validated against `EvaluationResponse` and all report completeness checks passed.
+      - **Still quota-deferred:** extra development runs for GPT-OSS-120B (4 answered items) and
+        Qwen (27); they are marked incomplete and excluded from the test comparison.
+      - **Resume fixes:** failed steps are retried on a later invocation; worker exceptions and
+        unfinished queues return failure; `--stop-on-quota` exits with saved progress; attempt
+        numbering preserves logs with gaps; the checkout and runner paths work across platforms.
+- [x] T8.2 Evaluation report generator for the Analytics page and the report. Evidence, run on
+      2026-10-25:
+      - **`python -m eval report`** (`eval/report.py`) writes `report.json` and `report.md` from
+        one function, so the page and Chapter 12 cannot disagree.
+        - **Its sections follow 4.9:** the comparison on the test split, per field and by
+          category, plan validity, the ablations, and end to end.
+        - **Provenance:** the machine-labelled provenance (D-081) is printed above every table.
+        - **What is not tabled:** an incomplete run is marked incomplete, and an unreviewed draft
+          run is never tabled.
+        - **New options:** `--results` and `--out`, to regenerate an archived report.
+      - **`GET /api/analytics/evaluation`** serves the file as written, through every-field-required
+        models, so the generated client types are exact. A missing or malformed file is "not
+        available" with the reason, never an empty table. Compose mounts `eval/results` read-only.
+      - **The Analytics page's Chatbot evaluation section** replaces the placeholder:
+        - the provenance note comes before any figure;
+        - then the comparison, plan validity, ablation and end-to-end tables, to one decimal, with
+          "Not measured" for nulls.
+        - **Its fixture** (`src/test/fixtures/evaluation.ts`) is a captured response from the
+          endpoint.
+        - **The browser backend** serves the archived report, so screenshots are the same on every
+          machine.
+      - **Checks:**
+        - backend: `pytest tests/test_eval.py` 93 passed, including a contract test that the
+          generator's JSON validates against the endpoint's schema; the endpoint's three tests in
+          `test_routers.py`; the offline suite 1784 passed; `ruff`, `ruff format` and `mypy app`
+          clean;
+        - frontend: `AnalyticsPage.test.tsx` 8 passed; the whole Vitest suite 298 passed in 36
+          files; `npm run lint` and `npm run typecheck` clean; `openapi.json` and `schema.d.ts`
+          regenerated.
+- [x] T8.3 `scripts/report/appendix_c.py` and `scripts/report/versions.py`. Evidence, run on
+      2026-10-25:
+      - **`appendix_c.py --build`** runs the plugin's new `AppendixCExportTest`, which scores
+        `AppendixCFixture` with the plugin's own `PriorityScoreCalculator` and writes
+        `plugin/target/appendix-c.json`. It then prints Table 13.2 from that file, with both the
+        own and the effective score: 0.667, 0.650, 0.633 (0.650 after inheritance) and 0.300, in
+        the report's dispatch order. No Python copy of the formula exists. An export older than
+        the fixture or the calculator is refused.
+      - **`versions.py`** regenerates a section of `docs/versions.md` from the build files:
+        - **What it reads:** `pom.xml`, `plugins.txt`, `pyproject.toml` with `uv.lock`,
+          `package.json`, the Dockerfiles, Compose and the backend's settings. It finds 108 pins.
+        - **`--check`** also fails when a hand-written table disagrees with the build. Its first
+          run caught `java.level` 21 in the hand table, where `plugin/pom.xml` leaves the parent's
+          17 on purpose; the table is corrected.
+        - **`--appendix-e`** prints the report's Appendix E.
+      - **Checks:**
+        - `mvn -o -Dtest=AppendixCExportTest,AppendixCExampleTest test`: passed;
+        - verify.py's checks "appendix_c.py prints the scores the plugin computes on
+          AppendixCExampleTest's fixture" and "docs/versions.md is regenerated from the build files,
+          and its tables agree with them": PASS.
+- [x] T8.4 `docs/report-updates.md` completed with every required change (Part 4.10). Evidence, run
+      on 2026-10-25:
+      - **Added:**
+        - Chapter 12's replacement, with its generated tables and the experiment's findings as
+          the evidence gives them;
+        - the chatbot evaluation section, with its provenance statement and the datasets'
+          attribution;
+        - Appendix C and Appendix E from their generators.
+      - **Limitations:** the machine labels, the free-tier limits, and the dependency gate's
+        unrequested-upstream limit.
+      - **The rest:** the Phase 8 part of the AI-assisted-development disclosure; Chapter 8's two
+        stale passages; Chapter 6's definitions of D and T as the plugin computes them; and the
+        scripted demo.
+      - **Check:** a grep for each item Part 4.10 names found every one. The 55 items stay open
+        until the report itself is edited: its Word source was not supplied.
+- [x] T8.5 `scripts/demo_reset.py` snapshot and restore; `LLM_MODE=replay` demo fixtures;
+      `docs/demo-script.md`. Evidence, run on 2026-10-25:
+      - **`demo_reset.py snapshot`** dumps the database and archives `jenkins-dev`'s home (stopped
+        for the archive, `war/` left out), with a manifest of checksums, jobs and row counts.
+      - **`restore --yes`** checks the snapshot against its manifest before changing anything. It
+        restores the database in one transaction, replaces the home's contents (never the volume),
+        restarts both, and checks the jobs and row counts. Snapshots go to `.demo/`, which is
+        git-ignored (password hashes and Jenkins' secrets).
+      - **`docs/demo-script.md`:** ten steps across both assistants and three roles. Their
+        messages are T5.8's commands, so the fixtures recorded for T5.8, which Phase 5's gate
+        replays, cover them. Compose mounts `backend/app/ai/fixtures` read-only, so replay mode
+        always uses the repository's fixtures.
+      - **`tests/test_demo_script.py`** reads the script's table from the document and replays
+        every step through the real stack. Every parse and plan must come from a fixture. Steps
+        that approve run on `jenkins-dev`, as the later steps need: the last deploy's status, the
+        failed tests to rerun, and Explain failure.
+      - **Checks:**
+        - `E2E_LLM=replay pytest -m e2e tests/test_demo_script.py`: 2 passed, in 356 s;
+        - verify.py's "the demo reset restores a known state": PASS in 46 s. A snapshot, a marker
+          job and a marker row, a restore: both markers gone; 30 jobs and 632 rows, as the
+          snapshot had them.
+- [x] T8.6 Phase 8 checks in `verify.py`. Eight checks are written:
+      - the dataset rebuilds from its source;
+      - the evaluation tests pass;
+      - the report regenerates from the archived runs;
+      - Appendix C;
+      - versions;
+      - the demo reset;
+      - the experiment import into the Analytics tables (`scripts/import_experiments.py`, added by
+        the final audit: 4.7.3's experiment results and M2 series on the page);
+      - the demo script.
+
+      The archive is now present and its required measurements pass the report's completeness
+      validator. The gate also rejects incomplete test runs, plan samples, ablations and live
+      samples, with regression tests in `backend/tests/test_eval_campaign.py`.
+      Gate run 12 completed: 104 of 108 checks passed. Its four failures were the stale plugin
+      artifact, two formatting findings (all fixed), and GitHub DNS failing on agent-2 during
+      demo step 1 even after Jenkins' checkout retries. The failed gate, replay output and exact
+      build console are preserved under `docs/testing/evidence/gate-run-12-*`.
+      Both agents subsequently resolved and fetched the sample repository. Gate run 13 is now
+      running on mains power, with an explicit exit-status record; no final pass is claimed yet.
+      Run 13 completed 106/108 (exit 1): a real Pipeline preview race and another agent DNS
+      outage in demo step 4. D-083 fixes the race at the transaction boundary: all database
+      dependencies finish before responses are sent. Three new regressions pass; backend lint,
+      format and mypy pass; the complete offline suite passes 1,805 tests (52 deselected).
+      The backend image is rebuilt; the affected live Pipeline browser flow passed in 17.4 s,
+      with its temporary account deactivated. The complete replay demo then passed both tests
+      in 347.07 s; its UTF-8 log is archived under `docs/testing/evidence/`.
+      Gate run 14 completed all 108 checks on mains power, with Windows kept awake:
+      `python scripts/verify.py --phase 8` printed ALL CHECKS PASSED, exit 0, in 42m 27s
+      (2026-10-25, 22:31:56 to 23:14:23 PKT). Its unmodified UTF-8 log and exit-status record
+      are archived as `docs/testing/evidence/gate-run-14-phase-8-working-tree.log` and
+      `docs/testing/evidence/gate-run-14-result.json`. All Phase 8 implementation tasks and
+      cumulative acceptance are complete; the Needs human items remain open.
+
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
   installed and every Phase 2 test except T2.14 runs on JenkinsRule without it. Approved by the user.
@@ -2519,6 +2708,27 @@ Details in `docs/decisions.md`.
   consequence is recorded in D-016 and queued as a report correction.
 
 ## Session log
+- 2026-10-25 Resumed from the supplied handoff, BUILD_PROMPT.md, PLAN.md and this file. Finished
+  the required evaluation campaign and archived 15 runs, the dataset, generated report and two
+  failed builds' console logs. Added campaign recovery and gate completeness regressions;
+  all 111 evaluation/campaign regressions pass, along with nine Analytics tests, backend/evaluation
+  lint and formatting, and strict evaluation typing. Chapter 12 now
+  contains all generated evaluation tables and the discussion; Analytics uses the archived
+  payload. Extra development runs are quota-deferred. Gate run 12 is running; its first finding
+  is a plugin artifact older than a Phase 8 source comment, rebuilt successfully by its Maven
+  check (126 unit tests, one skipped; 100 integration tests). Two formatter findings are fixed.
+  Run 12 finished 104/108: the last failure was the known agent DNS issue at demo step 1, with
+  its console archived. Both agents' GitHub fetches passed before starting gate run 13 on mains.
+  Run 13 finished 106/108: its browser trace exposed commit-after-response (D-083), now fixed
+  across all session dependencies and covered at the ASGI response boundary. The other failure
+  was GitHub DNS on agent-1 during the demo's deploy checkout. Both failed gates and consoles
+  are kept; the browser trace has temporary authentication values redacted.
+  Run 14 then passed all 108 checks (exit 0) in 42m 27s. Archived its log and result, completed
+  T8.6, and updated the audit and Chapter 12 to record the final acceptance pass. Human label
+  review, usability testing, demo rehearsal and applying the report edits remain open.
+  Committed as `2c7d595`, pushed `phase-8-evaluation`, and opened draft PR #18 against `main`.
+  All 47 archived hashes were verified in Git's staged content, and the 152 review files plus
+  browser-trace resources were checked against configured secret values without a match.
 - 2026-09-28 Read BUILD_PROMPT.md in full. Explored `legacy/m2-poc/` (plugin sources, experiment
   harness, result files) and the report PDF (Chapter 6 algorithms, Chapter 12, Appendices B to F).
   Confirmed M2 known problems 1, 2, 3, 6 and 7 directly in the code and data. Found eleven conflicts

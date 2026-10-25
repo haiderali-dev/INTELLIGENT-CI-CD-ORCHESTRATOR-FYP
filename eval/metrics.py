@@ -1,9 +1,9 @@
 """Metrics, as pure functions over predictions.
 
 BUILD_PROMPT 4.9: action accuracy, per-field accuracy, exact match, clarification precision and
-recall, refusal rate (target 100%), latency median and 95th percentile, and tokens per command.
-Plan validity before and after repair, and end-to-end success against ``jenkins-dev``, need the
-Phase 5 generator and are reported as not yet measured rather than left out.
+recall, refusal rate (target 100%), latency median and 95th percentile, and tokens per command
+(``score``), and plan validity before and after repair (``score_plans``). End-to-end success
+against ``jenkins-dev`` is ``eval/e2e.py``'s, from runs on the real stack.
 
 Every metric with an empty denominator is ``None``, never 0. A refusal rate of 0 over zero refusal
 items would read as "refused nothing" -- a finding -- when the truth is that nothing was measured.
@@ -24,10 +24,11 @@ Behaviour metrics score what the whole pipeline did.
 
 from __future__ import annotations
 
+import json
 import math
 import statistics
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Final
 
 INTENT_FIELDS: Final = (
@@ -62,6 +63,11 @@ class Prediction:
     ai_fallback: bool = False
     cached: bool = False
     error: str | None = None
+    #: Wall time for the whole pipeline, waits for quota included; ``latency_ms`` is the model's.
+    elapsed_ms: int = 0
+    #: Every attempt the chain made for this command, as ``llm_calls`` would record it.
+    calls: list[dict[str, Any]] = field(default_factory=list)
+    role: str = ""
 
 
 def _norm_text(value: Any) -> str:
@@ -178,14 +184,60 @@ def score(predictions: list[Prediction]) -> dict[str, Any]:
         "fallback_rate": _ratio(sum(p.ai_fallback for p in scored), len(scored)),
         "cache_hits": sum(p.cached for p in scored),
         "by_category": by_category,
-        "not_yet_measured": [
-            "plan validity before and after repair (needs the Phase 5 planner)",
-            "end-to-end success on a 20-command sample against jenkins-dev (needs Phase 5)",
-        ],
+        "by_behavior": _by_behavior(scored),
         "comparison_rules": {
             "justification": "lenient: both absent, or one contains the other after normalising",
             "extra_stages": "compared as a set",
             "scored_answer": "the parser's own answer (model_intent), not the corrected one",
-            "latency": "excludes answers served from a cache",
+            "latency": "the answering call's own time; excludes answers served from a cache",
+        },
+    }
+
+
+def _by_behavior(scored: list[Prediction]) -> dict[str, dict[str, Any]]:
+    """Per gold behaviour: how many, and how often the pipeline did that."""
+    grouped: dict[str, list[Prediction]] = defaultdict(list)
+    for p in scored:
+        grouped[p.gold_behavior].append(p)
+    return {
+        behavior: {
+            "n": len(members),
+            "accuracy": _ratio(
+                sum(p.predicted_behavior == behavior for p in members), len(members)
+            ),
+        }
+        for behavior, members in sorted(grouped.items())
+    }
+
+
+def score_plans(records: list[dict[str, Any]], *, plannable_items: int) -> dict[str, Any]:
+    """Plan validity before and after repair (4.9), over the items a model planned.
+
+    ``valid_before_repair`` is the share of first plans that passed the checks; with
+    ``max_repairs=0`` it is also the "no repair loop" ablation's result. An item no model answered
+    is counted in ``no_model_plan``, never as valid or invalid.
+    """
+    answered = [r for r in records if r.get("valid_before_repair") is not None]
+    errors = [r for r in records if r.get("error")]
+    before = sum(bool(r["valid_before_repair"]) for r in answered)
+    after = sum(bool(r["valid_after_repair"]) for r in answered)
+    repaired = sum(not r["valid_before_repair"] and bool(r["valid_after_repair"]) for r in answered)
+    distinct = {json.dumps(r.get("request"), sort_keys=True) for r in answered}
+    tokens = [r.get("prompt_tokens", 0) + r.get("completion_tokens", 0) for r in answered]
+    return {
+        "plannable_items": plannable_items,
+        "planned": len(records),
+        "n": len(answered),
+        "valid_before_repair": _ratio(before, len(answered)),
+        "valid_after_repair": _ratio(after, len(answered)),
+        "repaired": repaired,
+        "still_invalid": len(answered) - after,
+        "no_model_plan": len(records) - len(answered) - len(errors),
+        "errors": len(errors),
+        "distinct_requests": len(distinct),
+        "tokens_per_plan": round(statistics.mean(tokens), 1) if tokens else None,
+        "comparison_rules": {
+            "intent": "the gold intent after the validator, so a parse error cannot cost the plan",
+            "valid": "the backend's own plan checks (app/generation/planner.py, check_plan)",
         },
     }

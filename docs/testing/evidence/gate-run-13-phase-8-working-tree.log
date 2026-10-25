@@ -1,0 +1,229 @@
+verify.py --phase 8   (108 checks)
+
+-- phase 0 ---------------------------------------------------------
+[PASS] skeleton folders exist
+       all 22 present
+[PASS] root documents exist
+       all 9 present
+[PASS] tracking documents exist
+       all 4 present
+[PASS] legacy/m2-poc present
+       plugin sources, harness and results all present
+[PASS] legacy/m2-poc unmodified against m2-final
+       byte-identical to the tag, nothing added
+[PASS] no secrets tracked by Git
+       1727 tracked files, none matching 7 secret patterns
+[PASS] .gitattributes sets LF for the required types
+       all 7 types pinned to LF
+[PASS] legacy/ is exempt from line-ending normalisation
+       `legacy/** -text` keeps the frozen copy byte for byte
+[PASS] CI workflow parses
+       6 jobs: detect, verify, plugin, backend, frontend, flows
+[PASS] M2 baseline figures match the legacy result files
+       HIGH-band wait 271.50 s -> 39.08 s, as documented
+[PASS] no Jenkins script console call in our code
+       790 code files scanned, no reference
+-- phase 1 ---------------------------------------------------------
+[PASS] Docker and Compose files exist
+       all 12 present
+[PASS] docker-compose.yml is valid and matches Part 4.2.3 and D-078
+       12 services, 6 default, 6 profiled
+[PASS] every published port is bound to loopback, and Jenkins keeps its safety checks
+       7 published ports, all on 127.0.0.1; no agent port; signatures checked
+[PASS] Compose refuses to start rather than defaulting a secret
+       all 6 secrets fail loudly when unset
+[PASS] JCasC files are valid and the two arms differ only in optimizerEnabled
+       dev plus two arms differing only in optimizerEnabled
+[PASS] JCasC quotes every floating-point optimizer value, at Appendix D's values (D-017)
+       all 7 quoted, at the report's values, in 3 files
+[PASS] the stock arm's JCasC is the baseline's without the optimizer (D-078)
+       experiment-baseline.yaml without the optimizer's block, with its own agent and URL
+[PASS] the controller image installs the built plugin
+       COPY present and the .hpi exists (94 KB)
+[PASS] the stock controller's image is the controller image without the plugin (D-078)
+       stock, then the optimizer stage adding only the plugin and its entrypoint; jenkins-stock builds stock, the other 3 controllers the optimizer stage
+[PASS] controller plugins are pinned
+       16 plugins, all pinned
+[PASS] Docker is available
+       daemon 29.8.1
+[PASS] docker compose config validates
+       the merged configuration is valid
+[PASS] jenkins-dev and its agents run what the current source builds
+       jenkins-dev runs plugin/target's classes and files; both agents match their build
+[PASS] jenkins-dev answers with the bot token
+       authenticated as orchestrator-bot
+[PASS] controller runs zero executors
+       0, so all work goes to the labelled agents
+[PASS] both agents are online
+       2 agents online, 4 executors, linux on agent-1, agent-2
+[PASS] sample services are present and complete
+       2 services with build, test, deploy and a Dockerfile
+[PASS] both sample services' own tests pass
+       payment-service 12 passed; auth-service 7 passed
+[PASS] deploy scripts refuse production
+       both refuse production explicitly
+[PASS] shell scripts use LF endings
+       all sample-service shell scripts are LF
+[PASS] catalog validates
+       schema, production policy and structure all valid
+[PASS] reference configs were exported from Jenkins
+       3 configs, all carrying Jenkins' own plugin version stamps
+-- phase 2 ---------------------------------------------------------
+[PASS] every test named in Part 4.3.10 exists
+       all 17 present
+[PASS] integration tests are bound to the Maven lifecycle
+       integration-test and verify goals both bound
+[PASS] the scoring formula matches the report
+       U = 1.0/0.6/0.3 and weights 0.5/0.3/0.2 with aging 0.05 per 5 min, cap 0.15
+[PASS] mvn -B verify passes: every unit and integration test
+       BUILD SUCCESS: 126 unit tests (1 skipped), 100 integration tests (0 skipped)
+[PASS] plugin artifact was built
+       dynamic-queue-optimizer.hpi (94 KB)
+[PASS] the ranking endpoint answers with the bot token
+       200, queueLength=0, weights 0.5/0.3/0.2, aging 0.05 cap 0.15
+[PASS] the plugin health and metrics endpoints answer
+       both answer 200
+-- phase 3 ---------------------------------------------------------
+[PASS] Alembic is configured and has a migration
+       5 migration(s), newest 20261018_1300_9d4f2b6e8a10_users_token_epoch.py
+[PASS] migrations create every table in Part 4.4.3
+       all 14 tables
+[PASS] every migration is reversible, and the migrations build the models' schema
+       every downgrade() acts; on PostgreSQL the migrations match the models, downgrade to base and build them again (2 passed)
+[PASS] seed scripts exist and are idempotent by construction
+       seed_admin and seed_catalog, both checking before writing
+[PASS] the backend image ships its migrations
+       alembic.ini, alembic/ and app/ all copied
+[PASS] the backend container runs what the current source builds
+       building the backend now gives the image it runs
+[PASS] backend quality bars pass
+       ruff, ruff format, mypy and pytest all clean
+[PASS] the auth endpoints and role guards exist
+       login, refresh, logout and /api/me, with three role guards
+[PASS] the auth endpoints are rate limited
+       login 5/min per address and account and 30/min per address, refresh 30/min, general 300/min; the 429s seen by 5 passed
+[PASS] suspicious activity is written to the audit log
+       role denials, replayed refresh tokens and engaged sign-in limits are audited; 9 passed
+[PASS] the catalog loads through one schema-validated loader
+       one loader, schema-validated, safe_load only
+[PASS] git refs are validated before reaching git
+       option-shaped refs rejected, ordinary branches accepted, no shell
+[PASS] the metrics endpoint exists and accepts what it cannot parse
+       gated, constant-time, open to unknown fields, all four kinds handled
+[PASS] the plugin publishes metrics over HTTP/1.1
+       pinned to HTTP/1.1 and asserted by a test
+[PASS] the controller reinstalls the plugin under test on start
+       entrypoint replaces the plugin, leaves the image's REF alone, and execs jenkins.sh
+[PASS] a live plugin event reaches the backend
+       4 published, 0 failed, 0 dropped
+[PASS] the WebSocket never takes its token from the URL
+       auth by first frame, timed out, nothing read from the query string
+[PASS] publishing to the hub cannot block the tracker
+       synchronous, bounded, drops the oldest event
+[PASS] the tracker polls on the interval 4.4.5 fixes
+       3 second interval, bounded tick, abandoned triggers time out
+[PASS] a polled queue wait never overwrites a plugin-measured one
+       the tracker fills queue_wait_ms only when it is unset
+[PASS] Part 4.4.4's endpoints are all registered
+       17 routes across 14 router modules
+[PASS] mutating endpoints carry a role guard
+       cancel needs DevOps; resync and every admin route need Admin
+[PASS] the queue endpoint degrades when the plugin is absent
+       reports availability and a reason instead of failing
+[PASS] GET /api/health on the Compose stack reports database, Jenkins and LLM provider
+       database up, jenkins up (Jenkins 2.568.3), LLM disabled (fake provider; no network calls)
+[PASS] integration tests create, trigger and read a freestyle and a Pipeline job
+       8 passed against the live controller
+-- phase 4 ---------------------------------------------------------
+[PASS] the AI core's modules exist
+       17 modules
+[PASS] the prompt is versioned and carries 8 to 12 examples
+       intent_v1 with 12 examples and Appendix E's rules
+[PASS] the model never sees a shell command
+       catalog context and schema carry names only
+[PASS] the SDK's own retries are off
+       max_retries=0; ModelChain owns the retry policy
+[PASS] llm_calls records the prompt version and the outcome
+       migration 8c2f4d1e7a90 present
+[PASS] drafted evaluation items stay capped and unreviewed
+       30 drafts, all awaiting human review
+[PASS] AI unit and policy tests pass
+       836 passed across 8 AI test files
+[PASS] with Groq unreachable the rule parser answers with ai_fallback
+       unreachable and keyless Groq both fall back to rules with ai_fallback: true
+[PASS] the evaluation command writes a metrics file
+       metrics.json written; 0 scored, 30 excluded pending review
+[PASS] the evaluation package passes ruff and strict mypy
+       ruff, ruff format and strict mypy clean
+-- phase 5 ---------------------------------------------------------
+[PASS] golden template tests pass, and the templates derive from the reference configs
+       33 passed
+[PASS] the linter integration test passes against jenkins-dev
+       4 passed
+[PASS] pytest -m e2e passes on the Compose stack
+       12 passed
+[PASS] the failing-branch chain stops before deploy
+       test failed on demo/failing-tests and the deploy job never started
+[PASS] Explain failure (T5.9): redaction, analysis, checks, endpoint and a live failing job
+       170 passed
+-- phase 6 ---------------------------------------------------------
+[PASS] DESIGN.md has every part 4.7.2 asks for, and its colours pass the floors it states
+       6 named colours, 4 score bar and 3 build-state colours; worst text contrast 6.86:1 (Graphite on Ground, light); score bar neighbours at least 20.0 apart, 11.9 under CVD; 5 principles; wireframes for Assistant workspace, Queue, Overview
+[PASS] the frontend passes lint, typecheck, test and build
+       lint, typecheck and build clean; 299 tests passed
+[PASS] the browser flows of 4.7.6 pass against the backend in fake mode
+       12 flows passed in Chrome, against the backend in fake mode
+[PASS] screenshots are present for every screen, in both themes at 1440 and 390 px
+       40 screenshots: 10 screens, 1440 and 390 px, light and dark
+[PASS] an independent security review covers Phases 3, 5 and 6, each finding with its fix
+       15 findings, each with its fix and regression test
+[PASS] Lighthouse scores both assistant pages 95 or more for accessibility
+       16 audits; lowest accessibility score 100 (Freestyle), 100 (Pipeline)
+[PASS] the frontend's API types are generated from the backend's current OpenAPI schema
+       openapi.json is the backend's schema (42 paths), and schema.d.ts is its output
+[PASS] the frontend container runs what the current source builds
+       building the frontend now gives the image it serves
+[FAIL] the system tests pass through the running stack's own frontend
+       deactivated system-test-b8378413@example.com / (node:20740) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set. / (Use `node --trace-warnings ...` to show where the warning was created) (.tmp\verify\stack-system-tests.log)
+[PASS] the frontend container serves the build with its policy and proxies the API
+       the build with its CSP, frame-ancestors and nosniff, and /api proxied to the backend
+[PASS] the frontend's WebSocket event and topic names are the backend's
+       12 event types and 4 topics, the same on both sides
+-- phase 7 ---------------------------------------------------------
+[PASS] the experiment package's tests pass
+       121 passed
+[PASS] the experiment package passes ruff and strict mypy
+       ruff, ruff format and strict mypy clean
+[PASS] the experiment controllers and their agents run what the current source builds
+       both controllers run plugin/target's classes and files; both agents match a build
+[PASS] the smoke run completes on both experiment controllers
+       freestyle-6 on one executor, observe-only and optimized: 6 of 6 jobs built and analysed on each, plugin 2.0.0-SNAPSHOT (0673a2a)
+[PASS] results/latest.json is newer than its raw files
+       names 20261025T165554Z-smoke-freestyle-6-optimized-1x-r1, written 4.1 ms after its last raw file
+[PASS] the smoke run's analysis reports zero dependency violations
+       0 in both runs, from the plugin's events and Jenkins' build times (4 edges)
+[PASS] the stock controller and its agent run what the current source builds (D-078)
+       jenkins-stock runs the stock stage the current source builds; its agent matches a build
+[PASS] the stock controller runs Jenkins without the optimizer, the plugin controller with it
+       jenkins-stock: no optimizer in its image, its home or its plugin manager, and no /dynamic-queue; its 79 plugins and Jenkins 2.568.3 are jenkins-plugin's, where the optimizer is active and the arm optimized
+[PASS] the stock controller runs the smoke workload, with figures comparable to the others'
+       freestyle-6 on one executor: 6 of 6 jobs on jenkins-stock, 0 dependency violation(s) by the analysis and by builds.json; makespan and mean wait: stock 51.7 s and 18.7 s; observe-only 51.6 s and 18.5 s; optimized 51.5 s and 21.2 s
+-- phase 8 ---------------------------------------------------------
+[PASS] the evaluation dataset is rebuilt byte for byte from its source (D-081)
+       eval-v1: 250 items, 100 dev and 150 test, identical to a rebuild; labelled by claude-code, reviewed by a person: 0
+[PASS] the evaluation package's tests pass
+       111 passed
+[PASS] the evaluation report is generated from the archived runs, as it was kept
+       eval-v1-2026-10-25: report.json and report.md regenerate identically; 4 parsers on the test split, 4 ablation configurations, end to end 18 of 20; labels: machine
+[PASS] appendix_c.py prints the scores the plugin computes on AppendixCExampleTest's fixture
+       0.667, 0.650, 0.633 (0.650 after inheritance) and 0.300, in the report's order
+[PASS] docs/versions.md is regenerated from the build files, and its tables agree with them
+       108 pins; current; 0 disagreement(s)
+[PASS] the demo reset restores a known state
+       snapshot, two markers, restore: both gone; 21:59:14 restored verify: 38 jobs and 763 rows, as the snapshot had them
+[PASS] the archived experiment runs and the M2 series load into the Analytics page's tables
+       63 v2 runs and the 5 runs of Milestone 2's series, one row each
+[FAIL] the demo script replays end to end with every model answer from a fixture
+       the demo script failed: =========================== short test summary info =========================== / FAILED tests/test_demo_script.py::test_the_demo_script_runs_with_every_answer_replayed / 1 failed, 1 passed in 258.21s (0:04:18) (full output: .tmp\verify\the-demo-script.log)
+
+2 CHECKS FAILED

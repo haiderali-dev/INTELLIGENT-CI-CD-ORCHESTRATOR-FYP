@@ -1,0 +1,49 @@
+created system-test-b8378413@example.com
+
+Running 3 tests using 1 worker
+
+  ✓  1 [stack] › e2e\stack.spec.ts:52:1 › every page loads through the stack's frontend, under its policy, with no server error (2.8s)
+  ✓  2 [stack] › e2e\stack.spec.ts:79:1 › a freestyle build runs on the real Jenkins, and its run card follows it live (23.7s)
+  ✘  3 [stack] › e2e\stack.spec.ts:117:1 › a Pipeline build is linted and run by the real Jenkins, its stages followed live (8.0m)
+
+
+  1) [stack] › e2e\stack.spec.ts:117:1 › a Pipeline build is linted and run by the real Jenkins, its stages followed live 
+
+    Test timeout of 480000ms exceeded.
+
+    Error: locator.click: Test timeout of 480000ms exceeded.
+    Call log:
+      - waiting for getByRole('complementary', { name: 'Preview' }).getByRole('tab', { name: 'Jenkinsfile' })
+
+
+      133 |
+      134 |   const preview = page.getByRole("complementary", { name: "Preview" });
+    > 135 |   await preview.getByRole("tab", { name: "Jenkinsfile" }).click();
+          |                                                           ^
+      136 |   await expect(preview.getByText("pipeline {")).toBeVisible({ timeout: 60_000 });
+      137 |   await preview.getByRole("tab", { name: "Checks" }).click();
+      138 |   // The Jenkinsfile was linted by jenkins-dev's own declarative linter on the way to Validated.
+        at D:\FYP POC\CICD project - Copy\frontend\e2e\stack.spec.ts:135:59
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\stack-a-Pipeline-build-is--960af-ns-its-stages-followed-live-stack\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\stack-a-Pipeline-build-is--960af-ns-its-stages-followed-live-stack\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\stack-a-Pipeline-build-is--960af-ns-its-stages-followed-live-stack\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\stack-a-Pipeline-build-is--960af-ns-its-stages-followed-live-stack\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  Slow test file: [stack] › e2e\stack.spec.ts (8.4m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  1 failed
+    [stack] › e2e\stack.spec.ts:117:1 › a Pipeline build is linted and run by the real Jenkins, its stages followed live 
+  2 passed (8.5m)
+deactivated system-test-b8378413@example.com
+(node:20740) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)

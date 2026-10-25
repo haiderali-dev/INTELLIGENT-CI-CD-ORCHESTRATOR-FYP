@@ -78,6 +78,7 @@ async def get_db() -> AsyncGenerator[AsyncSession]:
 
     Commit-on-success rather than per-service commits: a request that fails halfway must not leave
     half its writes behind, and a router cannot forget to roll back.
+    Routes use function-scoped Depends so commit finishes before a response is sent.
     """
     factory = get_session_factory()
     async with factory() as session:

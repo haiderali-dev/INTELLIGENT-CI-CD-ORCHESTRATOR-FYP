@@ -156,7 +156,7 @@ async def _latest_call(session: AsyncSession) -> LlmCall | None:
 )
 async def health(
     response: Response,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     settings: Annotated[Settings, Depends(get_settings_dep)],
     jenkins: Annotated[JenkinsClient, Depends(get_jenkins_client)],
 ) -> HealthResponse:

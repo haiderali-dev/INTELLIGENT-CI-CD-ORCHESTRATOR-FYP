@@ -1,0 +1,14 @@
+250 item(s): 0 reviewed, 250 awaiting review
+  labels: written by Claude Code, not reviewed by a person (D-081)
+2026-10-25 14:14:10 [info     ] catalog_loaded                 path='D:\\FYP POC\\CICD project - Copy\\catalog\\services.yaml' services=2
+resuming: 150 item(s) already done
+2026-10-25 14:14:12 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=076b1142ad64
+2026-10-25 14:15:12 [info     ] llm_rate_limited               exhausted=True model=qwen/qwen3.8-27b remaining_requests=933 retry_after=674.0
+2026-10-25 14:15:12 [warning  ] llm_chain_exhausted            reasons=['qwen/qwen3.8-27b: rate limited for 11 min']
+stopped planning at ev1-c074: the daily budget for qwen/qwen3.8-27b is spent (qwen/qwen3.8-27b: rate limited for 11 min). Progress is saved; rerun the same command later to resume.
+scored 150 item(s), 0 error(s)
+action accuracy 0.9133, behaviour accuracy 0.94
+plans: 42 of 74 planned by the model, valid before repair 1.0, after 1.0
+note: Gold labels written by Claude Code and checked against the card's rules by code; no person has reviewed them (docs/decisions.md D-081). Report these figures with that provenance beside them.
+incomplete: stopped planning at ev1-c074: the daily budget for qwen/qwen3.8-27b is spent (qwen/qwen3.8-27b: rate limited for 11 min). Progress is saved; rerun the same command later to resume.
+metrics: eval\results\eval-v1-test__groq-qwen-qwen3.8-27b\metrics.json

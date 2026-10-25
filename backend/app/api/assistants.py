@@ -191,7 +191,7 @@ class IntentEdit(BaseModel):
 async def create_conversation(
     assistant: AssistantPath,
     user: CurrentUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     body: ConversationCreate | None = None,
 ) -> ConversationResponse:
     conversation = await service.create_conversation(
@@ -206,7 +206,7 @@ async def create_conversation(
 @router.get("/conversations", response_model=ConversationPage, dependencies=[ApiRateLimit])
 async def list_conversations(
     user: CurrentUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     assistant: AssistantPath | None = None,
     limit: Annotated[int | None, Query(ge=1, le=200)] = None,
     offset: Annotated[int | None, Query(ge=0)] = None,
@@ -234,7 +234,7 @@ async def list_conversations(
 async def get_conversation(
     conversation_id: str,
     user: CurrentUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
 ) -> ConversationDetail:
     conversation = await service.get_conversation(
         session, user=user, conversation_id=conversation_id
@@ -256,7 +256,7 @@ async def post_message(
     conversation_id: str,
     body: MessageRequest,
     user: CurrentUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     parser: Annotated[IntentParser, Depends(get_intent_parser)],
     clarifier: Annotated[ClarificationService, Depends(get_clarifier)],
     settings: Annotated[Settings, Depends(get_settings_dep)],
@@ -293,7 +293,7 @@ async def post_message(
 async def get_command(
     command_id: str,
     user: CurrentUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
 ) -> CommandResponse:
     command, _ = await service.get_command(session, user=user, command_id=command_id)
     return CommandResponse.of(command)
@@ -308,7 +308,7 @@ async def edit_intent(
     command_id: str,
     body: IntentEdit,
     user: CurrentUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     parser: Annotated[IntentParser, Depends(get_intent_parser)],
     settings: Annotated[Settings, Depends(get_settings_dep)],
 ) -> CommandResponse:

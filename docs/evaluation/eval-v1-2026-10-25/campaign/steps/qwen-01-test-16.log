@@ -1,0 +1,14 @@
+250 item(s): 0 reviewed, 250 awaiting review
+  labels: written by Claude Code, not reviewed by a person (D-081)
+2026-10-25 15:01:44 [info     ] catalog_loaded                 path='D:\\FYP POC\\CICD project - Copy\\catalog\\services.yaml' services=2
+resuming: 150 item(s) already done
+2026-10-25 15:01:44 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=962 retry_after=None
+2026-10-25 15:01:54 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=962 retry_after=None
+2026-10-25 15:02:05 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=962 retry_after=None
+2026-10-25 15:02:15 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=962 retry_after=None
+2026-10-25 15:02:26 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=06b2231a792e
+scored 150 item(s), 0 error(s)
+action accuracy 0.9133, behaviour accuracy 0.94
+plans: 74 of 74 planned by the model, valid before repair 1.0, after 1.0
+note: Gold labels written by Claude Code and checked against the card's rules by code; no person has reviewed them (docs/decisions.md D-081). Report these figures with that provenance beside them.
+metrics: eval\results\eval-v1-test__groq-qwen-qwen3.8-27b\metrics.json

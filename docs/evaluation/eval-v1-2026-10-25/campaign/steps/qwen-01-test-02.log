@@ -1,0 +1,39 @@
+250 item(s): 0 reviewed, 250 awaiting review
+  labels: written by Claude Code, not reviewed by a person (D-081)
+2026-10-25 05:22:53 [info     ] catalog_loaded                 path='D:\\FYP POC\\CICD project - Copy\\catalog\\services.yaml' services=2
+resuming: 3 item(s) already done
+2026-10-25 05:22:53 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:23:03 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:23:13 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:23:23 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:23:33 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:23:43 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:23:54 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:24:04 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:24:14 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:24:16 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:24:26 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:24:36 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:24:47 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:24:57 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:25:07 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:25:17 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:25:27 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:25:37 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:25:40 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:25:50 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:26:00 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:26:10 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:26:20 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:26:30 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:26:40 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:26:51 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:27:01 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 05:27:01 [warning  ] llm_chain_exhausted            reasons=['qwen/qwen3.8-27b: still rate limited after 3 attempts']
+stopped at ev1-a010: the daily budget for qwen/qwen3.8-27b is spent (qwen/qwen3.8-27b: still rate limited after 3 attempts). Progress is saved; rerun the same command later to resume.
+scored 3 item(s), 0 error(s)
+action accuracy 1.0, behaviour accuracy 1.0
+plans: 0 of 74 planned by the model, valid before repair None, after None
+note: Gold labels written by Claude Code and checked against the card's rules by code; no person has reviewed them (docs/decisions.md D-081). Report these figures with that provenance beside them.
+incomplete: stopped at ev1-a010: the daily budget for qwen/qwen3.8-27b is spent (qwen/qwen3.8-27b: still rate limited after 3 attempts). Progress is saved; rerun the same command later to resume.
+metrics: eval\results\eval-v1-test__groq-qwen-qwen3.8-27b\metrics.json

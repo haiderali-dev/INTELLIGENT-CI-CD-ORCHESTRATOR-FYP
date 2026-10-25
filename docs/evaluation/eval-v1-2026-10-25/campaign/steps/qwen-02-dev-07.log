@@ -1,0 +1,22 @@
+250 item(s): 0 reviewed, 250 awaiting review
+  labels: written by Claude Code, not reviewed by a person (D-081)
+2026-10-25 17:45:23 [info     ] catalog_loaded                 path='D:\\FYP POC\\CICD project - Copy\\catalog\\services.yaml' services=2
+resuming: 13 item(s) already done
+2026-10-25 17:45:23 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 17:45:33 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=1000 retry_after=None
+2026-10-25 17:45:44 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=5093bdc586bb
+2026-10-25 17:45:46 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=999 retry_after=None
+2026-10-25 17:45:56 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=999 retry_after=None
+2026-10-25 17:46:06 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=999 retry_after=None
+2026-10-25 17:46:16 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=999 retry_after=None
+2026-10-25 17:46:26 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=999 retry_after=None
+2026-10-25 17:46:36 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=999 retry_after=None
+2026-10-25 17:46:46 [info     ] llm_rate_limited               exhausted=True model=qwen/qwen3.8-27b remaining_requests=999 retry_after=181.0
+2026-10-25 17:46:46 [warning  ] llm_chain_exhausted            reasons=['qwen/qwen3.8-27b: rate limited for 3 min']
+stopped at ev1-c005: the daily budget for qwen/qwen3.8-27b is spent (qwen/qwen3.8-27b: rate limited for 3 min). Progress is saved; rerun the same command later to resume.
+scored 14 item(s), 0 error(s)
+action accuracy 0.9286, behaviour accuracy 1.0
+plans: 0 of 48 planned by the model, valid before repair None, after None
+note: Gold labels written by Claude Code and checked against the card's rules by code; no person has reviewed them (docs/decisions.md D-081). Report these figures with that provenance beside them.
+incomplete: stopped at ev1-c005: the daily budget for qwen/qwen3.8-27b is spent (qwen/qwen3.8-27b: rate limited for 3 min). Progress is saved; rerun the same command later to resume.
+metrics: eval\results\eval-v1-dev__groq-qwen-qwen3.8-27b\metrics.json

@@ -154,8 +154,33 @@ each one attaches to Jenkins.
 
 ## Chapter 12 and Table 12.1
 
+- [ ] **Replace Chapter 12 with `docs/report/chapter-12-achievements-and-results.md`** (written in
+      Phase 8). It keeps the old chapter's Milestone 1 and 2 record, corrected as listed below, and
+      adds the final milestone's achievements, the experiment (Section 12.5) and the chatbot
+      evaluation (Section 12.6).
+      - **Its twelve tables are generated, never typed:** `python scripts/report/chapter_12.py`
+        recomputes them from the archived run files, and `--check` fails if one is stale.
+        Regenerate before pasting, and paste them as they are.
+      - **The old chapter numbered Milestone 2's subsections 12.1.1 to 12.1.4 under 12.3.** The new
+        one numbers them 12.3.1 to 12.3.4.
 - [ ] **Table 12.1, p. 83 [82] is an empty skeleton** marked "to be completed from the dashboard
-      export before submission". Replace it with the generated `experiment/results/table_12_1.md`.
+      export before submission". Replace it with Table 12.1 of the new chapter: the same KPIs, on
+      the same condition Milestone 2 measured (`freestyle-30`, one executor), with mean ± standard
+      deviation over 3 repetitions. The full per-condition tables are
+      `docs/experiment/matrix-2026-10-24/report/table_12_1.md`.
+- [ ] **State the experiment's findings as the evidence gives them** (Section 12.5):
+      - **The gain:** HIGH-band waits fell 17% to 34% in every fixed-order condition, and mean waits
+        1.6% to 9.7%.
+      - **The cost to the LOW band:** on one executor, the six LOW jobs waited 224 s instead of 15 s.
+        Priority scheduling moves waiting; it does not remove it.
+      - **The cost in makespan:** on three executors, makespan worsened 3% to 10%, because holding
+        dependants leaves executors idle that the baseline fills by breaking dependency order.
+      - **Dependencies:** after DF-48's fix (D-080), the optimized arm broke no dependency edge it
+        could see. The three violations left in random order are downstreams whose upstream had not
+        been requested yet.
+      - **Aging:** turning it off changed nothing measurable, as predicted.
+      - **The sanity run:** stock Jenkins was within 0.4% of observe-only, so the baseline is
+        sound.
 - [ ] **Add the version 2 KPIs** that Appendix F lacks: dependency violations (target 0), maximum LOW
       wait, and scheduler overhead per cycle. For Pipeline runs, report the first node block's wait
       and the sum of all node-block waits separately.
@@ -180,7 +205,22 @@ each one attaches to Jenkins.
       - **The comparison with version 2:** its gate breaks none. In simulation on the same
         workload, no policy that respects dependencies got the HIGH band below 155.9 s. Compare
         version 2 with "M2 dispatcher v1" only with that column beside it.
-- [ ] **Add a chatbot evaluation section** from `python -m eval report`.
+- [ ] **Add a chatbot evaluation section:** Section 12.6 of the new chapter. Its tables (12.8 to
+      12.12) are generated from the archived `python -m eval report` output in
+      `docs/evaluation/`. They cover 4.9's comparisons, plan validity, the ablations and the
+      end-to-end sample.
+      - **Keep the provenance statement beside the figures.** The gold labels were written by
+        Claude Code, and no person has reviewed them (D-081). The figures measure agreement with
+        those labels, not accuracy against human judgement.
+      - **Cite the dataset's sources:** CLINC150 (Larson et al., 2019; CC BY 3.0) and
+        deepset/prompt-injections (deepset, 2023; Apache-2.0). Their attribution is in
+        `eval/datasets/eval-v1.card.md`.
+      - **2026-10-25 evidence is archived:** `docs/evaluation/eval-v1-2026-10-25/`. Chapter 12's
+        tables and discussion are populated: four test parsers, four ablation configurations,
+        plan validity, and 18 of 20 live commands successful. State that accuracy denominators
+        exclude rejected responses, that 74 planned items represent 20 distinct requests, and
+        that the two live build failures were sample-service formatting checks. Extra development
+        runs are marked incomplete. Keep the measured failures in the submitted report.
 
 ## Appendices
 
@@ -196,20 +236,24 @@ each one attaches to Jenkins.
       - **How its waits are measured:** it has no plugin events, so each job's queue entry is the
         harness's trigger time; build start and end come from Jenkins, as in every arm. Say so
         beside its figures.
-- [ ] **Appendix C, pp. 85–86 [84–85]: regenerate from `scripts/report/appendix_c.py`.** Add a column
-      so the table shows *both* the base score and the effective score after group inheritance. The
-      current single-column table gives `integration-tests-api` 0.633 while the prose says the group
-      takes 0.650, which reads as a contradiction. See `docs/decisions.md` D-004.
+- [ ] **Appendix C, pp. 85–86 [84–85]: regenerate from `scripts/report/appendix_c.py --build`.**
+      It prints Table 13.2 from what the plugin's own calculator computes on the fixture
+      `AppendixCExampleTest` asserts, so the numbers cannot drift from the code. The table shows
+      *both* the score on the job's own merit and the score after group inheritance. The current
+      single-column table gives `integration-tests-api` 0.633 while the prose says the group takes
+      0.650, which reads as a contradiction (D-004). Paste its explanation of D and T too: the
+      report's prose does not define D as `(group size - 1) / (largest group size - 1)`.
 - [ ] **Appendix D, pp. 86–87 [85–86]: extend.** Add the `options { dynamicQueuePriority(...) }`
       declarative form beside the existing `properties([...])` form. Add `rescoreIntervalSeconds`,
       `metricsToken` and the metrics settings. Correct the `metricsBackendUrl` default to empty
       (`docs/decisions.md` D-006). Note that a property declared inside a Jenkinsfile only takes
       effect once that build has run, which is why the backend also writes the property into
       `config.xml` at creation time.
-- [ ] **Appendix E, p. 87 [86]: replace with real versions** from `scripts/report/versions.py`.
-      Known wrong today: Jenkins LTS is 2.568.3, not 2.541.x (`docs/decisions.md` D-003), and Redis 7
-      is not part of the system at all. The React, Python and Java lines are whatever
-      `docs/versions.md` records once each component is pinned; do not hand-edit them.
+- [ ] **Appendix E, p. 87 [86]: replace with real versions:** paste the output of
+      `python scripts/report/versions.py --appendix-e` (Table 13.3), which reads every version from
+      the build files. Known wrong today: Jenkins LTS is 2.568.3, not 2.541.x (`docs/decisions.md`
+      D-003), and Redis 7 is not part of the system at all. Do not hand-edit any version;
+      `versions.py --check` fails when `docs/versions.md` disagrees with the build.
 - [ ] **Appendix F, p. 87 [86–87]: add the version 2 KPI definitions** listed under Chapter 12 above.
 
 ## New: limitations and disclosure
@@ -251,3 +295,55 @@ each one attaches to Jenkins.
 - [ ] **Usability and accessibility: Lighthouse scores 100 for accessibility** on both assistant
       pages, in all 16 audits (empty and with a chat, light and dark, mobile and desktop). Measured
       signed in (D-064), and checked in CI on every push since 2026-10-20.
+
+## New: from Phase 8 (2026-10-24 to 2026-10-25)
+
+- [ ] **Testing chapter: add the final gate finding D-083.** The live browser trace exposed a
+      validated generation returning before its database commit, leaving the Pipeline preview
+      empty after an immediate conversation reload. Function-scoped request sessions fix it.
+      Ordinary ASGITransport tests hid the race; the new response-start tests use a separate
+      database connection and fail before the fix. Keep this later finding separate from the
+      frozen testing campaign's defect counts. Gate runs 12 and 13 also document agent DNS
+      outages; those are infrastructure failures, not successful demo runs.
+
+- [ ] **Limitations section: the evaluation's labels (D-081).**
+      - **Who labelled it:** one AI author, Claude Code, wrote and labelled `eval-v1`, and no person
+        has reviewed it. There is no inter-annotator agreement, and the author's reading of the
+        labelling rules is built into the labels.
+      - **How it was checked:** the labels were checked against twelve stated rules by code. That
+        catches slips, not misreadings.
+      - **Other limits:** the catalog has two services, and the authored messages may be more
+        regular than real users' messages.
+      - **What to recommend:** a person's review of at least the test split, as the datasheet
+        describes.
+- [ ] **Limitations section: free-tier limits shaped the evaluation.**
+      - **The cost:** about 1,800 tokens an intent parse.
+      - **What it shaped:** the comparisons used the test split only, and the ablations one model.
+      - **Latency:** quota waits are excluded from the figures, but a paid tier may differ.
+- [ ] **Limitations section: the dependency gate cannot hold a job whose upstream has not been
+      requested at all** (D-080). Random order met it three times. The system's own chains never
+      meet it, because each job triggers the next.
+- [ ] **AI-assisted development disclosure: name the Phase 8 work too.** Claude Code wrote:
+      - the evaluation dataset and every gold label;
+      - the evaluation harness;
+      - Chapter 12's draft and the generators of its tables, of Appendix C and of Appendix E.
+
+      The team directed the work and reviewed it. The tests and `scripts/verify.py` (108 checks
+      across Phases 0 to 8) checked it.
+- [ ] **Testing chapter, Section 8.8.5, "Experiment v2 (Phase 7): not yet run":** take the
+      repository's version (`docs/testing/chapter-8-software-testing.md`, updated 2026-10-25). It
+      keeps the predictions as written, points to Chapter 12, Section 12.5, and says how each
+      prediction held. The matrix ran on 2026-10-24 (53 runs), and so did the re-run after DF-48's
+      fix (10 runs).
+- [ ] **Testing chapter, Section 8.10's last paragraph** said the chatbot evaluation "needs the
+      drafted evaluation items reviewed by people". The repository's version now says what was
+      done (D-081): a machine-labelled evaluation, reported as such in Chapter 12, Section 12.6,
+      with a person's review still recommended. Carry it into the report.
+- [ ] **Chapter 6, Algorithm 1: define D as the plugin computes it,** `(group size - 1) /
+      (largest group size - 1)`, and 0 for an independent job or when no group has more than one
+      member. Define T as `1 - (estimate - shortest) / (longest - shortest)`, and 0.5 when the
+      estimate is unknown or every estimate is equal. Appendix C's generated explanation states
+      both; the chapter should match it.
+- [ ] **A demonstration section, or an appendix:** the scripted demo (`docs/demo-script.md`) runs
+      from a known state (`scripts/demo_reset.py`), with the model's answers replayed from
+      fixtures, so it needs no model access on the day.

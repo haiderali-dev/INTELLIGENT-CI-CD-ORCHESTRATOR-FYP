@@ -97,7 +97,7 @@ class TokenResponse(BaseModel):
 async def login(
     payload: LoginRequest,
     request: Request,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     settings: Annotated[Settings, Depends(get_settings_dep)],
     limiter: Annotated[RateLimiter, Depends(get_rate_limiter)],
 ) -> TokenResponse:
@@ -144,7 +144,7 @@ async def login(
 async def refresh(
     payload: RefreshRequest,
     request: Request,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     settings: Annotated[Settings, Depends(get_settings_dep)],
 ) -> TokenResponse:
     """Rotate the token pair.
@@ -174,7 +174,7 @@ async def refresh(
 async def logout(
     payload: LogoutRequest,
     user: CurrentUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     settings: Annotated[Settings, Depends(get_settings_dep)],
 ) -> None:
     """Revoke the caller's refresh token.

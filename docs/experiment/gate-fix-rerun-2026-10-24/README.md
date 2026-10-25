@@ -23,9 +23,9 @@ back. `rerun_campaign.py` ran it on `matrix_campaign.py`'s machinery, and both a
 - **`campaign-log.txt` and `progress.jsonl`:** every step and each run's headline figures.
 
 **The analysis has DF-47's fix.** The harness ran from PR #16's branch, `phase-7-matrix` at
-`7d9c090`, whose `kpis.py` judges a Pipeline's violation by when its work starts (D-079). `main` has
-not got that fix yet. Analysed with `main`'s `kpis.py`, the Pipeline counts would include run starts
-again.
+`7d9c090`, whose `kpis.py` judges a Pipeline's violation by when its work starts (D-079). When this
+was written `main` had not got that fix yet. It has since: PR #16 merged as `535330f` on
+2026-10-24, so `main`'s `kpis.py` reproduces these counts.
 
 ## Result
 

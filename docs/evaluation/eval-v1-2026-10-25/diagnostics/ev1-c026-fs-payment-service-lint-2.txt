@@ -1,0 +1,61 @@
+Started by upstream project "fs-payment-service-build" build number 217
+originally caused by:
+ Started by user Orchestrator Backend
+Running as SYSTEM
+Building remotely on agent-1 (linux) in workspace /home/jenkins/agent/workspace/fs-payment-service-lint
+[WS-CLEANUP] Deleting project workspace...
+[WS-CLEANUP] Deferred wipeout is used...
+[WS-CLEANUP] Done
+The recommended git tool is: NONE
+No credentials specified
+Cloning the remote Git repository
+Cloning repository https://github.com/haiderali-dev/payment-service.git
+ > git init /home/jenkins/agent/workspace/fs-payment-service-lint # timeout=10
+Fetching upstream changes from https://github.com/haiderali-dev/payment-service.git
+ > git --version # timeout=10
+ > git --version # 'git version 2.47.3'
+ > git fetch --tags --force --progress -- https://github.com/haiderali-dev/payment-service.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+ > git config remote.origin.url https://github.com/haiderali-dev/payment-service.git # timeout=10
+ > git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* # timeout=10
+Avoid second fetch
+ > git rev-parse refs/remotes/origin/main^{commit} # timeout=10
+Checking out Revision 998844b0159c13bf8ab32e1e2da2f4a187b7eb61 (refs/remotes/origin/main)
+ > git config core.sparsecheckout # timeout=10
+ > git checkout -f 998844b0159c13bf8ab32e1e2da2f4a187b7eb61 # timeout=10
+Commit message: "fix(deploy): probe /health on a configurable host"
+ > git rev-list --no-walk 998844b0159c13bf8ab32e1e2da2f4a187b7eb61 # timeout=10
+[fs-payment-service-lint] $ /bin/sh -xe /tmp/jenkins9703238654233404432.sh
++ ./scripts/build.sh
+[build] payment-service
+[build] ok
+[fs-payment-service-lint] $ /bin/sh -xe /tmp/jenkins10023476376285830708.sh
++ ./scripts/lint.sh
+[lint] ruff
+All checks passed!
+unformatted: File would be reformatted
+  --> tests/test_integration.py:41:12
+   |
+40 |     time.sleep(STEP_SECONDS)
+   -     ids = {client.post("/payments", params={"amount_cents": n}).json()["id"] for n in range(1, 11)}
+41 +     ids = {
+42 +         client.post("/payments", params={"amount_cents": n}).json()["id"]
+43 +         for n in range(1, 11)
+44 +     }
+45 |     assert len(ids) == 10
+   |
+
+unformatted: File would be reformatted
+  --> tests/test_unit.py:51:24
+   |
+50 |     time.sleep(STEP_SECONDS)
+   -     body = client.post("/payments", params={"amount_cents": 500, "currency": "usd"}).json()
+51 +     body = client.post(
+52 +         "/payments", params={"amount_cents": 500, "currency": "usd"}
+53 +     ).json()
+54 |     assert body["currency"] == "USD"
+   |
+
+2 files would be reformatted, 3 files already formatted
+Build step 'Execute shell' marked build as failure
+Archiving artifacts
+Finished: FAILURE

@@ -176,13 +176,28 @@ class Stack:
 _QUOTA = QuotaTracker()
 
 
-async def stack() -> AsyncGenerator[Stack]:
+async def stack(
+    provider: LLMProvider | None = None,
+    *,
+    mode: str | None = None,
+    models: str | None = None,
+    quota: QuotaTracker | None = None,
+) -> AsyncGenerator[Stack]:
+    """The stack, with the model ``E2E_LLM`` chooses.
+
+    The evaluation's end-to-end run (``eval/e2e.py``, 4.9) supplies its own ``provider`` -- one
+    model, cached and paced -- with ``models`` naming that one model and a ``quota`` of its own,
+    so that it measures exactly this stack rather than a copy of it.
+    """
     settings = settings_for_e2e()
-    mode = llm_mode()
-    if mode != "replay" and not settings.groq_api_key:
-        raise RuntimeError(f"E2E_LLM={mode} needs GROQ_API_KEY")
-    provider: LLMProvider = provider_for(mode, settings.groq_api_key)
-    quota = _QUOTA
+    if models is not None:
+        settings = settings.model_copy(update={"llm_model_chain": models})
+    mode = mode or llm_mode()
+    if provider is None:
+        if mode != "replay" and not settings.groq_api_key:
+            raise RuntimeError(f"E2E_LLM={mode} needs GROQ_API_KEY")
+        provider = provider_for(mode, settings.groq_api_key)
+    quota = quota or _QUOTA
 
     engine = create_async_engine(settings.database_url, pool_pre_ping=True)
     db_session.configure(engine)

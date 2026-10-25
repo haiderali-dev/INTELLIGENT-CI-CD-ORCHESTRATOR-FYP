@@ -1,0 +1,133 @@
+{
+  "run": {
+    "parser": "groq:openai/gpt-oss-20b",
+    "dataset": "eval/datasets/eval-v1.jsonl",
+    "split": "dev",
+    "subset": null,
+    "prompt_version": "intent_v1@9457338e",
+    "planner_prompt_version": "planner_v1@9b25deca",
+    "include_examples": true,
+    "include_enums": true,
+    "max_repairs": 2,
+    "rate_limit_waits": 0,
+    "finished_at": "2026-10-25T08:08:47.894964+00:00",
+    "complete": true,
+    "stopped_reason": null,
+    "labels": "machine",
+    "for_reporting": true
+  },
+  "dataset": {
+    "items": 250,
+    "selected": 100,
+    "scorable": 0,
+    "excluded_needs_review": 0,
+    "warnings": [],
+    "card": {
+      "name": "eval-v1",
+      "sha256": "31559fed8225979eab3d7bf532b54062661056717c7936fffdaa15a390596428",
+      "labels": "machine",
+      "decision": "D-081"
+    }
+  },
+  "metrics": {
+    "n": 100,
+    "errors": 0,
+    "action_accuracy": 0.97,
+    "per_field_accuracy": {
+      "action": 0.97,
+      "service": 0.97,
+      "branch": 0.97,
+      "commit": 0.99,
+      "environment": 0.93,
+      "test_suite": 0.96,
+      "urgency": 0.99,
+      "extra_stages": 1.0,
+      "justification": 0.98
+    },
+    "exact_match": 0.78,
+    "behavior_accuracy": 0.89,
+    "clarification": {
+      "precision": 0.8824,
+      "recall": 0.6818
+    },
+    "refusal_rate": 0.9231,
+    "refusal_target": 1.0,
+    "latency_ms": {
+      "median": 679,
+      "p95": 1552
+    },
+    "tokens_per_command": 1787.7,
+    "fallback_rate": 0.0,
+    "cache_hits": 0,
+    "by_category": {
+      "ambiguous": {
+        "n": 10,
+        "action_accuracy": 0.8,
+        "behavior_accuracy": 0.9
+      },
+      "clear": {
+        "n": 40,
+        "action_accuracy": 1.0,
+        "behavior_accuracy": 1.0
+      },
+      "missing_field": {
+        "n": 15,
+        "action_accuracy": 0.9333,
+        "behavior_accuracy": 0.5333
+      },
+      "paraphrase_typos": {
+        "n": 20,
+        "action_accuracy": 1.0,
+        "behavior_accuracy": 0.9
+      },
+      "prompt_injection": {
+        "n": 5,
+        "action_accuracy": 1.0,
+        "behavior_accuracy": 1.0
+      },
+      "unsafe_out_of_scope": {
+        "n": 10,
+        "action_accuracy": 1.0,
+        "behavior_accuracy": 0.9
+      }
+    },
+    "by_behavior": {
+      "CLARIFY": {
+        "n": 22,
+        "accuracy": 0.6818
+      },
+      "GENERATE": {
+        "n": 65,
+        "accuracy": 0.9538
+      },
+      "REFUSE": {
+        "n": 13,
+        "accuracy": 0.9231
+      }
+    },
+    "comparison_rules": {
+      "justification": "lenient: both absent, or one contains the other after normalising",
+      "extra_stages": "compared as a set",
+      "scored_answer": "the parser's own answer (model_intent), not the corrected one",
+      "latency": "the answering call's own time; excludes answers served from a cache"
+    }
+  },
+  "plans": {
+    "plannable_items": 48,
+    "planned": 48,
+    "n": 48,
+    "valid_before_repair": 0.8125,
+    "valid_after_repair": 1.0,
+    "repaired": 9,
+    "still_invalid": 0,
+    "no_model_plan": 0,
+    "errors": 0,
+    "distinct_requests": 12,
+    "tokens_per_plan": 2000.6,
+    "comparison_rules": {
+      "intent": "the gold intent after the validator, so a parse error cannot cost the plan",
+      "valid": "the backend's own plan checks (app/generation/planner.py, check_plan)"
+    }
+  },
+  "warning": "Gold labels written by Claude Code and checked against the card's rules by code; no person has reviewed them (docs/decisions.md D-081). Report these figures with that provenance beside them."
+}

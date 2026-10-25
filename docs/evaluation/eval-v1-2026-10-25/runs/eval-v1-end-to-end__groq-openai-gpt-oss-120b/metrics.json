@@ -1,0 +1,34 @@
+{
+  "run": {
+    "kind": "e2e",
+    "parser": "groq:openai/gpt-oss-120b",
+    "model": "openai/gpt-oss-120b",
+    "dataset": "eval/datasets/eval-v1.jsonl",
+    "finished_at": "2026-10-25T07:38:50.387831+00:00",
+    "complete": true,
+    "stopped_reason": null,
+    "labels": "machine",
+    "for_reporting": true
+  },
+  "summary": {
+    "n": 20,
+    "expected": 20,
+    "succeeded": 18,
+    "success_rate": 0.9,
+    "failed_at": {
+      "ran": 2
+    },
+    "by_assistant": {
+      "freestyle": {
+        "n": 10,
+        "succeeded": 9
+      },
+      "pipeline": {
+        "n": 10,
+        "succeeded": 9
+      }
+    },
+    "seconds_median": 22.6
+  },
+  "path": "eval/results/eval-v1-end-to-end__groq-openai-gpt-oss-120b/metrics.json"
+}

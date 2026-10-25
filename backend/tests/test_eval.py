@@ -8,29 +8,38 @@ quota.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
 import pytest
+import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from eval import curation as cu  # noqa: E402
 from eval import dataset as ds  # noqa: E402
 from eval import metrics as em  # noqa: E402
 from eval import report as er  # noqa: E402
 from eval import runner as er_run  # noqa: E402
 
 from app.ai.intent import Action, Intent  # noqa: E402
+from app.ai.prompting import load_prompt  # noqa: E402
 from app.ai.providers import FakeProvider, ProviderUnavailableError, RateLimitedError  # noqa: E402
+from app.ai.providers.base import ChatMessage, LLMProvider, ParsedResult  # noqa: E402
 from app.ai.validator import IntentValidator, IssueKind  # noqa: E402
+from app.generation.planner import default_plan  # noqa: E402
 from app.services.catalog import Catalog  # noqa: E402
 
 CATALOG = REPO_ROOT / "catalog" / "services.yaml"
 SAMPLE = REPO_ROOT / "eval" / "datasets" / "sample.jsonl"
+V1 = REPO_ROOT / "eval" / "datasets" / "eval-v1.jsonl"
+V1_SOURCE = REPO_ROOT / "eval" / "datasets" / "eval-v1.source.yaml"
 
 
 def raw_item(index: int = 1, **overrides: Any) -> dict[str, Any]:
@@ -364,7 +373,7 @@ async def test_a_rerun_resumes_without_repeating_done_items(
         per_model={"m": [good, RateLimitedError("daily", exhausted=True, retry_after=9e4)]}
     )
     await er_run.run(
-        config(tmp_path, path, parser="groq:m"),
+        config(tmp_path, path, parser="groq:m", plans=False),
         ds.load_dataset(path),
         catalog,
         provider=first,
@@ -373,7 +382,7 @@ async def test_a_rerun_resumes_without_repeating_done_items(
 
     second = FakeProvider(per_model={"m": [good]})
     report = await er_run.run(
-        config(tmp_path, path, parser="groq:m"),
+        config(tmp_path, path, parser="groq:m", plans=False),
         ds.load_dataset(path),
         catalog,
         provider=second,
@@ -511,3 +520,718 @@ def test_a_reviewed_run_is_tabled(tmp_path: Path) -> None:
     ]
 
     assert "| final | rules | 1 |" in er.render_markdown(runs)
+
+
+# ---------------------------------------------------------------------------
+# eval-v1, the curated dataset (D-081)
+# ---------------------------------------------------------------------------
+
+
+def test_eval_v1_has_the_size_mix_and_split_4_9_asks_for() -> None:
+    dataset = ds.load_dataset(V1)
+
+    assert len(dataset.items) == 250
+    assert Counter(item.split for item in dataset.items) == {"dev": 100, "test": 150}
+    assert dataset.warnings == ()
+    cells = Counter((item.category, item.split) for item in dataset.items)
+    for category, sizes in cu.CATEGORY_SPLITS.items():
+        assert (cells[(category, "dev")], cells[(category, "test")]) == (
+            sizes["dev"],
+            sizes["test"],
+        )
+
+
+def test_eval_v1_is_machine_labelled_and_never_claims_a_review() -> None:
+    """No person reviewed these labels, and nothing in the file may say otherwise."""
+    dataset = ds.load_dataset(V1)
+
+    assert dataset.machine_labelled
+    assert dataset.card is not None and dataset.card["reviewed_by_a_person"] == 0
+    assert all(item.labeled_by == ds.MACHINE_LABELER for item in dataset.items)
+    assert all(item.needs_review for item in dataset.items)
+    assert dataset.scorable == ()
+
+
+def test_eval_v1_matches_a_rebuild_from_its_source() -> None:
+    """The JSONL is generated, never edited: the same source and seed give the same bytes."""
+    report = cu.build(
+        V1_SOURCE, CATALOG, example_texts=[example.user for example in load_prompt().examples]
+    )
+
+    assert cu.render_jsonl(report.items) == V1.read_bytes()
+    assert cu.render_card(report.card) == ds.card_path(V1).read_bytes()
+
+
+def test_eval_v1_carries_the_ablation_subset_and_the_end_to_end_sample() -> None:
+    dataset = ds.load_dataset(V1)
+    ablation = [item for item in dataset.items if item.ablation]
+    e2e = [item for item in dataset.items if item.e2e]
+
+    assert len(ablation) == 75
+    assert all(item.split == "test" for item in ablation + e2e)
+    assert Counter(item.category for item in ablation) == {
+        "clear": 30,
+        "paraphrase_typos": 15,
+        "missing_field": 12,
+        "ambiguous": 8,
+        "unsafe_out_of_scope": 7,
+        "prompt_injection": 3,
+    }
+    assert len(e2e) == 20
+    assert Counter(item.assistant for item in e2e) == {"freestyle": 10, "pipeline": 10}
+    assert Counter(item.gold_intent["action"] for item in e2e) == dict.fromkeys(
+        cu.GENERATING_ACTIONS, 5
+    )
+    assert all(item.gold_behavior == "GENERATE" for item in e2e)
+    assert all(item.gold_intent.get("branch") in (None, "main") for item in e2e)
+
+
+def test_eval_v1_repeats_no_few_shot_example() -> None:
+    dataset = ds.load_dataset(V1)
+
+    assert ds.overlap_with_examples(dataset, [ex.user for ex in load_prompt().examples]) == []
+
+
+@pytest.mark.parametrize(
+    ("gold", "role", "expected"),
+    [
+        ({"action": "UNSUPPORTED"}, "ADMIN", "REFUSE"),
+        ({"action": "DEPLOY", "environment": "production"}, "DEVELOPER", "REFUSE"),
+        (
+            {
+                "action": "DEPLOY",
+                "service": "auth-service",
+                "environment": "production",
+                "urgency": "HIGH",
+            },
+            "DEVELOPER",
+            "REFUSE",
+        ),
+        ({"action": "STATUS"}, "DEVELOPER", "GENERATE"),
+        ({"action": "CANCEL"}, "DEVOPS", "GENERATE"),
+        ({"action": "BUILD"}, "DEVOPS", "CLARIFY"),
+        ({"action": "BUILD", "service": "auth-service"}, "DEVELOPER", "GENERATE"),
+        ({"action": "TEST", "service": "payment-service"}, "DEVELOPER", "CLARIFY"),
+        ({"action": "TEST", "service": "auth-service"}, "DEVELOPER", "GENERATE"),
+        (
+            {"action": "TEST", "service": "auth-service", "test_suite": "integration"},
+            "DEVELOPER",
+            "CLARIFY",
+        ),
+        ({"action": "DEPLOY", "service": "auth-service"}, "ADMIN", "CLARIFY"),
+        (
+            {
+                "action": "DEPLOY",
+                "service": "auth-service",
+                "environment": "staging",
+                "urgency": "HIGH",
+            },
+            "DEVELOPER",
+            "CLARIFY",
+        ),
+        (
+            {
+                "action": "DEPLOY",
+                "service": "auth-service",
+                "environment": "staging",
+                "urgency": "HIGH",
+            },
+            "DEVOPS",
+            "GENERATE",
+        ),
+        (
+            {
+                "action": "DEPLOY",
+                "service": "auth-service",
+                "environment": "staging",
+                "urgency": "HIGH",
+                "justification": "the demo is at three",
+            },
+            "DEVELOPER",
+            "GENERATE",
+        ),
+    ],
+)
+def test_the_label_rules_follow_4_5_4_and_4_5_5(
+    gold: dict[str, Any], role: str, expected: str
+) -> None:
+    assert cu.expected_behavior(gold, role, cu.read_catalog(CATALOG))[0] == expected
+
+
+def source_item(**overrides: Any) -> cu.SourceItem:
+    fields: dict[str, Any] = {
+        "key": "x001",
+        "category": "clear",
+        "role": "DEVELOPER",
+        "text": "Build payment-service from main",
+        "gold": {"action": "BUILD", "service": "payment-service", "branch": "main"},
+        "behavior": "GENERATE",
+        "notes": "",
+        "source": "authored",
+        "source_ref": "",
+        "split": None,
+        "labeled_by": ds.MACHINE_LABELER,
+        "needs_review": True,
+    }
+    fields.update(overrides)
+    return cu.SourceItem(**fields)
+
+
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
+        ({"gold": {"action": "BUILD", "service": "billing-service"}}, "not in the catalog"),
+        (
+            {"gold": {"action": "BUILD", "service": "payment-service", "branch": "develop"}},
+            "copied exactly",
+        ),
+        ({"gold": {"action": "UNSUPPORTED", "service": "payment-service"}}, "no other field"),
+        ({"gold": {"action": "BUILD", "service": "payment-service", "commit": "abc"}}, "SHA"),
+        (
+            {
+                "gold": {
+                    "action": "BUILD",
+                    "service": "payment-service",
+                    "urgency": "HIGH",
+                    "justification": "because I said so",
+                }
+            },
+            "user's words",
+        ),
+        ({"behavior": "CLARIFY"}, "the rules give GENERATE"),
+        ({"needs_review": False}, "cannot claim"),
+        ({"source": "clinc150"}, "source_ref"),
+        ({"text": "x" * 1001}, "1 to 1000"),
+    ],
+)
+def test_a_label_that_breaks_a_rule_is_refused(overrides: dict[str, Any], message: str) -> None:
+    problems = cu.check_item(source_item(**overrides), cu.read_catalog(CATALOG))
+
+    assert any(message in problem for problem in problems), problems
+
+
+def write_source(path: Path, entries: list[dict[str, Any]]) -> Path:
+    source = {"version": 1, "defaults": {"role": "DEVELOPER"}, "categories": {"clear": entries}}
+    path.write_text(yaml.safe_dump(source), encoding="utf-8")
+    return path
+
+
+def test_the_build_refuses_a_repeated_text_and_a_few_shot_example(tmp_path: Path) -> None:
+    entry = {
+        "text": "Build payment-service from main",
+        "gold": {"action": "BUILD", "service": "payment-service", "branch": "main"},
+        "behavior": "GENERATE",
+    }
+    source = write_source(tmp_path / "s.yaml", [{"key": "x001", **entry}, {"key": "x002", **entry}])
+
+    with pytest.raises(cu.CurationError, match="same text as x001") as exc:
+        cu.build(source, CATALOG, example_texts=["build payment-service from MAIN"])
+
+    assert "repeats a few-shot example" in str(exc.value)
+
+
+def test_near_duplicates_in_different_splits_are_refused(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Leakage: tuning on a development item would also tune on its test twin."""
+    monkeypatch.setattr(cu, "NEAR_DUPLICATE", 0.6)
+
+    with pytest.raises(cu.CurationError, match="near-duplicates fall in different splits"):
+        cu.build(V1_SOURCE, CATALOG, example_texts=[])
+
+
+def test_allocation_is_largest_remainder() -> None:
+    # 1.5, 1.5 and 2.0: the one seat left goes to the first of the two tied remainders.
+    assert cu.allocate({"a": 3, "b": 3, "c": 4}, 5) == {"a": 2, "b": 1, "c": 2}
+    assert sum(cu.allocate({"a": 7, "b": 1}, 4).values()) == 4
+
+
+# ---------------------------------------------------------------------------
+# Machine-labelled datasets in the loader and the runner (D-081)
+# ---------------------------------------------------------------------------
+
+
+def write_machine_dataset(
+    path: Path, items: list[dict[str, Any]], *, sha256: str | None = None
+) -> Path:
+    write_dataset(path, items)
+    digest = sha256 or hashlib.sha256(path.read_bytes()).hexdigest()
+    ds.card_path(path).write_text(
+        json.dumps({"name": "m", "labels": "machine", "sha256": digest, "decision": "D-081"}),
+        encoding="utf-8",
+    )
+    return path
+
+
+def machine_item(index: int = 1, **overrides: Any) -> dict[str, Any]:
+    return raw_item(index, **{"labeled_by": ds.MACHINE_LABELER, "needs_review": True, **overrides})
+
+
+def test_machine_labelled_items_need_a_card(tmp_path: Path) -> None:
+    path = write_dataset(tmp_path / "d.jsonl", [machine_item()])
+
+    with pytest.raises(ds.DatasetError, match="needs a card"):
+        ds.load_dataset(path)
+
+
+def test_a_machine_labelled_item_cannot_claim_a_review(tmp_path: Path) -> None:
+    path = write_machine_dataset(tmp_path / "d.jsonl", [machine_item(needs_review=False)])
+
+    with pytest.raises(ds.DatasetError, match="needs_review"):
+        ds.load_dataset(path)
+
+
+def test_a_file_edited_without_rebuilding_is_refused(tmp_path: Path) -> None:
+    path = write_machine_dataset(tmp_path / "d.jsonl", [machine_item()], sha256="0" * 64)
+
+    with pytest.raises(ds.DatasetError, match="checksum"):
+        ds.load_dataset(path)
+
+
+async def test_a_machine_labelled_run_is_reportable_with_its_provenance(
+    tmp_path: Path, catalog: Catalog
+) -> None:
+    path = write_machine_dataset(tmp_path / "d.jsonl", [machine_item()])
+
+    report = await er_run.run(
+        config(tmp_path, path, include_unreviewed=True),
+        ds.load_dataset(path),
+        catalog,
+        log=lambda _: None,
+    )
+
+    assert report["run"]["labels"] == "machine"
+    assert report["run"]["for_reporting"] is True
+    assert "Claude Code" in report["warning"] and "D-081" in report["warning"]
+    assert report["dataset"]["card"]["labels"] == "machine"
+
+
+async def test_split_and_subset_choose_the_items(tmp_path: Path, catalog: Catalog) -> None:
+    path = write_dataset(
+        tmp_path / "d.jsonl",
+        [
+            raw_item(1, split="dev"),
+            raw_item(2, text="Build auth-service from main", split="test"),
+            raw_item(3, text="Build auth-service from develop", split="test", ablation=True),
+        ],
+    )
+    dataset = ds.load_dataset(path)
+
+    test_only = await er_run.run(
+        config(tmp_path, path, split="test"), dataset, catalog, log=lambda _: None
+    )
+    ablation = await er_run.run(
+        config(tmp_path, path, subset="ablation", fresh=True), dataset, catalog, log=lambda _: None
+    )
+
+    assert test_only["metrics"]["n"] == 2
+    assert ablation["metrics"]["n"] == 1
+
+
+@pytest.mark.parametrize(
+    ("split", "subset", "repairs", "name"),
+    [
+        ("test", None, 2, "eval-v1-test__groq-m"),
+        (None, "ablation", 2, "eval-v1-ablation__groq-m"),
+        (None, "ablation", 0, "eval-v1-ablation__groq-m__no-repair"),
+    ],
+)
+def test_a_split_subset_or_repair_budget_gets_its_own_directory(
+    split: str | None, subset: str | None, repairs: int, name: str
+) -> None:
+    out = er_run.default_out_dir(
+        "groq:m",
+        V1,
+        include_examples=True,
+        include_enums=True,
+        split=split,
+        subset=subset,
+        max_repairs=repairs,
+    )
+
+    assert out.name == name
+
+
+# ---------------------------------------------------------------------------
+# Pacing, latency and the disk cache
+# ---------------------------------------------------------------------------
+
+
+class HeaderProvider(LLMProvider):
+    """Answers like Groq: with the minute's remaining tokens in the headers."""
+
+    name = "headers"
+
+    def __init__(self, remaining: int, limit: int = 8000, tokens: int = 1000) -> None:
+        self.remaining, self.limit, self.tokens = remaining, limit, tokens
+
+    async def complete_json(
+        self,
+        *,
+        schema: dict[str, Any],
+        system: str,
+        messages: list[ChatMessage],
+        model: str,
+        reasoning_effort: str = "low",
+    ) -> ParsedResult:
+        return ParsedResult(
+            data={"action": "BUILD"},
+            provider=self.name,
+            model=model,
+            prompt_tokens=self.tokens,
+            completion_tokens=0,
+            latency_ms=7,
+            rate_limit={
+                "x-ratelimit-remaining-tokens": str(self.remaining),
+                "x-ratelimit-limit-tokens": str(self.limit),
+            },
+        )
+
+    def stream_text(self, **_: Any) -> Any:
+        raise NotImplementedError
+
+
+async def test_a_live_call_waits_for_the_tokens_the_minute_has_left(tmp_path: Path) -> None:
+    """A 1,000-token prompt last time, 500 left: the next is admitted against its prompt and its
+    1,024-token completion allowance, plus 5%, so it waits for the shortfall at 8,000 a minute."""
+    now = [1000.0]
+    waits: list[float] = []
+
+    async def fake_sleep(seconds: float) -> None:
+        waits.append(seconds)
+        now[0] += seconds
+
+    cached = er_run.CachedLiveProvider(
+        HeaderProvider(remaining=500), tmp_path, clock=lambda: now[0], sleep=fake_sleep
+    )
+    await cached.complete_json(
+        schema={}, system="a", messages=[ChatMessage("user", "a")], model="m"
+    )
+    await cached.complete_json(
+        schema={}, system="b", messages=[ChatMessage("user", "b")], model="m"
+    )
+
+    needed = (1000 + er_run.MAX_COMPLETION_TOKENS) * er_run.TOKEN_MARGIN
+    assert waits == [pytest.approx((needed - 500) * 60 / 8000)]
+
+
+async def test_a_per_minute_429_is_waited_out_and_a_daily_one_is_not(tmp_path: Path) -> None:
+    """A minute's limit clears in seconds; the day's must stop the run (4.9)."""
+    waits: list[float] = []
+
+    async def fake_sleep(seconds: float) -> None:
+        waits.append(seconds)
+
+    minute = RateLimitedError("tpm", retry_after=3.0)
+    live = FakeProvider(script=[minute, {"action": "BUILD"}])
+    cached = er_run.CachedLiveProvider(live, tmp_path, per_minute=10**9, sleep=fake_sleep)
+
+    answer = await cached.complete_json(
+        schema={}, system="s", messages=[ChatMessage("user", "a")], model="m"
+    )
+    assert answer.data == {"action": "BUILD"}
+    assert cached.transient_waits == 1
+    assert 3.0 in waits
+
+    daily = RateLimitedError("tpd", retry_after=40_000, exhausted=True)
+    spent = er_run.CachedLiveProvider(
+        FakeProvider(script=[daily]), tmp_path / "b", per_minute=10**9, sleep=fake_sleep
+    )
+    with pytest.raises(RateLimitedError):
+        await spent.complete_json(
+            schema={}, system="s", messages=[ChatMessage("user", "b")], model="m"
+        )
+    assert spent.transient_waits == 0
+
+
+async def test_a_429_asking_for_seconds_is_waited_out_though_called_exhausted(
+    tmp_path: Path,
+) -> None:
+    """Groq's provider calls a wait over 20 s exhaustion, for a user's sake; the eval waits it out.
+    Seen live on 2026-10-25: qwen3.8-27b asked for 27 s and stopped a run for a "daily budget"."""
+    waits: list[float] = []
+
+    async def fake_sleep(seconds: float) -> None:
+        waits.append(seconds)
+
+    short = RateLimitedError("tpm", retry_after=27.0, exhausted=True)
+    cached = er_run.CachedLiveProvider(
+        FakeProvider(script=[short, {"action": "BUILD"}]),
+        tmp_path,
+        per_minute=10**9,
+        sleep=fake_sleep,
+    )
+
+    answer = await cached.complete_json(
+        schema={}, system="s", messages=[ChatMessage("user", "a")], model="m"
+    )
+
+    assert answer.data == {"action": "BUILD"}
+    assert 27.0 in waits
+
+
+async def test_cached_answers_spend_no_quota_and_are_marked_cached(
+    tmp_path: Path, catalog: Catalog
+) -> None:
+    """The backend's tracker would count a replay against the day; here the server judges."""
+    path = write_dataset(
+        tmp_path / "d.jsonl",
+        [
+            raw_item(index, text=f"Build payment-service from main, take {index}")
+            for index in range(5)
+        ],
+    )
+    # Far over 4.5.1's per-minute and per-day token limits if they were counted locally.
+    huge = FakeProvider(
+        responder=lambda s, m, sc, mo: Intent(
+            action=Action.BUILD, service="payment-service"
+        ).to_card(),
+        prompt_tokens=90_000,
+    )
+    live = er_run.CachedLiveProvider(huge, tmp_path / "cache", per_minute=10**9)
+
+    first = await er_run.run(
+        config(tmp_path, path, parser="groq:m", plans=False),
+        ds.load_dataset(path),
+        catalog,
+        provider=live,
+        log=lambda _: None,
+    )
+    again = er_run.CachedLiveProvider(huge, tmp_path / "cache", per_minute=10**9)
+    second = await er_run.run(
+        config(tmp_path, path, parser="groq:m", plans=False, fresh=True),
+        ds.load_dataset(path),
+        catalog,
+        provider=again,
+        log=lambda _: None,
+    )
+
+    assert first["run"]["complete"] and first["metrics"]["errors"] == 0
+    assert second["run"]["complete"] and again.live_calls == 0
+    assert second["metrics"]["cache_hits"] == 5
+    assert second["metrics"]["latency_ms"]["median"] is None
+
+
+async def test_latency_is_the_answering_calls_and_waits_are_elapsed(
+    tmp_path: Path, catalog: Catalog
+) -> None:
+    path = write_dataset(tmp_path / "d.jsonl", [raw_item(1)])
+
+    await er_run.run(
+        config(tmp_path, path, parser="groq:m", plans=False),
+        ds.load_dataset(path),
+        catalog,
+        provider=FakeProvider(per_model={"m": [Intent(action=Action.BUILD).to_card()]}),
+        log=lambda _: None,
+    )
+
+    saved = json.loads((tmp_path / "out" / "predictions.jsonl").read_text(encoding="utf-8"))
+    assert saved["latency_ms"] == 1  # FakeProvider's own latency
+    assert saved["elapsed_ms"] >= 0
+    assert [call["outcome"] for call in saved["calls"]] == ["ok"]
+
+
+# ---------------------------------------------------------------------------
+# Plan validity (4.9)
+# ---------------------------------------------------------------------------
+
+
+def good_plan(catalog: Catalog) -> dict[str, Any]:
+    service = catalog.get("payment-service")
+    assert service is not None
+    intent = Intent(action=Action.BUILD, service="payment-service", branch="main")
+    return default_plan(intent, service).model_dump(mode="json")
+
+
+async def test_plan_validity_before_and_after_repair(tmp_path: Path, catalog: Catalog) -> None:
+    path = write_dataset(tmp_path / "d.jsonl", [raw_item(1)])
+    card = Intent(action=Action.BUILD, service="payment-service", branch="main").to_card()
+    provider = FakeProvider(per_model={"m": [card, {"stages": []}, good_plan(catalog)]})
+
+    report = await er_run.run(
+        config(tmp_path, path, parser="groq:m"),
+        ds.load_dataset(path),
+        catalog,
+        provider=provider,
+        log=lambda _: None,
+    )
+
+    plans = report["plans"]
+    assert (plans["n"], plans["valid_before_repair"], plans["valid_after_repair"]) == (1, 0.0, 1.0)
+    assert plans["repaired"] == 1
+
+
+async def test_no_repair_loop_keeps_the_first_plan(tmp_path: Path, catalog: Catalog) -> None:
+    """4.9's ablation: with no repair, an invalid first plan stays invalid."""
+    path = write_dataset(tmp_path / "d.jsonl", [raw_item(1)])
+    card = Intent(action=Action.BUILD, service="payment-service", branch="main").to_card()
+    provider = FakeProvider(per_model={"m": [card, {"stages": []}, good_plan(catalog)]})
+
+    report = await er_run.run(
+        config(tmp_path, path, parser="groq:m", max_repairs=0),
+        ds.load_dataset(path),
+        catalog,
+        provider=provider,
+        log=lambda _: None,
+    )
+
+    assert (report["plans"]["valid_before_repair"], report["plans"]["valid_after_repair"]) == (
+        0.0,
+        0.0,
+    )
+    assert provider.calls_to("m") == 2  # the parse and one plan, no repair
+
+
+async def test_a_budget_stop_while_planning_saves_the_parse(
+    tmp_path: Path, catalog: Catalog
+) -> None:
+    path = write_dataset(tmp_path / "d.jsonl", [raw_item(1)])
+    card = Intent(action=Action.BUILD, service="payment-service", branch="main").to_card()
+    daily = RateLimitedError("daily", retry_after=40_000, exhausted=True)
+    provider = FakeProvider(per_model={"m": [card, daily]})
+
+    report = await er_run.run(
+        config(tmp_path, path, parser="groq:m"),
+        ds.load_dataset(path),
+        catalog,
+        provider=provider,
+        log=lambda _: None,
+    )
+
+    assert report["run"]["complete"] is False
+    assert "stopped planning" in report["run"]["stopped_reason"]
+    assert report["metrics"]["n"] == 1
+    assert report["plans"]["planned"] == 0
+
+
+def test_score_plans_counts_what_no_model_answered_apart() -> None:
+    records = [
+        {"valid_before_repair": True, "valid_after_repair": True, "request": {"a": 1}},
+        {"valid_before_repair": False, "valid_after_repair": True, "request": {"a": 1}},
+        {"valid_before_repair": False, "valid_after_repair": False, "request": {"a": 2}},
+        {"valid_before_repair": None, "valid_after_repair": None},
+        {"error": "the spec could not be built"},
+    ]
+
+    result = em.score_plans(records, plannable_items=6)
+
+    assert (result["n"], result["valid_before_repair"], result["valid_after_repair"]) == (
+        3,
+        0.3333,
+        0.6667,
+    )
+    assert (result["no_model_plan"], result["errors"], result["distinct_requests"]) == (1, 1, 2)
+
+
+# ---------------------------------------------------------------------------
+# The report and the Analytics page
+# ---------------------------------------------------------------------------
+
+
+def a_run(name: str, parser: str, **meta: Any) -> dict[str, Any]:
+    fields: dict[str, Any] = {
+        "parser": parser,
+        "for_reporting": True,
+        "labels": "machine",
+        "split": "test",
+        "subset": None,
+        "include_examples": True,
+        "include_enums": True,
+        "max_repairs": 2,
+        "complete": True,
+    }
+    fields.update(meta)
+    plans = (
+        em.score_plans(
+            [{"valid_before_repair": True, "valid_after_repair": True, "request": {}}],
+            plannable_items=1,
+        )
+        if parser != "rules"
+        else None
+    )
+    return {"name": name, "run": fields, "metrics": em.score([prediction()]), "plans": plans}
+
+
+def report_runs() -> list[dict[str, Any]]:
+    return [
+        a_run("eval-v1-test__groq-m", "groq:m"),
+        a_run("eval-v1-test__rules", "rules"),
+        a_run("eval-v1-ablation__groq-m", "groq:m", split=None, subset="ablation"),
+        a_run(
+            "eval-v1-ablation__groq-m__no-enums",
+            "groq:m",
+            split=None,
+            subset="ablation",
+            include_enums=False,
+        ),
+        a_run("eval-v1-ablation__rules", "rules", split=None, subset="ablation"),
+        {
+            "name": "eval-v1-e2e__groq-m",
+            "run": {"kind": "e2e", "model": "m", "for_reporting": True, "labels": "machine"},
+            "summary": {
+                "n": 2,
+                "expected": 2,
+                "succeeded": 1,
+                "success_rate": 0.5,
+                "failed_at": {"ran": 1},
+                "by_assistant": {"freestyle": {"n": 1, "succeeded": 1}},
+            },
+        },
+    ]
+
+
+def test_the_report_puts_the_provenance_above_machine_labelled_figures() -> None:
+    markdown = er.render_markdown(report_runs())
+
+    assert markdown.index("**Provenance.**") < markdown.index("## Comparison on the test split")
+    assert "Claude Code" in markdown and "D-081" in markdown
+    # The rule baseline is tabled first, then the models.
+    comparison = markdown.split("## Comparison on the test split")[1]
+    assert comparison.index("| rules |") < comparison.index("| groq:m |")
+    assert "| no catalog enums |" in markdown
+    assert "## End to end against jenkins-dev" in markdown
+
+
+def test_the_report_is_exactly_what_the_analytics_endpoint_serves() -> None:
+    """A contract test: the generator's JSON must validate against the page's schema."""
+    from app.api.analytics import EvaluationResponse
+
+    report = json.loads(json.dumps(er.build_report(report_runs())))
+    served = EvaluationResponse.model_validate({**report, "available": True, "detail": None})
+
+    assert [row.parser for row in served.comparison] == ["rules", "groq:m"]
+    assert served.ablations is not None and served.ablations.parser == "groq:m"
+    assert [row.configuration for row in served.ablations.rows] == ["full", "no-enums"]
+    assert served.e2e[0].failed_at == {"ran": 1}
+    assert served.provenance is not None and served.provenance.labels == "machine"
+
+
+def test_an_incomplete_run_is_tabled_as_incomplete() -> None:
+    markdown = er.render_markdown([a_run("eval-v1-test__groq-m", "groq:m", complete=False)])
+
+    assert "| groq:m (incomplete) |" in markdown
+
+
+@pytest.mark.parametrize("checksum", ["frozen", "changed"])
+def test_archived_reports_use_the_frozen_card_and_reject_a_changed_checksum(
+    tmp_path: Path, checksum: str
+) -> None:
+    runs = tmp_path / "runs"
+    saved = runs / "model-test"
+    saved.mkdir(parents=True)
+    run = a_run("model-test", "groq:m", dataset="eval\\datasets\\eval-v1.jsonl")
+    run["dataset"] = {"card": {"sha256": "frozen"}}
+    (saved / "metrics.json").write_text(json.dumps(run), encoding="utf-8")
+    dataset = tmp_path / "dataset"
+    dataset.mkdir()
+    (dataset / "eval-v1.card.json").write_text(
+        json.dumps({"name": "frozen-evaluation", "sha256": checksum}), encoding="utf-8"
+    )
+
+    if checksum == "changed":
+        with pytest.raises(ValueError, match="checksum disagrees"):
+            er.write_report(runs, tmp_path / "report")
+    else:
+        path, _ = er.write_report(runs, tmp_path / "report")
+        report = json.loads(path.read_text(encoding="utf-8"))
+        assert report["dataset"]["name"] == "frozen-evaluation"
