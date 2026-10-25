@@ -70,8 +70,9 @@ class E2EConfig:
 
     @property
     def out_dir(self) -> Path:
+        # Not "-e2e": that is the parse-only run over the same sample (`--subset e2e`).
         slug = re.sub(r"[^A-Za-z0-9.]+", "-", self.parser).strip("-")
-        return RESULTS_DIR / f"{self.dataset.stem}-e2e__{slug}"
+        return RESULTS_DIR / f"{self.dataset.stem}-end-to-end__{slug}"
 
 
 def expected_templates(gold: dict[str, Any]) -> set[str]:
@@ -333,7 +334,7 @@ async def run_e2e(config: E2EConfig, *, groq_key: str | None) -> dict[str, Any]:
             "kind": "e2e",
             "parser": config.parser,
             "model": config.model,
-            "dataset": str(config.dataset.relative_to(REPO_ROOT)),
+            "dataset": config.dataset.relative_to(REPO_ROOT).as_posix(),
             "finished_at": datetime.now(UTC).isoformat(),
             "complete": stopped is None and len(records) == len(items),
             "stopped_reason": stopped,
@@ -341,7 +342,7 @@ async def run_e2e(config: E2EConfig, *, groq_key: str | None) -> dict[str, Any]:
             "for_reporting": True,
         },
         "summary": summarise(records, len(items)),
-        "path": str((config.out_dir / "metrics.json").relative_to(REPO_ROOT)),
+        "path": (config.out_dir / "metrics.json").relative_to(REPO_ROOT).as_posix(),
     }
     (config.out_dir / "metrics.json").write_text(
         json.dumps(report, indent=2) + "\n", encoding="utf-8"

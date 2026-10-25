@@ -145,7 +145,13 @@ def main(argv: list[str] | None = None) -> int:
         "--fresh", action="store_true", help="discard saved progress and start over"
     )
 
-    commands.add_parser("report", help="write report.json and report.md from finished runs")
+    report_cmd = commands.add_parser(
+        "report", help="write report.json and report.md from finished runs"
+    )
+    report_cmd.add_argument(
+        "--results", type=Path, help="the runs to report (default: eval/results)"
+    )
+    report_cmd.add_argument("--out", type=Path, help="where to write (default: the results folder)")
 
     args = parser.parse_args(argv)
 
@@ -157,8 +163,13 @@ def main(argv: list[str] | None = None) -> int:
             return _check(args.file)
 
         if args.command == "report":
-            json_path, md_path = write_report()
-            print(f"wrote {json_path.relative_to(REPO_ROOT)} and {md_path.relative_to(REPO_ROOT)}")
+            if args.results is not None:
+                json_path, md_path = write_report(
+                    args.results.resolve(), args.out and args.out.resolve()
+                )
+            else:
+                json_path, md_path = write_report(out_dir=args.out and args.out.resolve())
+            print(f"wrote {json_path} and {md_path}")
             return 0
 
         if args.command == "e2e":

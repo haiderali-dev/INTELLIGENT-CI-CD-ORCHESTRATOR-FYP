@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.admin import ROLE_ORDER
 from app.core.security import hash_password
+from app.core.settings import Settings
 from app.db.models import (
     AuditLog,
     Experiment,
@@ -109,6 +110,7 @@ async def make_run(
         ("get", "/api/services"),
         ("get", "/api/analytics/runs"),
         ("get", "/api/analytics/experiments"),
+        ("get", "/api/analytics/evaluation"),
         ("get", "/api/admin/users"),
         ("get", "/api/admin/audit"),
         ("get", "/api/admin/policy"),
@@ -691,6 +693,95 @@ async def test_experiments_can_be_filtered_by_mode(client: AsyncClient, db: Asyn
 
     assert body["total"] == 1
     assert body["items"][0]["label"] == "b"
+
+
+EVALUATION_ROW = {
+    "run": "eval-v1-test__rules",
+    "parser": "rules",
+    "complete": True,
+    "labels": "machine",
+    "n": 150,
+    "errors": 0,
+    "action_accuracy": 0.8333,
+    "exact_match": 0.5,
+    "behavior_accuracy": 0.8533,
+    "clarification_precision": 0.7,
+    "clarification_recall": None,
+    "refusal_rate": 1.0,
+    "latency_p50_ms": 2,
+    "latency_p95_ms": 5,
+    "tokens_per_command": 0.0,
+    "per_field_accuracy": {"action": 0.8333},
+    "behavior_by_category": {"clear": 0.95},
+}
+
+
+async def test_the_evaluation_is_unavailable_until_a_report_exists(
+    client: AsyncClient, db: AsyncSession, settings: Settings, tmp_path: Path
+) -> None:
+    """No report is "not available, and why", never an empty table that reads as zeros."""
+    settings.evaluation_report_path = tmp_path / "report.json"
+    token = await token_for(client, db)
+
+    body = (await client.get("/api/analytics/evaluation", headers=auth(token))).json()
+
+    assert body["available"] is False
+    assert "python -m eval report" in body["detail"]
+    assert body["comparison"] == []
+
+
+async def test_the_evaluation_report_is_served_as_written(
+    client: AsyncClient, db: AsyncSession, settings: Settings, tmp_path: Path
+) -> None:
+    report = tmp_path / "report.json"
+    report.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-10-25T10:00:00+00:00",
+                "provenance": {"labels": "machine", "statement": "Labels written by Claude Code."},
+                "dataset": None,
+                "comparison": [EVALUATION_ROW],
+                "plans": [],
+                "ablations": None,
+                "e2e": [],
+                "runs": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    settings.evaluation_report_path = report
+    token = await token_for(client, db)
+
+    body = (await client.get("/api/analytics/evaluation", headers=auth(token))).json()
+
+    assert body["available"] is True
+    assert body["provenance"]["labels"] == "machine"
+    assert body["comparison"][0]["action_accuracy"] == 0.8333
+    assert body["comparison"][0]["clarification_recall"] is None
+
+
+async def test_a_report_that_breaks_its_schema_is_not_served(
+    client: AsyncClient, db: AsyncSession, settings: Settings, tmp_path: Path
+) -> None:
+    report = tmp_path / "report.json"
+    broken = {
+        "generated_at": None,
+        "provenance": None,
+        "dataset": None,
+        "comparison": [{"run": "x"}],
+        "plans": [],
+        "ablations": None,
+        "e2e": [],
+        "runs": [],
+    }
+    report.write_text(json.dumps(broken), encoding="utf-8")
+    settings.evaluation_report_path = report
+    token = await token_for(client, db)
+
+    body = (await client.get("/api/analytics/evaluation", headers=auth(token))).json()
+
+    assert body["available"] is False
+    assert "does not match its schema at comparison.0" in body["detail"]
 
 
 # ---------------------------------------------------------------------------

@@ -182,6 +182,12 @@ services:
     volumes:
       # The catalog is the source of truth for service definitions and is read at runtime.
       - ./catalog:/app/catalog:ro
+      # The chatbot evaluation's report, for the Analytics page (T8.2). Read-only: the backend
+      # serves it as `python -m eval report` wrote it.
+      - ./eval/results:/app/eval/results:ro
+      # The replay fixtures, so LLM_MODE=replay (the demo, docs/demo-script.md) always answers
+      # from the repository's fixtures rather than the copy baked in at the last image build.
+      - ./backend/app/ai/fixtures:/app/app/ai/fixtures:ro
     ports:
       - "127.0.0.1:8000:8000"
     healthcheck:

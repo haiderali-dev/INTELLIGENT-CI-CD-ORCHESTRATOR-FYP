@@ -6,6 +6,9 @@
 *.pem
 *.key
 !jenkins/casc/*.key.example
+# Demo snapshots (scripts/demo_reset.py): a database dump with password hashes, and a Jenkins home
+# with its secrets and credentials.
+.demo/
 
 # --- Scratch ---
 .tmp/

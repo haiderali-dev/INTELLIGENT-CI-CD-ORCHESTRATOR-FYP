@@ -2489,12 +2489,95 @@ Built on `phase-8-evaluation`, branched from `main` at `0937f9e` (2026-10-24).
         - `ruff check`, `ruff format --check` and `mypy --strict` on `eval/`: clean;
         - `python -m eval build`: 250 items, checksum `31559fed…`.
       - **Not done yet:** the live runs, the ablations and the end-to-end sample.
-- [ ] T8.2 Evaluation report generator for the Analytics page and the report.
-- [ ] T8.3 `scripts/report/appendix_c.py` and `scripts/report/versions.py`.
-- [ ] T8.4 `docs/report-updates.md` completed with every required change (Part 4.10).
-- [ ] T8.5 `scripts/demo_reset.py` snapshot and restore; `LLM_MODE=replay` demo fixtures;
-      `docs/demo-script.md`.
-- [ ] T8.6 Phase 8 checks in `verify.py`.
+- [x] T8.2 Evaluation report generator for the Analytics page and the report. Evidence, run on
+      2026-10-25:
+      - **`python -m eval report`** (`eval/report.py`) writes `report.json` and `report.md` from
+        one function, so the page and Chapter 12 cannot disagree.
+        - **Its sections follow 4.9:** the comparison on the test split, per field and by
+          category, plan validity, the ablations, and end to end.
+        - **Provenance:** the machine-labelled provenance (D-081) is printed above every table.
+        - **What is not tabled:** an incomplete run is marked incomplete, and an unreviewed draft
+          run is never tabled.
+        - **New options:** `--results` and `--out`, to regenerate an archived report.
+      - **`GET /api/analytics/evaluation`** serves the file as written, through every-field-required
+        models, so the generated client types are exact. A missing or malformed file is "not
+        available" with the reason, never an empty table. Compose mounts `eval/results` read-only.
+      - **The Analytics page's Chatbot evaluation section** replaces the placeholder:
+        - the provenance note comes before any figure;
+        - then the comparison, plan validity, ablation and end-to-end tables, to one decimal, with
+          "Not measured" for nulls.
+        - **Its fixture** (`src/test/fixtures/evaluation.ts`) is a captured response from the
+          endpoint.
+        - **The browser backend** serves the archived report, so screenshots are the same on every
+          machine.
+      - **Checks:**
+        - backend: `pytest tests/test_eval.py` 93 passed, including a contract test that the
+          generator's JSON validates against the endpoint's schema; the endpoint's three tests in
+          `test_routers.py`; the offline suite 1784 passed; `ruff`, `ruff format` and `mypy app`
+          clean;
+        - frontend: `AnalyticsPage.test.tsx` 8 passed; the whole Vitest suite 298 passed in 36
+          files; `npm run lint` and `npm run typecheck` clean; `openapi.json` and `schema.d.ts`
+          regenerated.
+- [x] T8.3 `scripts/report/appendix_c.py` and `scripts/report/versions.py`. Evidence, run on
+      2026-10-25:
+      - **`appendix_c.py --build`** runs the plugin's new `AppendixCExportTest`, which scores
+        `AppendixCFixture` with the plugin's own `PriorityScoreCalculator` and writes
+        `plugin/target/appendix-c.json`. It then prints Table 13.2 from that file, with both the
+        own and the effective score: 0.667, 0.650, 0.633 (0.650 after inheritance) and 0.300, in
+        the report's dispatch order. No Python copy of the formula exists. An export older than
+        the fixture or the calculator is refused.
+      - **`versions.py`** regenerates a section of `docs/versions.md` from the build files:
+        - **What it reads:** `pom.xml`, `plugins.txt`, `pyproject.toml` with `uv.lock`,
+          `package.json`, the Dockerfiles, Compose and the backend's settings. It finds 108 pins.
+        - **`--check`** also fails when a hand-written table disagrees with the build. Its first
+          run caught `java.level` 21 in the hand table, where `plugin/pom.xml` leaves the parent's
+          17 on purpose; the table is corrected.
+        - **`--appendix-e`** prints the report's Appendix E.
+      - **Checks:**
+        - `mvn -o -Dtest=AppendixCExportTest,AppendixCExampleTest test`: passed;
+        - verify.py's checks "appendix_c.py prints the scores the plugin computes on
+          AppendixCExampleTest's fixture" and "docs/versions.md is regenerated from the build files,
+          and its tables agree with them": PASS.
+- [x] T8.4 `docs/report-updates.md` completed with every required change (Part 4.10). Evidence, run
+      on 2026-10-25:
+      - **Added:**
+        - Chapter 12's replacement, with its generated tables and the experiment's findings as
+          the evidence gives them;
+        - the chatbot evaluation section, with its provenance statement and the datasets'
+          attribution;
+        - Appendix C and Appendix E from their generators.
+      - **Limitations:** the machine labels, the free-tier limits, and the dependency gate's
+        unrequested-upstream limit.
+      - **The rest:** the Phase 8 part of the AI-assisted-development disclosure; Chapter 8's two
+        stale passages; Chapter 6's definitions of D and T as the plugin computes them; and the
+        scripted demo.
+      - **Check:** a grep for each item Part 4.10 names found every one. The 55 items stay open
+        until the report itself is edited: its Word source was not supplied.
+- [x] T8.5 `scripts/demo_reset.py` snapshot and restore; `LLM_MODE=replay` demo fixtures;
+      `docs/demo-script.md`. Evidence, run on 2026-10-25:
+      - **`demo_reset.py snapshot`** dumps the database and archives `jenkins-dev`'s home (stopped
+        for the archive, `war/` left out), with a manifest of checksums, jobs and row counts.
+      - **`restore --yes`** checks the snapshot against its manifest before changing anything. It
+        restores the database in one transaction, replaces the home's contents (never the volume),
+        restarts both, and checks the jobs and row counts. Snapshots go to `.demo/`, which is
+        git-ignored (password hashes and Jenkins' secrets).
+      - **`docs/demo-script.md`:** ten steps across both assistants and three roles. Their
+        messages are T5.8's commands, so the fixtures recorded for T5.8, which Phase 5's gate
+        replays, cover them. Compose mounts `backend/app/ai/fixtures` read-only, so replay mode
+        always uses the repository's fixtures.
+      - **`tests/test_demo_script.py`** reads the script's table from the document and replays
+        every step through the real stack. Every parse and plan must come from a fixture. Steps
+        that approve run on `jenkins-dev`, as the later steps need: the last deploy's status, the
+        failed tests to rerun, and Explain failure.
+      - **Checks:**
+        - `E2E_LLM=replay pytest -m e2e tests/test_demo_script.py`: 2 passed, in 356 s;
+        - verify.py's "the demo reset restores a known state": PASS in 46 s. A snapshot, a marker
+          job and a marker row, a restore: both markers gone; 30 jobs and 632 rows, as the
+          snapshot had them.
+- [ ] T8.6 Phase 8 checks in `verify.py`. Seven checks written: the dataset rebuilds from its
+      source, the evaluation tests, the report regenerates from the archived runs, Appendix C,
+      versions, the demo reset, and the demo script. Six pass when run on their own (2026-10-25).
+      The report check waits for the archive of the finished evaluation.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not

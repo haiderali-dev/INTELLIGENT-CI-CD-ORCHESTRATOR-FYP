@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { json, noAnswer, type FakeBackend } from "@/test/backend";
 import { FakeSocket } from "@/test/fakeSocket";
+import { evaluation, evaluationUnavailable } from "@/test/fixtures/evaluation";
 import * as captured from "@/test/fixtures/pages";
 import { renderRoutes } from "@/test/renderRoutes";
 import { disposeSessions, neverAnswers, signedIn } from "@/test/signedIn";
@@ -19,7 +20,10 @@ function analytics(backend: FakeBackend, populated = true): FakeBackend {
     .on("GET /api/analytics/experiments", () =>
       json(200, populated ? captured.experiments : captured.experimentsEmpty),
     )
-    .on("GET /api/analytics/experiments/:id", () => json(200, captured.experimentDetail));
+    .on("GET /api/analytics/experiments/:id", () => json(200, captured.experimentDetail))
+    .on("GET /api/analytics/evaluation", () =>
+      json(200, populated ? evaluation : evaluationUnavailable),
+    );
 }
 
 const runsSection = () => screen.getByRole("region", { name: "Runs" });
@@ -91,21 +95,60 @@ describe("analytics", () => {
     ).toEqual(["mean_waitHIGH12.5 s, sd 1.59"]);
   });
 
-  it("says the chatbot evaluation has nothing to show, rather than inventing it", async () => {
+  it("says who wrote the evaluation's answers before any of its figures", async () => {
     const { backend, session } = await signedIn();
     renderRoutes("/analytics", session, analytics(backend));
 
-    const evaluation = await screen.findByRole("region", { name: "Chatbot evaluation" });
-    expect(evaluation).toHaveTextContent(
-      "No evaluation results can be shown yet. The evaluation runner writes them, and the backend does not serve them to this page so far.",
-    );
+    const section = await screen.findByRole("region", { name: "Chatbot evaluation" });
+    const note = await within(section).findByRole("note");
+    expect(note).toHaveTextContent("Who wrote the answers:");
+    expect(note).toHaveTextContent("Claude Code");
+    expect(note).toHaveTextContent("D-081");
+    const table = within(section).getByRole("table", { name: "Parsers compared on the test split" });
+    // The note comes first in the page's reading order, before the first figure.
+    expect(note.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(section).getByText(/Reviewed by a person: 0\./)).toBeInTheDocument();
+  });
+
+  it("tables each parser on the test split, to one decimal, and not measured for no latency", async () => {
+    const { backend, session } = await signedIn();
+    renderRoutes("/analytics", session, analytics(backend));
+
+    const table = await screen.findByRole("table", { name: "Parsers compared on the test split" });
+    const [row] = within(table).getAllByRole("row").slice(1);
+    if (!row) {
+      throw new Error("no parser row");
+    }
+    expect(within(row).getByRole("rowheader")).toHaveTextContent("Rule baseline");
+    expect(within(row).getAllByRole("cell").map((cell) => cell.textContent)).toEqual([
+      "150",
+      "83.3%",
+      "72.7%",
+      "85.3%",
+      "80.6%, 87.9%",
+      "100.0%",
+      "0 ms, 0 ms",
+      "0",
+    ]);
+  });
+
+  it("says why the evaluation cannot be shown, rather than an empty table", async () => {
+    const { backend, session } = await signedIn();
+    renderRoutes("/analytics", session, analytics(backend, false));
+
+    const section = await screen.findByRole("region", { name: "Chatbot evaluation" });
+    expect(
+      await within(section).findByText(/No evaluation report has been generated yet\./),
+    ).toHaveTextContent("python -m eval report");
+    expect(within(section).queryByRole("table")).toBeNull();
   });
 
   it("says each part is loading, and what failed", async () => {
     const { backend, session } = await signedIn();
     backend
       .on("GET /api/analytics/runs", neverAnswers)
-      .on("GET /api/analytics/experiments", noAnswer);
+      .on("GET /api/analytics/experiments", noAnswer)
+      .on("GET /api/analytics/evaluation", neverAnswers);
     renderRoutes("/analytics", session, backend);
 
     expect(await screen.findByText("Loading the run statistics")).toBeInTheDocument();

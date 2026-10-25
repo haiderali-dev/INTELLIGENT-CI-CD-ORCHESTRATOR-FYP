@@ -58,10 +58,12 @@ from app.ai.providers import (
     GroqProvider,
     LLMProvider,
     ParsedResult,
+    RateLimitedError,
     RecordingProvider,
     ReplayMissError,
     ReplayProvider,
 )
+from app.ai.providers.groq import MAX_COMPLETION_TOKENS
 from app.ai.quota import ModelLimits, QuotaTracker
 from app.ai.rules import RuleBasedParser
 from app.ai.validator import IntentValidator
@@ -96,8 +98,14 @@ UNREACHABLE: Final = ModelLimits(
 # "no requests remaining today"; "rate limited" covers a 429 the chain could not wait out.
 _QUOTA_REASON: Final = re.compile(r"rate limited|daily|limit|remaining|quota")
 
-# The next live call is assumed to cost this much more than the last one did.
-TOKEN_MARGIN: Final = 1.25
+# A little room over the next call's admission cost (its prompt and completion allowance).
+TOKEN_MARGIN: Final = 1.05
+
+# A per-minute 429 (not exhausted) is waited out here, this many times, rather than surfacing to
+# the chain, whose retries are seconds apart and would stop the run for a limit that clears in a
+# minute. A daily limit is never retried here: it stops the run, as 4.9 asks.
+TRANSIENT_RETRIES: Final = 8
+TRANSIENT_WAIT: Final = 10.0
 
 SUBSETS: Final = ("ablation", "e2e")
 
@@ -160,12 +168,14 @@ class CachedLiveProvider(LLMProvider):
         self._clock = clock
         self._sleep = sleep
         self._last_cost = 0
+        self._last_prompt = 0
         self._tokens_left: int | None = None
         self._tokens_limit: int | None = None
         self._tokens_seen_at = 0.0
         self.name = live.name
         self.live_calls = 0
         self.cache_hits = 0
+        self.transient_waits = 0
 
     async def complete_json(
         self,
@@ -185,36 +195,48 @@ class CachedLiveProvider(LLMProvider):
         else:
             self.cache_hits += 1
             return cached
-        wait = max(self._interval - (self._clock() - self._last_live), self._token_wait())
-        if wait > 0:
-            await self._sleep(wait)
-        self._last_live = self._clock()
-        self.live_calls += 1
-        result = await self._recorder.complete_json(
-            schema=schema,
-            system=system,
-            messages=messages,
-            model=model,
-            reasoning_effort=reasoning_effort,
-        )
-        self._observe(result)
-        return result
+        for attempt in range(TRANSIENT_RETRIES + 1):
+            wait = max(self._interval - (self._clock() - self._last_live), self._token_wait())
+            if wait > 0:
+                await self._sleep(wait)
+            self._last_live = self._clock()
+            self.live_calls += 1
+            try:
+                result = await self._recorder.complete_json(
+                    schema=schema,
+                    system=system,
+                    messages=messages,
+                    model=model,
+                    reasoning_effort=reasoning_effort,
+                )
+            except RateLimitedError as exc:
+                if exc.exhausted or attempt == TRANSIENT_RETRIES:
+                    raise
+                self.transient_waits += 1
+                await self._sleep(exc.retry_after or TRANSIENT_WAIT)
+                continue
+            self._observe(result)
+            return result
+        raise AssertionError("unreachable: the last attempt returns or raises")
 
     def _token_wait(self) -> float:
         """Seconds until the minute's bucket holds the next call, from the last call's headers.
 
         Groq refills tokens continuously at the per-minute limit; the headers give what was left
-        and the limit, so the wait is the shortfall at that rate.
+        and the limit, so the wait is the shortfall at that rate. A request is admitted against
+        its prompt *and* its whole completion allowance (seen live, 2026-10-25: a 65-token call
+        took 567 from the bucket with a 512 allowance), so that is what the next call needs.
         """
         if self._tokens_left is None or not self._tokens_limit or not self._last_cost:
             return 0.0
-        needed = self._last_cost * TOKEN_MARGIN
+        needed = (self._last_prompt + MAX_COMPLETION_TOKENS) * TOKEN_MARGIN
         refilled = (self._clock() - self._tokens_seen_at) * self._tokens_limit / 60.0
         shortfall = needed - (self._tokens_left + refilled)
         return max(0.0, shortfall * 60.0 / self._tokens_limit)
 
     def _observe(self, result: ParsedResult) -> None:
         self._last_cost = result.prompt_tokens + result.completion_tokens
+        self._last_prompt = result.prompt_tokens
         left = _header_int(result.rate_limit.get("x-ratelimit-remaining-tokens"))
         limit = _header_int(result.rate_limit.get("x-ratelimit-limit-tokens"))
         if left is not None and limit:
@@ -545,7 +567,10 @@ def select_items(dataset: Dataset, config: RunConfig) -> list[Item]:
 
 
 def _relative(path: Path) -> str:
-    return str(path.relative_to(REPO_ROOT)) if path.is_relative_to(REPO_ROOT) else str(path)
+    """Forward slashes, so a metrics file written on Windows still resolves on Linux CI."""
+    if path.is_relative_to(REPO_ROOT):
+        return path.relative_to(REPO_ROOT).as_posix()
+    return path.as_posix()
 
 
 async def run(
@@ -631,6 +656,8 @@ async def run(
             "include_examples": config.include_examples,
             "include_enums": config.include_enums,
             "max_repairs": config.max_repairs,
+            # Per-minute 429s waited out in this process (CachedLiveProvider); none are scored.
+            "rate_limit_waits": getattr(harness.live, "transient_waits", None),
             "finished_at": datetime.now(UTC).isoformat(),
             "complete": stopped is None,
             "stopped_reason": stopped,

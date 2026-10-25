@@ -76,6 +76,8 @@ class Settings(BaseSettings):
 
     # --- Application ----------------------------------------------------------
     catalog_path: Path = Path("catalog/services.yaml")
+    # What `python -m eval report` writes; the Analytics page reads it (T8.2).
+    evaluation_report_path: Path = Path("eval/results/report.json")
     frontend_origin: str = "http://localhost:5173"
     high_urgency_daily_quota: int = 3
 

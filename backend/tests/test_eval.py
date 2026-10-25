@@ -892,7 +892,8 @@ class HeaderProvider(LLMProvider):
 
 
 async def test_a_live_call_waits_for_the_tokens_the_minute_has_left(tmp_path: Path) -> None:
-    """1,000 tokens last time, 500 left: wait for 750 more at 8,000 a minute, 5.625 s."""
+    """A 1,000-token prompt last time, 500 left: the next is admitted against its prompt and its
+    1,024-token completion allowance, plus 5%, so it waits for the shortfall at 8,000 a minute."""
     now = [1000.0]
     waits: list[float] = []
 
@@ -910,7 +911,37 @@ async def test_a_live_call_waits_for_the_tokens_the_minute_has_left(tmp_path: Pa
         schema={}, system="b", messages=[ChatMessage("user", "b")], model="m"
     )
 
-    assert waits == [pytest.approx(750 * 60 / 8000)]
+    needed = (1000 + er_run.MAX_COMPLETION_TOKENS) * er_run.TOKEN_MARGIN
+    assert waits == [pytest.approx((needed - 500) * 60 / 8000)]
+
+
+async def test_a_per_minute_429_is_waited_out_and_a_daily_one_is_not(tmp_path: Path) -> None:
+    """A minute's limit clears in seconds; the day's must stop the run (4.9)."""
+    waits: list[float] = []
+
+    async def fake_sleep(seconds: float) -> None:
+        waits.append(seconds)
+
+    minute = RateLimitedError("tpm", retry_after=3.0)
+    live = FakeProvider(script=[minute, {"action": "BUILD"}])
+    cached = er_run.CachedLiveProvider(live, tmp_path, per_minute=10**9, sleep=fake_sleep)
+
+    answer = await cached.complete_json(
+        schema={}, system="s", messages=[ChatMessage("user", "a")], model="m"
+    )
+    assert answer.data == {"action": "BUILD"}
+    assert cached.transient_waits == 1
+    assert 3.0 in waits
+
+    daily = RateLimitedError("tpd", retry_after=40_000, exhausted=True)
+    spent = er_run.CachedLiveProvider(
+        FakeProvider(script=[daily]), tmp_path / "b", per_minute=10**9, sleep=fake_sleep
+    )
+    with pytest.raises(RateLimitedError):
+        await spent.complete_json(
+            schema={}, system="s", messages=[ChatMessage("user", "b")], model="m"
+        )
+    assert spent.transient_waits == 0
 
 
 async def test_cached_answers_spend_no_quota_and_are_marked_cached(
@@ -1064,3 +1095,92 @@ def test_score_plans_counts_what_no_model_answered_apart() -> None:
         0.6667,
     )
     assert (result["no_model_plan"], result["errors"], result["distinct_requests"]) == (1, 1, 2)
+
+
+# ---------------------------------------------------------------------------
+# The report and the Analytics page
+# ---------------------------------------------------------------------------
+
+
+def a_run(name: str, parser: str, **meta: Any) -> dict[str, Any]:
+    fields: dict[str, Any] = {
+        "parser": parser,
+        "for_reporting": True,
+        "labels": "machine",
+        "split": "test",
+        "subset": None,
+        "include_examples": True,
+        "include_enums": True,
+        "max_repairs": 2,
+        "complete": True,
+    }
+    fields.update(meta)
+    plans = (
+        em.score_plans(
+            [{"valid_before_repair": True, "valid_after_repair": True, "request": {}}],
+            plannable_items=1,
+        )
+        if parser != "rules"
+        else None
+    )
+    return {"name": name, "run": fields, "metrics": em.score([prediction()]), "plans": plans}
+
+
+def report_runs() -> list[dict[str, Any]]:
+    return [
+        a_run("eval-v1-test__groq-m", "groq:m"),
+        a_run("eval-v1-test__rules", "rules"),
+        a_run("eval-v1-ablation__groq-m", "groq:m", split=None, subset="ablation"),
+        a_run(
+            "eval-v1-ablation__groq-m__no-enums",
+            "groq:m",
+            split=None,
+            subset="ablation",
+            include_enums=False,
+        ),
+        a_run("eval-v1-ablation__rules", "rules", split=None, subset="ablation"),
+        {
+            "name": "eval-v1-e2e__groq-m",
+            "run": {"kind": "e2e", "model": "m", "for_reporting": True, "labels": "machine"},
+            "summary": {
+                "n": 2,
+                "expected": 2,
+                "succeeded": 1,
+                "success_rate": 0.5,
+                "failed_at": {"ran": 1},
+                "by_assistant": {"freestyle": {"n": 1, "succeeded": 1}},
+            },
+        },
+    ]
+
+
+def test_the_report_puts_the_provenance_above_machine_labelled_figures() -> None:
+    markdown = er.render_markdown(report_runs())
+
+    assert markdown.index("**Provenance.**") < markdown.index("## Comparison on the test split")
+    assert "Claude Code" in markdown and "D-081" in markdown
+    # The rule baseline is tabled first, then the models.
+    comparison = markdown.split("## Comparison on the test split")[1]
+    assert comparison.index("| rules |") < comparison.index("| groq:m |")
+    assert "| no catalog enums |" in markdown
+    assert "## End to end against jenkins-dev" in markdown
+
+
+def test_the_report_is_exactly_what_the_analytics_endpoint_serves() -> None:
+    """A contract test: the generator's JSON must validate against the page's schema."""
+    from app.api.analytics import EvaluationResponse
+
+    report = json.loads(json.dumps(er.build_report(report_runs())))
+    served = EvaluationResponse.model_validate({**report, "available": True, "detail": None})
+
+    assert [row.parser for row in served.comparison] == ["rules", "groq:m"]
+    assert served.ablations is not None and served.ablations.parser == "groq:m"
+    assert [row.configuration for row in served.ablations.rows] == ["full", "no-enums"]
+    assert served.e2e[0].failed_at == {"ran": 1}
+    assert served.provenance is not None and served.provenance.labels == "machine"
+
+
+def test_an_incomplete_run_is_tabled_as_incomplete() -> None:
+    markdown = er.render_markdown([a_run("eval-v1-test__groq-m", "groq:m", complete=False)])
+
+    assert "| groq:m (incomplete) |" in markdown

@@ -1050,6 +1050,998 @@
         "title": "ErrorResponse",
         "type": "object"
       },
+      "EvaluationAblationRow": {
+        "properties": {
+          "action_accuracy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action Accuracy"
+          },
+          "behavior_accuracy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Behavior Accuracy"
+          },
+          "behavior_by_category": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Behavior By Category",
+            "type": "object"
+          },
+          "clarification_precision": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clarification Precision"
+          },
+          "clarification_recall": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clarification Recall"
+          },
+          "complete": {
+            "title": "Complete",
+            "type": "boolean"
+          },
+          "configuration": {
+            "title": "Configuration",
+            "type": "string"
+          },
+          "errors": {
+            "title": "Errors",
+            "type": "integer"
+          },
+          "exact_match": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exact Match"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "labels": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Labels"
+          },
+          "latency_p50_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency P50 Ms"
+          },
+          "latency_p95_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency P95 Ms"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "parser": {
+            "title": "Parser",
+            "type": "string"
+          },
+          "per_field_accuracy": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Per Field Accuracy",
+            "type": "object"
+          },
+          "plan_valid_after_repair": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Valid After Repair"
+          },
+          "plan_valid_before_repair": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Valid Before Repair"
+          },
+          "refusal_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refusal Rate"
+          },
+          "run": {
+            "title": "Run",
+            "type": "string"
+          },
+          "tokens_per_command": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tokens Per Command"
+          }
+        },
+        "required": [
+          "run",
+          "parser",
+          "complete",
+          "labels",
+          "n",
+          "errors",
+          "action_accuracy",
+          "exact_match",
+          "behavior_accuracy",
+          "clarification_precision",
+          "clarification_recall",
+          "refusal_rate",
+          "latency_p50_ms",
+          "latency_p95_ms",
+          "tokens_per_command",
+          "per_field_accuracy",
+          "behavior_by_category",
+          "configuration",
+          "label",
+          "plan_valid_before_repair",
+          "plan_valid_after_repair"
+        ],
+        "title": "EvaluationAblationRow",
+        "type": "object"
+      },
+      "EvaluationAblations": {
+        "properties": {
+          "parser": {
+            "title": "Parser",
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/EvaluationAblationRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "rules": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvaluationComparisonRow"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "parser",
+          "rows",
+          "rules"
+        ],
+        "title": "EvaluationAblations",
+        "type": "object"
+      },
+      "EvaluationAssistantCell": {
+        "properties": {
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "succeeded": {
+            "title": "Succeeded",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "n",
+          "succeeded"
+        ],
+        "title": "EvaluationAssistantCell",
+        "type": "object"
+      },
+      "EvaluationComparisonRow": {
+        "description": "One parser's figures on one set of items; every rate is 0 to 1, or null if not measured.",
+        "properties": {
+          "action_accuracy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action Accuracy"
+          },
+          "behavior_accuracy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Behavior Accuracy"
+          },
+          "behavior_by_category": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Behavior By Category",
+            "type": "object"
+          },
+          "clarification_precision": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clarification Precision"
+          },
+          "clarification_recall": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clarification Recall"
+          },
+          "complete": {
+            "title": "Complete",
+            "type": "boolean"
+          },
+          "errors": {
+            "title": "Errors",
+            "type": "integer"
+          },
+          "exact_match": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exact Match"
+          },
+          "labels": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Labels"
+          },
+          "latency_p50_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency P50 Ms"
+          },
+          "latency_p95_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency P95 Ms"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "parser": {
+            "title": "Parser",
+            "type": "string"
+          },
+          "per_field_accuracy": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Per Field Accuracy",
+            "type": "object"
+          },
+          "refusal_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refusal Rate"
+          },
+          "run": {
+            "title": "Run",
+            "type": "string"
+          },
+          "tokens_per_command": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tokens Per Command"
+          }
+        },
+        "required": [
+          "run",
+          "parser",
+          "complete",
+          "labels",
+          "n",
+          "errors",
+          "action_accuracy",
+          "exact_match",
+          "behavior_accuracy",
+          "clarification_precision",
+          "clarification_recall",
+          "refusal_rate",
+          "latency_p50_ms",
+          "latency_p95_ms",
+          "tokens_per_command",
+          "per_field_accuracy",
+          "behavior_by_category"
+        ],
+        "title": "EvaluationComparisonRow",
+        "type": "object"
+      },
+      "EvaluationDataset": {
+        "properties": {
+          "decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision"
+          },
+          "items": {
+            "title": "Items",
+            "type": "integer"
+          },
+          "labels": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Labels"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "reviewed_by_a_person": {
+            "title": "Reviewed By A Person",
+            "type": "integer"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/EvaluationSource"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "splits": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Splits",
+            "type": "object"
+          }
+        },
+        "required": [
+          "name",
+          "items",
+          "sha256",
+          "labels",
+          "reviewed_by_a_person",
+          "decision",
+          "splits",
+          "sources"
+        ],
+        "title": "EvaluationDataset",
+        "type": "object"
+      },
+      "EvaluationEndToEndRow": {
+        "properties": {
+          "by_assistant": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/EvaluationAssistantCell"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "By Assistant"
+          },
+          "complete": {
+            "title": "Complete",
+            "type": "boolean"
+          },
+          "expected": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected"
+          },
+          "failed_at": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "integer"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failed At"
+          },
+          "labels": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Labels"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "n": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N"
+          },
+          "run": {
+            "title": "Run",
+            "type": "string"
+          },
+          "succeeded": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Succeeded"
+          },
+          "success_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Success Rate"
+          }
+        },
+        "required": [
+          "run",
+          "model",
+          "complete",
+          "labels",
+          "n",
+          "expected",
+          "succeeded",
+          "success_rate",
+          "failed_at",
+          "by_assistant"
+        ],
+        "title": "EvaluationEndToEndRow",
+        "type": "object"
+      },
+      "EvaluationPlanRow": {
+        "properties": {
+          "distinct_requests": {
+            "title": "Distinct Requests",
+            "type": "integer"
+          },
+          "errors": {
+            "title": "Errors",
+            "type": "integer"
+          },
+          "max_repairs": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Repairs"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "no_model_plan": {
+            "title": "No Model Plan",
+            "type": "integer"
+          },
+          "parser": {
+            "title": "Parser",
+            "type": "string"
+          },
+          "plannable_items": {
+            "title": "Plannable Items",
+            "type": "integer"
+          },
+          "repaired": {
+            "title": "Repaired",
+            "type": "integer"
+          },
+          "run": {
+            "title": "Run",
+            "type": "string"
+          },
+          "still_invalid": {
+            "title": "Still Invalid",
+            "type": "integer"
+          },
+          "tokens_per_plan": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tokens Per Plan"
+          },
+          "valid_after_repair": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid After Repair"
+          },
+          "valid_before_repair": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Before Repair"
+          }
+        },
+        "required": [
+          "run",
+          "parser",
+          "max_repairs",
+          "plannable_items",
+          "n",
+          "valid_before_repair",
+          "valid_after_repair",
+          "repaired",
+          "still_invalid",
+          "no_model_plan",
+          "errors",
+          "distinct_requests",
+          "tokens_per_plan"
+        ],
+        "title": "EvaluationPlanRow",
+        "type": "object"
+      },
+      "EvaluationProvenance": {
+        "properties": {
+          "labels": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "human, machine (D-081) or mixed: who wrote the labels",
+            "title": "Labels"
+          },
+          "statement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the labels' provenance means; show it",
+            "title": "Statement"
+          }
+        },
+        "required": [
+          "labels",
+          "statement"
+        ],
+        "title": "EvaluationProvenance",
+        "type": "object"
+      },
+      "EvaluationResponse": {
+        "description": "``eval/results/report.json`` as ``python -m eval report`` wrote it, or why there is none.\n\nEvery field is required, so the generated client types say exactly what arrives.",
+        "properties": {
+          "ablations": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvaluationAblations"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "comparison": {
+            "description": "The test split, 4.9's parsers",
+            "items": {
+              "$ref": "#/components/schemas/EvaluationComparisonRow"
+            },
+            "title": "Comparison",
+            "type": "array"
+          },
+          "dataset": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvaluationDataset"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why nothing is available, when not",
+            "title": "Detail"
+          },
+          "e2e": {
+            "items": {
+              "$ref": "#/components/schemas/EvaluationEndToEndRow"
+            },
+            "title": "E2E",
+            "type": "array"
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At"
+          },
+          "plans": {
+            "items": {
+              "$ref": "#/components/schemas/EvaluationPlanRow"
+            },
+            "title": "Plans",
+            "type": "array"
+          },
+          "provenance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvaluationProvenance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "runs": {
+            "description": "Every run, reportable or not",
+            "items": {
+              "$ref": "#/components/schemas/EvaluationRun"
+            },
+            "title": "Runs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "available",
+          "detail",
+          "generated_at",
+          "provenance",
+          "dataset",
+          "comparison",
+          "plans",
+          "ablations",
+          "e2e",
+          "runs"
+        ],
+        "title": "EvaluationResponse",
+        "type": "object"
+      },
+      "EvaluationRun": {
+        "properties": {
+          "complete": {
+            "title": "Complete",
+            "type": "boolean"
+          },
+          "configuration": {
+            "title": "Configuration",
+            "type": "string"
+          },
+          "for_reporting": {
+            "title": "For Reporting",
+            "type": "boolean"
+          },
+          "labels": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Labels"
+          },
+          "n": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N"
+          },
+          "parser": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parser"
+          },
+          "run": {
+            "title": "Run",
+            "type": "string"
+          },
+          "scope": {
+            "title": "Scope",
+            "type": "string"
+          },
+          "stopped_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stopped Reason"
+          }
+        },
+        "required": [
+          "run",
+          "parser",
+          "scope",
+          "configuration",
+          "labels",
+          "for_reporting",
+          "complete",
+          "stopped_reason",
+          "n"
+        ],
+        "title": "EvaluationRun",
+        "type": "object"
+      },
+      "EvaluationSource": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "licence": {
+            "title": "Licence",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "licence"
+        ],
+        "title": "EvaluationSource",
+        "type": "object"
+      },
       "EvidenceLineResponse": {
         "properties": {
           "line": {
@@ -5693,6 +6685,53 @@
         "summary": "Set a new password for a user",
         "tags": [
           "admin"
+        ]
+      }
+    },
+    "/api/analytics/evaluation": {
+      "get": {
+        "description": "The evaluation report, as the harness wrote it. Read from disk on request, never cached,\nso a regenerated report shows at once.",
+        "operationId": "evaluation_api_analytics_evaluation_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Refused. The error code says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Failed on the server or upstream of it."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Chatbot evaluation",
+        "tags": [
+          "analytics"
         ]
       }
     },

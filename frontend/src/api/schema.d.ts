@@ -157,6 +157,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/analytics/evaluation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Chatbot evaluation
+         * @description The evaluation report, as the harness wrote it. Read from disk on request, never cached,
+         *     so a regenerated report shows at once.
+         */
+        get: operations["evaluation_api_analytics_evaluation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/analytics/experiments": {
         parameters: {
             query?: never;
@@ -1240,6 +1261,268 @@ export interface components {
          */
         ErrorResponse: {
             error: components["schemas"]["ErrorBody"];
+        };
+        /** EvaluationAblationRow */
+        EvaluationAblationRow: {
+            /** Action Accuracy */
+            action_accuracy: number | null;
+            /** Behavior Accuracy */
+            behavior_accuracy: number | null;
+            /** Behavior By Category */
+            behavior_by_category: {
+                [key: string]: number | null;
+            };
+            /** Clarification Precision */
+            clarification_precision: number | null;
+            /** Clarification Recall */
+            clarification_recall: number | null;
+            /** Complete */
+            complete: boolean;
+            /** Configuration */
+            configuration: string;
+            /** Errors */
+            errors: number;
+            /** Exact Match */
+            exact_match: number | null;
+            /** Label */
+            label: string;
+            /** Labels */
+            labels: string | null;
+            /** Latency P50 Ms */
+            latency_p50_ms: number | null;
+            /** Latency P95 Ms */
+            latency_p95_ms: number | null;
+            /** N */
+            n: number;
+            /** Parser */
+            parser: string;
+            /** Per Field Accuracy */
+            per_field_accuracy: {
+                [key: string]: number | null;
+            };
+            /** Plan Valid After Repair */
+            plan_valid_after_repair: number | null;
+            /** Plan Valid Before Repair */
+            plan_valid_before_repair: number | null;
+            /** Refusal Rate */
+            refusal_rate: number | null;
+            /** Run */
+            run: string;
+            /** Tokens Per Command */
+            tokens_per_command: number | null;
+        };
+        /** EvaluationAblations */
+        EvaluationAblations: {
+            /** Parser */
+            parser: string;
+            /** Rows */
+            rows: components["schemas"]["EvaluationAblationRow"][];
+            rules: components["schemas"]["EvaluationComparisonRow"] | null;
+        };
+        /** EvaluationAssistantCell */
+        EvaluationAssistantCell: {
+            /** N */
+            n: number;
+            /** Succeeded */
+            succeeded: number;
+        };
+        /**
+         * EvaluationComparisonRow
+         * @description One parser's figures on one set of items; every rate is 0 to 1, or null if not measured.
+         */
+        EvaluationComparisonRow: {
+            /** Action Accuracy */
+            action_accuracy: number | null;
+            /** Behavior Accuracy */
+            behavior_accuracy: number | null;
+            /** Behavior By Category */
+            behavior_by_category: {
+                [key: string]: number | null;
+            };
+            /** Clarification Precision */
+            clarification_precision: number | null;
+            /** Clarification Recall */
+            clarification_recall: number | null;
+            /** Complete */
+            complete: boolean;
+            /** Errors */
+            errors: number;
+            /** Exact Match */
+            exact_match: number | null;
+            /** Labels */
+            labels: string | null;
+            /** Latency P50 Ms */
+            latency_p50_ms: number | null;
+            /** Latency P95 Ms */
+            latency_p95_ms: number | null;
+            /** N */
+            n: number;
+            /** Parser */
+            parser: string;
+            /** Per Field Accuracy */
+            per_field_accuracy: {
+                [key: string]: number | null;
+            };
+            /** Refusal Rate */
+            refusal_rate: number | null;
+            /** Run */
+            run: string;
+            /** Tokens Per Command */
+            tokens_per_command: number | null;
+        };
+        /** EvaluationDataset */
+        EvaluationDataset: {
+            /** Decision */
+            decision: string | null;
+            /** Items */
+            items: number;
+            /** Labels */
+            labels: string | null;
+            /** Name */
+            name: string;
+            /** Reviewed By A Person */
+            reviewed_by_a_person: number;
+            /** Sha256 */
+            sha256: string;
+            /** Sources */
+            sources: components["schemas"]["EvaluationSource"][];
+            /** Splits */
+            splits: {
+                [key: string]: number | null;
+            };
+        };
+        /** EvaluationEndToEndRow */
+        EvaluationEndToEndRow: {
+            /** By Assistant */
+            by_assistant: {
+                [key: string]: components["schemas"]["EvaluationAssistantCell"];
+            } | null;
+            /** Complete */
+            complete: boolean;
+            /** Expected */
+            expected: number | null;
+            /** Failed At */
+            failed_at: {
+                [key: string]: number;
+            } | null;
+            /** Labels */
+            labels: string | null;
+            /** Model */
+            model: string | null;
+            /** N */
+            n: number | null;
+            /** Run */
+            run: string;
+            /** Succeeded */
+            succeeded: number | null;
+            /** Success Rate */
+            success_rate: number | null;
+        };
+        /** EvaluationPlanRow */
+        EvaluationPlanRow: {
+            /** Distinct Requests */
+            distinct_requests: number;
+            /** Errors */
+            errors: number;
+            /** Max Repairs */
+            max_repairs: number | null;
+            /** N */
+            n: number;
+            /** No Model Plan */
+            no_model_plan: number;
+            /** Parser */
+            parser: string;
+            /** Plannable Items */
+            plannable_items: number;
+            /** Repaired */
+            repaired: number;
+            /** Run */
+            run: string;
+            /** Still Invalid */
+            still_invalid: number;
+            /** Tokens Per Plan */
+            tokens_per_plan: number | null;
+            /** Valid After Repair */
+            valid_after_repair: number | null;
+            /** Valid Before Repair */
+            valid_before_repair: number | null;
+        };
+        /** EvaluationProvenance */
+        EvaluationProvenance: {
+            /**
+             * Labels
+             * @description human, machine (D-081) or mixed: who wrote the labels
+             */
+            labels: string | null;
+            /**
+             * Statement
+             * @description What the labels' provenance means; show it
+             */
+            statement: string | null;
+        };
+        /**
+         * EvaluationResponse
+         * @description ``eval/results/report.json`` as ``python -m eval report`` wrote it, or why there is none.
+         *
+         *     Every field is required, so the generated client types say exactly what arrives.
+         */
+        EvaluationResponse: {
+            ablations: components["schemas"]["EvaluationAblations"] | null;
+            /** Available */
+            available: boolean;
+            /**
+             * Comparison
+             * @description The test split, 4.9's parsers
+             */
+            comparison: components["schemas"]["EvaluationComparisonRow"][];
+            dataset: components["schemas"]["EvaluationDataset"] | null;
+            /**
+             * Detail
+             * @description Why nothing is available, when not
+             */
+            detail: string | null;
+            /** E2E */
+            e2e: components["schemas"]["EvaluationEndToEndRow"][];
+            /** Generated At */
+            generated_at: string | null;
+            /** Plans */
+            plans: components["schemas"]["EvaluationPlanRow"][];
+            provenance: components["schemas"]["EvaluationProvenance"] | null;
+            /**
+             * Runs
+             * @description Every run, reportable or not
+             */
+            runs: components["schemas"]["EvaluationRun"][];
+        };
+        /** EvaluationRun */
+        EvaluationRun: {
+            /** Complete */
+            complete: boolean;
+            /** Configuration */
+            configuration: string;
+            /** For Reporting */
+            for_reporting: boolean;
+            /** Labels */
+            labels: string | null;
+            /** N */
+            n: number | null;
+            /** Parser */
+            parser: string | null;
+            /** Run */
+            run: string;
+            /** Scope */
+            scope: string;
+            /** Stopped Reason */
+            stopped_reason: string | null;
+        };
+        /** EvaluationSource */
+        EvaluationSource: {
+            /** Id */
+            id: string;
+            /** Licence */
+            licence: string;
+            /** Name */
+            name: string;
         };
         /** EvidenceLineResponse */
         EvidenceLineResponse: {
@@ -3056,6 +3339,44 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminUserResponse"];
+                };
+            };
+            /** @description Refused. The error code says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    evaluation_api_analytics_evaluation_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvaluationResponse"];
                 };
             };
             /** @description Refused. The error code says why. */
