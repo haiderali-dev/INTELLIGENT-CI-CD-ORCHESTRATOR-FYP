@@ -11,6 +11,29 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 8
 
+### D-084 Admins can register services from the Service Catalog
+**Date:** 2026-10-26 · **Status:** implemented at the owner's request
+
+The owner requested an Add Service option in the frontend. This supersedes D-032's choice to
+omit catalog writes and implements the admin-create operation already listed in Part 4.4.4.
+
+The catalog header offers Admins a form for the repository, branch, agent label, build command,
+test suites, staging deploy and optional extra stages. `POST /api/services` requires Admin,
+validates typed input and the complete candidate through the existing catalog schema, rejects
+duplicate service/suite names and unsafe commands, and appends to `catalog/services.yaml`.
+The file remains the source for assistant choices and commands; the API does not introduce a
+second catalog. Existing entries and comments are retained. The backend's catalog bind mount is
+writable so registration persists across container restarts and remains visible in the checkout.
+
+An async lock serializes registration and resync in the single-worker backend. File publication uses an
+atomic replacement, and a failed database transaction restores the prior file. The mirror and
+`catalog.service.created` audit entry commit before HTTP 201. Read endpoints continue to omit
+shell commands. Neither registering a service nor the verification flow triggers a Jenkins job.
+The caller supplies commands; the LLM still never writes them. Production remains unavailable.
+
+Browser tests use a private temporary catalog, alongside their temporary database, so an Add
+Service flow cannot change the real catalog or affect the running app.
+
 ### D-083 Commit request transactions before sending successful responses
 **Date:** 2026-10-25 · **Status:** fixed during the final gate review
 
@@ -2212,7 +2235,7 @@ show the state of the rule rather than omitting it, and constant because rule 1.
 production deploys outright — an admin screen implying it could be switched on would misrepresent
 what the system does.
 
-**Also decided here: the service catalog has no write endpoint.** 4.4.4 mentions admin "create,
+**Also decided here: the service catalog has no write endpoint (superseded for creation by D-084).** 4.4.4 mentions admin "create,
 update, resync" for the catalog, but only resync exists, and it pushes the *file* into the table.
 Commands the model may run have to be reviewable in version control (4.6.1); an API that could
 rewrite `catalog/services.yaml` at runtime would move the only source of shell commands out of the

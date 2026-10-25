@@ -59,6 +59,9 @@ DEVELOPER_PASSWORD = _required("E2E_DEVELOPER_PASSWORD")
 
 WORKDIR = Path(tempfile.mkdtemp(prefix="orchestrator-browser-"))
 atexit.register(shutil.rmtree, WORKDIR, ignore_errors=True)
+CATALOG_SOURCE = Path(__file__).resolve().parent.parent / "catalog" / "services.yaml"
+for name in ("services.yaml", "services.schema.json"):
+    shutil.copy2(CATALOG_SOURCE.with_name(name), WORKDIR / name)
 
 
 def _archived_evaluation() -> str:
@@ -86,6 +89,7 @@ os.environ.update(
         "SEED_ADMIN_PASSWORD": ADMIN_PASSWORD,
         "FRONTEND_ORIGIN": FRONTEND_ORIGIN,
         "EVALUATION_REPORT_PATH": _archived_evaluation(),
+        "CATALOG_PATH": str(WORKDIR / "services.yaml"),
     }
 )
 
@@ -233,6 +237,13 @@ def control_router(
                     cancelled += 1
             await session.commit()
         return {"cancelled": cancelled}
+
+    @router.post("/catalog/reset")
+    async def reset_catalog() -> dict[str, bool]:
+        """Restore this browser run's private catalog; never modify the repository catalog."""
+        shutil.copy2(CATALOG_SOURCE, WORKDIR / "services.yaml")
+        get_catalog().reload()
+        return {"restored": True}
 
     return router
 

@@ -799,7 +799,8 @@ export interface paths {
         /** The service catalog */
         get: operations["list_services_api_services_get"];
         put?: never;
-        post?: never;
+        /** Add a service */
+        post: operations["add_service_api_services_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1212,6 +1213,28 @@ export interface components {
             id: string;
             /** Title */
             title: string;
+        };
+        /** CreateServiceRequest */
+        CreateServiceRequest: {
+            /** Agent Label */
+            agent_label: string;
+            /** Allowed Environments */
+            allowed_environments: "staging"[];
+            /** Build Command */
+            build_command: string;
+            /** Default Branch */
+            default_branch: string;
+            deploy: components["schemas"]["NewDeploy"];
+            /** Extra Stages */
+            extra_stages?: {
+                [key: string]: string;
+            };
+            /** Name */
+            name: string;
+            /** Repo */
+            repo: string;
+            /** Test Suites */
+            test_suites: components["schemas"]["NewTestSuite"][];
         };
         /** CreateUserRequest */
         CreateUserRequest: {
@@ -2080,6 +2103,26 @@ export interface components {
             unit: string;
             /** Value */
             value: number;
+        };
+        /** NewDeploy */
+        NewDeploy: {
+            staging: components["schemas"]["NewDeployTarget"];
+        };
+        /** NewDeployTarget */
+        NewDeployTarget: {
+            /** Command */
+            command: string;
+            /** Url */
+            url: string;
+        };
+        /** NewTestSuite */
+        NewTestSuite: {
+            /** Approx Seconds */
+            approx_seconds: number;
+            /** Command */
+            command: string;
+            /** Name */
+            name: string;
         };
         /**
          * NothingToRerunReply
@@ -4694,6 +4737,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ServiceListResponse"];
+                };
+            };
+            /** @description Refused. The error code says why. */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Failed on the server or upstream of it. */
+            "5XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    add_service_api_services_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateServiceRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceResponse"];
                 };
             };
             /** @description Refused. The error code says why. */

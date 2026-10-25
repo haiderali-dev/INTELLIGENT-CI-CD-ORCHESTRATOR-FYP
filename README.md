@@ -179,6 +179,17 @@ Phase 8 cumulative acceptance passed all 108 checks on 2026-10-25. The
 [completion audit](docs/final-audit-phase-8.md) preserve the validation evidence and remaining
 human work.
 
+## Adding services
+
+Admins can register a repository from **Service catalog → Add Service**. Enter its clone URL,
+default branch, Jenkins agent label, build/test commands and staging deploy settings. Saving
+validates and appends the definition to `catalog/services.yaml`, updates the database mirror,
+and records an audit entry. The service is then available to both assistants without a restart.
+Direct file edits can still be loaded with **Resync the catalog**.
+
+On Linux, the bind-mounted `catalog/` directory must be writable by the backend's container
+user (UID 1001) for registration to save successfully.
+
 ## Contributing
 
 - Work phase by phase. Each phase lives on `phase-<n>-<slug>` and ends with a pull request reviewed
