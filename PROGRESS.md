@@ -2708,6 +2708,12 @@ Details in `docs/decisions.md`.
   consequence is recorded in D-016 and queued as a report correction.
 
 ## Session log
+- 2026-10-25 Enabled live chatbot AI at the user's request: local `.env` now sets
+  `LLM_MODE=live`, with GPT-OSS-120B then GPT-OSS-20B. Recreated the backend with
+  `docker compose up -d --no-deps --wait backend`. Both assistants returned HTTP 201 through
+  the frontend proxy with parser LLM, GPT-OSS-120B, no cache and no fallback; LLM health is up
+  with last outcome ok. The temporary verification account was deactivated. The API key and
+  runtime setting remain in the ignored `.env`; repository defaults still support offline use.
 - 2026-10-25 Resumed from the supplied handoff, BUILD_PROMPT.md, PLAN.md and this file. Finished
   the required evaluation campaign and archived 15 runs, the dataset, generated report and two
   failed builds' console logs. Added campaign recovery and gate completeness regressions;
