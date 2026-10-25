@@ -4374,6 +4374,33 @@ def check_demo_reset() -> Result:
     return ok("snapshot, two markers, restore: both gone; " + _tail(restore, 1))
 
 
+@check(8, "the archived experiment runs and the M2 series load into the Analytics page's tables")
+def check_experiment_import() -> Result:
+    """4.7.3: the Analytics page shows "the M2 series, experiment v2 results". The import is
+    idempotent, so running it here leaves one row per archived run, and the M2 series apart."""
+    if run(["docker", "info"], timeout=60).returncode != 0:
+        return fail("Docker is not running")
+    result = run([sys.executable, "scripts/import_experiments.py"], timeout=600)
+    if result.returncode != 0:
+        return fail("scripts/import_experiments.py failed: " + _tail(result))
+    archived = sum(
+        1
+        for archive in ("matrix-2026-10-24", "gate-fix-rerun-2026-10-24")
+        for path in (REPO_ROOT / "docs" / "experiment" / archive / "runs").iterdir()
+        if path.is_dir()
+    )
+    counts = _psql(
+        "select count(*) filter (where label like 'v2 %'), "
+        "count(*) filter (where label like 'M2 %') from experiments"
+    )
+    if counts.returncode != 0:
+        return fail("could not count the rows: " + _tail(counts))
+    v2, series = (int(value) for value in counts.stdout.strip().split("|"))
+    if (v2, series) != (archived, 5):
+        return fail(f"{v2} v2 rows for {archived} archived runs, and {series} M2 rows, not 5")
+    return ok(f"{v2} v2 runs and the 5 runs of Milestone 2's series, one row each")
+
+
 @check(8, "the demo script replays end to end with every model answer from a fixture")
 def check_demo_script() -> Result:
     """Phase 8's acceptance: "a demo reset followed by the scripted demo commands works with

@@ -1200,7 +1200,12 @@ Three findings, one of them new:
    - **Version 2's gate holds such a job** (Table 8.9), and E2 measures what that costs and
      what it buys.
 
-### 8.8.5 Experiment v2 (Phase 7): not yet run
+### 8.8.5 Experiment v2 (Phase 7): what E2 and E3 predicted, and how it held
+
+When this chapter's evidence was gathered, experiment v2 had not run; the paragraphs below are the
+predictions made then, kept as written. It ran on 2026-10-24: 53 runs of the matrix, then 10 after
+DF-48's fix. Chapter 12, Section 12.5, reports it, and the end of this section says how each
+prediction held.
 
 Phase 7's run matrix (`BUILD_PROMPT.md` 4.8.2):
 - **Main group:** the optimized arm against its own observe-only arm (the same plugin, ordering
@@ -1220,6 +1225,15 @@ cycle to the report's Appendix F. None of it has run. E2 and E3 bear on its desi
   one executor and three on three, against none.
 - **Expect a smaller but real advantage on three executors** (E2: HIGH 31% and MEDIUM 40% shorter
   than FIFO), and a makespan within a few seconds of FIFO's.
+
+**How the predictions held** (Chapter 12, Tables 12.2 and 12.5; freestyle-30):
+- **Aging:** held. Turning aging off changed every figure by under a second.
+- **Dependency order:** held exactly. The observe-only arm broke one edge on one executor and three
+  on three, and the optimized arm broke none.
+- **Three executors:** held in part.
+  - The HIGH band waited 28% less, against E2's 31%.
+  - The MEDIUM band waited 21% less, half of E2's 40%.
+  - The makespan was 3.4 s longer than observe-only's, within the few seconds predicted.
 
 ## 8.9 Results and discussion
 
@@ -1457,9 +1471,12 @@ Four lessons stand out:
    - Milestone 2's headline improvement came from breaking 19 of 20 dependency edges, which
      version 2 never does.
 
-What remains is outside this chapter: Phase 7's controlled experiment on real Jenkins controllers,
-and Phase 8's evaluation of the assistants against human-labelled answers. E2 and E3 have already
-shaped the first; the second needs the drafted evaluation items reviewed by people.
+What remained outside this chapter has since been done, and Chapter 12 reports both:
+- **Phase 7's controlled experiment** on real Jenkins controllers, which E2 and E3 had shaped
+  (Section 8.8.5 says how their predictions held).
+- **Phase 8's evaluation of the assistants.** It used labels written by an AI assistant, not by
+  people, because no person was available to label them (D-081). A person's review of those labels
+  remains the step most worth adding.
 
 ## References
 

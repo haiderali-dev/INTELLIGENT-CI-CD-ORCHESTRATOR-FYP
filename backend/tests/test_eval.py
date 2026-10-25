@@ -944,6 +944,32 @@ async def test_a_per_minute_429_is_waited_out_and_a_daily_one_is_not(tmp_path: P
     assert spent.transient_waits == 0
 
 
+async def test_a_429_asking_for_seconds_is_waited_out_though_called_exhausted(
+    tmp_path: Path,
+) -> None:
+    """Groq's provider calls a wait over 20 s exhaustion, for a user's sake; the eval waits it out.
+    Seen live on 2026-10-25: qwen3.8-27b asked for 27 s and stopped a run for a "daily budget"."""
+    waits: list[float] = []
+
+    async def fake_sleep(seconds: float) -> None:
+        waits.append(seconds)
+
+    short = RateLimitedError("tpm", retry_after=27.0, exhausted=True)
+    cached = er_run.CachedLiveProvider(
+        FakeProvider(script=[short, {"action": "BUILD"}]),
+        tmp_path,
+        per_minute=10**9,
+        sleep=fake_sleep,
+    )
+
+    answer = await cached.complete_json(
+        schema={}, system="s", messages=[ChatMessage("user", "a")], model="m"
+    )
+
+    assert answer.data == {"action": "BUILD"}
+    assert 27.0 in waits
+
+
 async def test_cached_answers_spend_no_quota_and_are_marked_cached(
     tmp_path: Path, catalog: Catalog
 ) -> None:

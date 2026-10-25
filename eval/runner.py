@@ -101,11 +101,14 @@ _QUOTA_REASON: Final = re.compile(r"rate limited|daily|limit|remaining|quota")
 # A little room over the next call's admission cost (its prompt and completion allowance).
 TOKEN_MARGIN: Final = 1.05
 
-# A per-minute 429 (not exhausted) is waited out here, this many times, rather than surfacing to
-# the chain, whose retries are seconds apart and would stop the run for a limit that clears in a
-# minute. A daily limit is never retried here: it stops the run, as 4.9 asks.
+# A per-minute 429 is waited out here, this many times, rather than surfacing to the chain, whose
+# retries are seconds apart and would stop the run for a limit that clears in a minute. The Groq
+# provider calls any wait over 20 s exhaustion, which is right inside a user's request and wrong
+# here: a 429 asking for up to TRANSIENT_MAX_WAIT is waited out. A daily limit asks for far longer,
+# or says no requests remain, and still stops the run, as 4.9 asks.
 TRANSIENT_RETRIES: Final = 8
 TRANSIENT_WAIT: Final = 10.0
+TRANSIENT_MAX_WAIT: Final = 120.0
 
 SUBSETS: Final = ("ablation", "e2e")
 
@@ -135,6 +138,14 @@ class AcceptAllGitClient(GitClient):
 
     async def commit_exists(self, repo_url: str, commit: str, *, branch: str | None = None) -> bool:
         return True
+
+
+def _transient(exc: RateLimitedError) -> bool:
+    """A 429 the evaluation can wait out: one naming a short wait, or one not marked exhausted
+    that names none. A daily limit names a long wait, or none with no requests left."""
+    if exc.retry_after is not None:
+        return exc.retry_after <= TRANSIENT_MAX_WAIT
+    return not exc.exhausted
 
 
 def _header_int(value: str | None) -> int | None:
@@ -210,7 +221,7 @@ class CachedLiveProvider(LLMProvider):
                     reasoning_effort=reasoning_effort,
                 )
             except RateLimitedError as exc:
-                if exc.exhausted or attempt == TRANSIENT_RETRIES:
+                if not _transient(exc) or attempt == TRANSIENT_RETRIES:
                     raise
                 self.transient_waits += 1
                 await self._sleep(exc.retry_after or TRANSIENT_WAIT)

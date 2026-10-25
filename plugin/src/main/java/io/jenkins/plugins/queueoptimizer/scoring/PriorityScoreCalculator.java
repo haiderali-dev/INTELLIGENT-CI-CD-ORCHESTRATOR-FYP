@@ -181,9 +181,10 @@ public final class PriorityScoreCalculator {
      * producer is scheduled on its own merit and its consumers drift behind other work, so the
      * group occupies the queue far longer than the sum of its parts.
      *
-     * <p>Report Appendix C shows the effect: the LOW job {@code build-api} scores 0.650 and
-     * overtakes a MEDIUM job, not on its own merit but because it unblocks a group whose best
-     * member scores 0.633.
+     * <p>Report Appendix C shows the effect: the MEDIUM job {@code integration-tests-api} scores
+     * 0.633 on its own merit and is lifted to 0.650, its producer {@code build-api}'s score, so
+     * the two move through the queue together, producer first. {@code build-api} is LOW, but
+     * reaches 0.650 on its own: it is the queue's shortest job, in its largest group.
      */
     private static List<ScoredJob> applyGroupInheritance(List<ScoredJob> scored) {
         Map<String, Double> bestByGroup = new HashMap<>();

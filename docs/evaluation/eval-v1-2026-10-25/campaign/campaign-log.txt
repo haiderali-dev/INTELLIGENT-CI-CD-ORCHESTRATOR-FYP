@@ -1,0 +1,15 @@
+2026-10-25 05:02:31 CAMPAIGN: queues 120b, 20b, qwen; done so far: []
+2026-10-25 05:02:31 120b/test: attempt 1
+2026-10-25 05:02:31 qwen/test: attempt 1
+2026-10-25 05:02:31 20b/test: attempt 1
+2026-10-25 05:02:50 qwen/test: QUOTA after 19 s, waiting 20 min: plans: 0 of 74 planned by the model, valid before repair None, after None | note: Gold labels written by Claude Code and checked against the card's rules by code; no person has reviewed them (docs/decisions.md D-081). Report these figures with that provenance beside them. | incomplete: stopped at ev
+2026-10-25 05:22:51 qwen/test: attempt 2
+2026-10-25 05:27:01 qwen/test: QUOTA after 250 s, waiting 20 min: plans: 0 of 74 planned by the model, valid before repair None, after None | note: Gold labels written by Claude Code and checked against the card's rules by code; no person has reviewed them (docs/decisions.md D-081). Report these figures with that provenance beside them. | incomplete: stopped at ev
+2026-10-25 05:47:01 qwen/test: attempt 3
+2026-10-25 05:52:55 qwen/test: QUOTA after 355 s, waiting 2 min: plans: 0 of 74 planned by the model, valid before repair None, after None | note: Gold labels written by Claude Code and checked against the card's rules by code; no person has reviewed them (docs/decisions.md D-081). Report these figures with that provenance beside them. | incomplete: stopped at ev
+2026-10-25 05:54:55 qwen/test: attempt 4
+2026-10-25 05:58:05 120b/test: DONE in 3334 s: action accuracy 0.9867, behaviour accuracy 0.96 | plans: 74 of 74 planned by the model, valid before repair 1.0, after 1.0 | note: Gold labels written by Claude Code and checked against the card's rules by code; no person has reviewed them (docs/decisions.md D-081). Report these figures with that provenance beside them. | metrics: eval\results\eval-v1-test__groq-openai-gpt-oss-120b\metrics.json
+2026-10-25 05:58:05 120b/e2e: attempt 1
+2026-10-25 05:59:26 20b/test: FAILED (exit 1) after 3414 s: 
+2026-10-25 05:59:26 qwen/test: FAILED (exit 1) after 270 s: 
+2026-10-25 05:59:26 120b/e2e: FAILED (exit 1) after 81 s: {"method": "GET", "path": "/api/chains/ddcb7b3189484446b151febd1ebd03e9", "status": 200, "event": "request", "level": "info", "logger": "app.request", "request_id": "a4c5d9e388f34e648d2135920b18b511", "timestamp": "2026-10-25T00:59:24.875746Z"} | {"event": "HTTP Request: GET http://e2e/api/chains/ddcb7b3189484446b151febd1ebd03e9 \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "request_id

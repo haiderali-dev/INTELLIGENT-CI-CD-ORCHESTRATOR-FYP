@@ -80,6 +80,14 @@ Branch: phase-8-evaluation
         file" (0 scored, 30 excluded pending review) pass; Phase 0 passes.
 - [ ] **Schedule the long runs:** the full experiment matrix, about 50 runs (Phase 7), and the final
       live chatbot evaluation (Phase 8).
+- [ ] **Run the usability study** (Phase 8, BUILD_PROMPT Part 3). It needs real users. Each user
+      completes the demo script's tasks (`docs/demo-script.md`) unaided while someone times them
+      and notes where they hesitate. Added by the final audit (2026-10-25): the spec lists it, but
+      it was missing here.
+- [ ] **Rehearse the demo** (Phase 8). Follow `docs/demo-script.md` from a fresh
+      `scripts/demo_reset.py restore`, on the presenting machine, with the network the demo will
+      have. `tests/test_demo_script.py` proves every step replays (2026-10-25: 2 passed). Only the
+      team can rehearse the telling. Added by the final audit.
 - [ ] **Supply the report's Word source**, or confirm the PDF is the only copy. Only
       `INTELLIGENT CI-CD ORCHESTRATOR FYP Report.pdf` was provided, so `docs/report-updates.md`
       tracks changes as a checklist rather than editing the document.
@@ -2574,10 +2582,19 @@ Built on `phase-8-evaluation`, branched from `main` at `0937f9e` (2026-10-24).
         - verify.py's "the demo reset restores a known state": PASS in 46 s. A snapshot, a marker
           job and a marker row, a restore: both markers gone; 30 jobs and 632 rows, as the
           snapshot had them.
-- [ ] T8.6 Phase 8 checks in `verify.py`. Seven checks written: the dataset rebuilds from its
-      source, the evaluation tests, the report regenerates from the archived runs, Appendix C,
-      versions, the demo reset, and the demo script. Six pass when run on their own (2026-10-25).
-      The report check waits for the archive of the finished evaluation.
+- [ ] T8.6 Phase 8 checks in `verify.py`. Eight checks are written:
+      - the dataset rebuilds from its source;
+      - the evaluation tests pass;
+      - the report regenerates from the archived runs;
+      - Appendix C;
+      - versions;
+      - the demo reset;
+      - the experiment import into the Analytics tables (`scripts/import_experiments.py`, added by
+        the final audit: 4.7.3's experiment results and M2 series on the page);
+      - the demo script.
+
+      Seven pass when run on their own (2026-10-25). The report check waits for the archive of the
+      finished evaluation.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not

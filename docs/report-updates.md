@@ -314,15 +314,17 @@ each one attaches to Jenkins.
       - the evaluation harness;
       - Chapter 12's draft and the generators of its tables, of Appendix C and of Appendix E.
 
-      The team directed the work and reviewed it. The tests and `scripts/verify.py` (107 checks
+      The team directed the work and reviewed it. The tests and `scripts/verify.py` (108 checks
       across Phases 0 to 8) checked it.
-- [ ] **Testing chapter, Section 8.8.5 "Experiment v2 (Phase 7): not yet run":** replace with a
-      pointer to Chapter 12, Section 12.5. The matrix ran on 2026-10-24 (53 runs), and so did the
-      re-run after DF-48's fix (10 runs).
-- [ ] **Testing chapter, Section 8.10's last paragraph** says the chatbot evaluation "needs the
-      drafted evaluation items reviewed by people". Replace it with what was done (D-081): a
-      machine-labelled evaluation, reported as such in Chapter 12, Section 12.6, with a person's
-      review still recommended.
+- [ ] **Testing chapter, Section 8.8.5, "Experiment v2 (Phase 7): not yet run":** take the
+      repository's version (`docs/testing/chapter-8-software-testing.md`, updated 2026-10-25). It
+      keeps the predictions as written, points to Chapter 12, Section 12.5, and says how each
+      prediction held. The matrix ran on 2026-10-24 (53 runs), and so did the re-run after DF-48's
+      fix (10 runs).
+- [ ] **Testing chapter, Section 8.10's last paragraph** said the chatbot evaluation "needs the
+      drafted evaluation items reviewed by people". The repository's version now says what was
+      done (D-081): a machine-labelled evaluation, reported as such in Chapter 12, Section 12.6,
+      with a person's review still recommended. Carry it into the report.
 - [ ] **Chapter 6, Algorithm 1: define D as the plugin computes it,** `(group size - 1) /
       (largest group size - 1)`, and 0 for an independent job or when no group has more than one
       member. Define T as `1 - (estimate - shortest) / (longest - shortest)`, and 0.5 when the

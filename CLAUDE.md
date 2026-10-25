@@ -78,7 +78,16 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
   (Phase 6 merged as PR #11; hardened on `phase-6-hardening`, 2026-10-18 to 2026-10-22). Phase 7
   merged as PR #14 (`3fcaf81`, 2026-10-23). Then came the stock-Jenkins controller (PR #15, D-078),
   the full matrix with DF-47's fix (PR #16, D-079), and the gate's fix for Pipelines (PR #17,
-  D-080).
+  D-080). Phase 8 is on `phase-8-evaluation` (2026-10-24 on). Its dataset, `eval-v1`, is labelled by
+  Claude Code at the owner's instruction, and every result says so (D-081).
+- Groq, checked 2026-10-24 and 2026-10-25:
+  - **Models:** this key can use three with strict JSON schemas: `openai/gpt-oss-120b`,
+    `openai/gpt-oss-20b` and `qwen/qwen3.8-27b`. `meta-models/muse-spark-open` needs the
+    organisation's admin to accept its terms first.
+  - **Admission:** a request is admitted against its prompt *plus* its whole
+    `max_completion_tokens`, so pace for that.
+  - **429s count:** each one is charged against the 1,000 requests a day.
+  - **No prompt caching** shows on the intent prompt: every call costs about 1,800 tokens.
 - Docker here uses the containerd image store, so a container's `Image` field names the index its
   image arrived in. Compare a container with Compose's `com.docker.compose.image` label instead.
   Provenance attestations are off in `docker-compose.yml`, because they gave every build a new ID

@@ -107,7 +107,7 @@ experiment was designed to avoid each (Section 12.5.9):
 
 The final milestone rebuilt the Proof of Concept as version 2 and delivered the rest of the system
 the report designs. The work ran in eight phases, each ending in an automated acceptance gate
-(`scripts/verify.py`). The gate now has 107 checks across Phases 0 to 8.
+(`scripts/verify.py`). The gate now has 108 checks across Phases 0 to 8.
 
 | Component | What was built | Where it is verified |
 | --- | --- | --- |
@@ -509,7 +509,7 @@ The evaluation archive is not in `docs/evaluation/` yet; this table is generated
   latency may differ.
 - **AI-assisted development.** Claude Code, an AI assistant, wrote most of the code, the tests, the
   evaluation dataset and this chapter's tables, under the team's direction and review. Correctness
-  was checked by the test suites, by the acceptance gate (`scripts/verify.py`, 107 checks), and by
+  was checked by the test suites, by the acceptance gate (`scripts/verify.py`, 108 checks), and by
   the experiment and evaluation themselves. Chapter 8 lists the defects that checking found.
 
 ## 12.9 Chapter summary

@@ -20,6 +20,8 @@
 # The testing chapter's evidence: gate and test logs it cites.
 !docs/testing/evidence/*.log
 !docs/testing/evidence/raw/**/*.log
+# The chatbot evaluation's campaign: every step's output, kept with its results (Chapter 12).
+!docs/evaluation/**/*.log
 
 # --- Java / Maven ---
 target/

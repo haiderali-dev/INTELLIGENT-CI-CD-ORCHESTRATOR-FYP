@@ -23,7 +23,13 @@ it the day before a demo; `scripts/verify.py --phase 8` runs it too.
    an account of the role in its row.
 3. Warm the build history, so the queue estimator has durations to work from. As the DevOps
    account, run step 4 once and let it finish.
-4. Take the snapshot every demo starts from:
+4. Load the experiment's archived runs and Milestone 2's series into the Analytics page:
+
+   ```
+   python scripts/import_experiments.py
+   ```
+
+5. Take the snapshot every demo starts from:
 
    ```
    python scripts/demo_reset.py snapshot

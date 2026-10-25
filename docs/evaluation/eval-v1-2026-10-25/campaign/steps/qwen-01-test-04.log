@@ -1,0 +1,42 @@
+250 item(s): 0 reviewed, 250 awaiting review
+  labels: written by Claude Code, not reviewed by a person (D-081)
+2026-10-25 05:54:57 [info     ] catalog_loaded                 path='D:\\FYP POC\\CICD project - Copy\\catalog\\services.yaml' services=2
+resuming: 29 item(s) already done
+2026-10-25 05:54:58 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=968f0c81bdfe
+2026-10-25 05:54:59 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=981 retry_after=3.0
+2026-10-25 05:55:03 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=d4e2a6be8bb2
+2026-10-25 05:55:05 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=980 retry_after=8.0
+2026-10-25 05:55:14 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=d2cda5336b2a
+2026-10-25 05:55:15 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=979 retry_after=4.0
+2026-10-25 05:55:20 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=979 retry_after=5.0
+2026-10-25 05:55:26 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=68c79a3e73f8
+2026-10-25 05:55:59 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=4575224e5e9f
+2026-10-25 05:56:03 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=977 retry_after=6.0
+2026-10-25 05:56:10 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=0ba98efcc3c2
+2026-10-25 05:56:14 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=976 retry_after=5.0
+2026-10-25 05:56:19 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=72c195fc413e
+2026-10-25 05:56:26 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=975 retry_after=4.0
+2026-10-25 05:56:31 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=345de0acb1d8
+2026-10-25 05:56:33 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=974 retry_after=20.0
+2026-10-25 05:56:53 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=18fba696796a
+2026-10-25 05:56:59 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=973 retry_after=9.0
+2026-10-25 05:57:09 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=26f2571b588f
+2026-10-25 05:57:10 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=972 retry_after=17.0
+2026-10-25 05:57:28 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=972 retry_after=1.0
+2026-10-25 05:57:30 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=d58bb25ac4eb
+2026-10-25 05:57:32 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=971 retry_after=6.0
+2026-10-25 05:57:39 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=51480cc50748
+2026-10-25 05:57:41 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=970 retry_after=5.0
+2026-10-25 05:57:46 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=1b79e466ffe4
+2026-10-25 05:57:53 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=969 retry_after=4.0
+2026-10-25 05:57:58 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=b7a056b60561
+2026-10-25 05:58:10 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=0b09ce99b287
+2026-10-25 05:58:31 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=50c70d92d7dc
+2026-10-25 05:58:39 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=966 retry_after=2.0
+2026-10-25 05:58:42 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=89c08e8cac2e
+2026-10-25 05:58:46 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=965 retry_after=8.0
+2026-10-25 05:58:55 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=bf00c5f981b9
+2026-10-25 05:58:58 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=964 retry_after=7.0
+2026-10-25 05:59:06 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=9d5965c55223
+2026-10-25 05:59:10 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=963 retry_after=4.0
+2026-10-25 05:59:15 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=112c00ec1ab4
