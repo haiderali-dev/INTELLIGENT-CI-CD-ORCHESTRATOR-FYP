@@ -5,6 +5,9 @@ last as PR #17 (`0937f9e`), whose gate passed 100 of 100 (gate run 11) ·
 Branch: phase-8-evaluation
 
 ## Needs human
+- [ ] **Review and merge Phase 8**: [draft PR #18](https://github.com/haiderali-dev/INTELLIGENT-CI-CD-ORCHESTRATOR-FYP/pull/18)
+      targets `main`. Gate run 14 passed all 108 checks on the implementation now committed as
+      `2c7d595`; `docs/final-audit-phase-8.md` records the evidence and remaining human work.
 - [x] **Create the two sample-service GitHub repositories**, push them, create the
       `demo/failing-tests` branch, and put the URLs in `catalog/services.yaml`. Blocks T1.8's
       `git ls-remote` check and the Phase 5 failing-branch acceptance test.
@@ -2723,6 +2726,9 @@ Details in `docs/decisions.md`.
   Run 14 then passed all 108 checks (exit 0) in 42m 27s. Archived its log and result, completed
   T8.6, and updated the audit and Chapter 12 to record the final acceptance pass. Human label
   review, usability testing, demo rehearsal and applying the report edits remain open.
+  Committed as `2c7d595`, pushed `phase-8-evaluation`, and opened draft PR #18 against `main`.
+  All 47 archived hashes were verified in Git's staged content, and the 152 review files plus
+  browser-trace resources were checked against configured secret values without a match.
 - 2026-09-28 Read BUILD_PROMPT.md in full. Explored `legacy/m2-poc/` (plugin sources, experiment
   harness, result files) and the report PDF (Chapter 6 algorithms, Chapter 12, Appendices B to F).
   Confirmed M2 known problems 1, 2, 3, 6 and 7 directly in the code and data. Found eleven conflicts
