@@ -934,6 +934,93 @@
         "title": "ConversationResponse",
         "type": "object"
       },
+      "CreateServiceRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "agent_label": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Agent Label",
+            "type": "string"
+          },
+          "allowed_environments": {
+            "items": {
+              "const": "staging",
+              "type": "string"
+            },
+            "maxItems": 1,
+            "minItems": 1,
+            "title": "Allowed Environments",
+            "type": "array"
+          },
+          "build_command": {
+            "maxLength": 512,
+            "minLength": 1,
+            "pattern": "^[^;&|`$><\\r\\n\\x00]+$",
+            "title": "Build Command",
+            "type": "string"
+          },
+          "default_branch": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Default Branch",
+            "type": "string"
+          },
+          "deploy": {
+            "$ref": "#/components/schemas/NewDeploy"
+          },
+          "extra_stages": {
+            "additionalProperties": {
+              "maxLength": 512,
+              "minLength": 1,
+              "pattern": "^[^;&|`$><\\r\\n\\x00]+$",
+              "type": "string"
+            },
+            "propertyNames": {
+              "enum": [
+                "lint",
+                "security_scan",
+                "integration_tests",
+                "smoke_test"
+              ]
+            },
+            "title": "Extra Stages",
+            "type": "object"
+          },
+          "name": {
+            "pattern": "^[a-z][a-z0-9-]{0,63}$",
+            "title": "Name",
+            "type": "string"
+          },
+          "repo": {
+            "maxLength": 2048,
+            "pattern": "^(https://|git@)[^\\s]+\\.git$",
+            "title": "Repo",
+            "type": "string"
+          },
+          "test_suites": {
+            "items": {
+              "$ref": "#/components/schemas/NewTestSuite"
+            },
+            "maxItems": 30,
+            "minItems": 1,
+            "title": "Test Suites",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "repo",
+          "default_branch",
+          "agent_label",
+          "build_command",
+          "test_suites",
+          "deploy",
+          "allowed_environments"
+        ],
+        "title": "CreateServiceRequest",
+        "type": "object"
+      },
       "CreateUserRequest": {
         "properties": {
           "email": {
@@ -3611,6 +3698,73 @@
           "sample_size"
         ],
         "title": "MetricResponse",
+        "type": "object"
+      },
+      "NewDeploy": {
+        "additionalProperties": false,
+        "properties": {
+          "staging": {
+            "$ref": "#/components/schemas/NewDeployTarget"
+          }
+        },
+        "required": [
+          "staging"
+        ],
+        "title": "NewDeploy",
+        "type": "object"
+      },
+      "NewDeployTarget": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "maxLength": 512,
+            "minLength": 1,
+            "pattern": "^[^;&|`$><\\r\\n\\x00]+$",
+            "title": "Command",
+            "type": "string"
+          },
+          "url": {
+            "maxLength": 2048,
+            "pattern": "^https?://[^\\s]+$",
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "command",
+          "url"
+        ],
+        "title": "NewDeployTarget",
+        "type": "object"
+      },
+      "NewTestSuite": {
+        "additionalProperties": false,
+        "properties": {
+          "approx_seconds": {
+            "maximum": 3600.0,
+            "minimum": 1.0,
+            "title": "Approx Seconds",
+            "type": "integer"
+          },
+          "command": {
+            "maxLength": 512,
+            "minLength": 1,
+            "pattern": "^[^;&|`$><\\r\\n\\x00]+$",
+            "title": "Command",
+            "type": "string"
+          },
+          "name": {
+            "pattern": "^[a-z][a-z0-9-]{0,63}$",
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "command",
+          "approx_seconds"
+        ],
+        "title": "NewTestSuite",
         "type": "object"
       },
       "NothingToRerunReply": {
@@ -8895,6 +9049,60 @@
           }
         ],
         "summary": "The service catalog",
+        "tags": [
+          "services"
+        ]
+      },
+      "post": {
+        "operationId": "add_service_api_services_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateServiceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Refused. The error code says why."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Failed on the server or upstream of it."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Add a service",
         "tags": [
           "services"
         ]

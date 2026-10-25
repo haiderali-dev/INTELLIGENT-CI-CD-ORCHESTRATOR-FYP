@@ -16,10 +16,16 @@ Two consequences shape the design:
 
 from __future__ import annotations
 
+import asyncio
 import json
+import os
+import tempfile
 import threading
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
+from textwrap import indent
 from typing import Any, Final
 
 import jsonschema
@@ -39,6 +45,10 @@ SCHEMA_FILENAME: Final = "services.schema.json"
 
 class CatalogError(RuntimeError):
     """The catalog is missing, unreadable or does not satisfy its schema."""
+
+
+class DuplicateServiceError(CatalogError):
+    """A service with this name is already present."""
 
 
 # ---------------------------------------------------------------------------
@@ -200,6 +210,8 @@ class Catalog:
     def __init__(self, path: Path) -> None:
         self._path = path
         self._lock = threading.Lock()
+        # Shared by registration and resync, scoped to this app's catalog and event loop.
+        self.write_lock = asyncio.Lock()
         self._services: dict[str, CatalogService] = {}
         self._loaded_mtime: float | None = None
         self.reload()
@@ -218,6 +230,48 @@ class Catalog:
             self._services = services
             self._loaded_mtime = self._path.stat().st_mtime
         logger.info("catalog_loaded", path=str(self._path), services=len(services))
+
+    def _replace(self, content: bytes) -> None:
+        """Validate a complete replacement beside the schema, then publish it atomically."""
+        if _schema_for(self._path) is None:
+            raise CatalogError("The catalog schema is required when adding a service.")
+        descriptor, name = tempfile.mkstemp(dir=self._path.parent, suffix=".yaml")
+        temporary = Path(name)
+        try:
+            with os.fdopen(descriptor, "wb") as stream:
+                stream.write(content)
+                stream.flush()
+                os.fsync(stream.fileno())
+            load_document(temporary)
+            temporary.chmod(self._path.stat().st_mode)
+            temporary.replace(self._path)
+        finally:
+            temporary.unlink(missing_ok=True)
+
+    @contextmanager
+    def adding(self, entry: dict[str, Any]) -> Iterator[CatalogService]:
+        """Append an Admin's entry, retaining comments; undo it if the DB transaction fails.
+
+        The caller serializes writers and commits the mirror/audit inside this context. The
+        complete candidate passes the same loader as every read before the file is replaced.
+        """
+        original = self._path.read_bytes()
+        document = load_document(self._path)
+        if any(service["name"] == entry["name"] for service in document["services"]):
+            raise DuplicateServiceError(f"A service named {entry['name']!r} already exists.")
+        addition = indent(yaml.safe_dump([entry], sort_keys=False, allow_unicode=True), "  ")
+        candidate = original.rstrip(b"\r\n") + b"\n\n" + addition.encode("utf-8")
+        self._replace(candidate)
+        try:
+            yield CatalogService.from_mapping(entry)
+        except BaseException:
+            # Do not overwrite an independent edit that arrived while the transaction ran.
+            if self._path.read_bytes() == candidate:
+                self._replace(original)
+            self.reload()
+            raise
+        else:
+            self.reload()
 
     def _refresh_if_changed(self) -> None:
         try:

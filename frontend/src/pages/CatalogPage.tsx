@@ -15,6 +15,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Empty, Loading, LoadFailed, PageSection, StatusWord } from "@/components/PageStates";
 import { useToast } from "@/components/toast/toastContext";
 import { describeBranches, describeSuites, readable } from "@/catalog/catalogModel";
+import { AddService } from "@/catalog/AddService";
 import { cn } from "@/lib/cn";
 import { keys } from "@/workspace/assistantApiContext";
 
@@ -35,8 +36,7 @@ export function CatalogPage({ item }: { item: Pick<NavItem, "label" | "descripti
       items.length === 0 ? (
         <Empty>
           <p>
-            The catalog has no services. Add one to <code>catalog/services.yaml</code>, then resync
-            it here as an Admin.
+            The catalog has no services. {admin ? "Use Add Service to connect your first repository." : "Ask an Admin to add a service."}
           </p>
         </Empty>
       ) : (
@@ -62,7 +62,8 @@ export function CatalogPage({ item }: { item: Pick<NavItem, "label" | "descripti
 
   return (
     <>
-      <PageHeader title={item.label} description={item.description} />
+      <PageHeader title={item.label} description={item.description}
+        aside={admin ? <AddService existingNames={services.data?.items.map(({ name }) => name) ?? []} /> : undefined} />
       <div className="py-5">{body}</div>
       {admin ? <Resync /> : null}
     </>
@@ -142,7 +143,7 @@ function Reachability({ service, defaultBranch }: { service: string; defaultBran
   );
 }
 
-/** An Admin's one action here: read the catalog file again and mirror it into the database. */
+/** Re-read the catalog after a direct file edit and mirror it into the database. */
 function Resync() {
   const api = useApi(catalogApi);
   const queryClient = useQueryClient();
@@ -160,7 +161,7 @@ function Resync() {
       <div className="flex max-w-[68ch] flex-col gap-3 px-6">
         <p className="text-graphite">
           Reads <code>catalog/services.yaml</code> again and mirrors it into the database. The file
-          is the only place a service is defined, so nothing here edits one.
+          remains the source of truth for every service.
         </p>
         {resync.isError ? (
           <p role="alert">

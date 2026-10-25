@@ -23,6 +23,7 @@ export function Sheet({
   trigger,
   open,
   onOpenChange,
+  onOpenAutoFocus,
   children,
 }: {
   side: SheetSide;
@@ -30,6 +31,7 @@ export function Sheet({
   trigger: ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onOpenAutoFocus?: (event: Event) => void;
   children: ReactNode;
 }) {
   return (
@@ -38,6 +40,7 @@ export function Sheet({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/40" />
         <Dialog.Content
+          onOpenAutoFocus={onOpenAutoFocus}
           aria-describedby={undefined}
           className={cn(
             "fixed z-50 flex flex-col bg-panel text-ink shadow-float dark:border-rule",

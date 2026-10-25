@@ -181,7 +181,8 @@ services:
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:?set SEED_ADMIN_PASSWORD in .env}
     volumes:
       # The catalog is the source of truth for service definitions and is read at runtime.
-      - ./catalog:/app/catalog:ro
+      # Admin registration appends schema-validated services to the source catalog.
+      - ./catalog:/app/catalog:rw
       # The chatbot evaluation's report, for the Analytics page (T8.2). Read-only: the backend
       # serves it as `python -m eval report` wrote it.
       - ./eval/results:/app/eval/results:ro

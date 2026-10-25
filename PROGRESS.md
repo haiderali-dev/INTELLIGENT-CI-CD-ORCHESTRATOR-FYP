@@ -1,13 +1,16 @@
 # Progress
 
-Updated: 2026-10-25 · Current phase: 8 (acceptance passed; ready for review). Phases 0 to 7 are merged into `main`, the
-last as PR #17 (`0937f9e`), whose gate passed 100 of 100 (gate run 11) ·
-Branch: phase-8-evaluation
+Updated: 2026-10-26 · Phases 0 to 8 are merged into `main`, last as PR #18 (`5624767`).
+Phase 8 acceptance passed all 108 checks (gate run 14).
+Current work: Service Catalog registration follow-up · Branch: feat/service-catalog-add
 
 ## Needs human
-- [ ] **Review and merge Phase 8**: [draft PR #18](https://github.com/haiderali-dev/INTELLIGENT-CI-CD-ORCHESTRATOR-FYP/pull/18)
-      targets `main`. Gate run 14 passed all 108 checks on the implementation now committed as
-      `2c7d595`; `docs/final-audit-phase-8.md` records the evidence and remaining human work.
+- [ ] **Review Add Service**: [draft PR #19](https://github.com/haiderali-dev/INTELLIGENT-CI-CD-ORCHESTRATOR-FYP/pull/19)
+      targets `main` from `feat/service-catalog-add`. The feature is deployed locally and its
+      focused checks, complete offline backend/frontend suites and desktop/mobile flows pass.
+- [x] **Review and merge Phase 8**: [PR #18](https://github.com/haiderali-dev/INTELLIGENT-CI-CD-ORCHESTRATOR-FYP/pull/18)
+      merged into `main` as `5624767`, checked on 2026-10-26. Gate run 14 passed all 108 checks
+      on `2c7d595`; `docs/final-audit-phase-8.md` records that evidence and remaining human work.
 - [x] **Create the two sample-service GitHub repositories**, push them, create the
       `demo/failing-tests` branch, and put the URLs in `catalog/services.yaml`. Blocks T1.8's
       `git ls-remote` check and the Phase 5 failing-branch acceptance test.
@@ -2638,6 +2641,30 @@ Built on `phase-8-evaluation`, branched from `main` at `0937f9e` (2026-10-24).
       `docs/testing/evidence/gate-run-14-result.json`. All Phase 8 implementation tasks and
       cumulative acceptance are complete; the Needs human items remain open.
 
+## Follow-up: Service Catalog registration (2026-10-26)
+
+- [x] Add Service in the frontend, at the owner's request (D-084).
+      - Admin-only header action opens a labelled drawer with repository/branch/agent details,
+        build command, editable test suites, staging deploy settings and optional extra stages.
+        Validation errors retain the input; successful registration refreshes the catalog.
+      - `POST /api/services` validates the request and complete catalog, rejects duplicates and
+        production, appends atomically to the source YAML, mirrors the database and audits the
+        change before HTTP 201. A failed DB commit restores the previous file. Registration and
+        resync share a catalog-scoped async lock. Existing commands remain absent from reads.
+      - API types regenerated. Browser tests use a private catalog copy to keep the real catalog
+        unchanged. The backend's mount permits persistent saves; Linux ownership is documented.
+      - Validation: `pytest tests/test_catalog_create.py`: 17 passed, covering persistence,
+        authorization, invalid input, duplicate/concurrent requests, resync overlap and rollback.
+        `npm run test`: 305 passed; frontend lint and typecheck clean. Backend Ruff, formatting
+        and mypy clean (78 source files). Both Chrome registration flows pass at 1440/light and
+        390/dark; their screenshots were reviewed. The exported API schema is current.
+      - Both production images rebuilt and healthy. The Admin form was opened and cancelled
+        through the real frontend, and the non-root container user saved/reloaded a private
+        catalog on the host bind mount. The real catalog still contains its two original
+        services. Chatbot AI remains live and healthy.
+      - Final offline backend suite: `pytest tests -m "not live and not e2e and not integration"`
+        passed 1,822 tests (52 deselected) in 156.61 seconds. Gate run 14 predates this follow-up.
+
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
   installed and every Phase 2 test except T2.14 runs on JenkinsRule without it. Approved by the user.
@@ -2708,6 +2735,13 @@ Details in `docs/decisions.md`.
   consequence is recorded in D-016 and queued as a report correction.
 
 ## Session log
+- 2026-10-26 Added Admin service registration from the Service Catalog (D-084), on
+  `feat/service-catalog-add` from the merged Phase 8 main. Built and verified the running app,
+  including desktop/mobile persistence flows and the writable catalog mount. The existing
+  Phase 8 PR is merged; this follow-up will have its own review.
+  Final validation: 1,822 offline backend tests, 305 frontend tests, two registration browser
+  flows, lint/typechecks and production builds pass. Both local containers are healthy.
+  Committed as `6608964`, pushed the feature branch and opened draft PR #19 against `main`.
 - 2026-10-25 Resumed from the supplied handoff, BUILD_PROMPT.md, PLAN.md and this file. Finished
   the required evaluation campaign and archived 15 runs, the dataset, generated report and two
   failed builds' console logs. Added campaign recovery and gate completeness regressions;

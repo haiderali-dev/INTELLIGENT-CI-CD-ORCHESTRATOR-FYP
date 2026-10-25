@@ -4,10 +4,8 @@ BUILD_PROMPT 4.4.4: ``GET /api/services``, ``GET /api/services/{name}/branches``
 resync.
 
 ``catalog/services.yaml`` stays the source of truth (4.6.1). These endpoints read it, and the
-``services`` table is a mirror the API joins against — so the resync endpoint pushes the file into
-the table and never the other way round. There is no endpoint to edit a service: a command the
-model may run must be reviewable in version control, and an API that could rewrite the catalog at
-runtime would move the only source of shell commands out of the repository.
+``services`` table is a mirror the API joins against. Admin registration validates and appends to
+the same file, then commits the mirror and audit before returning success.
 """
 
 from __future__ import annotations
@@ -19,13 +17,12 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import AdminUser, ApiRateLimit, CurrentUser
-from app.core.errors import ErrorCode, not_found, unavailable
+from app.core.errors import ErrorCode, not_found
 from app.core.logging import get_logger
 from app.core.settings import Settings
-from app.db.models import AuditLog
-from app.db.seed import seed_catalog
 from app.db.session import get_db
 from app.services.catalog import Catalog, CatalogService
+from app.services.catalog_admin import CreateServiceRequest, create_service, resync_services
 from app.services.dependencies import get_catalog, get_git_client, get_settings_dep
 from app.services.git import GitClient, GitError
 
@@ -91,6 +88,20 @@ class BranchListResponse(BaseModel):
 class ResyncResponse(BaseModel):
     created: int
     updated: int
+
+
+@router.post("/services", response_model=ServiceResponse, status_code=201, summary="Add a service")
+async def add_service(
+    body: CreateServiceRequest,
+    user: AdminUser,
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
+    settings: Annotated[Settings, Depends(get_settings_dep)],
+    catalog: Annotated[Catalog, Depends(get_catalog)],
+) -> ServiceResponse:
+    service = await create_service(
+        session, user=user, catalog=catalog, settings=settings, body=body
+    )
+    return ServiceResponse.of(service)
 
 
 @router.get("/services", response_model=ServiceListResponse, summary="The service catalog")
@@ -164,21 +175,6 @@ async def resync_catalog(
     rather than deleted, because ``jobs.service_id`` references them and deleting one would orphan
     the history of every job that ever built that service.
     """
-    try:
-        catalog.reload()
-    except Exception as exc:
-        raise unavailable(
-            ErrorCode.VALIDATION_FAILED, f"The catalog file could not be loaded: {exc}"
-        ) from exc
-
-    created, updated = await seed_catalog(session, settings)
-    session.add(
-        AuditLog(
-            actor_id=user.id,
-            action="catalog.resynced",
-            target=str(catalog.path.name),
-            details={"created": created, "updated": updated},
-        )
-    )
+    created, updated = await resync_services(session, user=user, catalog=catalog, settings=settings)
     logger.info("catalog_resynced", created=created, updated=updated, actor=user.id)
     return ResyncResponse(created=created, updated=updated)

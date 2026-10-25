@@ -1,15 +1,19 @@
 /**
  * The Service catalog page's requests. `catalog/services.yaml` is the source of truth (4.6.1): the
- * API reads it, lists each repository's live branches, and lets an Admin mirror the file into the
- * database again. There is no endpoint to edit a service, by design.
+ * API reads it, lists live branches, and lets an Admin add a validated service or resync the file.
  */
 
 import { api, type ApiClient } from "./client";
 import { answer } from "./request";
+import type { components } from "./schema";
+
+export type NewCatalogService = components["schemas"]["CreateServiceRequest"];
 
 export function catalogApi(client: ApiClient = api) {
   return {
     services: () => answer(client.GET("/api/services")),
+
+    create: (service: NewCatalogService) => answer(client.POST("/api/services", { body: service })),
 
     /** Whether the repository answered, and its branches when it did. */
     branches: (service: string) =>
