@@ -5,6 +5,9 @@ Phase 8 acceptance passed all 108 checks (gate run 14).
 Current work: Service Catalog registration follow-up · Branch: feat/service-catalog-add
 
 ## Needs human
+- [ ] **Review Add Service**: [draft PR #19](https://github.com/haiderali-dev/INTELLIGENT-CI-CD-ORCHESTRATOR-FYP/pull/19)
+      targets `main` from `feat/service-catalog-add`. The feature is deployed locally and its
+      focused checks, complete offline backend/frontend suites and desktop/mobile flows pass.
 - [x] **Review and merge Phase 8**: [PR #18](https://github.com/haiderali-dev/INTELLIGENT-CI-CD-ORCHESTRATOR-FYP/pull/18)
       merged into `main` as `5624767`, checked on 2026-10-26. Gate run 14 passed all 108 checks
       on `2c7d595`; `docs/final-audit-phase-8.md` records that evidence and remaining human work.
@@ -2738,6 +2741,7 @@ Details in `docs/decisions.md`.
   Phase 8 PR is merged; this follow-up will have its own review.
   Final validation: 1,822 offline backend tests, 305 frontend tests, two registration browser
   flows, lint/typechecks and production builds pass. Both local containers are healthy.
+  Committed as `6608964`, pushed the feature branch and opened draft PR #19 against `main`.
 - 2026-10-25 Resumed from the supplied handoff, BUILD_PROMPT.md, PLAN.md and this file. Finished
   the required evaluation campaign and archived 15 runs, the dataset, generated report and two
   failed builds' console logs. Added campaign recovery and gate completeness regressions;
