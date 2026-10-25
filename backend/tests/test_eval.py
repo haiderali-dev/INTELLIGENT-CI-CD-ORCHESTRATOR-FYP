@@ -1210,3 +1210,28 @@ def test_an_incomplete_run_is_tabled_as_incomplete() -> None:
     markdown = er.render_markdown([a_run("eval-v1-test__groq-m", "groq:m", complete=False)])
 
     assert "| groq:m (incomplete) |" in markdown
+
+
+@pytest.mark.parametrize("checksum", ["frozen", "changed"])
+def test_archived_reports_use_the_frozen_card_and_reject_a_changed_checksum(
+    tmp_path: Path, checksum: str
+) -> None:
+    runs = tmp_path / "runs"
+    saved = runs / "model-test"
+    saved.mkdir(parents=True)
+    run = a_run("model-test", "groq:m", dataset="eval\\datasets\\eval-v1.jsonl")
+    run["dataset"] = {"card": {"sha256": "frozen"}}
+    (saved / "metrics.json").write_text(json.dumps(run), encoding="utf-8")
+    dataset = tmp_path / "dataset"
+    dataset.mkdir()
+    (dataset / "eval-v1.card.json").write_text(
+        json.dumps({"name": "frozen-evaluation", "sha256": checksum}), encoding="utf-8"
+    )
+
+    if checksum == "changed":
+        with pytest.raises(ValueError, match="checksum disagrees"):
+            er.write_report(runs, tmp_path / "report")
+    else:
+        path, _ = er.write_report(runs, tmp_path / "report")
+        report = json.loads(path.read_text(encoding="utf-8"))
+        assert report["dataset"]["name"] == "frozen-evaluation"

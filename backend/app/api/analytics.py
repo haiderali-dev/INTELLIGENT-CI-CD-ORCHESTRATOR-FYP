@@ -127,7 +127,7 @@ class RunStatsResponse(BaseModel):
 @router.get("/analytics/experiments", response_model=ExperimentPage, summary="Experiment runs")
 async def list_experiments(
     user: CurrentUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     mode: Annotated[str | None, Query(max_length=32)] = None,
     label: Annotated[str | None, Query(max_length=128)] = None,
     limit: Annotated[int | None, Query(ge=1, le=MAX_PAGE_SIZE)] = None,
@@ -168,7 +168,7 @@ async def list_experiments(
 async def get_experiment(
     experiment_id: str,
     user: CurrentUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
 ) -> ExperimentDetailResponse:
     experiment = await session.get(Experiment, experiment_id)
     if experiment is None:
@@ -209,7 +209,7 @@ async def get_experiment(
 @router.get("/analytics/runs", response_model=RunStatsResponse, summary="Run statistics")
 async def run_statistics(
     user: CurrentUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
 ) -> RunStatsResponse:
     """Counts and averages over ``job_runs``, computed now.
 

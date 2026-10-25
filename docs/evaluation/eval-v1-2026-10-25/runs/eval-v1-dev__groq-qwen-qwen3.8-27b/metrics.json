@@ -1,0 +1,109 @@
+{
+  "run": {
+    "parser": "groq:qwen/qwen3.8-27b",
+    "dataset": "eval/datasets/eval-v1.jsonl",
+    "split": "dev",
+    "subset": null,
+    "prompt_version": "intent_v1@9457338e",
+    "planner_prompt_version": "planner_v1@9b25deca",
+    "include_examples": true,
+    "include_enums": true,
+    "max_repairs": 2,
+    "rate_limit_waits": 3,
+    "finished_at": "2026-10-25T15:08:33.773480+00:00",
+    "complete": false,
+    "stopped_reason": "stopped at ev1-c023: the daily budget for qwen/qwen3.8-27b is spent (qwen/qwen3.8-27b: rate limited for 12 min). Progress is saved; rerun the same command later to resume.",
+    "labels": "machine",
+    "for_reporting": true
+  },
+  "dataset": {
+    "items": 250,
+    "selected": 100,
+    "scorable": 0,
+    "excluded_needs_review": 0,
+    "warnings": [],
+    "card": {
+      "name": "eval-v1",
+      "sha256": "31559fed8225979eab3d7bf532b54062661056717c7936fffdaa15a390596428",
+      "labels": "machine",
+      "decision": "D-081"
+    }
+  },
+  "metrics": {
+    "n": 27,
+    "errors": 0,
+    "action_accuracy": 0.9259,
+    "per_field_accuracy": {
+      "action": 0.9259,
+      "service": 0.963,
+      "branch": 0.9259,
+      "commit": 0.9259,
+      "environment": 1.0,
+      "test_suite": 1.0,
+      "urgency": 0.9259,
+      "extra_stages": 0.963,
+      "justification": 1.0
+    },
+    "exact_match": 0.7778,
+    "behavior_accuracy": 0.963,
+    "clarification": {
+      "precision": 0.9,
+      "recall": 1.0
+    },
+    "refusal_rate": null,
+    "refusal_target": 1.0,
+    "latency_ms": {
+      "median": 871,
+      "p95": 1452
+    },
+    "tokens_per_command": 1566.9,
+    "fallback_rate": 0.0,
+    "cache_hits": 0,
+    "by_category": {
+      "ambiguous": {
+        "n": 10,
+        "action_accuracy": 0.9,
+        "behavior_accuracy": 1.0
+      },
+      "clear": {
+        "n": 17,
+        "action_accuracy": 0.9412,
+        "behavior_accuracy": 0.9412
+      }
+    },
+    "by_behavior": {
+      "CLARIFY": {
+        "n": 9,
+        "accuracy": 1.0
+      },
+      "GENERATE": {
+        "n": 18,
+        "accuracy": 0.9444
+      }
+    },
+    "comparison_rules": {
+      "justification": "lenient: both absent, or one contains the other after normalising",
+      "extra_stages": "compared as a set",
+      "scored_answer": "the parser's own answer (model_intent), not the corrected one",
+      "latency": "the answering call's own time; excludes answers served from a cache"
+    }
+  },
+  "plans": {
+    "plannable_items": 48,
+    "planned": 0,
+    "n": 0,
+    "valid_before_repair": null,
+    "valid_after_repair": null,
+    "repaired": 0,
+    "still_invalid": 0,
+    "no_model_plan": 0,
+    "errors": 0,
+    "distinct_requests": 0,
+    "tokens_per_plan": null,
+    "comparison_rules": {
+      "intent": "the gold intent after the validator, so a parse error cannot cost the plan",
+      "valid": "the backend's own plan checks (app/generation/planner.py, check_plan)"
+    }
+  },
+  "warning": "Gold labels written by Claude Code and checked against the card's rules by code; no person has reviewed them (docs/decisions.md D-081). Report these figures with that provenance beside them."
+}

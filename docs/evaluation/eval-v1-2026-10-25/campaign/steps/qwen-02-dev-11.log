@@ -1,0 +1,28 @@
+250 item(s): 0 reviewed, 250 awaiting review
+  labels: written by Claude Code, not reviewed by a person (D-081)
+2026-10-25 20:04:08 [info     ] catalog_loaded                 path='D:\\FYP POC\\CICD project - Copy\\catalog\\services.yaml' services=2
+resuming: 15 item(s) already done
+2026-10-25 20:04:10 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=8a15c9935e6b
+2026-10-25 20:04:11 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=3bece475c178
+2026-10-25 20:04:14 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=2ad3f4bd543b
+2026-10-25 20:04:16 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=fa69b0b88cb4
+2026-10-25 20:04:19 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=cbb481f34d32
+2026-10-25 20:05:11 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=2e489c58b311
+2026-10-25 20:05:13 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=89af69fb66a5
+2026-10-25 20:05:15 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=50ef223abf95
+2026-10-25 20:05:18 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=3498d73a4b20
+2026-10-25 20:05:20 [info     ] llm_rate_limited               exhausted=False model=qwen/qwen3.8-27b remaining_requests=991 retry_after=7.0
+2026-10-25 20:05:28 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=13d9f3455822
+2026-10-25 20:06:12 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=2f7f00e2fc90
+2026-10-25 20:06:14 [info     ] llm_rate_limited               exhausted=True model=qwen/qwen3.8-27b remaining_requests=989 retry_after=67.0
+2026-10-25 20:07:22 [info     ] llm_rate_limited               exhausted=True model=qwen/qwen3.8-27b remaining_requests=989 retry_after=69.0
+2026-10-25 20:08:32 [info     ] llm_fixture_recorded           model=qwen/qwen3.8-27b prompt_hash=6be74742b8c6
+2026-10-25 20:08:33 [info     ] llm_rate_limited               exhausted=True model=qwen/qwen3.8-27b remaining_requests=989 retry_after=693.0
+2026-10-25 20:08:33 [warning  ] llm_chain_exhausted            reasons=['qwen/qwen3.8-27b: rate limited for 12 min']
+stopped at ev1-c023: the daily budget for qwen/qwen3.8-27b is spent (qwen/qwen3.8-27b: rate limited for 12 min). Progress is saved; rerun the same command later to resume.
+scored 27 item(s), 0 error(s)
+action accuracy 0.9259, behaviour accuracy 0.963
+plans: 0 of 48 planned by the model, valid before repair None, after None
+note: Gold labels written by Claude Code and checked against the card's rules by code; no person has reviewed them (docs/decisions.md D-081). Report these figures with that provenance beside them.
+incomplete: stopped at ev1-c023: the daily budget for qwen/qwen3.8-27b is spent (qwen/qwen3.8-27b: rate limited for 12 min). Progress is saved; rerun the same command later to resume.
+metrics: eval\results\eval-v1-dev__groq-qwen-qwen3.8-27b\metrics.json

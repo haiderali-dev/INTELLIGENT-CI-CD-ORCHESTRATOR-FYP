@@ -1,0 +1,124 @@
+{
+  "name": "eval-v1",
+  "version": 1,
+  "labels": "machine",
+  "labelled_by": "claude-code",
+  "reviewed_by_a_person": 0,
+  "decision": "D-081",
+  "datasheet": "eval/datasets/eval-v1.card.md",
+  "items": 250,
+  "sha256": "31559fed8225979eab3d7bf532b54062661056717c7936fffdaa15a390596428",
+  "source": "eval-v1.source.yaml",
+  "source_sha256": "bfbc3e34131a709ff32fc4bcb4a43da03aca931bf3a0f234166588eb445cf47e",
+  "seed": 20261024,
+  "categories": {
+    "ambiguous": 25,
+    "clear": 100,
+    "missing_field": 38,
+    "paraphrase_typos": 50,
+    "prompt_injection": 12,
+    "unsafe_out_of_scope": 25
+  },
+  "behaviors": {
+    "CLARIFY": 55,
+    "GENERATE": 163,
+    "REFUSE": 32
+  },
+  "roles": {
+    "ADMIN": 32,
+    "DEVELOPER": 160,
+    "DEVOPS": 58
+  },
+  "sources_used": {
+    "authored": 205,
+    "bp-4.6.5": 9,
+    "clinc150": 8,
+    "deepset-pi": 5,
+    "deepset-pi+": 2,
+    "phase-4-draft": 21
+  },
+  "actions": {
+    "BUILD": 45,
+    "BUILD_TEST_DEPLOY": 32,
+    "CANCEL": 11,
+    "DEPLOY": 58,
+    "RERUN": 15,
+    "STATUS": 15,
+    "TEST": 52,
+    "UNSUPPORTED": 22
+  },
+  "splits": {
+    "dev": {
+      "items": 100,
+      "category:ambiguous": 10,
+      "category:clear": 40,
+      "category:missing_field": 15,
+      "category:paraphrase_typos": 20,
+      "category:prompt_injection": 5,
+      "category:unsafe_out_of_scope": 10,
+      "behavior:CLARIFY": 22,
+      "behavior:GENERATE": 65,
+      "behavior:REFUSE": 13
+    },
+    "test": {
+      "items": 150,
+      "category:ambiguous": 15,
+      "category:clear": 60,
+      "category:missing_field": 23,
+      "category:paraphrase_typos": 30,
+      "category:prompt_injection": 7,
+      "category:unsafe_out_of_scope": 15,
+      "behavior:CLARIFY": 33,
+      "behavior:GENERATE": 98,
+      "behavior:REFUSE": 19
+    }
+  },
+  "ablation": 75,
+  "e2e": 20,
+  "near_duplicates_across_splits": [],
+  "near_few_shot_examples": [],
+  "sources": [
+    {
+      "id": "authored",
+      "name": "Written for this dataset by Claude Code",
+      "licence": "the project's own",
+      "use": "most messages, and every gold label"
+    },
+    {
+      "id": "bp-4.6.5",
+      "name": "BUILD_PROMPT.md 4.6.5, the commands version 1 must handle",
+      "licence": "the project's own",
+      "use": "the nine commands verbatim; development split"
+    },
+    {
+      "id": "phase-4-draft",
+      "name": "eval/datasets/sample.jsonl, drafted in Phase 4",
+      "licence": "the project's own",
+      "use": "verbatim; development split, because Phase 4 had seen them"
+    },
+    {
+      "id": "clinc150",
+      "name": "CLINC150 (clinc/clinc_oos), out-of-scope queries, test split",
+      "url": "https://huggingface.co/datasets/clinc/clinc_oos",
+      "licence": "CC BY 3.0",
+      "citation": "Larson, S. et al. (2019) 'An Evaluation Dataset for Intent Classification and Out-of-Scope Prediction', Proceedings of EMNLP-IJCNLP 2019, pp. 1311-1316. doi:10.18653/v1/D19-1131",
+      "use": "eight human-written everyday requests, verbatim, as out-of-scope items"
+    },
+    {
+      "id": "deepset-pi",
+      "name": "deepset/prompt-injections, label 1 (injection), train split",
+      "url": "https://huggingface.co/datasets/deepset/prompt-injections",
+      "licence": "Apache-2.0",
+      "citation": "deepset (2023) prompt-injections [dataset]. Hugging Face.",
+      "use": "five injection attempts verbatim as whole messages"
+    },
+    {
+      "id": "deepset-pi+",
+      "name": "deepset/prompt-injections payloads after an authored request",
+      "url": "https://huggingface.co/datasets/deepset/prompt-injections",
+      "licence": "Apache-2.0",
+      "citation": "deepset (2023) prompt-injections [dataset]. Hugging Face.",
+      "use": "two payloads, verbatim, appended to a CI/CD request"
+    }
+  ]
+}

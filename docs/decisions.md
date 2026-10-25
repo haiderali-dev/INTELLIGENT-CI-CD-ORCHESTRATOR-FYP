@@ -11,6 +11,68 @@ the conflict is recorded here, and any needed report change goes in `docs/report
 
 ## Phase 8
 
+### D-083 Commit request transactions before sending successful responses
+**Date:** 2026-10-25 · **Status:** fixed during the final gate review
+
+**Found by gate run 13.** The Pipeline browser flow generated a validated plan with HTTP 201,
+then immediately reloaded its conversation. That HTTP 200 still contained only the original
+intent, so the preview remained empty and the browser timed out. The saved trace is under
+`docs/testing/evidence/raw/gate-run-13-preview/`; temporary authentication values are redacted.
+
+**Cause.** Every `Depends(get_db)` used FastAPI's default request scope. Its generator committed
+after the response had been sent. A follow-up request could therefore read uncommitted state.
+Ordinary `ASGITransport` tests buffered the response and dependency cleanup, hiding the race.
+
+**Fix.** Every request session, including authentication subdependencies, now uses
+`Depends(get_db, scope="function")`. Sessions still commit once on success and roll back on
+failure, but cleanup completes before response bytes are sent. Using one scope consistently
+also preserves FastAPI's shared session cache within each request. Streaming explanation code
+already records later calls through a session of its own.
+
+**Evidence.** `tests/test_transaction_visibility.py` observes the real ASGI response-start
+boundary from a separate database connection. Before the fix it saw a 201 with no committed row,
+and a failed commit still returned 201. Both regressions now pass, as does a guard covering every
+registered session dependency (including nested routers). Backend lint, formatting and mypy pass;
+the full offline suite passes 1,805 tests, with 52 live/integration/end-to-end tests deselected.
+The exact live Pipeline flow passed against the rebuilt backend in 17.4 seconds, versus the
+original eight-minute timeout. The complete replay demo then passed both tests in 347.07 seconds,
+including deploys and the intentional failure. Its log is archived as
+`docs/testing/evidence/demo-replay-after-transaction-fix.log`. Gate run 14 then passed all 108
+checks, exit 0; its output and exit-status record are archived under `docs/testing/evidence/`.
+Separate agent DNS failures remain documented rather than hidden by test retries.
+
+### D-082 Keep incomplete evaluation work and measured failures visible
+**Date:** 2026-10-25 · **Status:** decided during Phase 8 completion
+
+**Found on resuming.** The campaign's `finished()` treated `gave_up: true` as success, so a failed
+step could be skipped forever. Thread exceptions did not reach the parent, and the campaign
+returned zero even with unfinished work. Attempt numbering by file count could overwrite a log
+after a gap. The script also hardcoded this checkout and unconditionally called Windows APIs.
+
+**Fix.** Only successful steps count as finished. A failed step is eligible on the next run;
+workers propagate their outcomes, old log numbers are preserved, paths derive from the script,
+and the Windows wake lock is conditional and released on exit. `--stop-on-quota` saves progress
+and returns 3 when quota prevents completion. The default still waits for the provider's retry
+time, as the existing campaign did.
+
+**Report integrity.** A regenerated report alone does not establish that its measurements are
+complete. The Phase 8 gate now checks the specified models, all 150 test attempts per model,
+the plan sample, all four 75-item ablation configurations, and a completed 20-command live run.
+It accepts measured model/build failures without relabelling them as successes. Parser errors
+are excluded from accuracy denominators by the existing scorer; reports and Analytics now say
+that explicitly, and show rejected ablation responses as well as rejected test responses.
+Chapter 12 preserves incomplete markers rather than rendering partial measurements as complete.
+Archived report regeneration uses the frozen dataset card beside the runs, validates its checksum
+against run metadata, and accepts older Windows path separators. A later review of the working
+dataset cannot change an archived report's provenance.
+
+**Evidence.** `docs/evaluation/eval-v1-2026-10-25/` preserves all required measurements. The live
+sample succeeded on 18 of 20 commands; two generated jobs failed sample-service formatting
+checks, with console logs retained. Extra development runs stopped for quota and are marked
+incomplete. The dataset's machine-label provenance remains D-081; no review is claimed.
+Regression tests cover campaign recovery, failure propagation, evidence preservation and gate
+completeness in `backend/tests/test_eval_campaign.py`.
+
 ### D-081 The evaluation dataset is written and labelled by Claude Code, and says so everywhere
 **Date:** 2026-10-24 · **Status:** accepted (Phase 8), at the project owner's instruction
 

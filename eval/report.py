@@ -215,17 +215,22 @@ def _run_row(run: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _dataset(runs: list[dict[str, Any]]) -> dict[str, Any] | None:
+def _dataset(
+    runs: list[dict[str, Any]], *, dataset_dir: Path | None = None
+) -> dict[str, Any] | None:
     """The card of the dataset the reportable test runs used, read from the card file itself."""
     for run in runs:
         card = (run.get("dataset") or {}).get("card")
         dataset = run["run"].get("dataset")
         if not card or not dataset:
             continue
-        path = RESULTS_DIR.parents[1] / dataset
+        relative = Path(dataset.replace("\\", "/"))
+        path = dataset_dir / relative.name if dataset_dir else RESULTS_DIR.parents[1] / relative
         card_file = path.with_name(path.stem + ".card.json")
         if card_file.is_file():
             full = json.loads(card_file.read_text(encoding="utf-8"))
+            if full.get("sha256") != card.get("sha256"):
+                raise ValueError(f"Dataset card checksum disagrees with the run: {card_file}")
             return {
                 "name": full.get("name"),
                 "items": full.get("items"),
@@ -245,7 +250,7 @@ def _dataset(runs: list[dict[str, Any]]) -> dict[str, Any] | None:
     return None
 
 
-def build_report(runs: list[dict[str, Any]]) -> dict[str, Any]:
+def build_report(runs: list[dict[str, Any]], *, dataset_dir: Path | None = None) -> dict[str, Any]:
     reportable = [run for run in runs if _reportable(run)]
     comparison = sorted(
         (
@@ -276,7 +281,7 @@ def build_report(runs: list[dict[str, Any]]) -> dict[str, Any]:
             "labels": tier,
             "statement": MACHINE_STATEMENT if tier in ("machine", "mixed") else None,
         },
-        "dataset": _dataset(reportable),
+        "dataset": _dataset(reportable, dataset_dir=dataset_dir),
         "comparison": comparison,
         "plans": plans,
         "ablations": _ablations(reportable),
@@ -346,13 +351,13 @@ def _ablations_md(ablations: dict[str, Any]) -> list[str]:
     lines = [
         f"On the 75-item stratified subset of the test split, with `{ablations['parser']}`.",
         "",
-        "| Configuration | n | Action | Exact match | Behaviour | Clarify P / R | Refusal | "
-        "Tokens/cmd | Plans valid first / after repair |",
-        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Configuration | n | Errors | Action | Exact match | Behaviour | Clarify P / R | "
+        "Refusal | Tokens/cmd | Plans valid first / after repair |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for row in ablations["rows"]:
         lines.append(
-            f"| {row['label']}{_incomplete(row)} | {row['n']} "
+            f"| {row['label']}{_incomplete(row)} | {row['n']} | {row['errors']} "
             f"| {_fmt(row['action_accuracy'])} | {_fmt(row['exact_match'])} "
             f"| {_fmt(row['behavior_accuracy'])} "
             f"| {_fmt(row['clarification_precision'])} / {_fmt(row['clarification_recall'])} "
@@ -388,8 +393,8 @@ def _e2e_md(rows: list[dict[str, Any]]) -> list[str]:
     return lines
 
 
-def render_markdown(runs: list[dict[str, Any]]) -> str:
-    report = build_report(runs)
+def render_markdown(runs: list[dict[str, Any]], *, dataset_dir: Path | None = None) -> str:
+    report = build_report(runs, dataset_dir=dataset_dir)
     reportable = [run for run in runs if _reportable(run)]
     lines = ["# Chatbot evaluation", ""]
     if report["provenance"]["statement"]:
@@ -450,6 +455,8 @@ def render_markdown(runs: list[dict[str, Any]]) -> str:
             "",
             "Field comparison: `extra_stages` as a set; `justification` leniently (both absent, or "
             "one contains the other). Action and field scores use each parser's own answer. "
+            "Items with a parser error are counted in Errors and excluded from accuracy, "
+            "clarification and refusal denominators. "
             "Latency is the answering model call's own time; answers served from a cache are left "
             "out of it.",
             "",
@@ -484,10 +491,14 @@ def write_report(results_dir: Path = RESULTS_DIR, out_dir: Path | None = None) -
     """Write ``report.json`` and ``report.md`` for the runs in ``results_dir``, into ``out_dir``
     (the results directory itself by default, where the Analytics page reads it)."""
     runs = collect(results_dir)
+    archived_dataset = results_dir.parent / "dataset"
+    dataset_dir = archived_dataset if archived_dataset.is_dir() else None
     target = out_dir or results_dir
     target.mkdir(parents=True, exist_ok=True)
     json_path = target / "report.json"
     md_path = target / "report.md"
-    json_path.write_text(json.dumps(build_report(runs), indent=2) + "\n", encoding="utf-8")
-    md_path.write_text(render_markdown(runs), encoding="utf-8")
+    json_path.write_text(
+        json.dumps(build_report(runs, dataset_dir=dataset_dir), indent=2) + "\n", encoding="utf-8"
+    )
+    md_path.write_text(render_markdown(runs, dataset_dir=dataset_dir), encoding="utf-8")
     return json_path, md_path

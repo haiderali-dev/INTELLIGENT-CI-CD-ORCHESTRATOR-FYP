@@ -1,0 +1,8 @@
+250 item(s): 0 reviewed, 250 awaiting review
+  labels: written by Claude Code, not reviewed by a person (D-081)
+2026-10-25 20:14:20 [info     ] catalog_loaded                 path='D:\\FYP POC\\CICD project - Copy\\catalog\\services.yaml' services=2
+scored 75 item(s), 0 error(s)
+action accuracy 0.9733, behaviour accuracy 0.96
+plans: 38 of 38 planned by the model, valid before repair 1.0, after 1.0
+note: Gold labels written by Claude Code and checked against the card's rules by code; no person has reviewed them (docs/decisions.md D-081). Report these figures with that provenance beside them.
+metrics: eval\results\eval-v1-ablation__groq-openai-gpt-oss-120b\metrics.json

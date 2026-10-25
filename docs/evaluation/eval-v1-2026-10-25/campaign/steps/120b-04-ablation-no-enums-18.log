@@ -1,0 +1,24 @@
+250 item(s): 0 reviewed, 250 awaiting review
+  labels: written by Claude Code, not reviewed by a person (D-081)
+2026-10-25 17:17:53 [info     ] catalog_loaded                 path='D:\\FYP POC\\CICD project - Copy\\catalog\\services.yaml' services=2
+resuming: 54 item(s) already done
+2026-10-25 17:17:54 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=2c563e40f856
+2026-10-25 17:17:56 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=01f5d3ba9820
+2026-10-25 17:17:59 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=d050471d5c80
+2026-10-25 17:18:04 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=6479bb1f37c9
+2026-10-25 17:18:55 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=7d9b313e4f72
+2026-10-25 17:18:57 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=857d1224dfd0
+2026-10-25 17:19:00 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=72061bd93a62
+2026-10-25 17:19:05 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=0e35cbe6e1d3
+2026-10-25 17:19:56 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=cd2d51992061
+2026-10-25 17:19:59 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=19761f785d22
+2026-10-25 17:20:01 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=ecc2881ed012
+2026-10-25 17:20:06 [info     ] llm_rate_limited               exhausted=True model=openai/gpt-oss-120b remaining_requests=989 retry_after=689.0
+2026-10-25 17:20:06 [warning  ] llm_chain_exhausted            reasons=['openai/gpt-oss-120b: rate limited for 11 min']
+stopped at ev1-p040: the daily budget for openai/gpt-oss-120b is spent (openai/gpt-oss-120b: rate limited for 11 min). Progress is saved; rerun the same command later to resume.
+scored 64 item(s), 1 error(s)
+action accuracy 0.9844, behaviour accuracy 0.9688
+plans: 0 of 38 planned by the model, valid before repair None, after None
+note: Gold labels written by Claude Code and checked against the card's rules by code; no person has reviewed them (docs/decisions.md D-081). Report these figures with that provenance beside them.
+incomplete: stopped at ev1-p040: the daily budget for openai/gpt-oss-120b is spent (openai/gpt-oss-120b: rate limited for 11 min). Progress is saved; rerun the same command later to resume.
+metrics: eval\results\eval-v1-ablation__groq-openai-gpt-oss-120b__no-enums\metrics.json

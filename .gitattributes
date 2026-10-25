@@ -47,3 +47,9 @@ uv.lock                       linguist-generated=true
 
 # The experiment matrix's raw runs are kept byte for byte too, so SHA256SUMS still matches.
 docs/experiment/*/runs/** -text
+
+# Evaluation snapshots retain the bytes covered by their SHA-256 manifests on every platform.
+docs/evaluation/*/runs/** -text
+docs/evaluation/*/report/** -text
+docs/evaluation/*/dataset/** -text
+docs/evaluation/*/diagnostics/** -text

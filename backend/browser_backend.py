@@ -68,6 +68,7 @@ def _archived_evaluation() -> str:
     reports = sorted(archive.glob("*/report/report.json"))
     return str(reports[-1] if reports else WORKDIR / "no-evaluation-report.json")
 
+
 # Before anything from `app` is imported, so the settings every module reads are these. Each one
 # that could carry a secret is set, which keeps a local .env from supplying it.
 os.environ.update(

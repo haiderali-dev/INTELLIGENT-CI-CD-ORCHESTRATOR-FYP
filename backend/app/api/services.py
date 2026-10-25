@@ -154,7 +154,7 @@ async def list_branches(
 )
 async def resync_catalog(
     user: AdminUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     settings: Annotated[Settings, Depends(get_settings_dep)],
     catalog: Annotated[Catalog, Depends(get_catalog)],
 ) -> ResyncResponse:

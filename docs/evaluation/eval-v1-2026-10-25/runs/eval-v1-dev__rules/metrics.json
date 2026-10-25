@@ -1,0 +1,116 @@
+{
+  "run": {
+    "parser": "rules",
+    "dataset": "eval\\datasets\\eval-v1.jsonl",
+    "split": "dev",
+    "subset": null,
+    "prompt_version": "intent_v1@9457338e",
+    "planner_prompt_version": null,
+    "include_examples": true,
+    "include_enums": true,
+    "max_repairs": 2,
+    "finished_at": "2026-10-24T23:51:25.679473+00:00",
+    "complete": true,
+    "stopped_reason": null,
+    "labels": "machine",
+    "for_reporting": true
+  },
+  "dataset": {
+    "items": 250,
+    "selected": 100,
+    "scorable": 0,
+    "excluded_needs_review": 0,
+    "warnings": [],
+    "card": {
+      "name": "eval-v1",
+      "sha256": "31559fed8225979eab3d7bf532b54062661056717c7936fffdaa15a390596428",
+      "labels": "machine",
+      "decision": "D-081"
+    }
+  },
+  "metrics": {
+    "n": 100,
+    "errors": 0,
+    "action_accuracy": 0.87,
+    "per_field_accuracy": {
+      "action": 0.87,
+      "service": 0.96,
+      "branch": 0.94,
+      "commit": 1.0,
+      "environment": 0.98,
+      "test_suite": 0.98,
+      "urgency": 1.0,
+      "extra_stages": 1.0,
+      "justification": 1.0
+    },
+    "exact_match": 0.76,
+    "behavior_accuracy": 0.84,
+    "clarification": {
+      "precision": 0.7917,
+      "recall": 0.8636
+    },
+    "refusal_rate": 0.7692,
+    "refusal_target": 1.0,
+    "latency_ms": {
+      "median": 0,
+      "p95": 1
+    },
+    "tokens_per_command": 0,
+    "fallback_rate": 1.0,
+    "cache_hits": 0,
+    "by_category": {
+      "ambiguous": {
+        "n": 10,
+        "action_accuracy": 0.9,
+        "behavior_accuracy": 0.7
+      },
+      "clear": {
+        "n": 40,
+        "action_accuracy": 0.925,
+        "behavior_accuracy": 0.925
+      },
+      "missing_field": {
+        "n": 15,
+        "action_accuracy": 1.0,
+        "behavior_accuracy": 1.0
+      },
+      "paraphrase_typos": {
+        "n": 20,
+        "action_accuracy": 0.7,
+        "behavior_accuracy": 0.65
+      },
+      "prompt_injection": {
+        "n": 5,
+        "action_accuracy": 1.0,
+        "behavior_accuracy": 1.0
+      },
+      "unsafe_out_of_scope": {
+        "n": 10,
+        "action_accuracy": 0.7,
+        "behavior_accuracy": 0.7
+      }
+    },
+    "by_behavior": {
+      "CLARIFY": {
+        "n": 22,
+        "accuracy": 0.8636
+      },
+      "GENERATE": {
+        "n": 65,
+        "accuracy": 0.8462
+      },
+      "REFUSE": {
+        "n": 13,
+        "accuracy": 0.7692
+      }
+    },
+    "comparison_rules": {
+      "justification": "lenient: both absent, or one contains the other after normalising",
+      "extra_stages": "compared as a set",
+      "scored_answer": "the parser's own answer (model_intent), not the corrected one",
+      "latency": "the answering call's own time; excludes answers served from a cache"
+    }
+  },
+  "plans": null,
+  "warning": "Gold labels written by Claude Code and checked against the card's rules by code; no person has reviewed them (docs/decisions.md D-081). Report these figures with that provenance beside them."
+}

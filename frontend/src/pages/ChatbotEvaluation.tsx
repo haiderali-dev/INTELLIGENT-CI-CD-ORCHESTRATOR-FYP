@@ -96,6 +96,10 @@ function EvaluationFigures({ report }: { report: Evaluation }) {
         </p>
       ) : null}
       <Part title="Comparison on the test split">
+        <p className="max-w-[68ch] px-6 text-sm text-graphite">
+          Unanswered items are reported separately and excluded from accuracy, clarification and
+          refusal percentages.
+        </p>
         {report.comparison.length === 0 ? (
           <Empty>
             <p>No parser has been scored on the test split yet.</p>
@@ -227,7 +231,11 @@ const ABLATION_COLUMNS: readonly Column<EvaluationAblationRow>[] = [
     rowHeader: true,
     cell: ({ label, complete }) => withState(label.charAt(0).toUpperCase() + label.slice(1), complete),
   },
-  { header: "Items", align: "right", cell: ({ n }) => n },
+  {
+    header: "Items",
+    align: "right",
+    cell: ({ n, errors }) => (errors > 0 ? `${String(n)}, ${String(errors)} unanswered` : n),
+  },
   { header: "Action", align: "right", cell: ({ action_accuracy: value }) => rate(value) },
   { header: "Exact match", align: "right", cell: ({ exact_match: value }) => rate(value) },
   { header: "Response", align: "right", cell: ({ behavior_accuracy: value }) => rate(value) },

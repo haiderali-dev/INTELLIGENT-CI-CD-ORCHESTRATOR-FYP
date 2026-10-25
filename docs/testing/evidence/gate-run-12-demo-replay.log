@@ -1,0 +1,232 @@
+.F                                                                       [100%]
+================================== FAILURES ===================================
+____________ test_the_demo_script_runs_with_every_answer_replayed _____________
+
+stack = Stack(client=<httpx.AsyncClient object at 0x000001BE8613E420>, settings=Settings(environment=<Environment.TEST: 'test'...t object at 0x000001BE85CBA480>, tracker=<app.services.tracker.RunTracker object at 0x000001BE85CBB950>, mode='replay')
+
+    async def test_the_demo_script_runs_with_every_answer_replayed(stack: Stack) -> None:
+        headers: dict[Role, dict[str, str]] = {}
+        for step in script_steps():
+            if step.role not in headers:
+                headers[step.role] = await e2e.sign_in(stack, step.role)
+            account = headers[step.role]
+            chat = await e2e.new_chat(stack, account, step.assistant)
+            body: dict[str, Any] = {}
+            for message in step.messages:
+                # In replay mode e2e.say fails the test when a parse did not come from a fixture.
+                body = await e2e.say(stack, account, chat, message)
+            check_answer(step, body)
+            if not step.approve:
+                continue
+    
+            pipeline = await e2e.generate(stack, account, body["command"]["id"])
+            assert pipeline["status"] == "VALIDATED", f"step {step.number}: {pipeline['progress']}"
+            approval = await e2e.approve(stack, account, pipeline["id"])
+            card = await e2e.wait_for_chain(stack, account, approval["chain_id"])
+>           assert card["status"] == step.expected_result, f"step {step.number}: {card}"
+E           AssertionError: step 1: {'id': 'ddc7f1fbf092477ea0d36f9f89449f1d', 'pipeline_id': '302f373638d54284822e371e6d76d9f0', 'service': 'payment-service', 'job_type': 'FREESTYLE', 'status': 'FAILURE', 'position': 0, 'parameters': {'BRANCH': 'main', 'COMMIT': 'refs/heads/main'}, 'started_at': '2026-10-25T16:03:45.472161+00:00', 'finished_at': '2026-10-25T16:04:15.157099+00:00', 'lock_expires_at': '2026-10-25T16:33:45.472161+00:00', 'duration_ms': 22105, 'jobs': [{'name': 'fs-payment-service-build', 'position': 0, 'state': 'failure', 'run': {'id': '807d48b3622d43b78f065f50a235d6b2', 'build_number': 230, 'result': 'FAILURE', 'started_at': '2026-10-25T16:03:52.859000+00:00', 'finished_at': '2026-10-25T16:04:14.964000+00:00', 'duration_ms': 22105, 'queue_wait_ms': None, 'url': 'http://localhost:8087/job/fs-payment-service-build/230/'}}], 'stages': [], 'queue': None, 'failed_run_id': '807d48b3622d43b78f065f50a235d6b2'}
+E           assert 'FAILURE' == 'SUCCESS'
+E             
+E             - SUCCESS
+E             + FAILURE
+
+tests\test_demo_script.py:139: AssertionError
+---------------------------- Captured stdout setup ----------------------------
+2026-10-25 21:03:44 [info     ] catalog_loaded                 path='D:\\FYP POC\\CICD project - Copy\\catalog\\services.yaml' services=2
+{"interval_seconds": 2.0, "event": "tracker_started", "level": "info", "logger": "app.services.tracker", "timestamp": "2026-10-25T16:03:44.251319Z"}
+{"event": "HTTP Request: GET http://localhost:8087/api/json?tree=mode \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:44.597261Z"}
+---------------------------- Captured stdout call -----------------------------
+{"user_id": "48569e3481a347afa228b0cd92bee290", "role": "DEVELOPER", "client": "127.0.0.1", "event": "login", "request_id": "9e84f343ccb14ad4ade304df058f10e7", "level": "info", "logger": "app.services.auth", "timestamp": "2026-10-25T16:03:44.759522Z"}
+{"method": "POST", "path": "/api/auth/login", "status": 200, "event": "request", "level": "info", "logger": "app.request", "request_id": "9e84f343ccb14ad4ade304df058f10e7", "timestamp": "2026-10-25T16:03:44.760519Z"}
+{"event": "HTTP Request: POST http://e2e/api/auth/login \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "request_id": "9e84f343ccb14ad4ade304df058f10e7", "timestamp": "2026-10-25T16:03:44.772069Z"}
+{"method": "POST", "path": "/api/assistants/freestyle/conversations", "status": 201, "event": "request", "level": "info", "logger": "app.request", "request_id": "eb3f0ec205484d7783971385cd6bc938", "timestamp": "2026-10-25T16:03:44.848900Z"}
+{"event": "HTTP Request: POST http://e2e/api/assistants/freestyle/conversations \"HTTP/1.1 201 Created\"", "level": "info", "logger": "httpx", "request_id": "eb3f0ec205484d7783971385cd6bc938", "timestamp": "2026-10-25T16:03:44.852134Z"}
+{"command_id": "1cbb32d1ad3442558a58aa4057bde449", "disposition": "READY", "parser": "LLM", "ai_fallback": false, "event": "intent_recorded", "request_id": "647b9194c6164f1db5c4bd9d72f64859", "level": "info", "logger": "app.ai.parser", "timestamp": "2026-10-25T16:03:45.041245Z"}
+{"method": "POST", "path": "/api/conversations/a5ffd40105304fb3b82857095f068136/messages", "status": 201, "event": "request", "level": "info", "logger": "app.request", "request_id": "647b9194c6164f1db5c4bd9d72f64859", "timestamp": "2026-10-25T16:03:45.052353Z"}
+{"event": "HTTP Request: POST http://e2e/api/conversations/a5ffd40105304fb3b82857095f068136/messages \"HTTP/1.1 201 Created\"", "level": "info", "logger": "httpx", "request_id": "647b9194c6164f1db5c4bd9d72f64859", "timestamp": "2026-10-25T16:03:45.056504Z"}
+{"event": "HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/api/json?tree=name \"HTTP/1.1 200 OK\"", "request_id": "ae02df1535164236aa4abc9932bd4eb4", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:45.386204Z"}
+{"pipeline_id": "302f373638d54284822e371e6d76d9f0", "command_id": "1cbb32d1ad3442558a58aa4057bde449", "status": "VALIDATED", "source": "plan", "event": "pipeline_generated", "request_id": "ae02df1535164236aa4abc9932bd4eb4", "level": "info", "logger": "app.services.generation", "timestamp": "2026-10-25T16:03:45.414444Z"}
+{"method": "POST", "path": "/api/commands/1cbb32d1ad3442558a58aa4057bde449/generate", "status": 201, "event": "request", "level": "info", "logger": "app.request", "request_id": "ae02df1535164236aa4abc9932bd4eb4", "timestamp": "2026-10-25T16:03:45.415507Z"}
+{"event": "HTTP Request: POST http://e2e/api/commands/1cbb32d1ad3442558a58aa4057bde449/generate \"HTTP/1.1 201 Created\"", "level": "info", "logger": "httpx", "request_id": "ae02df1535164236aa4abc9932bd4eb4", "timestamp": "2026-10-25T16:03:45.421571Z"}
+{"event": "HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/api/json?tree=name \"HTTP/1.1 200 OK\"", "request_id": "2bfef6fc795149de9d5c578f522e7c54", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:45.506810Z"}
+{"event": "HTTP Request: POST http://localhost:8087/job/fs-payment-service-build/config.xml \"HTTP/1.1 200 OK\"", "request_id": "2bfef6fc795149de9d5c578f522e7c54", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:45.634985Z"}
+{"job": "fs-payment-service-build", "event": "jenkins_job_updated", "request_id": "2bfef6fc795149de9d5c578f522e7c54", "level": "info", "logger": "app.services.jenkins", "timestamp": "2026-10-25T16:03:45.635517Z"}
+{"event": "HTTP Request: POST http://localhost:8087/job/fs-payment-service-build/buildWithParameters \"HTTP/1.1 201 Created\"", "request_id": "2bfef6fc795149de9d5c578f522e7c54", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:45.684674Z"}
+{"job": "fs-payment-service-build", "queue_item": 2155, "event": "jenkins_triggered", "request_id": "2bfef6fc795149de9d5c578f522e7c54", "level": "info", "logger": "app.services.jenkins", "timestamp": "2026-10-25T16:03:45.685222Z"}
+{"pipeline_id": "302f373638d54284822e371e6d76d9f0", "first_job": "fs-payment-service-build", "event": "pipeline_approved", "request_id": "2bfef6fc795149de9d5c578f522e7c54", "level": "info", "logger": "app.services.generation", "timestamp": "2026-10-25T16:03:45.739664Z"}
+{"method": "POST", "path": "/api/pipelines/302f373638d54284822e371e6d76d9f0/approve", "status": 200, "event": "request", "level": "info", "logger": "app.request", "request_id": "2bfef6fc795149de9d5c578f522e7c54", "timestamp": "2026-10-25T16:03:45.740729Z"}
+{"event": "HTTP Request: POST http://e2e/api/pipelines/302f373638d54284822e371e6d76d9f0/approve \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "request_id": "2bfef6fc795149de9d5c578f522e7c54", "timestamp": "2026-10-25T16:03:45.745767Z"}
+{"event": "HTTP Request: GET http://localhost:8087/queue/api/json?tree=items%5Bid%2Cblocked%2Cbuildable%2Cstuck%2Cwhy%2Ctask%5Bname%5D%5D \"HTTP/1.1 200 OK\"", "request_id": "9031480038614ea1a95cc04c892f476f", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:45.829166Z"}
+{"event": "HTTP Request: GET http://localhost:8087/dynamic-queue/api/json \"HTTP/1.1 200 OK\"", "request_id": "9031480038614ea1a95cc04c892f476f", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:46.140842Z"}
+{"method": "GET", "path": "/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d", "status": 200, "event": "request", "level": "info", "logger": "app.request", "request_id": "9031480038614ea1a95cc04c892f476f", "timestamp": "2026-10-25T16:03:46.141458Z"}
+{"event": "HTTP Request: GET http://e2e/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "request_id": "9031480038614ea1a95cc04c892f476f", "timestamp": "2026-10-25T16:03:46.143757Z"}
+{"event": "HTTP Request: GET http://localhost:8087/queue/item/2155/api/json \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:46.429227Z"}
+{"event": "HTTP Request: GET http://localhost:8087/queue/item/2155/api/json \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:46.462413Z"}
+{"event": "HTTP Request: GET http://localhost:8087/queue/item/2155/api/json \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:48.499685Z"}
+{"event": "HTTP Request: GET http://localhost:8087/queue/item/2155/api/json \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:48.519970Z"}
+{"event": "HTTP Request: GET http://localhost:8087/queue/api/json?tree=items%5Bid%2Cblocked%2Cbuildable%2Cstuck%2Cwhy%2Ctask%5Bname%5D%5D \"HTTP/1.1 200 OK\"", "request_id": "b18f374721c543efb0821c80ee97acaf", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:49.171482Z"}
+{"event": "HTTP Request: GET http://localhost:8087/dynamic-queue/api/json \"HTTP/1.1 200 OK\"", "request_id": "b18f374721c543efb0821c80ee97acaf", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:49.184896Z"}
+{"method": "GET", "path": "/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d", "status": 200, "event": "request", "level": "info", "logger": "app.request", "request_id": "b18f374721c543efb0821c80ee97acaf", "timestamp": "2026-10-25T16:03:49.185965Z"}
+{"event": "HTTP Request: GET http://e2e/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "request_id": "b18f374721c543efb0821c80ee97acaf", "timestamp": "2026-10-25T16:03:49.188135Z"}
+{"event": "HTTP Request: GET http://localhost:8087/queue/item/2155/api/json \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:50.552243Z"}
+{"event": "HTTP Request: GET http://localhost:8087/queue/item/2155/api/json \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:50.574193Z"}
+{"event": "HTTP Request: GET http://localhost:8087/queue/api/json?tree=items%5Bid%2Cblocked%2Cbuildable%2Cstuck%2Cwhy%2Ctask%5Bname%5D%5D \"HTTP/1.1 200 OK\"", "request_id": "fa1cef5ca7754cbfa2f530c811891574", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:52.240265Z"}
+{"event": "HTTP Request: GET http://localhost:8087/dynamic-queue/api/json \"HTTP/1.1 200 OK\"", "request_id": "fa1cef5ca7754cbfa2f530c811891574", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:52.257652Z"}
+{"method": "GET", "path": "/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d", "status": 200, "event": "request", "level": "info", "logger": "app.request", "request_id": "fa1cef5ca7754cbfa2f530c811891574", "timestamp": "2026-10-25T16:03:52.258743Z"}
+{"event": "HTTP Request: GET http://e2e/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "request_id": "fa1cef5ca7754cbfa2f530c811891574", "timestamp": "2026-10-25T16:03:52.261421Z"}
+{"event": "HTTP Request: GET http://localhost:8087/queue/item/2155/api/json \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:52.619814Z"}
+{"event": "HTTP Request: GET http://localhost:8087/queue/item/2155/api/json \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:52.651225Z"}
+{"event": "HTTP Request: GET http://localhost:8087/queue/item/2155/api/json \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:54.682918Z"}
+{"event": "HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:54.715094Z"}
+{"event": "HTTP Request: GET http://localhost:8087/queue/item/2155/api/json \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:54.733828Z"}
+{"resolved": 1, "advanced": 1, "chains": 1, "event": "tracker_tick", "level": "info", "logger": "app.services.tracker", "timestamp": "2026-10-25T16:03:54.749011Z"}
+{"event": "HTTP Request: GET http://localhost:8087/queue/api/json?tree=items%5Bid%2Cblocked%2Cbuildable%2Cstuck%2Cwhy%2Ctask%5Bname%5D%5D \"HTTP/1.1 200 OK\"", "request_id": "de460b3531fe4dedad71276c22798a53", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:55.291979Z"}
+{"event": "HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json \"HTTP/1.1 200 OK\"", "request_id": "de460b3531fe4dedad71276c22798a53", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:55.306376Z"}
+{"event": "HTTP Request: GET http://localhost:8087/dynamic-queue/api/json \"HTTP/1.1 200 OK\"", "request_id": "de460b3531fe4dedad71276c22798a53", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:55.319752Z"}
+{"method": "GET", "path": "/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d", "status": 200, "event": "request", "level": "info", "logger": "app.request", "request_id": "de460b3531fe4dedad71276c22798a53", "timestamp": "2026-10-25T16:03:55.320286Z"}
+{"event": "HTTP Request: GET http://e2e/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "request_id": "de460b3531fe4dedad71276c22798a53", "timestamp": "2026-10-25T16:03:55.322393Z"}
+{"event": "HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:56.775728Z"}
+{"event": "HTTP Request: GET http://localhost:8087/queue/api/json?tree=items%5Bid%2Cblocked%2Cbuildable%2Cstuck%2Cwhy%2Ctask%5Bname%5D%5D \"HTTP/1.1 200 OK\"", "request_id": "966a9bf671234cbab79d7909325afc96", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:58.361305Z"}
+{"event": "HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json \"HTTP/1.1 200 OK\"", "request_id": "966a9bf671234cbab79d7909325afc96", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:58.374548Z"}
+{"event": "HTTP Request: GET http://localhost:8087/dynamic-queue/api/json \"HTTP/1.1 200 OK\"", "request_id": "966a9bf671234cbab79d7909325afc96", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:58.387869Z"}
+{"method": "GET", "path": "/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d", "status": 200, "event": "request", "level": "info", "logger": "app.request", "request_id": "966a9bf671234cbab79d7909325afc96", "timestamp": "2026-10-25T16:03:58.389093Z"}
+{"event": "HTTP Request: GET http://e2e/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "request_id": "966a9bf671234cbab79d7909325afc96", "timestamp": "2026-10-25T16:03:58.391560Z"}
+{"event": "HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:03:58.812412Z"}
+{"event": "HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:00.858660Z"}
+{"event": "HTTP Request: GET http://localhost:8087/queue/api/json?tree=items%5Bid%2Cblocked%2Cbuildable%2Cstuck%2Cwhy%2Ctask%5Bname%5D%5D \"HTTP/1.1 200 OK\"", "request_id": "866356d92b7847979757ce38d739c43b", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:01.429610Z"}
+{"event": "HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json \"HTTP/1.1 200 OK\"", "request_id": "866356d92b7847979757ce38d739c43b", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:01.444234Z"}
+{"event": "HTTP Request: GET http://localhost:8087/dynamic-queue/api/json \"HTTP/1.1 200 OK\"", "request_id": "866356d92b7847979757ce38d739c43b", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:01.456861Z"}
+{"method": "GET", "path": "/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d", "status": 200, "event": "request", "level": "info", "logger": "app.request", "request_id": "866356d92b7847979757ce38d739c43b", "timestamp": "2026-10-25T16:04:01.457390Z"}
+{"event": "HTTP Request: GET http://e2e/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "request_id": "866356d92b7847979757ce38d739c43b", "timestamp": "2026-10-25T16:04:01.458966Z"}
+{"event": "HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:02.906115Z"}
+{"event": "HTTP Request: GET http://localhost:8087/queue/api/json?tree=items%5Bid%2Cblocked%2Cbuildable%2Cstuck%2Cwhy%2Ctask%5Bname%5D%5D \"HTTP/1.1 200 OK\"", "request_id": "281d1e443b7b4b51a10df7cfe5518fd0", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:04.497331Z"}
+{"event": "HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json \"HTTP/1.1 200 OK\"", "request_id": "281d1e443b7b4b51a10df7cfe5518fd0", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:04.518918Z"}
+{"event": "HTTP Request: GET http://localhost:8087/dynamic-queue/api/json \"HTTP/1.1 200 OK\"", "request_id": "281d1e443b7b4b51a10df7cfe5518fd0", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:04.534078Z"}
+{"method": "GET", "path": "/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d", "status": 200, "event": "request", "level": "info", "logger": "app.request", "request_id": "281d1e443b7b4b51a10df7cfe5518fd0", "timestamp": "2026-10-25T16:04:04.535139Z"}
+{"event": "HTTP Request: GET http://e2e/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "request_id": "281d1e443b7b4b51a10df7cfe5518fd0", "timestamp": "2026-10-25T16:04:04.537621Z"}
+{"event": "HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:04.956896Z"}
+{"event": "HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:06.997217Z"}
+{"event": "HTTP Request: GET http://localhost:8087/queue/api/json?tree=items%5Bid%2Cblocked%2Cbuildable%2Cstuck%2Cwhy%2Ctask%5Bname%5D%5D \"HTTP/1.1 200 OK\"", "request_id": "3eb84410b62845be872a4ecf10f9d40a", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:07.569017Z"}
+{"event": "HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json \"HTTP/1.1 200 OK\"", "request_id": "3eb84410b62845be872a4ecf10f9d40a", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:07.583333Z"}
+{"event": "HTTP Request: GET http://localhost:8087/dynamic-queue/api/json \"HTTP/1.1 200 OK\"", "request_id": "3eb84410b62845be872a4ecf10f9d40a", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:07.595574Z"}
+{"method": "GET", "path": "/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d", "status": 200, "event": "request", "level": "info", "logger": "app.request", "request_id": "3eb84410b62845be872a4ecf10f9d40a", "timestamp": "2026-10-25T16:04:07.596112Z"}
+{"event": "HTTP Request: GET http://e2e/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "request_id": "3eb84410b62845be872a4ecf10f9d40a", "timestamp": "2026-10-25T16:04:07.597842Z"}
+{"event": "HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:09.039972Z"}
+{"event": "HTTP Request: GET http://localhost:8087/queue/api/json?tree=items%5Bid%2Cblocked%2Cbuildable%2Cstuck%2Cwhy%2Ctask%5Bname%5D%5D \"HTTP/1.1 200 OK\"", "request_id": "9be9b9373e464858bd5d388435b72777", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:10.651362Z"}
+{"event": "HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json \"HTTP/1.1 200 OK\"", "request_id": "9be9b9373e464858bd5d388435b72777", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:10.671283Z"}
+{"event": "HTTP Request: GET http://localhost:8087/dynamic-queue/api/json \"HTTP/1.1 200 OK\"", "request_id": "9be9b9373e464858bd5d388435b72777", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:10.690163Z"}
+{"method": "GET", "path": "/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d", "status": 200, "event": "request", "level": "info", "logger": "app.request", "request_id": "9be9b9373e464858bd5d388435b72777", "timestamp": "2026-10-25T16:04:10.691287Z"}
+{"event": "HTTP Request: GET http://e2e/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "request_id": "9be9b9373e464858bd5d388435b72777", "timestamp": "2026-10-25T16:04:10.693934Z"}
+{"event": "HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:11.078148Z"}
+{"event": "HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:13.114854Z"}
+{"event": "HTTP Request: GET http://localhost:8087/queue/api/json?tree=items%5Bid%2Cblocked%2Cbuildable%2Cstuck%2Cwhy%2Ctask%5Bname%5D%5D \"HTTP/1.1 200 OK\"", "request_id": "a19043e51e644e078618aebbb3b59c33", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:13.723978Z"}
+{"event": "HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json \"HTTP/1.1 200 OK\"", "request_id": "a19043e51e644e078618aebbb3b59c33", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:13.737484Z"}
+{"event": "HTTP Request: GET http://localhost:8087/dynamic-queue/api/json \"HTTP/1.1 200 OK\"", "request_id": "a19043e51e644e078618aebbb3b59c33", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:13.750668Z"}
+{"method": "GET", "path": "/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d", "status": 200, "event": "request", "level": "info", "logger": "app.request", "request_id": "a19043e51e644e078618aebbb3b59c33", "timestamp": "2026-10-25T16:04:13.751197Z"}
+{"event": "HTTP Request: GET http://e2e/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "request_id": "a19043e51e644e078618aebbb3b59c33", "timestamp": "2026-10-25T16:04:13.753311Z"}
+{"event": "HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:15.153215Z"}
+{"resolved": 0, "advanced": 1, "chains": 1, "event": "tracker_tick", "level": "info", "logger": "app.services.tracker", "timestamp": "2026-10-25T16:04:15.170035Z"}
+{"event": "HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json \"HTTP/1.1 200 OK\"", "request_id": "55b3dffc941d484ba18ccf03d97b6439", "level": "info", "logger": "httpx", "timestamp": "2026-10-25T16:04:16.790765Z"}
+{"method": "GET", "path": "/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d", "status": 200, "event": "request", "level": "info", "logger": "app.request", "request_id": "55b3dffc941d484ba18ccf03d97b6439", "timestamp": "2026-10-25T16:04:16.791295Z"}
+{"event": "HTTP Request: GET http://e2e/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d \"HTTP/1.1 200 OK\"", "level": "info", "logger": "httpx", "request_id": "55b3dffc941d484ba18ccf03d97b6439", "timestamp": "2026-10-25T16:04:16.793425Z"}
+------------------------------ Captured log call ------------------------------
+INFO     app.services.auth:auth.py:246 {'user_id': '48569e3481a347afa228b0cd92bee290', 'role': 'DEVELOPER', 'client': '127.0.0.1', 'event': 'login', 'request_id': '9e84f343ccb14ad4ade304df058f10e7', 'level': 'info', 'logger': 'app.services.auth', 'timestamp': '2026-10-25T16:03:44.759522Z'}
+INFO     app.request:logging.py:131 {'method': 'POST', 'path': '/api/auth/login', 'status': 200, 'event': 'request', 'level': 'info', 'logger': 'app.request', 'request_id': '9e84f343ccb14ad4ade304df058f10e7', 'timestamp': '2026-10-25T16:03:44.760519Z'}
+INFO     httpx:_client.py:1740 HTTP Request: POST http://e2e/api/auth/login "HTTP/1.1 200 OK"
+INFO     app.request:logging.py:131 {'method': 'POST', 'path': '/api/assistants/freestyle/conversations', 'status': 201, 'event': 'request', 'level': 'info', 'logger': 'app.request', 'request_id': 'eb3f0ec205484d7783971385cd6bc938', 'timestamp': '2026-10-25T16:03:44.848900Z'}
+INFO     httpx:_client.py:1740 HTTP Request: POST http://e2e/api/assistants/freestyle/conversations "HTTP/1.1 201 Created"
+INFO     app.ai.parser:parser.py:587 {'command_id': '1cbb32d1ad3442558a58aa4057bde449', 'disposition': 'READY', 'parser': 'LLM', 'ai_fallback': False, 'event': 'intent_recorded', 'request_id': '647b9194c6164f1db5c4bd9d72f64859', 'level': 'info', 'logger': 'app.ai.parser', 'timestamp': '2026-10-25T16:03:45.041245Z'}
+INFO     app.request:logging.py:131 {'method': 'POST', 'path': '/api/conversations/a5ffd40105304fb3b82857095f068136/messages', 'status': 201, 'event': 'request', 'level': 'info', 'logger': 'app.request', 'request_id': '647b9194c6164f1db5c4bd9d72f64859', 'timestamp': '2026-10-25T16:03:45.052353Z'}
+INFO     httpx:_client.py:1740 HTTP Request: POST http://e2e/api/conversations/a5ffd40105304fb3b82857095f068136/messages "HTTP/1.1 201 Created"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/api/json?tree=name "HTTP/1.1 200 OK"
+INFO     app.services.generation:generation.py:429 {'pipeline_id': '302f373638d54284822e371e6d76d9f0', 'command_id': '1cbb32d1ad3442558a58aa4057bde449', 'status': 'VALIDATED', 'source': 'plan', 'event': 'pipeline_generated', 'request_id': 'ae02df1535164236aa4abc9932bd4eb4', 'level': 'info', 'logger': 'app.services.generation', 'timestamp': '2026-10-25T16:03:45.414444Z'}
+INFO     app.request:logging.py:131 {'method': 'POST', 'path': '/api/commands/1cbb32d1ad3442558a58aa4057bde449/generate', 'status': 201, 'event': 'request', 'level': 'info', 'logger': 'app.request', 'request_id': 'ae02df1535164236aa4abc9932bd4eb4', 'timestamp': '2026-10-25T16:03:45.415507Z'}
+INFO     httpx:_client.py:1740 HTTP Request: POST http://e2e/api/commands/1cbb32d1ad3442558a58aa4057bde449/generate "HTTP/1.1 201 Created"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/api/json?tree=name "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: POST http://localhost:8087/job/fs-payment-service-build/config.xml "HTTP/1.1 200 OK"
+INFO     app.services.jenkins:jenkins.py:459 {'job': 'fs-payment-service-build', 'event': 'jenkins_job_updated', 'request_id': '2bfef6fc795149de9d5c578f522e7c54', 'level': 'info', 'logger': 'app.services.jenkins', 'timestamp': '2026-10-25T16:03:45.635517Z'}
+INFO     httpx:_client.py:1740 HTTP Request: POST http://localhost:8087/job/fs-payment-service-build/buildWithParameters "HTTP/1.1 201 Created"
+INFO     app.services.jenkins:jenkins.py:499 {'job': 'fs-payment-service-build', 'queue_item': 2155, 'event': 'jenkins_triggered', 'request_id': '2bfef6fc795149de9d5c578f522e7c54', 'level': 'info', 'logger': 'app.services.jenkins', 'timestamp': '2026-10-25T16:03:45.685222Z'}
+INFO     app.services.generation:generation.py:683 {'pipeline_id': '302f373638d54284822e371e6d76d9f0', 'first_job': 'fs-payment-service-build', 'event': 'pipeline_approved', 'request_id': '2bfef6fc795149de9d5c578f522e7c54', 'level': 'info', 'logger': 'app.services.generation', 'timestamp': '2026-10-25T16:03:45.739664Z'}
+INFO     app.request:logging.py:131 {'method': 'POST', 'path': '/api/pipelines/302f373638d54284822e371e6d76d9f0/approve', 'status': 200, 'event': 'request', 'level': 'info', 'logger': 'app.request', 'request_id': '2bfef6fc795149de9d5c578f522e7c54', 'timestamp': '2026-10-25T16:03:45.740729Z'}
+INFO     httpx:_client.py:1740 HTTP Request: POST http://e2e/api/pipelines/302f373638d54284822e371e6d76d9f0/approve "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/queue/api/json?tree=items%5Bid%2Cblocked%2Cbuildable%2Cstuck%2Cwhy%2Ctask%5Bname%5D%5D "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/dynamic-queue/api/json "HTTP/1.1 200 OK"
+INFO     app.request:logging.py:131 {'method': 'GET', 'path': '/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d', 'status': 200, 'event': 'request', 'level': 'info', 'logger': 'app.request', 'request_id': '9031480038614ea1a95cc04c892f476f', 'timestamp': '2026-10-25T16:03:46.141458Z'}
+INFO     httpx:_client.py:1740 HTTP Request: GET http://e2e/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/queue/item/2155/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/queue/item/2155/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/queue/item/2155/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/queue/item/2155/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/queue/api/json?tree=items%5Bid%2Cblocked%2Cbuildable%2Cstuck%2Cwhy%2Ctask%5Bname%5D%5D "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/dynamic-queue/api/json "HTTP/1.1 200 OK"
+INFO     app.request:logging.py:131 {'method': 'GET', 'path': '/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d', 'status': 200, 'event': 'request', 'level': 'info', 'logger': 'app.request', 'request_id': 'b18f374721c543efb0821c80ee97acaf', 'timestamp': '2026-10-25T16:03:49.185965Z'}
+INFO     httpx:_client.py:1740 HTTP Request: GET http://e2e/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/queue/item/2155/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/queue/item/2155/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/queue/api/json?tree=items%5Bid%2Cblocked%2Cbuildable%2Cstuck%2Cwhy%2Ctask%5Bname%5D%5D "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/dynamic-queue/api/json "HTTP/1.1 200 OK"
+INFO     app.request:logging.py:131 {'method': 'GET', 'path': '/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d', 'status': 200, 'event': 'request', 'level': 'info', 'logger': 'app.request', 'request_id': 'fa1cef5ca7754cbfa2f530c811891574', 'timestamp': '2026-10-25T16:03:52.258743Z'}
+INFO     httpx:_client.py:1740 HTTP Request: GET http://e2e/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/queue/item/2155/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/queue/item/2155/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/queue/item/2155/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/queue/item/2155/api/json "HTTP/1.1 200 OK"
+INFO     app.services.tracker:tracker.py:212 {'resolved': 1, 'advanced': 1, 'chains': 1, 'event': 'tracker_tick', 'level': 'info', 'logger': 'app.services.tracker', 'timestamp': '2026-10-25T16:03:54.749011Z'}
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/queue/api/json?tree=items%5Bid%2Cblocked%2Cbuildable%2Cstuck%2Cwhy%2Ctask%5Bname%5D%5D "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/dynamic-queue/api/json "HTTP/1.1 200 OK"
+INFO     app.request:logging.py:131 {'method': 'GET', 'path': '/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d', 'status': 200, 'event': 'request', 'level': 'info', 'logger': 'app.request', 'request_id': 'de460b3531fe4dedad71276c22798a53', 'timestamp': '2026-10-25T16:03:55.320286Z'}
+INFO     httpx:_client.py:1740 HTTP Request: GET http://e2e/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/queue/api/json?tree=items%5Bid%2Cblocked%2Cbuildable%2Cstuck%2Cwhy%2Ctask%5Bname%5D%5D "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/dynamic-queue/api/json "HTTP/1.1 200 OK"
+INFO     app.request:logging.py:131 {'method': 'GET', 'path': '/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d', 'status': 200, 'event': 'request', 'level': 'info', 'logger': 'app.request', 'request_id': '966a9bf671234cbab79d7909325afc96', 'timestamp': '2026-10-25T16:03:58.389093Z'}
+INFO     httpx:_client.py:1740 HTTP Request: GET http://e2e/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/queue/api/json?tree=items%5Bid%2Cblocked%2Cbuildable%2Cstuck%2Cwhy%2Ctask%5Bname%5D%5D "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/dynamic-queue/api/json "HTTP/1.1 200 OK"
+INFO     app.request:logging.py:131 {'method': 'GET', 'path': '/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d', 'status': 200, 'event': 'request', 'level': 'info', 'logger': 'app.request', 'request_id': '866356d92b7847979757ce38d739c43b', 'timestamp': '2026-10-25T16:04:01.457390Z'}
+INFO     httpx:_client.py:1740 HTTP Request: GET http://e2e/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/queue/api/json?tree=items%5Bid%2Cblocked%2Cbuildable%2Cstuck%2Cwhy%2Ctask%5Bname%5D%5D "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/dynamic-queue/api/json "HTTP/1.1 200 OK"
+INFO     app.request:logging.py:131 {'method': 'GET', 'path': '/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d', 'status': 200, 'event': 'request', 'level': 'info', 'logger': 'app.request', 'request_id': '281d1e443b7b4b51a10df7cfe5518fd0', 'timestamp': '2026-10-25T16:04:04.535139Z'}
+INFO     httpx:_client.py:1740 HTTP Request: GET http://e2e/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/queue/api/json?tree=items%5Bid%2Cblocked%2Cbuildable%2Cstuck%2Cwhy%2Ctask%5Bname%5D%5D "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/dynamic-queue/api/json "HTTP/1.1 200 OK"
+INFO     app.request:logging.py:131 {'method': 'GET', 'path': '/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d', 'status': 200, 'event': 'request', 'level': 'info', 'logger': 'app.request', 'request_id': '3eb84410b62845be872a4ecf10f9d40a', 'timestamp': '2026-10-25T16:04:07.596112Z'}
+INFO     httpx:_client.py:1740 HTTP Request: GET http://e2e/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/queue/api/json?tree=items%5Bid%2Cblocked%2Cbuildable%2Cstuck%2Cwhy%2Ctask%5Bname%5D%5D "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/dynamic-queue/api/json "HTTP/1.1 200 OK"
+INFO     app.request:logging.py:131 {'method': 'GET', 'path': '/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d', 'status': 200, 'event': 'request', 'level': 'info', 'logger': 'app.request', 'request_id': '9be9b9373e464858bd5d388435b72777', 'timestamp': '2026-10-25T16:04:10.691287Z'}
+INFO     httpx:_client.py:1740 HTTP Request: GET http://e2e/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/queue/api/json?tree=items%5Bid%2Cblocked%2Cbuildable%2Cstuck%2Cwhy%2Ctask%5Bname%5D%5D "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/dynamic-queue/api/json "HTTP/1.1 200 OK"
+INFO     app.request:logging.py:131 {'method': 'GET', 'path': '/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d', 'status': 200, 'event': 'request', 'level': 'info', 'logger': 'app.request', 'request_id': 'a19043e51e644e078618aebbb3b59c33', 'timestamp': '2026-10-25T16:04:13.751197Z'}
+INFO     httpx:_client.py:1740 HTTP Request: GET http://e2e/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d "HTTP/1.1 200 OK"
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json "HTTP/1.1 200 OK"
+INFO     app.services.tracker:tracker.py:212 {'resolved': 0, 'advanced': 1, 'chains': 1, 'event': 'tracker_tick', 'level': 'info', 'logger': 'app.services.tracker', 'timestamp': '2026-10-25T16:04:15.170035Z'}
+INFO     httpx:_client.py:1740 HTTP Request: GET http://localhost:8087/job/fs-payment-service-build/230/api/json "HTTP/1.1 200 OK"
+INFO     app.request:logging.py:131 {'method': 'GET', 'path': '/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d', 'status': 200, 'event': 'request', 'level': 'info', 'logger': 'app.request', 'request_id': '55b3dffc941d484ba18ccf03d97b6439', 'timestamp': '2026-10-25T16:04:16.791295Z'}
+INFO     httpx:_client.py:1740 HTTP Request: GET http://e2e/api/chains/ddc7f1fbf092477ea0d36f9f89449f1d "HTTP/1.1 200 OK"
+-------------------------- Captured stdout teardown ---------------------------
+{"ticks": 16, "errors": 0, "event": "tracker_stopped", "level": "info", "logger": "app.services.tracker", "timestamp": "2026-10-25T16:04:17.111717Z"}
+---------------------------- Captured log teardown ----------------------------
+INFO     app.services.tracker:tracker.py:140 {'ticks': 16, 'errors': 0, 'event': 'tracker_stopped', 'level': 'info', 'logger': 'app.services.tracker', 'timestamp': '2026-10-25T16:04:17.111717Z'}
+=========================== short test summary info ===========================
+FAILED tests/test_demo_script.py::test_the_demo_script_runs_with_every_answer_replayed
+1 failed, 1 passed in 35.22s

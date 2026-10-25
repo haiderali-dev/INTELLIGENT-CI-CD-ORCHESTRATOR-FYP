@@ -84,6 +84,10 @@ def pct(value: float | None) -> str:
     return "n/a" if value is None else f"{value * 100:.1f}%"
 
 
+def completion_note(row: dict[str, Any]) -> str:
+    return " (incomplete)" if row.get("complete") is False else ""
+
+
 # ---------------------------------------------------------------------------
 # The experiment
 # ---------------------------------------------------------------------------
@@ -364,7 +368,8 @@ def table_12_8(report: dict[str, Any] | None) -> str:
             else f"{row['latency_p50_ms']} / {row['latency_p95_ms']}"
         )
         lines.append(
-            f"| {parser_name(row['parser'])} | {row['n']}{errors} | {pct(row['action_accuracy'])} "
+            f"| {parser_name(row['parser'])}{completion_note(row)} | {row['n']}{errors} "
+            f"| {pct(row['action_accuracy'])} "
             f"| {pct(row['exact_match'])} | {pct(row['behavior_accuracy'])} "
             f"| {pct(row['clarification_precision'])} / {pct(row['clarification_recall'])} "
             f"| {pct(row['refusal_rate'])} | {latency} | {num(row['tokens_per_command'], 0)} |"
@@ -373,7 +378,8 @@ def table_12_8(report: dict[str, Any] | None) -> str:
         "",
         f"The test split of eval-v1, 150 items (archive `{report['_archive']}`). Gold labels by "
         "Claude Code, not reviewed by a person (D-081). Response is whether the pipeline "
-        "generated, asked or refused as the gold label says.",
+        "generated, asked or refused as the gold label says. Unanswered items are reported "
+        "separately and excluded from accuracy, clarification and refusal denominators.",
     ]
     return "\n".join(lines)
 
@@ -404,14 +410,20 @@ def table_12_9(report: dict[str, Any] | None) -> str:
         return PENDING
     rows = report["comparison"]
     lines = [
-        "| Field | " + " | ".join(parser_name(row["parser"]) for row in rows) + " |",
+        "| Field | "
+        + " | ".join(parser_name(row["parser"]) + completion_note(row) for row in rows)
+        + " |",
         "| --- |" + " ---: |" * len(rows),
     ]
     for field in FIELDS:
         cells = " | ".join(pct(row["per_field_accuracy"].get(field)) for row in rows)
         lines.append(f"| `{field}` | {cells} |")
     lines.append("")
-    lines.append("| Category (response accuracy) | " + " | ".join(parser_name(r["parser"]) for r in rows) + " |")
+    lines.append(
+        "| Category (response accuracy) | "
+        + " | ".join(parser_name(row["parser"]) + completion_note(row) for row in rows)
+        + " |"
+    )
     lines.append("| --- |" + " ---: |" * len(rows))
     for key, label in CATEGORIES:
         cells = " | ".join(pct(row["behavior_by_category"].get(key)) for row in rows)
@@ -447,8 +459,10 @@ def table_12_11(report: dict[str, Any] | None) -> str:
         "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for row in ablations["rows"]:
+        errors = f" ({row['errors']} unanswered)" if row["errors"] else ""
         lines.append(
-            f"| {row['label'][0].upper() + row['label'][1:]} | {row['n']} "
+            f"| {row['label'][0].upper() + row['label'][1:]}{completion_note(row)} "
+            f"| {row['n']}{errors} "
             f"| {pct(row['action_accuracy'])} | {pct(row['exact_match'])} "
             f"| {pct(row['behavior_accuracy'])} | {pct(row['refusal_rate'])} "
             f"| {num(row['tokens_per_command'], 0)} "
@@ -484,7 +498,8 @@ def table_12_12(report: dict[str, Any] | None) -> str:
             cells.append(f"{cell['succeeded']} of {cell['n']}" if cell else "n/a")
         failed = ", ".join(f"{step}: {count}" for step, count in (row["failed_at"] or {}).items())
         lines.append(
-            f"| {row['model']} | {row['n']} | {row['succeeded']} ({pct(row['success_rate'])}) "
+            f"| {row['model']}{completion_note(row)} | {row['n']} "
+            f"| {row['succeeded']} ({pct(row['success_rate'])}) "
             f"| {cells[0]} | {cells[1]} | {failed or 'none'} |"
         )
     return "\n".join(lines)

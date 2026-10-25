@@ -143,6 +143,28 @@ describe("analytics", () => {
     expect(within(section).queryByRole("table")).toBeNull();
   });
 
+  it("keeps rejected responses and failed live builds visible in the archived results", async () => {
+    const { backend, session } = await signedIn();
+    renderRoutes("/analytics", session, analytics(backend));
+
+    const comparison = await screen.findByRole("table", {
+      name: "Parsers compared on the test split",
+    });
+    const model = within(comparison).getByRole("row", { name: /openai\/gpt-oss-20b/ });
+    expect(within(model).getByText("148, 2 unanswered")).toBeInTheDocument();
+    expect(
+      screen.getByText(/excluded from accuracy, clarification and refusal percentages/),
+    ).toBeInTheDocument();
+
+    const ablations = screen.getByRole("table", { name: "Ablations on the 75-item subset" });
+    const noEnums = within(ablations).getByRole("row", { name: /No catalog enums/ });
+    expect(within(noEnums).getByText("74, 1 unanswered")).toBeInTheDocument();
+
+    const live = screen.getByRole("table", { name: "End-to-end success" });
+    expect(within(live).getByText("18 of 20")).toBeInTheDocument();
+    expect(within(live).getByText("2 did not run to success")).toBeInTheDocument();
+  });
+
   it("says each part is loading, and what failed", async () => {
     const { backend, session } = await signedIn();
     backend

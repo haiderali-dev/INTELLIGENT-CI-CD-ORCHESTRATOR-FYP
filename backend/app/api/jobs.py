@@ -245,7 +245,7 @@ class RunFailureResponse(BaseModel):
 @router.get("/jobs", response_model=JobPage, summary="Jobs the orchestrator created")
 async def list_jobs(
     user: CurrentUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     service: Annotated[str | None, Query(max_length=128)] = None,
     job_type: Annotated[str | None, Query(max_length=16)] = None,
     limit: Annotated[int | None, Query(ge=1, le=runs_service.MAX_PAGE_SIZE)] = None,
@@ -266,7 +266,7 @@ async def list_jobs(
 @router.get("/runs", response_model=RunPage, summary="Runs, newest first")
 async def list_runs(
     user: CurrentUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     job_id: Annotated[str | None, Query(max_length=64)] = None,
     result: Annotated[str | None, Query(max_length=16)] = None,
     active: Annotated[bool, Query(description="Only runs that have not finished")] = False,
@@ -294,7 +294,7 @@ async def list_runs(
 async def get_run(
     run_id: str,
     user: CurrentUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
 ) -> RunResponse:
     run = await runs_service.get_run(session, run_id)
     job = await runs_service.get_job(session, run.job_id)
@@ -305,7 +305,7 @@ async def get_run(
 async def cancel_run(
     run_id: str,
     user: DevOpsUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     jenkins: Annotated[JenkinsClient, Depends(get_jenkins_client)],
 ) -> CancelResponse:
     """Cancel a queued run, or stop a building one.
@@ -322,7 +322,7 @@ async def cancel_run(
 async def get_run_log(
     run_id: str,
     user: CurrentUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     jenkins: Annotated[JenkinsClient, Depends(get_jenkins_client)],
     settings: Annotated[Settings, Depends(get_settings_dep)],
     start: Annotated[int, Query(ge=0, description="Byte offset to read from")] = 0,
@@ -357,7 +357,7 @@ async def get_run_log(
 async def explain_run_failure(
     run_id: str,
     user: CurrentUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     jenkins: Annotated[JenkinsClient, Depends(get_jenkins_client)],
     explainer: Annotated[FailureExplainer, Depends(get_failure_explainer)],
     settings: Annotated[Settings, Depends(get_settings_dep)],

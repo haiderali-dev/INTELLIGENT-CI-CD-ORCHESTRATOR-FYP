@@ -96,7 +96,7 @@ def rate_limit(limit: RateLimit, *, per_user: bool = False) -> Callable[..., Non
 
 async def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     settings: Annotated[Settings, Depends(get_settings_dep)],
 ) -> User:
     """The signed-in user, or 401."""
@@ -118,7 +118,7 @@ def require_role(minimum: Role) -> Callable[..., Awaitable[User]]:
     async def _guard(
         user: CurrentUser,
         request: Request,
-        session: Annotated[AsyncSession, Depends(get_db)],
+        session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     ) -> User:
         if not role_allows(Role(user.role), minimum):
             # Audited before the refusal: 4.4.3 asks for every policy denial (D-068).

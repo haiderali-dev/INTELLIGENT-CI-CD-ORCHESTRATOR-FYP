@@ -1,0 +1,100 @@
+Started by user Orchestrator Backend
+[Pipeline] Start of Pipeline
+[Pipeline] node
+Running on agent-2 in /home/jenkins/agent/workspace/pl-payment-service-build
+[Pipeline] {
+[Pipeline] timestamps
+[Pipeline] {
+[Pipeline] timeout
+[2026-10-25T07:30:17.755Z] Timeout set to expire in 30 min
+[Pipeline] {
+[Pipeline] stage
+[Pipeline] { (Checkout)
+[Pipeline] script
+[Pipeline] {
+[Pipeline] checkout
+[2026-10-25T07:30:18.014Z] The recommended git tool is: NONE
+[2026-10-25T07:30:18.211Z] No credentials specified
+[2026-10-25T07:30:18.215Z] Cloning the remote Git repository
+[2026-10-25T07:30:18.220Z] Cloning repository https://github.com/haiderali-dev/payment-service.git
+[2026-10-25T07:30:18.223Z]  > git init /home/jenkins/agent/workspace/pl-payment-service-build # timeout=10
+[2026-10-25T07:30:18.231Z] Fetching upstream changes from https://github.com/haiderali-dev/payment-service.git
+[2026-10-25T07:30:18.231Z]  > git --version # timeout=10
+[2026-10-25T07:30:18.235Z]  > git --version # 'git version 2.47.3'
+[2026-10-25T07:30:18.236Z]  > git fetch --tags --force --progress -- https://github.com/haiderali-dev/payment-service.git +refs/heads/*:refs/remotes/origin/* # timeout=10
+[2026-10-25T07:30:19.683Z] Avoid second fetch
+[2026-10-25T07:30:19.689Z] Checking out Revision 998844b0159c13bf8ab32e1e2da2f4a187b7eb61 (refs/remotes/origin/main)
+[2026-10-25T07:30:19.704Z] Commit message: "fix(deploy): probe /health on a configurable host"
+[2026-10-25T07:30:19.704Z] First time build. Skipping changelog.
+[Pipeline] }
+[Pipeline] // script
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Build)
+[Pipeline] sh
+[2026-10-25T07:30:19.670Z]  > git config remote.origin.url https://github.com/haiderali-dev/payment-service.git # timeout=10
+[2026-10-25T07:30:19.674Z]  > git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/* # timeout=10
+[2026-10-25T07:30:19.685Z]  > git rev-parse refs/remotes/origin/main^{commit} # timeout=10
+[2026-10-25T07:30:19.691Z]  > git config core.sparsecheckout # timeout=10
+[2026-10-25T07:30:19.694Z]  > git checkout -f 998844b0159c13bf8ab32e1e2da2f4a187b7eb61 # timeout=10
+[2026-10-25T07:30:20.230Z] + ./scripts/build.sh
+[2026-10-25T07:30:20.230Z] [build] payment-service
+[2026-10-25T07:30:28.366Z] [build] ok
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Lint)
+[Pipeline] sh
+[2026-10-25T07:30:28.825Z] + ./scripts/lint.sh
+[2026-10-25T07:30:28.825Z] [lint] ruff
+[2026-10-25T07:30:28.825Z] All checks passed!
+[2026-10-25T07:30:28.825Z] unformatted: File would be reformatted
+[2026-10-25T07:30:28.825Z]   --> tests/test_integration.py:41:12
+[2026-10-25T07:30:28.825Z]    |
+[2026-10-25T07:30:28.825Z] 40 |     time.sleep(STEP_SECONDS)
+[2026-10-25T07:30:28.825Z]    -     ids = {client.post("/payments", params={"amount_cents": n}).json()["id"] for n in range(1, 11)}
+[2026-10-25T07:30:28.825Z] 41 +     ids = {
+[2026-10-25T07:30:28.825Z] 42 +         client.post("/payments", params={"amount_cents": n}).json()["id"]
+[2026-10-25T07:30:28.825Z] 43 +         for n in range(1, 11)
+[2026-10-25T07:30:28.825Z] 44 +     }
+[2026-10-25T07:30:28.825Z] 45 |     assert len(ids) == 10
+[2026-10-25T07:30:28.825Z]    |
+[2026-10-25T07:30:28.825Z] 
+[2026-10-25T07:30:28.825Z] unformatted: File would be reformatted
+[2026-10-25T07:30:28.825Z]   --> tests/test_unit.py:51:24
+[2026-10-25T07:30:28.825Z]    |
+[2026-10-25T07:30:28.825Z] 50 |     time.sleep(STEP_SECONDS)
+[2026-10-25T07:30:28.825Z]    -     body = client.post("/payments", params={"amount_cents": 500, "currency": "usd"}).json()
+[2026-10-25T07:30:28.825Z] 51 +     body = client.post(
+[2026-10-25T07:30:28.825Z] 52 +         "/payments", params={"amount_cents": 500, "currency": "usd"}
+[2026-10-25T07:30:28.825Z] 53 +     ).json()
+[2026-10-25T07:30:28.825Z] 54 |     assert body["currency"] == "USD"
+[2026-10-25T07:30:28.825Z]    |
+[2026-10-25T07:30:28.825Z] 
+[2026-10-25T07:30:28.825Z] 2 files would be reformatted, 3 files already formatted
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Security scan)
+Stage "Security scan" skipped due to earlier failure(s)
+[Pipeline] getContext
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] stage
+[Pipeline] { (Declarative: Post Actions)
+[Pipeline] cleanWs
+[2026-10-25T07:30:29.382Z] [WS-CLEANUP] Deleting project workspace...
+[2026-10-25T07:30:29.382Z] [WS-CLEANUP] Deferred wipeout is used...
+[2026-10-25T07:30:29.398Z] [WS-CLEANUP] done
+[Pipeline] }
+[Pipeline] // stage
+[Pipeline] }
+[Pipeline] // timeout
+[Pipeline] }
+[Pipeline] // timestamps
+[Pipeline] }
+[Pipeline] // node
+[Pipeline] End of Pipeline
+ERROR: script returned exit code 1
+Finished: FAILURE

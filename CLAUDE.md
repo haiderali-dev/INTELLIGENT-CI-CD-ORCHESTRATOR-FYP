@@ -94,6 +94,8 @@ experiment/ · eval/ · catalog/ · sample-services/ · scripts/ · docs/ · leg
   (D-070).
 
 ## Lessons (add one line whenever a mistake repeats)
+- A database dependency must use function-scoped Depends so commit precedes HTTP success;
+  ASGITransport buffers dependency cleanup and hides response-before-commit races (D-083).
 - Pipeline queue items are placeholder tasks; resolve the job with getOwnerTask().
 - A Pipeline run starts when its flyweight leaves the queue, within milliseconds and before any
   executor is involved; its work is its node blocks. Never time, count or gate a Pipeline by its

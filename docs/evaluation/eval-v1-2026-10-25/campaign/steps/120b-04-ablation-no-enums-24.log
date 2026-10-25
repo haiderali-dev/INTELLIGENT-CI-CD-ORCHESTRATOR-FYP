@@ -1,0 +1,16 @@
+250 item(s): 0 reviewed, 250 awaiting review
+  labels: written by Claude Code, not reviewed by a person (D-081)
+2026-10-25 20:04:08 [info     ] catalog_loaded                 path='D:\\FYP POC\\CICD project - Copy\\catalog\\services.yaml' services=2
+resuming: 68 item(s) already done
+2026-10-25 20:04:10 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=934da4f28f82
+2026-10-25 20:04:11 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=d86320d66bf5
+2026-10-25 20:04:14 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=48bf190eb022
+2026-10-25 20:04:16 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=703276c0ea2a
+2026-10-25 20:05:11 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=3ced04530b32
+2026-10-25 20:05:13 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=fd911ba2e02d
+2026-10-25 20:05:15 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=cc39355127e2
+scored 74 item(s), 1 error(s)
+action accuracy 0.9865, behaviour accuracy 0.973
+plans: 38 of 38 planned by the model, valid before repair 1.0, after 1.0
+note: Gold labels written by Claude Code and checked against the card's rules by code; no person has reviewed them (docs/decisions.md D-081). Report these figures with that provenance beside them.
+metrics: eval\results\eval-v1-ablation__groq-openai-gpt-oss-120b__no-enums\metrics.json

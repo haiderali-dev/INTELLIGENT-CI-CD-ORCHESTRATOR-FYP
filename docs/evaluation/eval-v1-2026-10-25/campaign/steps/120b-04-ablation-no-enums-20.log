@@ -1,0 +1,14 @@
+250 item(s): 0 reviewed, 250 awaiting review
+  labels: written by Claude Code, not reviewed by a person (D-081)
+2026-10-25 17:39:13 [info     ] catalog_loaded                 path='D:\\FYP POC\\CICD project - Copy\\catalog\\services.yaml' services=2
+resuming: 65 item(s) already done
+2026-10-25 17:39:14 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=669e85dac35a
+2026-10-25 17:39:15 [info     ] llm_rate_limited               exhausted=True model=openai/gpt-oss-120b remaining_requests=999 retry_after=569.0
+2026-10-25 17:39:15 [warning  ] llm_chain_exhausted            reasons=['openai/gpt-oss-120b: rate limited for 9 min']
+stopped at ev1-p047: the daily budget for openai/gpt-oss-120b is spent (openai/gpt-oss-120b: rate limited for 9 min). Progress is saved; rerun the same command later to resume.
+scored 65 item(s), 1 error(s)
+action accuracy 0.9846, behaviour accuracy 0.9692
+plans: 0 of 38 planned by the model, valid before repair None, after None
+note: Gold labels written by Claude Code and checked against the card's rules by code; no person has reviewed them (docs/decisions.md D-081). Report these figures with that provenance beside them.
+incomplete: stopped at ev1-p047: the daily budget for openai/gpt-oss-120b is spent (openai/gpt-oss-120b: rate limited for 9 min). Progress is saved; rerun the same command later to resume.
+metrics: eval\results\eval-v1-ablation__groq-openai-gpt-oss-120b__no-enums\metrics.json

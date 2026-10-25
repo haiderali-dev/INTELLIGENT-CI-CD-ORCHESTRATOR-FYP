@@ -106,7 +106,7 @@ async def require_metrics_token(
 )
 async def post_metrics(
     payload: MetricEventRequest | MetricBatchRequest,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
 ) -> IngestResponse:
     """Accept one event, or a batch of them.
 

@@ -4208,7 +4208,9 @@ def check_eval_dataset() -> Result:
 
 @check(8, "the evaluation package's tests pass")
 def check_eval_tests() -> Result:
-    result, output = _pytest(["tests/test_eval.py", "-p", "no:cacheprovider"], timeout=600)
+    result, output = _pytest(
+        ["tests/test_eval.py", "tests/test_eval_campaign.py", "-p", "no:cacheprovider"], timeout=600
+    )
     return _all_passed(result, output, "the evaluation tests")
 
 
@@ -4251,19 +4253,9 @@ def check_eval_report() -> Result:
         return fail(f"report.md regenerated from {archive.name}/runs differs from the one kept")
 
     report = without_time(out / "report.json")
+    problems = _evaluation_problems(report)
     parsers = [row["parser"] for row in report["comparison"]]
-    problems = []
-    if "rules" not in parsers or len(parsers) < 3:
-        problems.append(f"the comparison has {parsers}; 4.9 asks for the rules and the models")
-    if not report["plans"]:
-        problems.append("no plan validity")
     configurations = [row["configuration"] for row in (report["ablations"] or {}).get("rows", [])]
-    if not {"full", "no-enums", "no-examples", "no-repair"} <= set(configurations):
-        problems.append(f"the ablations have {configurations}")
-    if not report["e2e"] or report["e2e"][0]["n"] != 20:
-        problems.append("no 20-command end-to-end run")
-    if (report["provenance"] or {}).get("labels") not in ("human", "machine", "mixed"):
-        problems.append("the provenance of the labels is not stated")
     if problems:
         return fail("; ".join(problems))
     e2e = report["e2e"][0]
@@ -4273,6 +4265,40 @@ def check_eval_report() -> Result:
         f"configurations, end to end {e2e['succeeded']} of {e2e['n']}; "
         f"labels: {report['provenance']['labels']}"
     )
+
+
+def _evaluation_problems(report: dict[str, Any]) -> list[str]:
+    parsers = {row["parser"] for row in report["comparison"]}
+    problems = []
+    required = {"rules", "groq:openai/gpt-oss-120b", "groq:openai/gpt-oss-20b"}
+    if not required <= parsers:
+        problems.append(f"the comparison is missing {sorted(required - parsers)}")
+    for row in report["comparison"]:
+        if not row["complete"] or row["n"] + row["errors"] != 150:
+            problems.append(f"{row['parser']}: incomplete 150-item test run")
+    if not report["plans"]:
+        problems.append("no plan validity")
+    planned_parsers = {row["parser"] for row in report["plans"]}
+    if missing := parsers - {"rules"} - planned_parsers:
+        problems.append(f"no plan validity for {sorted(missing)}")
+    for row in report["plans"]:
+        attempted = sum(row.get(key) or 0 for key in ("n", "no_model_plan", "errors"))
+        if attempted != row["plannable_items"]:
+            problems.append(f"{row['parser']}: incomplete plan validity run")
+    ablations = (report["ablations"] or {}).get("rows", [])
+    configurations = {row["configuration"] for row in ablations}
+    if not {"full", "no-enums", "no-examples", "no-repair"} <= configurations:
+        problems.append(f"the ablations have {sorted(configurations)}")
+    for row in ablations:
+        if not row["complete"] or row["n"] + row["errors"] != 75:
+            problems.append(f"{row['configuration']}: incomplete 75-item ablation")
+    if not any(
+        row["complete"] and row["n"] == row["expected"] == 20 for row in report["e2e"]
+    ):
+        problems.append("no completed 20-command end-to-end run")
+    if (report["provenance"] or {}).get("labels") not in ("human", "machine", "mixed"):
+        problems.append("the provenance of the labels is not stated")
+    return problems
 
 
 @check(8, "appendix_c.py prints the scores the plugin computes on AppendixCExampleTest's fixture")

@@ -1,0 +1,11 @@
+250 item(s): 0 reviewed, 250 awaiting review
+  labels: written by Claude Code, not reviewed by a person (D-081)
+2026-10-25 12:29:18 [info     ] catalog_loaded                 path='D:\\FYP POC\\CICD project - Copy\\catalog\\services.yaml' services=2
+resuming: 150 item(s) already done
+2026-10-25 12:29:18 [info     ] llm_fixture_recorded           model=openai/gpt-oss-20b prompt_hash=97e0c675d7b4
+2026-10-25 12:29:21 [info     ] llm_fixture_recorded           model=openai/gpt-oss-20b prompt_hash=5ae58c805d35
+scored 148 item(s), 2 error(s)
+action accuracy 0.9324, behaviour accuracy 0.9122
+plans: 74 of 74 planned by the model, valid before repair 0.8784, after 1.0
+note: Gold labels written by Claude Code and checked against the card's rules by code; no person has reviewed them (docs/decisions.md D-081). Report these figures with that provenance beside them.
+metrics: eval\results\eval-v1-test__groq-openai-gpt-oss-20b\metrics.json

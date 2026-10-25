@@ -158,6 +158,27 @@ never mixed into version 2 aggregates. Their provenance, including a stale-artif
 run where the old plugin silently degraded to FIFO, is written up in
 [`docs/m2-baseline.md`](docs/m2-baseline.md).
 
+The completed chatbot comparisons, ablations and live sample are archived in
+[`docs/evaluation/eval-v1-2026-10-25/`](docs/evaluation/eval-v1-2026-10-25/README.md), with raw
+predictions, plans, dataset cards, checksums and failure evidence. Their gold labels were written
+by Claude Code and still need a person's review. To reproduce that report and make it available
+on the running Analytics page, run from the repository root:
+
+```powershell
+uv run --no-sync --project backend python -m eval report --results docs/evaluation/eval-v1-2026-10-25/runs --out eval/results
+uv run --no-sync --project backend python scripts/report/chapter_12.py --check
+```
+
+The evaluation archive's README documents resuming the additional quota-deferred development
+runs. Human label review, usability testing, team demo rehearsal and the report's Word edits are
+tracked in `PROGRESS.md`.
+
+Phase 8 cumulative acceptance passed all 108 checks on 2026-10-25. The
+[gate log](docs/testing/evidence/gate-run-14-phase-8-working-tree.log),
+[exit-status record](docs/testing/evidence/gate-run-14-result.json) and
+[completion audit](docs/final-audit-phase-8.md) preserve the validation evidence and remaining
+human work.
+
 ## Contributing
 
 - Work phase by phase. Each phase lives on `phase-<n>-<slug>` and ends with a pull request reviewed

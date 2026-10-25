@@ -1,0 +1,53 @@
+250 item(s): 0 reviewed, 250 awaiting review
+  labels: written by Claude Code, not reviewed by a person (D-081)
+2026-10-25 12:54:13 [info     ] catalog_loaded                 path='D:\\FYP POC\\CICD project - Copy\\catalog\\services.yaml' services=2
+2026-10-25 12:54:14 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=bd4acc65a2c3
+2026-10-25 12:54:16 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=8e16800d54a3
+2026-10-25 12:54:19 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=5d0febd57013
+2026-10-25 12:54:21 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=46689582379f
+2026-10-25 12:55:15 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=a185e10007e1
+2026-10-25 12:55:17 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=07d366fee12b
+2026-10-25 12:55:20 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=f38844384273
+2026-10-25 12:55:22 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=077116c7fa4e
+2026-10-25 12:56:16 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=047534d55a7a
+2026-10-25 12:56:19 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=45851ce5c804
+2026-10-25 12:56:21 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=8a72b3c87c84
+2026-10-25 12:56:23 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=f7d72b539c28
+2026-10-25 12:57:17 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=43d67f5695d6
+2026-10-25 12:57:20 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=40c73980a509
+2026-10-25 12:57:22 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=1754858d9b65
+2026-10-25 12:57:25 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=f5adfe57d926
+2026-10-25 12:58:18 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=2568e246b308
+2026-10-25 12:58:21 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=3a9788f94ce2
+2026-10-25 12:58:23 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=cedf2ef2af89
+2026-10-25 12:58:26 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=6494b6d7d31b
+2026-10-25 12:59:19 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=394953030825
+2026-10-25 12:59:21 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=4800ce210b17
+2026-10-25 12:59:24 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=c5dd0655bbde
+2026-10-25 12:59:27 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=4cb34737af9d
+2026-10-25 13:00:21 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=784d871bd1b7
+2026-10-25 13:00:23 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=9bd39bb51da9
+2026-10-25 13:00:25 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=75c0e84039df
+2026-10-25 13:00:28 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=5a0f8ffaf96e
+2026-10-25 13:01:22 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=0315931def6a
+2026-10-25 13:01:24 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=c2095b7343c6
+2026-10-25 13:01:26 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=8cf1c16a8501
+2026-10-25 13:01:29 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=356254109f70
+2026-10-25 13:02:23 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=d5a975a660fb
+2026-10-25 13:02:25 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=49067d48e695
+2026-10-25 13:02:27 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=6156e52b4b56
+2026-10-25 13:02:30 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=b371cde1aa9a
+2026-10-25 13:03:24 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=024806fb00fd
+2026-10-25 13:03:26 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=c4be0849a3ab
+2026-10-25 13:03:28 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=978b67db9eb3
+2026-10-25 13:03:31 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=d88fe67f8e92
+2026-10-25 13:04:24 [info     ] llm_fixture_recorded           model=openai/gpt-oss-120b prompt_hash=3c37ebf144e8
+2026-10-25 13:04:26 [info     ] llm_rate_limited               exhausted=True model=openai/gpt-oss-120b remaining_requests=871 retry_after=578.0
+2026-10-25 13:04:26 [warning  ] llm_chain_exhausted            reasons=['openai/gpt-oss-120b: rate limited for 10 min']
+stopped at ev1-m009: the daily budget for openai/gpt-oss-120b is spent (openai/gpt-oss-120b: rate limited for 10 min). Progress is saved; rerun the same command later to resume.
+scored 41 item(s), 0 error(s)
+action accuracy 0.9756, behaviour accuracy 1.0
+plans: 0 of 38 planned by the model, valid before repair None, after None
+note: Gold labels written by Claude Code and checked against the card's rules by code; no person has reviewed them (docs/decisions.md D-081). Report these figures with that provenance beside them.
+incomplete: stopped at ev1-m009: the daily budget for openai/gpt-oss-120b is spent (openai/gpt-oss-120b: rate limited for 10 min). Progress is saved; rerun the same command later to resume.
+metrics: eval\results\eval-v1-ablation__groq-openai-gpt-oss-120b__no-enums\metrics.json

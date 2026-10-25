@@ -71,7 +71,7 @@ class ChainPage(BaseModel):
 @router.get("/chains", response_model=ChainPage, dependencies=[ApiRateLimit])
 async def list_chains(
     user: CurrentUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     service: str | None = None,
     active: bool = False,
     job_type: Annotated[
@@ -113,7 +113,7 @@ async def list_chains(
 async def get_chain(
     chain_id: str,
     user: CurrentUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     jenkins: Annotated[JenkinsClient, Depends(get_jenkins_client)],
     plugin: Annotated[PluginClient, Depends(get_plugin_client)],
 ) -> RunCard:
@@ -127,7 +127,7 @@ async def get_chain(
 async def cancel_chain(
     chain_id: str,
     user: CurrentUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     jenkins: Annotated[JenkinsClient, Depends(get_jenkins_client)],
 ) -> CancelResult:
     chain = await service.get_chain(session, chain_id)

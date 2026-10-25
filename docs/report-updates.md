@@ -215,6 +215,12 @@ each one attaches to Jenkins.
       - **Cite the dataset's sources:** CLINC150 (Larson et al., 2019; CC BY 3.0) and
         deepset/prompt-injections (deepset, 2023; Apache-2.0). Their attribution is in
         `eval/datasets/eval-v1.card.md`.
+      - **2026-10-25 evidence is archived:** `docs/evaluation/eval-v1-2026-10-25/`. Chapter 12's
+        tables and discussion are populated: four test parsers, four ablation configurations,
+        plan validity, and 18 of 20 live commands successful. State that accuracy denominators
+        exclude rejected responses, that 74 planned items represent 20 distinct requests, and
+        that the two live build failures were sample-service formatting checks. Extra development
+        runs are marked incomplete. Keep the measured failures in the submitted report.
 
 ## Appendices
 
@@ -291,6 +297,14 @@ each one attaches to Jenkins.
       signed in (D-064), and checked in CI on every push since 2026-10-20.
 
 ## New: from Phase 8 (2026-10-24 to 2026-10-25)
+
+- [ ] **Testing chapter: add the final gate finding D-083.** The live browser trace exposed a
+      validated generation returning before its database commit, leaving the Pipeline preview
+      empty after an immediate conversation reload. Function-scoped request sessions fix it.
+      Ordinary ASGITransport tests hid the race; the new response-start tests use a separate
+      database connection and fail before the fix. Keep this later finding separate from the
+      frozen testing campaign's defect counts. Gate runs 12 and 13 also document agent DNS
+      outages; those are infrastructure failures, not successful demo runs.
 
 - [ ] **Limitations section: the evaluation's labels (D-081).**
       - **Who labelled it:** one AI author, Claude Code, wrote and labelled `eval-v1`, and no person

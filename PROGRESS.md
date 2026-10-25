@@ -1,6 +1,6 @@
 # Progress
 
-Updated: 2026-10-25 · Current phase: 8 (in progress). Phases 0 to 7 are merged into `main`, the
+Updated: 2026-10-25 · Current phase: 8 (acceptance passed; ready for review). Phases 0 to 7 are merged into `main`, the
 last as PR #17 (`0937f9e`), whose gate passed 100 of 100 (gate run 11) ·
 Branch: phase-8-evaluation
 
@@ -78,8 +78,11 @@ Branch: phase-8-evaluation
         `pytest tests/test_eval.py`: 43 passed; verify.py's Phase 4 checks "drafted evaluation
         items stay capped and unreviewed" (30 drafts) and "the evaluation command writes a metrics
         file" (0 scored, 30 excluded pending review) pass; Phase 0 passes.
-- [ ] **Schedule the long runs:** the full experiment matrix, about 50 runs (Phase 7), and the final
-      live chatbot evaluation (Phase 8).
+- [x] **Schedule the long runs:** the full experiment matrix (Phase 7) and required final live
+      chatbot evaluation (Phase 8). The matrix is archived under `docs/experiment/`; on
+      2026-10-25 all four test comparisons, all primary-model ablations and the 20-command live
+      sample finished. Evaluation evidence: `docs/evaluation/eval-v1-2026-10-25/`.
+      Additional GPT-OSS-120B and Qwen development runs remain quota-deferred, with saved progress.
 - [ ] **Run the usability study** (Phase 8, BUILD_PROMPT Part 3). It needs real users. Each user
       completes the demo script's tasks (`docs/demo-script.md`) unaided while someone times them
       and notes where they hesitate. Added by the final audit (2026-10-25): the spec lists it, but
@@ -2466,8 +2469,8 @@ zero dependency violations. Since then:
 
 Built on `phase-8-evaluation`, branched from `main` at `0937f9e` (2026-10-24).
 
-- [ ] T8.1 Evaluation runner: splits, quota-aware throttling, resumable cache, comparisons and
-      ablations (Part 4.9). In progress. Done so far, run on 2026-10-25:
+- [x] T8.1 Evaluation runner: splits, quota-aware throttling, resumable cache, comparisons and
+      ablations (Part 4.9). Required measurements completed on 2026-10-25:
       - **The dataset, `eval-v1` (D-081):** 250 items, 100 dev and 150 test, in 4.9's exact mix,
         written and labelled by Claude Code at the project owner's instruction. No public dataset
         fits the task (`eval/datasets/eval-v1.card.md`, section 2).
@@ -2496,7 +2499,23 @@ Built on `phase-8-evaluation`, branched from `main` at `0937f9e` (2026-10-24).
         - `python -m pytest tests/test_eval.py`: 89 passed;
         - `ruff check`, `ruff format --check` and `mypy --strict` on `eval/`: clean;
         - `python -m eval build`: 250 items, checksum `31559fed…`.
-      - **Not done yet:** the live runs, the ablations and the end-to-end sample.
+      - **Required live runs are complete**, with raw evidence and generated reports archived in
+        `docs/evaluation/eval-v1-2026-10-25/`:
+        - rules plus GPT-OSS-120B, GPT-OSS-20B and Qwen on the 150-item test split;
+        - all four primary-model configurations on the 75-item ablation subset;
+        - 74 generating test items planned per model (20 distinct requests per model);
+        - the 20-command sample against real Jenkins: 18 succeeded, nine per assistant. Both
+          failures were payment-service formatting checks; the console logs are archived.
+      - **Commands run this session:** the campaign with `--stop-on-quota` finished no-enums,
+        no-repair and full ablations; `python -m eval report --results
+        docs/evaluation/eval-v1-2026-10-25/runs --out
+        docs/evaluation/eval-v1-2026-10-25/report` regenerated the archive. The generated JSON
+        validated against `EvaluationResponse` and all report completeness checks passed.
+      - **Still quota-deferred:** extra development runs for GPT-OSS-120B (4 answered items) and
+        Qwen (27); they are marked incomplete and excluded from the test comparison.
+      - **Resume fixes:** failed steps are retried on a later invocation; worker exceptions and
+        unfinished queues return failure; `--stop-on-quota` exits with saved progress; attempt
+        numbering preserves logs with gaps; the checkout and runner paths work across platforms.
 - [x] T8.2 Evaluation report generator for the Analytics page and the report. Evidence, run on
       2026-10-25:
       - **`python -m eval report`** (`eval/report.py`) writes `report.json` and `report.md` from
@@ -2582,7 +2601,7 @@ Built on `phase-8-evaluation`, branched from `main` at `0937f9e` (2026-10-24).
         - verify.py's "the demo reset restores a known state": PASS in 46 s. A snapshot, a marker
           job and a marker row, a restore: both markers gone; 30 jobs and 632 rows, as the
           snapshot had them.
-- [ ] T8.6 Phase 8 checks in `verify.py`. Eight checks are written:
+- [x] T8.6 Phase 8 checks in `verify.py`. Eight checks are written:
       - the dataset rebuilds from its source;
       - the evaluation tests pass;
       - the report regenerates from the archived runs;
@@ -2593,8 +2612,28 @@ Built on `phase-8-evaluation`, branched from `main` at `0937f9e` (2026-10-24).
         the final audit: 4.7.3's experiment results and M2 series on the page);
       - the demo script.
 
-      Seven pass when run on their own (2026-10-25). The report check waits for the archive of the
-      finished evaluation.
+      The archive is now present and its required measurements pass the report's completeness
+      validator. The gate also rejects incomplete test runs, plan samples, ablations and live
+      samples, with regression tests in `backend/tests/test_eval_campaign.py`.
+      Gate run 12 completed: 104 of 108 checks passed. Its four failures were the stale plugin
+      artifact, two formatting findings (all fixed), and GitHub DNS failing on agent-2 during
+      demo step 1 even after Jenkins' checkout retries. The failed gate, replay output and exact
+      build console are preserved under `docs/testing/evidence/gate-run-12-*`.
+      Both agents subsequently resolved and fetched the sample repository. Gate run 13 is now
+      running on mains power, with an explicit exit-status record; no final pass is claimed yet.
+      Run 13 completed 106/108 (exit 1): a real Pipeline preview race and another agent DNS
+      outage in demo step 4. D-083 fixes the race at the transaction boundary: all database
+      dependencies finish before responses are sent. Three new regressions pass; backend lint,
+      format and mypy pass; the complete offline suite passes 1,805 tests (52 deselected).
+      The backend image is rebuilt; the affected live Pipeline browser flow passed in 17.4 s,
+      with its temporary account deactivated. The complete replay demo then passed both tests
+      in 347.07 s; its UTF-8 log is archived under `docs/testing/evidence/`.
+      Gate run 14 completed all 108 checks on mains power, with Windows kept awake:
+      `python scripts/verify.py --phase 8` printed ALL CHECKS PASSED, exit 0, in 42m 27s
+      (2026-10-25, 22:31:56 to 23:14:23 PKT). Its unmodified UTF-8 log and exit-status record
+      are archived as `docs/testing/evidence/gate-run-14-phase-8-working-tree.log` and
+      `docs/testing/evidence/gate-run-14-result.json`. All Phase 8 implementation tasks and
+      cumulative acceptance are complete; the Needs human items remain open.
 
 ## Decisions taken while building
 - 2026-09-28 Build order deviates from Part 3: Phase 2 runs before Phase 1, because Docker is not
@@ -2666,6 +2705,24 @@ Details in `docs/decisions.md`.
   consequence is recorded in D-016 and queued as a report correction.
 
 ## Session log
+- 2026-10-25 Resumed from the supplied handoff, BUILD_PROMPT.md, PLAN.md and this file. Finished
+  the required evaluation campaign and archived 15 runs, the dataset, generated report and two
+  failed builds' console logs. Added campaign recovery and gate completeness regressions;
+  all 111 evaluation/campaign regressions pass, along with nine Analytics tests, backend/evaluation
+  lint and formatting, and strict evaluation typing. Chapter 12 now
+  contains all generated evaluation tables and the discussion; Analytics uses the archived
+  payload. Extra development runs are quota-deferred. Gate run 12 is running; its first finding
+  is a plugin artifact older than a Phase 8 source comment, rebuilt successfully by its Maven
+  check (126 unit tests, one skipped; 100 integration tests). Two formatter findings are fixed.
+  Run 12 finished 104/108: the last failure was the known agent DNS issue at demo step 1, with
+  its console archived. Both agents' GitHub fetches passed before starting gate run 13 on mains.
+  Run 13 finished 106/108: its browser trace exposed commit-after-response (D-083), now fixed
+  across all session dependencies and covered at the ASGI response boundary. The other failure
+  was GitHub DNS on agent-1 during the demo's deploy checkout. Both failed gates and consoles
+  are kept; the browser trace has temporary authentication values redacted.
+  Run 14 then passed all 108 checks (exit 0) in 42m 27s. Archived its log and result, completed
+  T8.6, and updated the audit and Chapter 12 to record the final acceptance pass. Human label
+  review, usability testing, demo rehearsal and applying the report edits remain open.
 - 2026-09-28 Read BUILD_PROMPT.md in full. Explored `legacy/m2-poc/` (plugin sources, experiment
   harness, result files) and the report PDF (Chapter 6 algorithms, Chapter 12, Appendices B to F).
   Confirmed M2 known problems 1, 2, 3, 6 and 7 directly in the code and data. Found eleven conflicts

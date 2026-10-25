@@ -142,7 +142,7 @@ class ApprovalResponse(BaseModel):
 async def generate(
     command_id: str,
     user: CurrentUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     planner: Annotated[Planner, Depends(get_planner)],
     catalog: Annotated[Catalog, Depends(get_catalog)],
     git: Annotated[GitClient, Depends(get_git_client)],
@@ -170,7 +170,7 @@ async def generate(
 async def get_pipeline(
     pipeline_id: str,
     user: CurrentUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
 ) -> PipelineResponse:
     context = await service.get_pipeline(session, user=user, pipeline_id=pipeline_id)
     return PipelineResponse.of(context.pipeline, context.conversation)
@@ -185,7 +185,7 @@ async def get_pipeline(
 async def regenerate(
     pipeline_id: str,
     user: CurrentUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     planner: Annotated[Planner, Depends(get_planner)],
     catalog: Annotated[Catalog, Depends(get_catalog)],
     git: Annotated[GitClient, Depends(get_git_client)],
@@ -210,7 +210,7 @@ async def regenerate(
 async def explain(
     pipeline_id: str,
     user: CurrentUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     settings: Annotated[Settings, Depends(get_settings_dep)],
     catalog: Annotated[Catalog, Depends(get_catalog)],
 ) -> StreamingResponse:
@@ -265,7 +265,7 @@ async def approve(
     pipeline_id: str,
     request: Request,
     user: CurrentUser,
-    session: Annotated[AsyncSession, Depends(get_db)],
+    session: Annotated[AsyncSession, Depends(get_db, scope="function")],
     catalog: Annotated[Catalog, Depends(get_catalog)],
     jenkins: Annotated[JenkinsClient, Depends(get_jenkins_client)],
     settings: Annotated[Settings, Depends(get_settings_dep)],
